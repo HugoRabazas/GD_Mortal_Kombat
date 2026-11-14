@@ -9,6 +9,14 @@ import { getFighter } from '../../shared/fighters.js';
 import { play } from './audio.js';
 import { hitSpark, blockSpark, dust, floatText, showBanner, addShake, addFlash, lightFlash } from './render/fx.js';
 
+// At the end of a brawl round, show over each fighter the points it earned.
+function showRoundPoints(state, project) {
+  for (const f of state.f) {
+    const p = project(f.x, f.hp > 0 ? 230 : 90, f.z);
+    floatText(p.x, p.y, `+${state.roundPts[f.slot]} PTS`, state.roundPts[f.slot] ? '#ffd34d' : '#bfaec0', 26);
+  }
+}
+
 // `quiet` is used for the demo fight behind the menu: sparks yes, banners and
 // sound no.
 export function handleEvents(events, state, { quiet, project }) {
@@ -139,12 +147,14 @@ export function handleEvents(events, state, { quiet, project }) {
       case 'ko':
         addShake(16);
         addFlash(0.75);
+        if (arena) showRoundPoints(state, project);
         if (quiet) break;
         if (arena) showBanner(e.winner < 0 ? 'ROUND SHARED' : `${nameOf(e.winner)} TAKES IT`, e.finisher ? 'FINISHER!' : e.perfect ? 'PERFECT!' : null, '#ff5a36', 2300);
         else showBanner(e.winner < 0 ? 'DOUBLE K.O.' : 'K.O.', e.finisher ? 'FINISHER!' : e.perfect ? 'PERFECT!' : null, '#ff5a36', 2300);
         if (!arena) play('ko');
         break;
       case 'timeup':
+        if (arena) showRoundPoints(state, project);
         if (quiet) break;
         showBanner('TIME UP', e.winner < 0 ? 'ROUND SHARED' : `${nameOf(e.winner)} TAKES IT`, '#e8b454', 2000);
         play('round');

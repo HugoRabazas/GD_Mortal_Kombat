@@ -148,6 +148,19 @@ export function createStage(glCanvas, hudCanvas) {
         drawTags(ctx, s, spots, view.labels);
         finisherCutIn(ctx, s);
         drawHud(ctx, s, view.labels, now);
+        // A reminder of the controls while the first round is being announced.
+        if (view.hint && s.round === 1 && s.phase === 'intro') {
+          ctx.save();
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = '600 13px Barlow, system-ui, sans-serif';
+          const w = Math.min(W - 40, ctx.measureText(view.hint).width + 36);
+          ctx.fillStyle = 'rgba(10,6,12,0.78)';
+          ctx.fillRect(W / 2 - w / 2, H - 76, w, 26);
+          ctx.fillStyle = '#f6ead8';
+          ctx.fillText(view.hint, W / 2, H - 62, W - 60);
+          ctx.restore();
+        }
         // Online: how the fight is reaching this screen, and how long the trip takes.
         if (view.net) {
           ctx.save();

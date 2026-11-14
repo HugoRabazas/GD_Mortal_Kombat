@@ -455,6 +455,13 @@ export function create3D(canvas) {
     );
     m.rotation.x = -Math.PI / 2;
     m.position.y = 0.035;
+    // A pointer on the ring shows which way the fighter faces (the head always
+    // looks at the camera, so it cannot tell you).
+    const tip = new THREE.Shape();
+    tip.moveTo(0.56, 0.15);
+    tip.lineTo(0.56, -0.15);
+    tip.lineTo(0.82, 0);
+    m.add(new THREE.Mesh(new THREE.ShapeGeometry(tip), m.material));
     scene.add(m);
     return m;
   });
@@ -740,6 +747,7 @@ export function create3D(canvas) {
         marks[i].position.x = f.x * S;
         marks[i].position.z = f.z * S;
         marks[i].scale.set(big * pulse, big * pulse, 1);
+        marks[i].rotation.z = -f.dir;
         marks[i].material.opacity = human ? 0.9 : 0.35;
       }
 

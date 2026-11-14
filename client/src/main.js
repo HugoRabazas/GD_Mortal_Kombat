@@ -161,6 +161,16 @@ function menuScreen() {
     </section>`;
 }
 
+// Power, speed and health as bars, so fighters can be compared at a glance.
+function statBars(f) {
+  const bar = (label, k) => `<div><dt>${label}</dt><dd><span class="meter"><i style="width:${Math.round(Math.min(1, Math.max(0.15, k)) * 100)}%"></i></span></dd></div>`;
+  return `<dl class="stats">
+    ${bar('Power', (f.stats.power - 0.8) / 0.4)}
+    ${bar('Speed', (f.stats.speed - 0.7) / 0.6)}
+    ${bar('Health', (f.stats.health - 80) / 40)}
+  </dl>`;
+}
+
 function slotCard(slot, who) {
   const f = getFighter(app.picks[slot]);
   return `
@@ -169,6 +179,7 @@ function slotCard(slot, who) {
       ${head(f.id, 'big')}
       <strong class="name">${f.name}</strong>
       <span class="title">${f.title}</span>
+      ${statBars(f)}
       <dl class="moves">
         <div><dt>Special</dt><dd>${f.special.name}</dd></div>
         <div><dt>Finisher</dt><dd>${f.super.name}</dd></div>
@@ -462,6 +473,7 @@ function roomScreen() {
           ${head(room.char, 'big')}
           <strong class="name">${getFighter(room.char).name}</strong>
           <span class="title">${getFighter(room.char).title}</span>
+          ${statBars(getFighter(room.char))}
           <div class="picker" role="group" aria-label="Your fighter">
             ${FIGHTERS.map((o) => `<button type="button" class="pick ${o.id === room.char ? 'on' : ''}" data-act="onChar" data-id="${o.id}" aria-pressed="${o.id === room.char}" title="${o.name}">${head(o.id)}</button>`).join('')}
           </div>
@@ -812,7 +824,12 @@ function frame(now) {
   const mine = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
   const humans = app.mode === 'online' ? tags.map((_, i) => i === mine) : tags.map((t) => t === 'YOU' || t === 'P1' || t === 'P2');
   const net = app.mode === 'online' && playing ? app.online?.status() : '';
-  stage.render({ state: g.state, demo: !playing, labels: tags, boss, humans, me: mine, net }, now);
+  const hint = !playing || !touchEl.hidden
+    ? ''
+    : app.mode === 'versus'
+      ? 'P1: WASD move · Space jump · F G punch kick · H block · T Y special finisher     P2: arrows · U · J K · L · I O'
+      : 'WASD move · Space jump · J punch (x3 combo) · K kick · L block (+move = roll) · I special · O finisher';
+  stage.render({ state: g.state, demo: !playing, labels: tags, boss, humans, me: mine, net, hint }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {

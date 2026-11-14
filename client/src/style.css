@@ -347,6 +347,45 @@ button:focus-visible {
   font-size: 0.85rem;
 }
 
+.stats {
+  display: grid;
+  gap: 3px;
+  width: min(100%, 190px);
+  margin: 6px 0 2px;
+}
+
+.stats div {
+  display: grid;
+  grid-template-columns: 4.2em 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.stats dt {
+  font: 700 0.66rem var(--font-body);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ash);
+  text-align: right;
+}
+
+.stats dd {
+  margin: 0;
+}
+
+.meter {
+  display: block;
+  height: 7px;
+  background: rgba(11, 7, 13, 0.7);
+  transform: skewX(-18deg);
+}
+
+.meter i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, var(--gold), var(--ember));
+}
+
 .moves {
   display: grid;
   gap: 2px;
@@ -914,7 +953,8 @@ kbd {
     height: 64px;
   }
 
-  .moves {
+  .moves,
+  .stats {
     display: none;
   }
 
