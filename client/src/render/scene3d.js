@@ -431,6 +431,34 @@ export function create3D(canvas) {
     ringFlames.push(sp);
   }
 
+  // ---------- crystals and floor markers ----------
+  const ITEM_COLORS = { energy: 0xffd34d, heal: 0x5dff8f };
+  const gems = [0, 1, 2].map(() => {
+    const group = new THREE.Group();
+    const mat = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
+    const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.17), mat);
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
+    halo.scale.set(1.1, 1.1, 1);
+    const light = new THREE.PointLight(0xffffff, 0, 4, 2);
+    group.add(gem, halo, light);
+    group.visible = false;
+    scene.add(group);
+    return { group, gem, mat, halo, light };
+  });
+  // A coloured ring on the floor under each fighter, so you can always find
+  // yours in the middle of a brawl.
+  const SLOT_COLORS = [0xffd34d, 0x59c7ff, 0xff6ad5, 0x8be04e];
+  const marks = SLOT_COLORS.map((color) => {
+    const m = new THREE.Mesh(
+      new THREE.RingGeometry(0.4, 0.5, 40),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.8, depthWrite: false, fog: false }),
+    );
+    m.rotation.x = -Math.PI / 2;
+    m.position.y = 0.035;
+    scene.add(m);
+    return m;
+  });
+
   // ---------- rain ----------
   const DROPS = 900;
   const rainPos = new Float32Array(DROPS * 6);
@@ -698,6 +726,42 @@ export function create3D(canvas) {
         contacts[i].position.set(f.x * S, 0.02, f.z * S);
         contacts[i].scale.set(1.0 * spread * big, 1.0 * spread * big, 1);
         contacts[i].material.opacity = 0.7 - Math.min(0.45, height * 0.3);
+      }
+
+      // Floor rings: bright for human players, faint for the CPU.
+      for (let i = 0; i < marks.length; i++) {
+        const f = s.f[i];
+        const show = !!f && f.hp > 0 && !view.demo;
+        marks[i].visible = show;
+        if (!show) continue;
+        const human = !!view.humans?.[i];
+        const big = getFighter(f.char).build === 'sumo' ? 1.35 : 1;
+        const pulse = human ? 1 + Math.sin(now / 260) * 0.06 : 1;
+        marks[i].position.x = f.x * S;
+        marks[i].position.z = f.z * S;
+        marks[i].scale.set(big * pulse, big * pulse, 1);
+        marks[i].material.opacity = human ? 0.9 : 0.35;
+      }
+
+      // Crystals: spinning, bobbing, glowing.
+      for (let i = 0; i < gems.length; i++) {
+        const g = gems[i];
+        const it = s.items[i];
+        g.group.visible = !!it;
+        if (!it) {
+          g.light.intensity = 0;
+          continue;
+        }
+        const color = ITEM_COLORS[it.kind];
+        const fade = Math.min(1, it.life / 90); // blink out at the end
+        g.group.position.set(it.x * S, 0.55 + Math.sin(now / 300 + it.id) * 0.1, it.z * S);
+        g.gem.rotation.y = now / 400;
+        g.mat.color.set(color);
+        g.halo.material.color.set(color);
+        g.halo.material.opacity = fade;
+        g.light.color.set(color);
+        g.light.intensity = 3 * fade;
+        g.group.visible = fade > 0.5 || Math.floor(now / 90) % 2 === 0;
       }
 
       // Projectiles: a white-hot core, a coloured halo and a light that

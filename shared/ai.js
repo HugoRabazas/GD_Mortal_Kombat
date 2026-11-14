@@ -161,6 +161,15 @@ export function aiInput(ai, s, me) {
   const r = Math.hypot(f.x, f.z);
   if (r > s.ringR - 70 && dist > 120) return hold(toward(-f.x, -f.z), 8);
 
+  // --- grab a crystal when it is worth it and nobody is on top of us ---
+  if (dist > 130) {
+    for (const it of s.items) {
+      const wants = it.kind === 'energy' ? f.meter < RULES.METER_MAX : f.hp < f.maxHp * 0.75;
+      const id = Math.hypot(it.x - f.x, it.z - f.z);
+      if (wants && id < 300 && id < dist) return hold(toward(it.x - f.x, it.z - f.z), 6);
+    }
+  }
+
   // --- finisher and special when they are likely to land ---
   if (f.meter >= RULES.SUPER_COST && dist < 340 && o.h <= 0 && rnd(ai) < cfg.special * 2) return press(INPUT.SUPER);
   if (f.meter >= RULES.SPECIAL_COST && rnd(ai) < cfg.special) {

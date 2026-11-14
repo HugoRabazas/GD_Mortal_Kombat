@@ -60,6 +60,7 @@ each one where you like and resize them, saved per orientation on the device.
 - **Block** only stops what comes from the front, and a blocked hit can never
   knock you out.
 - **Jump** over a ground stomp; attack in the air for a diving kick.
+- **Crystals** appear on the floor: gold gives energy, green gives health.
 - As the clock runs down a **ring of fire** closes in. A fighter knocked into
   it is scorched and bounced back.
 

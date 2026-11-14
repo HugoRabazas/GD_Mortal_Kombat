@@ -326,3 +326,20 @@ test('being knocked into the ring of fire burns and bounces back', () => {
   assert.ok(lost > MOVES.dash.dmg, `dash plus burn cost ${lost}`);
   assert.ok(Math.hypot(s.f[1].x, s.f[1].z) <= ARENA.R - 23.9);
 });
+
+test('crystals appear on the floor and give energy or health to whoever walks over them', () => {
+  const s = startFight();
+  run(s, 60 * 8);
+  assert.equal(s.items.length, 1, 'the first crystal has appeared');
+  const it = s.items[0];
+  it.kind = 'energy';
+  Object.assign(s.f[0], { x: it.x, z: it.z });
+  run(s, 2);
+  assert.equal(s.items.length, 0);
+  assert.equal(s.f[0].meter, 40);
+
+  s.items.push({ id: 99, kind: 'heal', x: s.f[1].x, z: s.f[1].z, life: 600 });
+  s.f[1].hp = 50;
+  run(s, 2);
+  assert.equal(s.f[1].hp, 65);
+});

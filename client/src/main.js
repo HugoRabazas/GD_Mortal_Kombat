@@ -260,6 +260,7 @@ function helpScreen() {
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
         <li><b>Block</b> only stops what comes from the front. Get behind a blocking rival, or step out of the way of a projectile.</li>
         <li><b>Jump</b> over a ground stomp; punch or kick in the air for a diving attack.</li>
+        <li><b>Crystals</b> appear on the floor: gold gives energy, green gives health. Walk over one to take it.</li>
         <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
         <li>On a phone, use the stick and the buttons on screen. <b>Arrange buttons</b> lets you drag them where you like.</li>
@@ -577,7 +578,9 @@ function frame(now) {
   handleEvents(g.drain(), g.state, { quiet: !playing, project: stage.project });
 
   const boss = playing && app.mode === 'arcade' ? [false, !!app.arcade.ladder[app.arcade.stage].boss] : null;
-  stage.render({ state: g.state, demo: !playing, labels: playing ? labels() : [], boss }, now);
+  const tags = playing ? labels() : [];
+  const humans = tags.map((t) => t === 'YOU' || t === 'P1' || t === 'P2');
+  stage.render({ state: g.state, demo: !playing, labels: tags, boss, humans, me: playing && app.mode !== 'versus' ? 0 : -1 }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {

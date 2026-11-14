@@ -15,7 +15,7 @@ export function createGame(chars, controllers, mods = [], mode) {
   let acc = 0;
   let events = [];
   const game = {
-    state: createMatch(chars, mods, mode),
+    state: createMatch(chars, mods, mode, (Math.random() * 0xffffffff) >>> 0),
     paused: false,
     update(now) {
       const dt = last === null ? 0 : now - last;

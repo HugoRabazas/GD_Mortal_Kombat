@@ -35,6 +35,19 @@ export function handleEvents(events, state, { quiet, project }) {
       case 'jump':
         if (!quiet) play('jump');
         break;
+      case 'spawn': {
+        lightFlash(e.x, 60, e.z, e.kind === 'energy' ? '#ffd34d' : '#5dff8f', false);
+        if (!quiet) play('spawn');
+        break;
+      }
+      case 'pickup': {
+        const energy = e.kind === 'energy';
+        const p = project(e.x, 120, e.z);
+        floatText(p.x, p.y, energy ? '+ENERGY' : '+HEALTH', energy ? '#ffd34d' : '#5dff8f', 24);
+        lightFlash(e.x, 60, e.z, energy ? '#ffd34d' : '#5dff8f', true);
+        if (!quiet) play('pickup');
+        break;
+      }
       case 'roll': {
         const p = project(by.x, 0, by.z);
         dust(p.x, p.y, 4);

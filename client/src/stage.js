@@ -101,7 +101,7 @@ export function createStage(glCanvas, hudCanvas) {
       three?.snapCamera();
     },
 
-    // view = { state, demo, labels, boss }
+    // view = { state, demo, labels, boss, humans, me }
     render(view, now) {
       const s = view.state;
       const shake = updateFx();
@@ -133,6 +133,10 @@ export function createStage(glCanvas, hudCanvas) {
           const q = flat(p.x, p.h, p.z);
           drawProjectile(ctx, q.x, q.y, getFighter(p.char));
         }
+        for (const it of s.items) {
+          const q = flat(it.x, 50, it.z);
+          drawProjectile(ctx, q.x, q.y, { colors: { glow: it.kind === 'energy' ? '#ffd34d' : '#5dff8f' } });
+        }
         ctx.restore();
       }
 
@@ -144,6 +148,20 @@ export function createStage(glCanvas, hudCanvas) {
         drawTags(ctx, s, spots, view.labels);
         finisherCutIn(ctx, s);
         drawHud(ctx, s, view.labels, now);
+        // Knocked out of a brawl that is still going: say so, and keep watching.
+        if (view.me >= 0 && s.f.length > 2 && s.phase === 'fight' && s.f[view.me].hp <= 0) {
+          ctx.save();
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = 'italic 700 30px Teko, Impact, "Arial Black", sans-serif';
+          ctx.lineJoin = 'round';
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = '#0b070d';
+          ctx.strokeText('YOU ARE OUT · WATCHING THE REST', W / 2, H - 78);
+          ctx.fillStyle = '#ff8a5c';
+          ctx.fillText('YOU ARE OUT · WATCHING THE REST', W / 2, H - 78);
+          ctx.restore();
+        }
       }
       drawOverlays(ctx, W, H);
     },

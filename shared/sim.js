@@ -29,6 +29,8 @@ const GETUP_TICKS = 18;
 const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle of where you face
 const ROLL = { ticks: 15, safe: 11, speed: 8.5, rest: 7 }; // the dodge roll
 const SPLAT = { speed: 3.2, dmg: 5 }; // being knocked into the ring of fire
+// Crystals that appear on the floor: walk over one to take it.
+const ITEMS = { first: 7, every: [9, 14], life: 12, max: 2, reach: 44, energy: 40, heal: 15 };
 
 // Every attack is a row of numbers:
 //   startup / active / recovery - ticks before it can hit, while it hits, after
@@ -136,7 +138,8 @@ function newFighter(charId, slot, count, mod) {
 }
 
 // chars: 2 to 4 fighter ids. mode: 'duel' or 'arena'.
-export function createMatch(chars, mods = [], mode = chars.length > 2 ? 'arena' : 'duel') {
+// `seed` decides where and when crystals appear; the same seed gives the same match.
+export function createMatch(chars, mods = [], mode = chars.length > 2 ? 'arena' : 'duel', seed = 1) {
   const n = chars.length;
   const rules = MODES[mode];
   return {
@@ -150,6 +153,10 @@ export function createMatch(chars, mods = [], mode = chars.length > 2 ? 'arena' 
     ringR: ARENA.R,
     f: chars.map((c, i) => newFighter(c, i, n, mods[i])),
     proj: [],
+    items: [], // crystals lying on the floor
+    itemSeq: 0,
+    nextItem: ITEMS.first * TICK_RATE,
+    seed: seed >>> 0 || 1,
     pts: chars.map(() => 0), // match points per fighter
     roundPts: chars.map(() => 0), // points handed out by the round that just ended
     hitstop: 0,
@@ -163,6 +170,40 @@ export function createMatch(chars, mods = [], mode = chars.length > 2 ? 'arena' 
     evSeq: 0,
     projSeq: 0,
   };
+}
+
+// The match's own random numbers (deterministic, kept in the state).
+function random(s) {
+  s.seed = (Math.imul(s.seed, 1664525) + 1013904223) >>> 0;
+  return s.seed / 4294967296;
+}
+
+function updateItems(s) {
+  if (--s.nextItem <= 0) {
+    s.nextItem = Math.round((ITEMS.every[0] + random(s) * (ITEMS.every[1] - ITEMS.every[0])) * TICK_RATE);
+    if (s.items.length < ITEMS.max) {
+      const a = random(s) * Math.PI * 2;
+      const r = Math.sqrt(random(s)) * (s.ringR - 90);
+      const item = { id: ++s.itemSeq, kind: random(s) < 0.6 ? 'energy' : 'heal', x: Math.cos(a) * r, z: Math.sin(a) * r, life: ITEMS.life * TICK_RATE };
+      s.items.push(item);
+      emit(s, 'spawn', { kind: item.kind, x: item.x, z: item.z });
+    }
+  }
+  for (const it of s.items) {
+    if (--it.life <= 0 || Math.hypot(it.x, it.z) > s.ringR - 20) {
+      it.gone = true;
+      continue;
+    }
+    for (const f of s.f) {
+      if (isOut(f) || f.h > 40 || f.state === 'down' || Math.hypot(f.x - it.x, f.z - it.z) > ITEMS.reach) continue;
+      if (it.kind === 'energy') addMeter(f, ITEMS.energy);
+      else f.hp = Math.min(f.maxHp, f.hp + ITEMS.heal);
+      it.gone = true;
+      emit(s, 'pickup', { slot: f.slot, kind: it.kind, x: it.x, z: it.z });
+      break;
+    }
+  }
+  s.items = s.items.filter((it) => !it.gone);
 }
 
 function emit(s, type, data) {
@@ -686,6 +727,7 @@ function endRound(s, kind) {
   s.pt = 0;
   s.koKind = kind;
   s.proj = [];
+  s.items = [];
   scoreRound(s);
   const w = s.winner >= 0 ? s.f[s.winner] : null;
   const last = s.f.filter(isOut).sort((a, b) => b.outAt - a.outAt)[0];
@@ -722,6 +764,8 @@ function resetRound(s) {
     return f;
   });
   s.proj = [];
+  s.items = [];
+  s.nextItem = ITEMS.first * TICK_RATE;
   s.timer = MODES[s.mode].seconds * TICK_RATE;
   s.ringR = ARENA.R;
   s.phase = 'intro';
@@ -793,6 +837,7 @@ export function step(s, inputs) {
 
   if (fighting) {
     resolveHits(s);
+    updateItems(s);
     for (const f of s.f) if (f.inv > 0) f.inv--;
   }
   for (const f of s.f) f.t++;

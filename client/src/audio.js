@@ -129,6 +129,12 @@ const SOUNDS = {
     [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.22, 0.35, i * 0.13));
   },
   ui: () => tone('triangle', 700, 900, 0.06, 0.2),
+  spawn: () => tone('sine', 900, 1500, 0.18, 0.12),
+  pickup: () => {
+    tone('triangle', 660, 660, 0.08, 0.3);
+    tone('triangle', 990, 990, 0.1, 0.3, 0.07);
+    tone('triangle', 1320, 1320, 0.16, 0.3, 0.14);
+  },
   burn: () => {
     burst(0.35, 0.7, 1200, 0.6);
     tone('sawtooth', 300, 80, 0.3, 0.3);
