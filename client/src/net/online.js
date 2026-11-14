@@ -33,7 +33,9 @@ const compact = (key, value) => (typeof value === 'number' && !Number.isInteger(
 // config: { url, key } or { local: true }. readInput() returns this player's buttons.
 // onChange() is called whenever the lobby or the room changes; onStart(info)
 // when a match begins; onEnd(reason) when it is over or the host is lost.
-export function createOnline({ config, name, char, readInput, onChange, onStart, onEnd }) {
+// `version` identifies this build of the game: everyone in a room must run the
+// same one, or the host and its guests would disagree about the rules.
+export function createOnline({ config, name, char, version, readInput, onChange, onStart, onEnd }) {
   const bus = createBus(config);
   const me = { id: newId(), name: cleanName(name) };
   let lobby = null;
@@ -86,7 +88,7 @@ export function createOnline({ config, name, char, readInput, onChange, onStart,
 
   // ----------------------------------------------------------------- room ---
 
-  const roomState = () => ({ name: me.name, char: room.char, ready: room.ready, at: room.at });
+  const roomState = () => ({ name: me.name, char: room.char, ready: room.ready, at: room.at, v: version });
 
   // Send game data to one member: directly when the link is up, otherwise
   // through the bus (and then only now and again, to stay within its limits).
@@ -111,12 +113,13 @@ export function createOnline({ config, name, char, readInput, onChange, onStart,
 
   function onPeers(list) {
     const peers = list
-      .map((p) => ({ id: p.id, name: cleanName(p.name), char: isFighterId(p.char) ? p.char : FIGHTERS[0].id, ready: !!p.ready, at: Number(p.at) || 0 }))
+      .map((p) => ({ id: p.id, name: cleanName(p.name), char: isFighterId(p.char) ? p.char : FIGHTERS[0].id, ready: !!p.ready, at: Number(p.at) || 0, same: p.v === version }))
       .sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : 1));
     const hostBefore = room.hostId;
     room.peers = peers;
     room.hostId = peers.length ? peers[0].id : me.id;
     room.isHost = room.hostId === me.id;
+    room.mixed = peers.some((p) => !p.same); // somebody is on another version
 
     // Drop links to people who left; if the host changed, start over.
     for (const [id, link] of room.links) {
@@ -188,7 +191,7 @@ export function createOnline({ config, name, char, readInput, onChange, onStart,
 
   // The first four members are the players; anyone after that watches.
   online.players = () => (room ? room.peers.slice(0, MAX_PLAYERS) : []);
-  online.canStart = () => !!room && room.isHost && !match && online.players().every((p) => p.ready || p.id === me.id);
+  online.canStart = () => !!room && room.isHost && !match && !room.mixed && online.players().every((p) => p.ready || p.id === me.id);
 
   // ---------------------------------------------------------------- match ---
 
@@ -203,8 +206,10 @@ export function createOnline({ config, name, char, readInput, onChange, onStart,
     if (match.host) {
       const slot = match.info.slots.findIndex((sl) => sl.id === from);
       if (slot >= 0 && typeof msg.i === 'number') match.remote[slot] = msg.i & INPUT_MASK;
-    } else if (from === room.hostId && msg.s) {
-      match.receive(msg.s);
+      if (typeof msg.ping === 'number') sendTo(from, { pong: msg.ping }, true); // answer a guest timing the trip
+    } else if (from === room.hostId) {
+      if (msg.s) match.receive(msg.s);
+      if (typeof msg.pong === 'number') match.ping = Math.round(performance.now() - msg.pong);
     }
   }
 
@@ -282,6 +287,7 @@ export function createOnline({ config, name, char, readInput, onChange, onStart,
     const queue = [];
     let lastBits = -1;
     let lastSendAt = 0;
+    let lastPingAt = 0;
     const lerp = (a, b, k) => a + (b - a) * k;
 
     const game = {
@@ -307,6 +313,10 @@ export function createOnline({ config, name, char, readInput, onChange, onStart,
         }
         // Tell the host which buttons are down: at once when they change, and
         // a few times a second regardless in case a message was lost.
+        if (now - lastPingAt > 2000) {
+          lastPingAt = now;
+          sendTo(room.hostId, { ping: performance.now() }, true);
+        }
         if (mySlot >= 0) {
           const bits = readInput();
           if (bits !== lastBits || now - lastSendAt > 100) {
@@ -335,7 +345,7 @@ export function createOnline({ config, name, char, readInput, onChange, onStart,
       }
     };
 
-    match = { info: clean, game, host: false, receive, mySlot };
+    match = { info: clean, game, host: false, receive, mySlot, ping: null };
     lobby?.track(lobbyState());
     onStart(clean);
   }
@@ -355,6 +365,13 @@ export function createOnline({ config, name, char, readInput, onChange, onStart,
 
   // Anyone can go back to the room; when the host does, the match ends for all.
   online.endMatch = () => stopMatch('finished');
+
+  // A short line for the corner of the screen during a fight.
+  online.status = () => {
+    if (!match) return '';
+    if (match.host) return `HOST · ${online.linkKind() === 'relayed' ? 'RELAYED' : 'DIRECT'}`;
+    return `${online.linkKind() === 'direct' ? 'DIRECT' : 'RELAYED'}${match.ping !== null ? ` · ${match.ping} ms` : ''}`;
+  };
 
   // How this player's game data is travelling right now.
   online.linkKind = () => {

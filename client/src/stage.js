@@ -148,6 +148,16 @@ export function createStage(glCanvas, hudCanvas) {
         drawTags(ctx, s, spots, view.labels);
         finisherCutIn(ctx, s);
         drawHud(ctx, s, view.labels, now);
+        // Online: how the fight is reaching this screen, and how long the trip takes.
+        if (view.net) {
+          ctx.save();
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = '700 10px Barlow, system-ui, sans-serif';
+          ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          ctx.fillText(view.net, W / 2, 90);
+          ctx.restore();
+        }
         // Knocked out of a brawl that is still going: say so, and keep watching.
         if (view.me >= 0 && s.f.length > 2 && s.phase === 'fight' && s.f[view.me].hp <= 0) {
           ctx.save();

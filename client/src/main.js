@@ -17,6 +17,9 @@ import { createOnline } from './net/online.js';
 // (see scripts/build.js). Adding ?net=local to the address swaps the internet
 // for a same-browser bus, which is what the automated tests use.
 const NET = typeof __NET__ === 'undefined' || !__NET__ ? null : new URLSearchParams(location.search).get('net') === 'local' ? { local: true } : __NET__;
+const BUILD = typeof __BUILD__ === 'undefined' ? 'dev' : __BUILD__;
+// An invite link ends in #room-ABCD: opening it takes you straight to that room.
+const invited = () => (/^#room-([A-Za-z0-9]{2,8})$/.exec(location.hash) || [])[1] || null;
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const root = document.getElementById('app');
@@ -465,9 +468,11 @@ function roomScreen() {
         </div>
       </div>
       ${room.isHost ? `<div class="seg" role="group"><button type="button" class="${app.fill ? 'on' : ''}" data-act="fill" data-id="1">Fill with CPU</button><button type="button" class="${app.fill ? '' : 'on'}" data-act="fill" data-id="0">Players only</button></div>` : ''}
+      ${room.mixed ? '<p class="note warn">Someone here has an older or newer version of the game. Everyone should reload the page before fighting.</p>' : ''}
       ${app.notice ? `<p class="note warn">${esc(app.notice)}</p>` : ''}
       <div class="row">
         <button type="button" class="btn quiet" data-act="leaveRoom">Leave room</button>
+        <button type="button" class="btn" data-act="invite">Copy invite link</button>
         ${
           room.isHost
             ? `<button type="button" class="btn primary" data-act="onStart" ${on.canStart() ? '' : 'disabled'}>Start fight</button>`
@@ -619,10 +624,22 @@ const ACTIONS = {
   },
   async leaveRoom() {
     await app.online.leaveRoom();
+    if (invited()) history.replaceState(null, '', location.pathname + location.search); // do not rejoin on reload
     app.notice = '';
     show('lobby');
   },
   onChar: (el) => app.online.setChar(el.dataset.id),
+  async invite(el) {
+    const link = `${location.origin}${location.pathname}#room-${app.online.room.code}`;
+    try {
+      await navigator.clipboard.writeText(link);
+      el.textContent = 'Link copied';
+    } catch {
+      // Copying is refused in some browsers: show the link so it can be copied by hand.
+      app.notice = link;
+      show('room');
+    }
+  },
   onReady() {
     const mine = app.online.room.peers.find((p) => p.id === app.online.me.id);
     app.online.setReady(!mine?.ready);
@@ -709,6 +726,7 @@ async function goOnline(name) {
   const online = createOnline({
     config: NET,
     name: app.nick,
+    version: BUILD,
     char: () => app.picks[0],
     readInput: () => readKeys('solo') | readTouch() | readPad(0),
     // Redraw the lobby or the room whenever someone joins, leaves or changes.
@@ -736,7 +754,13 @@ async function goOnline(name) {
     await online.connect();
     app.online = online;
     app.notice = '';
-    show('lobby');
+    const code = invited();
+    if (code) {
+      await online.joinRoom(code);
+      show('room');
+    } else {
+      show('lobby');
+    }
   } catch {
     app.notice = 'Could not reach the lobby. Check your connection and try again.';
     show('nick');
@@ -787,7 +811,8 @@ function frame(now) {
   const tags = playing ? labels() : [];
   const mine = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
   const humans = app.mode === 'online' ? tags.map((_, i) => i === mine) : tags.map((t) => t === 'YOU' || t === 'P1' || t === 'P2');
-  stage.render({ state: g.state, demo: !playing, labels: tags, boss, humans, me: mine }, now);
+  const net = app.mode === 'online' && playing ? app.online?.status() : '';
+  stage.render({ state: g.state, demo: !playing, labels: tags, boss, humans, me: mine, net }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {
@@ -845,6 +870,7 @@ async function boot() {
   show('menu');
   layout();
   requestAnimationFrame(frame);
+  if (NET && invited()) ACTIONS.online();
 }
 
 boot();

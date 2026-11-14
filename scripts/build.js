@@ -30,7 +30,9 @@ const result = await build({
   configFile: false,
   root: path.join(root, 'client'),
   logLevel: 'warn',
-  define: { __NET__: JSON.stringify(net) },
+  // __BUILD__ changes with every build, so online players can tell whether
+  // they are all running the same version.
+  define: { __NET__: JSON.stringify(net), __BUILD__: JSON.stringify(Date.now().toString(36)) },
   // The Artifact page cannot reach the network, so it leaves the online
   // library out altogether.
   resolve: web ? {} : { alias: { '@supabase/supabase-js': path.join(root, 'scripts', 'no-online.js') } },

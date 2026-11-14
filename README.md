@@ -74,6 +74,12 @@ The website build adds an **Online** mode for the whole alliance:
   fighter and presses Ready; the host starts the fight, optionally filling the
   empty places with CPU fighters. Two fighters play a duel, three or four an
   arena brawl.
+- **Copy invite link** in a room gives an address ending in `#room-ABCD`;
+  whoever opens it only has to type a name to land in that room.
+- Everyone in a room must be on the same version of the game. If someone has
+  an old page open, the room says so and the fight cannot start until they
+  reload. During a fight a small line under the timer shows whether the data
+  is travelling directly or relayed, and the round-trip time to the host.
 - How a match travels: the host's browser runs the real fight with the same
   rules code as offline; the others send only their buttons and receive a
   snapshot of the fight twenty times a second, which they draw gliding from
