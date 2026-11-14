@@ -26,6 +26,7 @@ root.innerHTML = `
     <button type="button" class="ctl tb tb-blk" data-ctl="blk" data-bit="64">BLK</button>
     <button type="button" class="ctl tb tb-k" data-ctl="k" data-bit="32">K</button>
     <button type="button" class="ctl tb tb-p" data-ctl="p" data-bit="16">P</button>
+    <button type="button" class="ctl tb tb-jmp" data-ctl="jmp" data-bit="512">JMP</button>
     <p id="turn">Turn your phone sideways for a bigger view.</p>
   </div>
   <div id="ui"></div>
@@ -50,7 +51,8 @@ const STAGES = [
 
 const app = {
   screen: 'loading',
-  mode: 'arcade', // 'arcade' and 'quick' are single player, 'versus' is two players
+  mode: 'arcade', // 'arcade', 'arena' and 'quick' are single player, 'versus' is two players
+  vsArena: false, // in 2-player mode: a duel, or a brawl with two CPU fighters added
   picks: [FIGHTERS[0].id, FIGHTERS[1 % FIGHTERS.length].id],
   level: 'normal',
   arcade: null, // { ladder, stage, score, retries, gained }
@@ -114,13 +116,10 @@ const points = (n) => n.toLocaleString('en-US');
 function buildLadder(playerId) {
   const others = FIGHTERS.filter((f) => f.id !== playerId);
   const pool = others.length ? others : FIGHTERS;
-  // Rivals first; with a small roster, mirror matches fill the gaps.
-  const order = [];
-  for (let i = 0; order.length < STAGES.length - 1; i++) {
-    order.push(pool[i % pool.length].id);
-    if (pool.length < STAGES.length - 1 && order.length < STAGES.length - 1) order.push(playerId);
-  }
-  order.push(pool[0].id); // the boss is your main rival, powered up
+  // Every rival once, then a mirror match if there is a stage left to fill.
+  const order = pool.map((f) => f.id).slice(0, STAGES.length - 1);
+  while (order.length < STAGES.length - 1) order.push(order.length % 2 ? playerId : pool[order.length % pool.length].id);
+  order.push(pool[0].id); // the boss is your first rival again, powered up
   return STAGES.map((st, i) => ({ ...st, char: order[i] }));
 }
 
@@ -131,8 +130,9 @@ function menuScreen() {
       <h1 class="brand"><span>GD</span> Arena</h1>
       <p class="tag">Alliance members step into the ring. First to two rounds wins.</p>
       <div class="stack">
-        <button type="button" class="btn primary" data-act="arcade">Arcade <small>single player · ${STAGES.length} fights</small></button>
-        <button type="button" class="btn" data-act="quick">Quick Fight <small>single player vs CPU</small></button>
+        <button type="button" class="btn primary" data-act="arena">Arena <small>4-fighter brawl · 3 rounds</small></button>
+        <button type="button" class="btn" data-act="arcade">Arcade <small>single player · ${STAGES.length} duels</small></button>
+        <button type="button" class="btn" data-act="quick">Quick Fight <small>one duel vs CPU</small></button>
         <button type="button" class="btn" data-act="versus">2 Players <small>keyboard or gamepads</small></button>
         <button type="button" class="btn quiet" data-act="help">How to play</button>
       </div>
@@ -186,29 +186,49 @@ function ladderCard() {
     </div>`;
 }
 
+// The fighters the CPU will play in a brawl: everyone the humans did not pick.
+function rivalsFor(taken) {
+  const rest = FIGHTERS.filter((f) => !taken.includes(f.id)).map((f) => f.id);
+  const need = 4 - taken.length;
+  while (rest.length < need) rest.push(FIGHTERS[rest.length % FIGHTERS.length].id);
+  return rest.slice(0, need);
+}
+
+function rivalsCard(taken) {
+  return `
+    <div class="ladder">
+      <span class="who">Your rivals</span>
+      <ol>
+        ${rivalsFor(taken)
+          .map((id) => `<li><span class="num">vs</span>${head(id)}<span class="lname">${getFighter(id).name}</span><span class="ltag">CPU</span></li>`)
+          .join('')}
+      </ol>
+      <p class="rules">Everyone fights at once. Three rounds; each round scores by how long you last. Level on points is a shared place.</p>
+    </div>`;
+}
+
 function selectScreen() {
   const levels = [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']];
-  const arcade = app.mode === 'arcade';
-  const names = app.mode === 'versus' ? ['Player 1', 'Player 2'] : ['You', 'CPU'];
+  const { mode } = app;
+  const names = mode === 'versus' ? ['Player 1', 'Player 2'] : ['You', 'CPU'];
+  const seg = (items, current, act) => `<div class="seg" role="group">${items.map(([id, label]) => `<button type="button" class="${current === id ? 'on' : ''}" data-act="${act}" data-id="${id}" aria-pressed="${current === id}">${label}</button>`).join('')}</div>`;
+  let second;
+  if (mode === 'arcade') second = ladderCard();
+  else if (mode === 'arena') second = rivalsCard([app.picks[0]]);
+  else second = `<span class="vs" aria-hidden="true">VS</span>${slotCard(1, names[1])}`;
   return `
     <section class="screen select">
-      <h2>${arcade ? 'Choose your fighter' : 'Choose your fighters'}</h2>
+      <h2>${mode === 'arcade' || mode === 'arena' ? 'Choose your fighter' : 'Choose your fighters'}</h2>
       <div class="versus">
         ${slotCard(0, names[0])}
-        ${arcade ? ladderCard() : `<span class="vs" aria-hidden="true">VS</span>${slotCard(1, names[1])}`}
+        ${second}
       </div>
-      ${
-        app.mode === 'quick'
-          ? `<div class="seg" role="group" aria-label="CPU difficulty">
-              ${levels.map(([id, label]) => `<button type="button" class="${app.level === id ? 'on' : ''}" data-act="level" data-id="${id}" aria-pressed="${app.level === id}">${label}</button>`).join('')}
-            </div>`
-          : app.mode === 'versus' && app.touch
-            ? '<p class="note">Two players need a keyboard or gamepads: the on-screen buttons control one fighter only.</p>'
-            : ''
-      }
+      ${mode === 'quick' || mode === 'arena' ? seg(levels, app.level, 'level') : ''}
+      ${mode === 'versus' ? seg([['duel', 'Duel'], ['brawl', 'Brawl with 2 CPU']], app.vsArena ? 'brawl' : 'duel', 'vsKind') : ''}
+      ${mode === 'versus' && app.touch ? '<p class="note">Two players need a keyboard or gamepads: the on-screen buttons control one fighter only.</p>' : ''}
       <div class="row">
         <button type="button" class="btn quiet" data-act="menu">Back</button>
-        <button type="button" class="btn primary" data-act="fight">${arcade ? 'Start' : 'Fight'}</button>
+        <button type="button" class="btn primary" data-act="fight">${mode === 'arcade' ? 'Start' : 'Fight'}</button>
       </div>
     </section>`;
 }
@@ -223,23 +243,24 @@ function helpScreen() {
         <table>
           <thead><tr><th></th><th>Single player</th><th>2P · Player 1</th><th>2P · Player 2</th><th>Gamepad</th></tr></thead>
           <tbody>
-            ${row('Move', `${k('A', 'D')} or ${k('←', '→')}`, k('A', 'D'), k('←', '→'), 'Stick / D-pad')}
-            ${row('Jump', `${k('W')} or ${k('↑')}`, k('W'), k('↑'), 'Up')}
-            ${row('Crouch', `${k('S')} or ${k('↓')}`, k('S'), k('↓'), 'Down')}
+            ${row('Walk', `${k('W', 'A', 'S', 'D')} or arrows`, k('W', 'A', 'S', 'D'), 'Arrows', 'Stick / D-pad')}
+            ${row('Jump', `${k('Space')} or ${k('U')}`, k('Space'), k('U'), 'A / Cross')}
             ${row('Punch', `${k('J')} or ${k('F')}`, k('F'), k('J'), 'X / Square')}
-            ${row('Kick', `${k('K')} or ${k('G')}`, k('G'), k('K'), 'A / Cross')}
-            ${row('Block', `${k('L')} or ${k('H')}`, k('H'), k('L'), 'B / Circle')}
+            ${row('Kick', `${k('K')} or ${k('G')}`, k('G'), k('K'), 'B / Circle')}
+            ${row('Block', `${k('L')} or ${k('H')}`, k('H'), k('L'), 'LB / LT')}
             ${row('Special', `${k('I')} or ${k('T')}`, k('T'), k('I'), 'Y / Triangle')}
             ${row('Finisher', `${k('O')} or ${k('Y')}`, k('Y'), k('O'), 'RB / RT')}
           </tbody>
         </table>
       </div>
       <ul class="tips">
+        <li><b>Walk anywhere</b> on the arena: left, right, into the depth and back. Attacks turn you towards the nearest rival, so you do not need perfect aim.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
-        <li>Hold <b>Block</b> to take a fraction of the damage. A blocked hit never knocks you out.</li>
-        <li><b>Crouch</b> to duck punches and projectiles. Crouch + Kick is a sweep that knocks down.</li>
-        <li>Punch or kick in the air for a jumping attack.</li>
-        <li>On a phone, use the stick and the buttons on screen. <b>Arrange buttons</b> in the menu lets you drag them where you like.</li>
+        <li><b>Block</b> only stops what comes from the front. Get behind a blocking rival, or step out of the way of a projectile.</li>
+        <li><b>Jump</b> over a ground stomp; punch or kick in the air for a diving attack.</li>
+        <li>As the clock runs down, a <b>ring of fire</b> closes in and squeezes everyone together.</li>
+        <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
+        <li>On a phone, use the stick and the buttons on screen. <b>Arrange buttons</b> lets you drag them where you like.</li>
         <li>Press <kbd>P</kbd>, <kbd>Esc</kbd> or Start to pause.</li>
       </ul>
       <div class="row"><button type="button" class="btn primary" data-act="menu">Back</button></div>
@@ -275,6 +296,30 @@ function arrangeScreen() {
 function resultScreen() {
   const s = app.game.state;
   const won = s.matchWinner === 0;
+  if (s.mode === 'arena') {
+    const who = labels();
+    const medal = ['1st', '2nd', '3rd', '4th'];
+    return `
+      <section class="screen result">
+        <ol class="ranking">
+          ${s.ranking
+            .map(
+              (r) => `<li class="${r.rank === 1 ? 'top' : ''}">
+                <span class="place">${medal[r.rank - 1]}</span>${head(r.char)}
+                <span class="lname">${getFighter(r.char).name}</span>
+                <span class="ltag">${who[r.slot]}</span>
+                <span class="pts">${r.points} pts</span>
+              </li>`,
+            )
+            .join('')}
+        </ol>
+        <div class="row">
+          <button type="button" class="btn primary" data-act="rematch">Rematch</button>
+          <button type="button" class="btn" data-act="select">Change fighter</button>
+          <button type="button" class="btn quiet" data-act="menu">Menu</button>
+        </div>
+      </section>`;
+  }
   if (app.mode !== 'arcade') {
     return `
       <section class="screen result">
@@ -355,31 +400,40 @@ function cpu(level) {
 }
 
 function startDemo() {
-  const a = FIGHTERS[(Math.random() * FIGHTERS.length) | 0].id;
-  const others = FIGHTERS.filter((f) => f.id !== a);
-  const b = (others[(Math.random() * others.length) | 0] || FIGHTERS[0]).id;
-  app.demo = createGame([a, b], [cpu('hard'), cpu('hard')]);
+  // A four-fighter brawl plays behind the menus, in a random order.
+  const ids = FIGHTERS.map((f) => f.id).sort(() => Math.random() - 0.5);
+  while (ids.length < 4) ids.push(FIGHTERS[ids.length % FIGHTERS.length].id);
+  const chars = ids.slice(0, 4);
+  app.demo = createGame(chars, chars.map(() => cpu('hard')));
 }
 
 function startFight() {
   const solo = () => readKeys('solo') | readTouch() | readPad(0);
+  const two = [() => readKeys('p1') | readPad(0), () => readKeys('p2') | readPad(1)];
   let chars = app.picks;
-  let mods = [null, null];
+  let mods = [];
   let controllers;
   if (app.mode === 'arcade') {
     const st = app.arcade.ladder[app.arcade.stage];
     chars = [app.picks[0], st.char];
     mods = [null, st.mod];
     controllers = [solo, cpu(st.level)];
+  } else if (app.mode === 'arena') {
+    chars = [app.picks[0], ...rivalsFor([app.picks[0]])];
+    controllers = [solo, cpu(app.level), cpu(app.level), cpu(app.level)];
   } else if (app.mode === 'quick') {
     controllers = [solo, cpu(app.level)];
+  } else if (app.vsArena) {
+    chars = [...app.picks, ...rivalsFor(app.picks)];
+    controllers = [...two, cpu('normal'), cpu('normal')];
   } else {
-    controllers = [() => readKeys('p1') | readPad(0), () => readKeys('p2') | readPad(1)];
+    controllers = two;
   }
   app.game = createGame(chars, controllers, mods);
   app.resultShown = false;
   stage.reset();
   show('fight');
+  document.activeElement?.blur?.(); // so Space jumps instead of pressing a button
 }
 
 function startArcade() {
@@ -395,7 +449,7 @@ function scoreMatch() {
   a.gained = 0;
   if (s.matchWinner !== 0) return;
   const me = s.f[0];
-  const flawless = s.wins[1] === 0 ? 500 : 0; // did not drop a round
+  const flawless = s.pts[1] === 0 ? 500 : 0; // did not drop a round
   a.gained = 1000 * (a.stage + 1) + Math.round((me.hp / me.maxHp) * 1000) + Math.ceil(s.timer / TICK_RATE) * 10 + flawless;
   a.score += a.gained;
   if (a.stage >= a.ladder.length - 1) saveBest(a.score);
@@ -421,6 +475,14 @@ const ACTIONS = {
   },
   quick() {
     app.mode = 'quick';
+    show('select');
+  },
+  arena() {
+    app.mode = 'arena';
+    show('select');
+  },
+  vsKind(el) {
+    app.vsArena = el.dataset.id === 'brawl';
     show('select');
   },
   versus() {
@@ -492,13 +554,15 @@ pauseBtn.addEventListener('click', togglePause);
 
 // ------------------------------------------------------------ frame loop ---
 
+// What to call each fighter in the HUD and on the floating tags.
 function labels() {
-  if (app.mode === 'versus') return ['PLAYER 1', 'PLAYER 2'];
+  const n = app.game ? app.game.state.f.length : 2;
+  if (app.mode === 'versus') return ['P1', 'P2', 'CPU', 'CPU'].slice(0, n);
   if (app.mode === 'arcade' && app.arcade) {
     const st = app.arcade.ladder[app.arcade.stage];
     return ['YOU', st.boss ? 'BOSS' : `STAGE ${app.arcade.stage + 1}/${app.arcade.ladder.length}`];
   }
-  return ['YOU', 'CPU'];
+  return ['YOU', 'CPU', 'CPU', 'CPU'].slice(0, n);
 }
 
 function frame(now) {
@@ -508,10 +572,10 @@ function frame(now) {
   if (!g || !stage) return;
   if (padStartPressed()) togglePause();
   g.update(now);
-  handleEvents(g.drain(), g.state, !playing);
+  handleEvents(g.drain(), g.state, { quiet: !playing, project: stage.project });
 
   const boss = playing && app.mode === 'arcade' ? [false, !!app.arcade.ladder[app.arcade.stage].boss] : null;
-  stage.render({ state: g.state, demo: !playing, labels: playing ? labels() : ['', ''], boss }, now);
+  stage.render({ state: g.state, demo: !playing, labels: playing ? labels() : [], boss }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {

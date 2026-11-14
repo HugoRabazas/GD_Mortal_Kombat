@@ -1,26 +1,34 @@
 // The 3D arena.
 //
 // Everything here is real 3D geometry seen through a perspective camera that
-// follows the fight: a stone dais, a courtyard wall with pillars and banners,
-// torches that light the scene, mountains and a moon far behind - and the
-// fighters themselves, which are articulated 3D bodies (see rig3d.js) that
-// cast shadows on the floor. Projectiles are glowing 3D orbs carrying their
-// own light, and every hit throws a brief flash of light on the fighters.
+// follows the fight: a round stone dais the fighters roam freely, a courtyard
+// wall with pillars and banners, torches that light the scene, mountains and
+// a moon far behind - and the fighters themselves, articulated 3D bodies (see
+// rig3d.js) that cast shadows on the floor.
 //
-// Units: 1 world unit = 100 arena pixels. The floor is y = 0, the fighters
-// move along the x axis at z = 0, and the camera looks down the -z axis.
+// The arena also lives in time: round one is fought at dusk, round two under
+// a cold night sky, round three in a storm with rain and lightning; and as the
+// clock runs down a ring of fire closes in on the fighters.
+//
+// Units: 1 world unit = 100 arena pixels. The floor is y = 0 and its centre
+// is the origin; the camera looks from +z towards -z.
 
 import { ARENA, TIMING } from '../../../shared/constants.js';
 import { getFighter } from '../../../shared/fighters.js';
-import { drawStreaks } from './fighter.js';
-import { drawFx, fxActive, takeFlashes } from './fx.js';
+import { takeFlashes } from './fx.js';
 import { createRig } from './rig3d.js';
+import { play } from '../audio.js';
 
 const S = 0.01;
-const wx = (px) => (px - ARENA.W / 2) * S;
-const wy = (py) => (ARENA.FLOOR - py) * S;
 
-const FX_SCALE = 1.5;
+// How the light and weather look at each time of the fight.
+//   sky: tint of the far backdrop; hemi: [sky colour, ground colour, strength];
+//   key / moon: [colour, strength]; fog: [colour, density].
+const MOODS = [
+  { sky: [1, 1, 1], hemi: [0xb890c8, 0x3a2030, 0.42], key: [0xffe2cf, 1.5], moon: [0xffb58a, 0.6], fog: [0x2a1030, 0.018], torch: 1.5, rain: 0 }, // dusk
+  { sky: [0.34, 0.42, 0.78], hemi: [0x7f9ad8, 0x141828, 0.5], key: [0xcfe0ff, 1.2], moon: [0x9fc0ff, 0.95], fog: [0x0e1630, 0.02], torch: 2.4, rain: 0 }, // night
+  { sky: [0.3, 0.3, 0.38], hemi: [0x8a8fa8, 0x15121c, 0.42], key: [0xe6ecff, 1.0], moon: [0x8892b8, 0.35], fog: [0x181824, 0.028], torch: 3.0, rain: 1 }, // storm
+];
 
 function seeded(seed) {
   let s = seed;
@@ -67,6 +75,7 @@ export function create3D(canvas) {
   const camera = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 300);
 
   // ---------- sky, moon and mountains (far away, so they barely move) ----------
+  let skyMat;
   {
     const c = makeCanvas(2048, 1024);
     const g = c.getContext('2d');
@@ -105,10 +114,8 @@ export function create3D(canvas) {
       g.arc(mx + dx, my + dy, r, 0, Math.PI * 2);
       g.fill();
     }
-    const mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(190, 60),
-      new THREE.MeshBasicMaterial({ map: texture(c), fog: false, depthWrite: false }),
-    );
+    skyMat = new THREE.MeshBasicMaterial({ map: texture(c), fog: false, depthWrite: false });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(190, 60), skyMat);
     mesh.position.set(0, 22, -70);
     mesh.renderOrder = -10;
     scene.add(mesh);
@@ -137,7 +144,8 @@ export function create3D(canvas) {
   ridge(8, '#260d22', 130, 10, 3, -40, 48);
 
   // ---------- lights ----------
-  scene.add(new THREE.HemisphereLight(lin(0xb890c8), lin(0x3a2030), 0.42));
+  const hemi = new THREE.HemisphereLight(lin(0xb890c8), lin(0x3a2030), 0.42);
+  scene.add(hemi);
   // Moonlight from behind: gives the fighters a warm rim.
   const moonLight = new THREE.DirectionalLight(lin(0xffb58a), 0.6);
   moonLight.position.set(6, 9, -8);
@@ -147,10 +155,10 @@ export function create3D(canvas) {
   key.position.set(-2.5, 10, 6);
   key.castShadow = true;
   key.shadow.mapSize.set(1024, 1024);
-  key.shadow.camera.left = -8;
-  key.shadow.camera.right = 8;
-  key.shadow.camera.top = 6;
-  key.shadow.camera.bottom = -6;
+  key.shadow.camera.left = -10;
+  key.shadow.camera.right = 10;
+  key.shadow.camera.top = 10;
+  key.shadow.camera.bottom = -10;
   key.shadow.camera.near = 1;
   key.shadow.camera.far = 30;
   key.shadow.bias = -0.0015;
@@ -364,7 +372,7 @@ export function create3D(canvas) {
     g.fillRect(0, 0, 128, 128);
     return texture(c);
   })();
-  const contacts = [0, 1].map(() => {
+  const contacts = [0, 1, 2, 3].map(() => {
     const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false }));
     m.rotation.x = -Math.PI / 2;
     m.position.y = 0.02;
@@ -372,15 +380,18 @@ export function create3D(canvas) {
     return m;
   });
 
-  // Rigs are rebuilt whenever the pairing changes (new fight, new fighters).
+  // Rigs are rebuilt whenever the line-up changes (new fight, new fighters).
   let rigs = [];
   let rigKey = '';
   const ensureRigs = (view) => {
     const s = view.state;
-    const opts = [0, 1].map((i) => ({
-      alt: i === 1 && s.f[0].char === s.f[1].char && !view.boss?.[1],
-      boss: !!view.boss?.[i],
-    }));
+    const seen = new Set();
+    const opts = s.f.map((f, i) => {
+      const boss = !!view.boss?.[i];
+      const alt = !boss && seen.has(f.char); // a second copy of a fighter wears other colours
+      seen.add(f.char);
+      return { alt, boss };
+    });
     const key = s.f.map((f, i) => `${f.char}:${opts[i].alt}:${opts[i].boss}`).join('|');
     if (key === rigKey) return;
     rigKey = key;
@@ -389,18 +400,15 @@ export function create3D(canvas) {
   };
 
   // ---------- projectiles and hit flashes ----------
-  const orbTex = flameTex;
-  const orbs = [0, 1, 2, 3].map(() => {
+  const orbs = [0, 1, 2, 3, 4, 5].map(() => {
     const group = new THREE.Group();
     const core = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }));
-    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: orbTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
-    halo.scale.set(1.1, 1.1, 1);
-    const tail = new THREE.Sprite(new THREE.SpriteMaterial({ map: orbTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false, opacity: 0.6 }));
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
     const light = new THREE.PointLight(0xffffff, 0, 6, 2);
-    group.add(core, halo, tail, light);
+    group.add(core, halo, light);
     group.visible = false;
     scene.add(group);
-    return { group, halo, tail, light };
+    return { group, halo, light };
   });
   const flashes = [0, 1, 2].map(() => {
     const light = new THREE.PointLight(0xffffff, 0, 7, 2);
@@ -409,69 +417,179 @@ export function create3D(canvas) {
   });
   let nextFlash = 0;
 
-  // One more card across the whole stage for sparks, dust and projectiles.
-  const fxCanvas = makeCanvas(ARENA.W * FX_SCALE, ARENA.H * FX_SCALE);
-  const fxG = fxCanvas.getContext('2d');
-  const fxTex = texture(fxCanvas);
-  fxTex.minFilter = THREE.LinearFilter;
-  fxTex.generateMipmaps = false;
-  const fxMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(ARENA.W * S, ARENA.H * S),
-    new THREE.MeshBasicMaterial({ map: fxTex, transparent: true, depthWrite: false, fog: false }),
-  );
-  fxMesh.position.set(0, wy(ARENA.H / 2), 0.45);
-  fxMesh.renderOrder = 20;
-  scene.add(fxMesh);
+  // ---------- the ring of fire ----------
+  const fireMat = new THREE.MeshBasicMaterial({ color: 0xff7a1a, transparent: true, opacity: 0, fog: false, blending: THREE.AdditiveBlending, depthWrite: false });
+  const fireRing = new THREE.Mesh(new THREE.TorusGeometry(1, 0.012, 8, 96), fireMat);
+  fireRing.rotation.x = Math.PI / 2;
+  fireRing.position.y = 0.06;
+  scene.add(fireRing);
+  const FLAMES = 40;
+  const ringFlames = [];
+  for (let i = 0; i < FLAMES; i++) {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false, opacity: 0 }));
+    scene.add(sp);
+    ringFlames.push(sp);
+  }
+
+  // ---------- rain ----------
+  const DROPS = 900;
+  const rainPos = new Float32Array(DROPS * 6);
+  const rainSeed = [];
+  for (let i = 0; i < DROPS; i++) rainSeed.push({ x: (Math.random() - 0.5) * 30, z: (Math.random() - 0.5) * 22 + 2, y: Math.random() * 12, v: 0.25 + Math.random() * 0.12 });
+  const rainGeo = new THREE.BufferGeometry();
+  rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPos, 3));
+  const rainMat = new THREE.LineBasicMaterial({ color: 0xaebfe8, transparent: true, opacity: 0, fog: false });
+  const rain = new THREE.LineSegments(rainGeo, rainMat);
+  rain.frustumCulled = false;
+  scene.add(rain);
+
+  // ---------- time of day and weather ----------
+  let mood = 0; // 0 dusk, 1 night, 2 storm; eases between them
+  let lightning = 0; // brightness of the current flash, fading out
+  let nextStrike = 4000;
+  const c1 = new THREE.Color();
+  const c2 = new THREE.Color();
+  const blend = (a, b, k) => c1.copy(lin(a)).lerp(c2.copy(lin(b)), k);
+
+  function applyMood(view, now, dt) {
+    const s = view.state;
+    // The fight moves through the evening one round at a time; the demo
+    // behind the menus drifts through all of it.
+    const want = view.demo ? 1 + Math.sin(now / 15000) : Math.min(2, s.round - 1);
+    mood += (want - mood) * Math.min(1, dt / 1400);
+    const i = Math.min(1, Math.floor(mood));
+    const k = Math.min(1, Math.max(0, mood - i));
+    const a = MOODS[i];
+    const b = MOODS[i + 1];
+    const mix = (x, y) => x + (y - x) * k;
+
+    // How far the ring of fire has closed in (0 = wide open, 1 = fully closed).
+    const closing = 1 - (s.ringR - ARENA.R_MIN) / (ARENA.R - ARENA.R_MIN);
+
+    // Lightning: a sudden flash that decays, with thunder.
+    const rainNow = mix(a.rain, b.rain);
+    if (rainNow > 0.5 && now > nextStrike) {
+      lightning = 1;
+      nextStrike = now + 3500 + Math.random() * 6000;
+      if (!view.demo) play('thunder');
+    }
+    lightning *= Math.pow(0.9, dt / 16.7);
+    if (lightning < 0.01) lightning = 0;
+    const flash = lightning * (0.6 + 0.4 * Math.sin(now / 23));
+
+    skyMat.color.setRGB(mix(a.sky[0], b.sky[0]) + flash * 0.7, mix(a.sky[1], b.sky[1]) + flash * 0.7, mix(a.sky[2], b.sky[2]) + flash * 0.8);
+    hemi.color.copy(blend(a.hemi[0], b.hemi[0], k));
+    hemi.groundColor.copy(blend(a.hemi[1], b.hemi[1], k));
+    hemi.intensity = mix(a.hemi[2], b.hemi[2]) + flash * 1.6;
+    key.color.copy(blend(a.key[0], b.key[0], k));
+    key.intensity = mix(a.key[1], b.key[1]) + flash * 0.8;
+    moonLight.color.copy(blend(a.moon[0], b.moon[0], k));
+    moonLight.intensity = mix(a.moon[1], b.moon[1]);
+    scene.fog.color.copy(blend(a.fog[0], b.fog[0], k));
+    scene.fog.density = mix(a.fog[1], b.fog[1]);
+
+    // Torches burn harder at night, and flare as the ring closes.
+    const torchBase = mix(a.torch, b.torch) + closing * 1.6;
+    for (const t of torches) {
+      const flick = Math.sin(now / 83 + t.phase) * 0.5 + Math.sin(now / 37 + t.phase * 2) * 0.5;
+      t.light.intensity = torchBase * (1 + flick * 0.22);
+      t.flame.scale.set(1.25 + flick * 0.12 + closing * 0.4, 1.75 + flick * 0.28 + closing * 0.7, 1);
+    }
+
+    // Rain.
+    rainMat.opacity = rainNow * 0.42;
+    rain.visible = rainNow > 0.02;
+    if (rain.visible) {
+      for (let d = 0; d < DROPS; d++) {
+        const r = rainSeed[d];
+        r.y -= r.v * dt * 0.06;
+        if (r.y < 0) r.y += 12;
+        const o = d * 6;
+        rainPos[o] = r.x;
+        rainPos[o + 1] = r.y;
+        rainPos[o + 2] = r.z;
+        rainPos[o + 3] = r.x + 0.03;
+        rainPos[o + 4] = r.y + 0.34;
+        rainPos[o + 5] = r.z;
+      }
+      rainGeo.attributes.position.needsUpdate = true;
+    }
+
+    // Ring of fire.
+    const R = s.ringR * S;
+    fireRing.scale.set(R, R, 1);
+    fireMat.opacity = 0.25 + closing * 0.75;
+    for (let f = 0; f < FLAMES; f++) {
+      const ang = (f / FLAMES) * Math.PI * 2 + now / 9000;
+      const flick = 0.75 + 0.25 * Math.sin(now / 70 + f * 1.7);
+      const sp = ringFlames[f];
+      sp.position.set(Math.cos(ang) * R, 0.2 + closing * 0.25 * flick, Math.sin(ang) * R);
+      sp.scale.set(0.5 + closing * 0.5, (0.55 + closing * 1.1) * flick, 1);
+      sp.material.opacity = closing * 0.9;
+      sp.visible = closing > 0.01;
+    }
+  }
 
   // ---------- camera ----------
-  // The camera is described by what it looks at, how far away it is and the
-  // angle it has swung round the fight. Each frame it eases towards the shot
-  // the action calls for.
-  const cam = { x: 0, y: 1.3, dist: 12, yaw: 0.5, ready: false };
+  // The camera is described by the spot on the floor it looks at, how far away
+  // it is and the angle it has swung round the fight. Each frame it eases
+  // towards the shot the action calls for.
+  const cam = { x: 0, z: 0, y: 1, dist: 14, yaw: 0.5, ready: false };
 
   function wantedShot(view, now) {
     const s = view.state;
-    const [a, b] = s.f;
-    const ax = wx(a.x);
-    const bx = wx(b.x);
-    const mid = (ax + bx) / 2;
-    const gap = Math.abs(ax - bx);
-    const lift = Math.max(wy(a.y), wy(b.y));
+    const standing = s.f.filter((f) => f.hp > 0);
+    const group = standing.length ? standing : s.f;
+    let cx = 0;
+    let cz = 0;
+    let lift = 0;
+    for (const f of group) {
+      cx += f.x * S;
+      cz += f.z * S;
+      lift = Math.max(lift, f.h * S);
+    }
+    cx /= group.length;
+    cz /= group.length;
+    let spread = 0;
+    for (const f of group) spread = Math.max(spread, Math.hypot(f.x * S - cx, (f.z * S - cz) * 1.5));
     const shot = {
-      x: mid * 0.9,
-      y: 1.25 + lift * 0.35,
-      dist: Math.min(12.5, Math.max(7.4, (gap + 4.2) / 1.2)),
+      x: cx * 0.9,
+      z: cz * 0.7,
+      y: 0.9 + lift * 0.3,
+      dist: Math.min(17, Math.max(8.2, 6.8 + spread * 1.75)),
       yaw: Math.sin(now / 5200) * 0.05,
-      ease: 0.09,
+      ease: 0.08,
     };
     if (view.demo) {
-      shot.yaw = Math.sin(now / 6000) * 0.42;
-      shot.dist += 1.2;
-      shot.y += 0.25;
+      shot.yaw = Math.sin(now / 6000) * 0.5;
+      shot.dist += 1.5;
     } else if (s.freeze > 0 && s.freezeBy >= 0) {
-      // Finisher: push in on the attacker from their side.
+      // Finisher: push in on the attacker.
       const f = s.f[s.freezeBy];
-      shot.x = wx(f.x) + f.facing * 0.5;
-      shot.y = 1.3;
-      shot.dist = 5.6;
-      shot.yaw = -f.facing * 0.42;
+      shot.x = f.x * S;
+      shot.z = f.z * S;
+      shot.y = 1.2;
+      shot.dist = 6;
+      shot.yaw = -Math.cos(f.dir) * 0.45;
       shot.ease = 0.16;
     } else if (s.phase === 'intro') {
       const k = Math.min(1, s.pt / TIMING.INTRO);
       shot.yaw = (1 - k) * (1 - k) * 0.75;
-      shot.dist += (1 - k) * 2;
-    } else if (s.phase === 'ko' && s.koKind === 'ko' && s.winner >= 0) {
-      const loser = s.f[1 - s.winner];
+      shot.dist += (1 - k) * 2.5;
+    } else if (s.phase === 'ko' && s.winner >= 0) {
+      const w = s.f[s.winner];
       const k = Math.min(1, s.pt / 120);
-      shot.x = mid * (1 - k * 0.5) + wx(loser.x) * k * 0.5;
-      shot.dist = Math.max(6.4, shot.dist - 2.2 * k);
-      shot.yaw = (loser.x < s.f[s.winner].x ? 1 : -1) * 0.3 * k;
+      shot.x += (w.x * S - shot.x) * k * 0.6;
+      shot.z += (w.z * S - shot.z) * k * 0.6;
+      shot.dist = Math.max(7, shot.dist - 3 * k);
+      shot.yaw = 0.3 * k;
       shot.ease = 0.05;
     } else if (s.phase === 'over' && s.matchWinner >= 0) {
       const w = s.f[s.matchWinner];
-      shot.x = wx(w.x);
-      shot.dist = 6.2;
-      shot.y = 1.45;
+      shot.x = w.x * S;
+      shot.z = w.z * S;
+      shot.dist = 6.8;
+      shot.y = 1.3;
       shot.yaw = Math.sin(now / 1800) * 0.3;
       shot.ease = 0.04;
     }
@@ -479,6 +597,7 @@ export function create3D(canvas) {
   }
 
   let lastNow = 0;
+  const probe = new THREE.Vector3();
 
   // Adaptive quality. If the device cannot hold a smooth frame rate, first
   // drop the cast shadows and the extra-sharp resolution, then render at a
@@ -518,6 +637,15 @@ export function create3D(canvas) {
       cam.ready = false;
     },
 
+    // Where a point of the arena (in arena pixels) lands on the flat HUD
+    // layer, and how big things there should be drawn (k = 1 at mid distance).
+    project(x, h, z) {
+      probe.set(x * S, h * S, z * S);
+      const dist = probe.distanceTo(camera.position);
+      probe.project(camera);
+      return { x: (probe.x * 0.5 + 0.5) * ARENA.W, y: (-probe.y * 0.5 + 0.5) * ARENA.H, k: 12 / dist };
+    },
+
     render(view, now, shake) {
       const rawDt = lastNow ? now - lastNow : 16;
       const dt = Math.min(50, rawDt);
@@ -528,27 +656,26 @@ export function create3D(canvas) {
       // Camera.
       const shot = wantedShot(view, now);
       if (!cam.ready) {
-        Object.assign(cam, { x: shot.x, y: shot.y, dist: shot.dist, yaw: shot.yaw, ready: true });
+        Object.assign(cam, { x: shot.x, z: shot.z, y: shot.y, dist: shot.dist, yaw: shot.yaw, ready: true });
       } else {
         const k = 1 - Math.pow(1 - shot.ease, dt / 16.7);
         cam.x += (shot.x - cam.x) * k;
+        cam.z += (shot.z - cam.z) * k;
         cam.y += (shot.y - cam.y) * k;
         cam.dist += (shot.dist - cam.dist) * k;
         cam.yaw += (shot.yaw - cam.yaw) * k;
       }
       camera.position.set(
         cam.x + Math.sin(cam.yaw) * cam.dist + shake.x * S * 1.5,
-        cam.y + 0.55 + cam.dist * 0.07 + shake.y * S * 1.5,
-        Math.cos(cam.yaw) * cam.dist,
+        cam.y + 0.8 + cam.dist * 0.46 + shake.y * S * 1.5,
+        cam.z + Math.cos(cam.yaw) * cam.dist,
       );
-      camera.lookAt(cam.x, cam.y, 0);
+      camera.lookAt(cam.x, cam.y, cam.z);
+      camera.updateMatrixWorld();
 
-      // Torches and embers.
-      for (const t of torches) {
-        const flick = Math.sin(now / 83 + t.phase) * 0.5 + Math.sin(now / 37 + t.phase * 2) * 0.5;
-        t.light.intensity = 1.5 + flick * 0.35;
-        t.flame.scale.set(1.25 + flick * 0.12, 1.75 + flick * 0.28, 1);
-      }
+      applyMood(view, now, dt);
+
+      // Embers.
       for (let i = 0; i < EMBERS; i++) {
         const v = emberVel[i];
         emberPos[i * 3] += v.x * dt * 0.06 + Math.sin(now / 500 + i) * 0.0015;
@@ -560,13 +687,16 @@ export function create3D(canvas) {
 
       // Fighters.
       ensureRigs(view);
-      for (let i = 0; i < 2; i++) {
+      for (let i = 0; i < contacts.length; i++) {
         const f = s.f[i];
+        contacts[i].visible = !!f;
+        if (!f) continue;
         rigs[i].update(f, now, camera);
-        const height = wy(f.y);
+        const height = f.h * S;
         const spread = 1 - Math.min(0.5, height * 0.25);
-        contacts[i].position.x = wx(f.x);
-        contacts[i].scale.set(1.15 * spread, 0.7 * spread, 1);
+        const big = getFighter(f.char).build === 'sumo' ? 1.5 : 1;
+        contacts[i].position.set(f.x * S, 0.02, f.z * S);
+        contacts[i].scale.set(1.0 * spread * big, 1.0 * spread * big, 1);
         contacts[i].material.opacity = 0.7 - Math.min(0.45, height * 0.3);
       }
 
@@ -582,12 +712,9 @@ export function create3D(canvas) {
         }
         const col = getFighter(p.char).colors.glow;
         const pulse = 1 + Math.sin(now / 45 + i) * 0.15;
-        o.group.position.set(wx(p.x), wy(p.y), 0);
+        o.group.position.set(p.x * S, p.h * S, p.z * S);
         o.halo.material.color.set(col);
-        o.halo.scale.set(1.2 * pulse, 1.2 * pulse, 1);
-        o.tail.material.color.set(col);
-        o.tail.position.set(-Math.sign(p.vx) * 0.45, 0, 0);
-        o.tail.scale.set(1.5, 0.7, 1);
+        o.halo.scale.set(1.3 * pulse, 1.3 * pulse, 1);
         o.light.color.set(col);
         o.light.intensity = 7 * pulse;
       }
@@ -595,27 +722,16 @@ export function create3D(canvas) {
       // Hit flashes: a short burst of light where a blow lands.
       for (const fl of takeFlashes()) {
         const light = flashes[nextFlash++ % flashes.length];
-        light.position.set(wx(fl.x), wy(fl.y), 0.9);
+        light.position.set(fl.x * S, fl.h * S, fl.z * S + 0.6);
         light.color.set(fl.color);
         light.intensity = fl.heavy ? 14 : 8;
       }
       for (const light of flashes) light.intensity *= 0.78;
 
-      // Sparks, dust, damage numbers and dash trails, painted on a clear sheet
-      // standing just in front of the fighters.
-      const dashing = s.f.some((f) => f.state === 'attack' && (f.move === 'dash' || f.move === 'super'));
-      const busy = dashing || fxActive();
-      fxMesh.visible = busy;
-      if (busy) {
-        fxG.setTransform(1, 0, 0, 1, 0, 0);
-        fxG.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
-        fxG.setTransform(FX_SCALE, 0, 0, FX_SCALE, 0, 0);
-        for (const f of s.f) drawStreaks(fxG, f, getFighter(f.char).colors.glow);
-        drawFx(fxG);
-        fxTex.needsUpdate = true;
-      }
-
       renderer.render(scene, camera);
     },
+
+    // Height of a fighter's head top, for name tags.
+    headTop: (slot) => (rigs[slot] ? rigs[slot].top() : 2),
   };
 }

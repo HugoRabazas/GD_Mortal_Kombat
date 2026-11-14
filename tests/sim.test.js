@@ -2,103 +2,108 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createMatch, step, MOVES } from '../shared/sim.js';
 import { createAI, aiInput } from '../shared/ai.js';
-import { INPUT, RULES, TIMING, ARENA } from '../shared/constants.js';
+import { FIGHTERS } from '../shared/fighters.js';
+import { ARENA, INPUT, RULES, TIMING } from '../shared/constants.js';
 
-function startFight(chars = ['ruko', 'shadow']) {
-  const s = createMatch(chars);
-  while (s.phase !== 'fight') step(s, [0, 0]);
+const ALL = FIGHTERS.map((f) => f.id);
+const idle = (s) => s.f.map(() => 0);
+
+function startFight(chars = ['ruko', 'shadow'], mods, mode) {
+  const s = createMatch(chars, mods, mode);
+  while (s.phase !== 'fight') step(s, idle(s));
   return s;
 }
 
-function run(s, ticks, inputs = [0, 0]) {
-  for (let i = 0; i < ticks; i++) step(s, inputs);
+function run(s, ticks, inputs) {
+  for (let i = 0; i < ticks; i++) step(s, inputs || idle(s));
 }
 
-// Put the two fighters next to each other, facing.
+// Stand fighter 1 just in front of fighter 0, the two facing each other.
 function closeUp(s, gap = 60) {
-  s.f[0].x = 400;
-  s.f[1].x = 400 + gap;
+  Object.assign(s.f[0], { x: 0, z: 0, dir: 0 });
+  Object.assign(s.f[1], { x: gap, z: 0, dir: Math.PI });
 }
 
-// Press a button for one tick, then run until the dust settles.
-function tap(s, bits0, bits1 = 0, after = 40) {
-  step(s, [bits0, bits1]);
+// Press buttons for one tick, then let things play out.
+function tap(s, inputs, after = 40) {
+  step(s, inputs);
   run(s, after);
 }
 
-test('a match starts with an intro and then lets players fight', () => {
+test('a match starts with an intro and then lets fighters move in every direction', () => {
   const s = createMatch(['ruko', 'shadow']);
   assert.equal(s.phase, 'intro');
-  const x = s.f[0].x;
+  const { x, z } = s.f[0];
   run(s, 30, [INPUT.RIGHT, 0]);
   assert.equal(s.f[0].x, x, 'no movement during the intro');
   run(s, TIMING.INTRO);
   assert.equal(s.phase, 'fight');
   run(s, 10, [INPUT.RIGHT, 0]);
-  assert.ok(s.f[0].x > x, 'walks once the fight starts');
+  assert.ok(s.f[0].x > x, 'walks right');
+  run(s, 10, [INPUT.UP, 0]);
+  assert.ok(s.f[0].z < z, 'walks into the depth of the arena');
+  run(s, 10, [INPUT.DOWN | INPUT.LEFT, 0]);
+  assert.ok(s.f[0].z < z && s.f[0].state === 'walk', 'walks diagonally');
 });
 
-test('a punch that connects removes health and builds meter', () => {
+test('a punch that connects removes health and builds energy', () => {
   const s = startFight();
   closeUp(s);
-  tap(s, INPUT.PUNCH);
+  tap(s, [INPUT.PUNCH, 0]);
   assert.ok(s.f[1].hp < s.f[1].maxHp);
   assert.ok(s.f[0].meter > 0);
   assert.equal(s.f[0].hp, s.f[0].maxHp);
 });
 
-test('a punch out of range misses', () => {
+test('attacks turn towards a nearby rival but miss one who is far away', () => {
   const s = startFight();
-  tap(s, INPUT.PUNCH);
-  assert.equal(s.f[1].hp, s.f[1].maxHp);
+  Object.assign(s.f[0], { x: 0, z: 0, dir: 0 });
+  Object.assign(s.f[1], { x: 0, z: 70 }); // off to the side, not in front
+  tap(s, [INPUT.PUNCH, 0]);
+  assert.ok(s.f[1].hp < s.f[1].maxHp, 'aim assist turned the puncher');
+
+  const far = startFight();
+  tap(far, [INPUT.PUNCH, 0]);
+  assert.equal(far.f[1].hp, far.f[1].maxHp, 'out of reach');
 });
 
-test('blocking cuts the damage and never knocks out', () => {
-  const s = startFight();
-  closeUp(s);
-  step(s, [INPUT.KICK, INPUT.BLOCK]);
-  run(s, 40, [0, INPUT.BLOCK]);
-  const chip = s.f[1].maxHp - s.f[1].hp;
+test('a guard stops blows from the front but not from behind', () => {
+  const front = startFight();
+  closeUp(front);
+  step(front, [INPUT.KICK, INPUT.BLOCK]);
+  run(front, 40, [0, INPUT.BLOCK]);
+  const chip = front.f[1].maxHp - front.f[1].hp;
   assert.ok(chip > 0 && chip < MOVES.kick.dmg, `chip damage was ${chip}`);
 
-  s.f[1].hp = 1;
+  const back = startFight();
+  closeUp(back);
+  back.f[1].state = 'block';
+  back.f[1].dir = 0; // guarding the wrong way: their back is to the attacker
+  step(back, [INPUT.KICK, 0]);
+  run(back, 12);
+  assert.ok(back.f[1].maxHp - back.f[1].hp >= MOVES.kick.dmg, 'hit from behind lands in full');
+});
+
+test('a blocked hit never knocks out', () => {
+  const s = startFight();
   closeUp(s);
+  s.f[1].hp = 1;
   step(s, [INPUT.KICK, INPUT.BLOCK]);
   run(s, 40, [0, INPUT.BLOCK]);
   assert.equal(s.f[1].hp, 1);
   assert.equal(s.phase, 'fight');
 });
 
-test('crouching ducks a standing punch but not a kick', () => {
-  const s = startFight();
-  closeUp(s);
-  run(s, 3, [0, INPUT.DOWN]);
-  step(s, [INPUT.PUNCH, INPUT.DOWN]);
-  run(s, 30, [0, INPUT.DOWN]);
-  assert.equal(s.f[1].hp, s.f[1].maxHp, 'punch goes over a crouching fighter');
-  step(s, [INPUT.KICK, INPUT.DOWN]);
-  run(s, 30, [0, INPUT.DOWN]);
-  assert.ok(s.f[1].hp < s.f[1].maxHp, 'kick hits a crouching fighter');
-});
-
-test('a sweep knocks the opponent down and they get back up', () => {
-  const s = startFight();
-  closeUp(s);
-  step(s, [INPUT.DOWN | INPUT.KICK, 0]);
-  run(s, 14, [INPUT.DOWN, 0]);
-  assert.equal(s.f[1].state, 'down');
-  run(s, 120);
-  assert.equal(s.f[1].state, 'idle');
-});
-
-test('specials need meter; the projectile special travels and hits', () => {
+test('specials need energy; the projectile flies where the fighter faces', () => {
   const s = startFight(['shadow', 'ruko']);
-  tap(s, INPUT.SPECIAL, 0, 5);
-  assert.equal(s.proj.length, 0, 'no meter, no special');
+  tap(s, [INPUT.SPECIAL, 0], 5);
+  assert.equal(s.proj.length, 0, 'no energy, no special');
   s.f[0].meter = RULES.SPECIAL_COST;
-  tap(s, INPUT.SPECIAL, 0, 20);
+  Object.assign(s.f[0], { x: 0, z: -200 });
+  Object.assign(s.f[1], { x: 0, z: 200 }); // straight "down" the arena
+  tap(s, [INPUT.SPECIAL, 0], 20);
   assert.equal(s.proj.length, 1);
-  assert.equal(s.f[0].meter, 0);
+  assert.ok(s.proj[0].vz > 0 && Math.abs(s.proj[0].vx) < 0.01);
   run(s, 60);
   assert.equal(s.proj.length, 0);
   assert.ok(s.f[1].hp < s.f[1].maxHp);
@@ -106,18 +111,46 @@ test('specials need meter; the projectile special travels and hits', () => {
 
 test('the dash special crosses the gap and knocks down', () => {
   const s = startFight(['ruko', 'shadow']);
-  s.f[0].x = 300;
-  s.f[1].x = 480;
+  Object.assign(s.f[0], { x: -90, z: -90 });
+  Object.assign(s.f[1], { x: 40, z: 40 });
   s.f[0].meter = RULES.SPECIAL_COST;
-  tap(s, INPUT.SPECIAL, 0, 24);
+  tap(s, [INPUT.SPECIAL, 0], 24);
   assert.ok(s.f[1].hp < s.f[1].maxHp);
   assert.equal(s.f[1].state, 'down');
 });
 
-test('the finisher uses the whole meter and freezes the action first', () => {
+test('the ground stomp floors everyone nearby except those in the air', () => {
+  const s = startFight(['jackie', 'ruko', 'shadow', 'pixie']);
+  Object.assign(s.f[0], { x: 0, z: 0 });
+  Object.assign(s.f[1], { x: 120, z: 0 });
+  Object.assign(s.f[2], { x: -80, z: 90 });
+  Object.assign(s.f[3], { x: 0, z: -130 });
+  s.f[0].meter = RULES.SPECIAL_COST;
+  step(s, [INPUT.SPECIAL, 0, 0, 0]);
+  run(s, 3);
+  run(s, 3, [0, 0, 0, INPUT.JUMP]); // Pixie jumps as the foot comes down
+  run(s, 18);
+  assert.equal(s.f[1].state, 'down');
+  assert.equal(s.f[2].state, 'down');
+  assert.equal(s.f[3].hp, s.f[3].maxHp, 'the jumper is untouched');
+});
+
+test('the spinning leap hits rivals on every side', () => {
+  const s = startFight(['pixie', 'ruko', 'shadow', 'jackie']);
+  Object.assign(s.f[0], { x: 0, z: 0 });
+  Object.assign(s.f[1], { x: 60, z: 0 });
+  Object.assign(s.f[2], { x: -60, z: 0 });
+  Object.assign(s.f[3], { x: 400, z: 300 });
+  s.f[0].meter = RULES.SPECIAL_COST;
+  tap(s, [INPUT.SPECIAL, 0, 0, 0], 14);
+  assert.ok(s.f[1].hp < s.f[1].maxHp && s.f[2].hp < s.f[2].maxHp);
+  assert.equal(s.f[3].hp, s.f[3].maxHp);
+});
+
+test('the finisher uses the whole bar and freezes the action first', () => {
   const s = startFight();
-  s.f[0].x = 300;
-  s.f[1].x = 520;
+  Object.assign(s.f[0], { x: -100, z: 0 });
+  Object.assign(s.f[1], { x: 120, z: 0 });
   s.f[0].meter = RULES.SUPER_COST;
   step(s, [INPUT.SUPER, 0]);
   assert.equal(s.f[0].meter, 0);
@@ -126,78 +159,125 @@ test('the finisher uses the whole meter and freezes the action first', () => {
   assert.ok(s.f[1].maxHp - s.f[1].hp >= 30);
 });
 
-test('fighters cannot walk through each other or leave the arena', () => {
+test('fighters cannot overlap or leave the ring, and the ring closes in late', () => {
   const s = startFight();
   run(s, 400, [INPUT.RIGHT, INPUT.RIGHT]);
-  assert.ok(s.f[1].x <= ARENA.MAX_X);
-  assert.ok(s.f[1].x - s.f[0].x >= 47.9);
-  run(s, 600, [INPUT.LEFT, INPUT.LEFT]);
-  assert.ok(s.f[0].x >= ARENA.MIN_X);
-  assert.ok(s.f[1].x - s.f[0].x >= 47.9);
+  for (const f of s.f) assert.ok(Math.hypot(f.x, f.z) <= ARENA.R - 23.9);
+  assert.ok(Math.hypot(s.f[1].x - s.f[0].x, s.f[1].z - s.f[0].z) >= 47.9);
+  s.timer = 6 * 60;
+  run(s, 30, [INPUT.RIGHT, INPUT.LEFT]);
+  assert.ok(s.ringR < ARENA.R - 200, 'ring has shrunk');
+  for (const f of s.f) assert.ok(Math.hypot(f.x, f.z) <= s.ringR - 23.9);
 });
 
-test('a knockout awards the round, and two rounds win the match', () => {
+test('duel: a knockout is worth a point and two points win the match', () => {
   const s = startFight();
   for (let round = 1; round <= 2; round++) {
-    while (s.phase !== 'fight') step(s, [0, 0]);
-    s.f[1].hp = 1;
+    while (s.phase !== 'fight') step(s, idle(s));
     closeUp(s);
-    tap(s, INPUT.KICK, 0, 20);
+    s.f[1].hp = 1;
+    tap(s, [INPUT.KICK, 0], 20);
     assert.equal(s.phase, 'ko');
-    assert.equal(s.wins[0], round);
+    assert.equal(s.pts[0], round);
     run(s, TIMING.KO + 20);
   }
   assert.equal(s.phase, 'over');
   assert.equal(s.matchWinner, 0);
 });
 
-test('when time runs out the healthier fighter takes the round', () => {
+test('duel: when time runs out the healthier fighter takes the round', () => {
   const s = startFight();
   s.f[0].hp = 40;
   s.timer = 3;
   run(s, 5);
   assert.equal(s.phase, 'ko');
   assert.equal(s.koKind, 'time');
-  assert.equal(s.winner, 1);
-  assert.deepEqual(s.wins, [0, 1]);
+  assert.deepEqual(s.pts, [0, 1]);
 });
 
-test('the simulation is deterministic and CPU matches always finish', () => {
-  const play = (seed) => {
-    const s = createMatch(['ruko', 'shadow']);
-    const a = createAI('hard', seed);
-    const b = createAI('normal', seed + 7);
-    let n = 0;
-    while (s.phase !== 'over' && n++ < 60 * 60 * 8) step(s, [aiInput(a, s, 0), aiInput(b, s, 1)]);
-    return s;
-  };
-  const one = play(42);
-  const two = play(42);
-  assert.equal(one.phase, 'over', 'match finished');
-  assert.equal(JSON.stringify(one), JSON.stringify(two));
-  for (const seed of [1, 2, 3, 4, 5]) {
-    const s = play(seed);
-    assert.equal(s.phase, 'over');
-    for (const f of s.f) {
-      assert.ok(Number.isFinite(f.x) && f.x >= ARENA.MIN_X && f.x <= ARENA.MAX_X);
-      assert.ok(f.y <= ARENA.FLOOR);
-    }
+test('arena: everyone fights at once and points follow the finishing order', () => {
+  const s = startFight(ALL);
+  assert.equal(s.mode, 'arena');
+  // Knock them out one at a time: slot 3 first, then 2, then 1.
+  for (const victim of [3, 2, 1]) {
+    Object.assign(s.f[0], { x: 0, z: 0 });
+    Object.assign(s.f[victim], { x: 60, z: 0, hp: 1, state: 'idle', stun: 0, inv: 0 });
+    tap(s, [INPUT.KICK, 0, 0, 0], 30); // long enough for the kick to finish
+    assert.equal(s.f[victim].state, 'ko');
+    if (victim !== 1) assert.equal(s.phase, 'fight', 'round goes on while two or more stand');
   }
+  assert.equal(s.phase, 'ko');
+  assert.deepEqual(s.roundPts, [3, 2, 1, 0]);
+  assert.equal(s.winner, 0);
+});
+
+test('arena: fighters who cannot be separated share a place, and nobody wins a tie', () => {
+  const s = startFight(ALL);
+  s.f[2].hp = 0;
+  s.f[2].state = 'ko';
+  s.f[2].outAt = s.tick;
+  s.f[3].hp = 0;
+  s.f[3].state = 'ko';
+  s.f[3].outAt = s.tick;
+  s.f[0].hp = s.f[0].maxHp / 2;
+  s.f[1].hp = s.f[1].maxHp / 2; // same share of health when the clock stops
+  s.timer = 2;
+  run(s, 4);
+  assert.equal(s.koKind, 'time');
+  assert.deepEqual(s.roundPts, [2, 2, 0, 0]);
+  assert.equal(s.winner, -1);
+});
+
+test('arena: the match is exactly three rounds and ends with a ranking where ties stay ties', () => {
+  const s = startFight(ALL);
+  for (let round = 1; round <= 3; round++) {
+    while (s.phase !== 'fight') step(s, idle(s));
+    assert.equal(s.round, round);
+    s.timer = 2; // let every round end on the clock with everyone level
+    run(s, 4);
+    run(s, TIMING.TIMEUP + 10);
+  }
+  assert.equal(s.phase, 'over');
+  assert.equal(s.matchWinner, -1);
+  assert.ok(s.ranking.every((r) => r.rank === 1), 'all level: everyone shares first place');
 });
 
 test('a boss modifier adds health and power, and survives the round reset', () => {
   const s = createMatch(['shadow', 'ruko'], [null, { health: 1.3, power: 1.5 }]);
-  assert.equal(s.f[1].maxHp, 130);
-  while (s.phase !== 'fight') step(s, [0, 0]);
+  const boosted = Math.round(FIGHTERS.find((f) => f.id === 'ruko').stats.health * 1.3);
+  assert.equal(s.f[1].maxHp, boosted);
+  while (s.phase !== 'fight') step(s, idle(s));
   closeUp(s);
-  tap(s, 0, INPUT.KICK);
-  const boosted = s.f[0].maxHp - s.f[0].hp;
-  assert.ok(boosted > MOVES.kick.dmg, `boosted kick did ${boosted}`);
+  tap(s, [0, INPUT.KICK]);
+  assert.ok(s.f[0].maxHp - s.f[0].hp > MOVES.kick.dmg);
+  closeUp(s);
   s.f[0].hp = 1;
-  closeUp(s);
-  tap(s, 0, INPUT.KICK, 20);
+  Object.assign(s.f[0], { state: 'idle', stun: 0 });
+  tap(s, [0, INPUT.KICK], 20);
   run(s, TIMING.KO + 20);
   assert.equal(s.round, 2);
-  assert.equal(s.f[1].maxHp, 130, 'boss health kept in round 2');
+  assert.equal(s.f[1].maxHp, boosted, 'boss health kept in round 2');
   assert.equal(s.f[1].pw, 1.5);
+});
+
+test('the simulation is deterministic and CPU matches always finish, duel and arena', () => {
+  const play = (chars, seed) => {
+    const s = createMatch(chars);
+    const ais = chars.map((_, i) => createAI(i % 2 ? 'normal' : 'hard', seed + i * 7));
+    let n = 0;
+    while (s.phase !== 'over' && n++ < 60 * 60 * 12) step(s, ais.map((ai, i) => aiInput(ai, s, i)));
+    return s;
+  };
+  assert.equal(JSON.stringify(play(ALL, 42)), JSON.stringify(play(ALL, 42)));
+  for (const seed of [1, 2, 3, 4, 5, 6]) {
+    for (const chars of [['ruko', 'shadow'], ['jackie', 'pixie'], ALL]) {
+      const s = play(chars, seed);
+      assert.equal(s.phase, 'over', `${chars.join(' v ')} seed ${seed} finished`);
+      assert.equal(s.ranking.length, chars.length);
+      for (const f of s.f) {
+        assert.ok(Number.isFinite(f.x) && Number.isFinite(f.z) && Math.hypot(f.x, f.z) <= ARENA.R);
+        assert.ok(f.h >= 0);
+      }
+    }
+  }
 });

@@ -8,15 +8,16 @@ const KEYMAPS = {
   // One player: either hand position works.
   solo: {
     LEFT: ['KeyA', 'ArrowLeft'], RIGHT: ['KeyD', 'ArrowRight'], UP: ['KeyW', 'ArrowUp'], DOWN: ['KeyS', 'ArrowDown'],
+    JUMP: ['Space', 'KeyU'],
     PUNCH: ['KeyJ', 'KeyF'], KICK: ['KeyK', 'KeyG'], BLOCK: ['KeyL', 'KeyH'], SPECIAL: ['KeyI', 'KeyT'], SUPER: ['KeyO', 'KeyY'],
   },
   // Two players sharing a keyboard.
   p1: {
-    LEFT: ['KeyA'], RIGHT: ['KeyD'], UP: ['KeyW'], DOWN: ['KeyS'],
+    LEFT: ['KeyA'], RIGHT: ['KeyD'], UP: ['KeyW'], DOWN: ['KeyS'], JUMP: ['Space'],
     PUNCH: ['KeyF'], KICK: ['KeyG'], BLOCK: ['KeyH'], SPECIAL: ['KeyT'], SUPER: ['KeyY'],
   },
   p2: {
-    LEFT: ['ArrowLeft'], RIGHT: ['ArrowRight'], UP: ['ArrowUp'], DOWN: ['ArrowDown'],
+    LEFT: ['ArrowLeft'], RIGHT: ['ArrowRight'], UP: ['ArrowUp'], DOWN: ['ArrowDown'], JUMP: ['KeyU'],
     PUNCH: ['KeyJ'], KICK: ['KeyK'], BLOCK: ['KeyL'], SPECIAL: ['KeyI'], SUPER: ['KeyO'],
   },
 };
@@ -50,8 +51,9 @@ export function setTouchLive(on) {
   touchBits = 0;
 }
 
-// Game controllers. Standard layout: stick or d-pad to move, X/Square punch,
-// A/Cross kick, B/Circle or LB block, Y/Triangle special, RB or RT finisher.
+// Game controllers. Standard layout: stick or d-pad to move, A/Cross jump,
+// X/Square punch, B/Circle kick, LB or LT block, Y/Triangle special, RB or RT
+// finisher.
 function pad(index) {
   try {
     const pads = [...(navigator.getGamepads?.() || [])].filter((p) => p && p.connected);
@@ -70,11 +72,12 @@ export function readPad(index) {
   let bits = 0;
   if (ax < -0.45 || on(14)) bits |= INPUT.LEFT;
   if (ax > 0.45 || on(15)) bits |= INPUT.RIGHT;
-  if (ay < -0.6 || on(12)) bits |= INPUT.UP;
-  if (ay > 0.6 || on(13)) bits |= INPUT.DOWN;
+  if (ay < -0.45 || on(12)) bits |= INPUT.UP;
+  if (ay > 0.45 || on(13)) bits |= INPUT.DOWN;
+  if (on(0)) bits |= INPUT.JUMP;
   if (on(2)) bits |= INPUT.PUNCH;
-  if (on(0)) bits |= INPUT.KICK;
-  if (on(1) || on(4)) bits |= INPUT.BLOCK;
+  if (on(1)) bits |= INPUT.KICK;
+  if (on(4) || on(6)) bits |= INPUT.BLOCK;
   if (on(3)) bits |= INPUT.SPECIAL;
   if (on(5) || on(7)) bits |= INPUT.SUPER;
   return bits;
@@ -124,7 +127,7 @@ function grab(el, pointerId) {
   }
 }
 
-// On-screen controls: a thumb stick on the left, five buttons on the right.
+// On-screen controls: a thumb stick to walk in any direction, and six buttons.
 export function initTouch(root) {
   const stick = root.querySelector('#stick');
   const knob = root.querySelector('#knob');
@@ -145,8 +148,8 @@ export function initTouch(root) {
     let bits = 0;
     if (dx < -0.35) bits |= INPUT.LEFT;
     if (dx > 0.35) bits |= INPUT.RIGHT;
-    if (dy < -0.45) bits |= INPUT.UP;
-    if (dy > 0.45) bits |= INPUT.DOWN;
+    if (dy < -0.35) bits |= INPUT.UP;
+    if (dy > 0.35) bits |= INPUT.DOWN;
     touchBits = (touchBits & ~MOVE) | bits;
   };
   const releaseStick = (e) => {

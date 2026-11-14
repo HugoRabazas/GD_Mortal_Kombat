@@ -1,19 +1,20 @@
-// Values shared by the simulation (server + practice mode) and the renderer.
+// Values shared by the simulation and the renderer.
 
 export const TICK_RATE = 60; // simulation steps per second
-export const SNAPSHOT_EVERY = 2; // server sends one snapshot every N ticks (30 per second)
 
-// Logical arena size. The canvas is scaled to fit the screen, but the game
-// always thinks in these units.
+// The fighting ground is a circle seen from above. Positions are in "arena
+// pixels" (100 px = 1 unit in the 3D world): x runs left-right, z runs from
+// the back of the arena (negative) towards the camera (positive), and h is
+// height above the floor. W and H are only the size of the flat HUD layer.
 export const ARENA = {
   W: 960,
   H: 540,
-  FLOOR: 452,
-  MIN_X: 46,
-  MAX_X: 914,
+  R: 600, // radius fighters can roam at the start of a round
+  R_MIN: 300, // radius once the ring of fire has fully closed in
 };
 
-// One bit per button, so a whole controller state fits in a single small number.
+// One bit per button, so a whole controller state fits in a single number.
+// UP means "away from the camera", DOWN means "towards the camera".
 export const INPUT = {
   LEFT: 1,
   RIGHT: 2,
@@ -24,16 +25,22 @@ export const INPUT = {
   BLOCK: 64,
   SPECIAL: 128,
   SUPER: 256,
+  JUMP: 512,
 };
-export const INPUT_MASK = 511;
+export const INPUT_MASK = 1023;
 
 export const RULES = {
-  ROUND_SECONDS: 60,
-  ROUNDS_TO_WIN: 2,
-  MAX_ROUNDS: 5,
   SPECIAL_COST: 35,
   SUPER_COST: 100,
   METER_MAX: 100,
+};
+
+// The two kinds of match.
+//   duel:  two fighters, a round win is 1 point, first to 2 points.
+//   arena: everyone at once, exactly 3 rounds, points by finishing position.
+export const MODES = {
+  duel: { seconds: 60, pointsToWin: 2, maxRounds: 5, shrinkAt: 20 },
+  arena: { seconds: 75, pointsToWin: Infinity, maxRounds: 3, shrinkAt: 40 },
 };
 
 // Phase lengths, in ticks.

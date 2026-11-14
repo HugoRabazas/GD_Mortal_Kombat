@@ -38,8 +38,12 @@ export function addFlash(amount) {
   flash = Math.max(flash, amount);
 }
 
+// Ask the 3D arena for a burst of light at a point of the arena floor.
+export function lightFlash(x, h, z, color, heavy) {
+  flashes.push({ x, h, z, color, heavy });
+}
+
 export function hitSpark(x, y, color, heavy) {
-  flashes.push({ x, y, color, heavy });
   const n = heavy ? 18 : 10;
   for (let i = 0; i < n; i++) {
     const a = Math.random() * Math.PI * 2;

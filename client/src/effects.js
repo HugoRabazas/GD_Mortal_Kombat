@@ -1,22 +1,27 @@
 // Turns the simulation's events ("a heavy hit landed here", "round 2 began")
 // into what the player sees and hears. Keeping this separate means the rules
 // never need to know about sparks or sounds.
+//
+// Events carry positions on the arena floor; `project` converts them to
+// points on the flat effects layer for whichever view is showing the fight.
 
 import { getFighter } from '../../shared/fighters.js';
-import { ARENA } from '../../shared/constants.js';
 import { play } from './audio.js';
-import { hitSpark, blockSpark, dust, floatText, showBanner, addShake, addFlash } from './render/fx.js';
+import { hitSpark, blockSpark, dust, floatText, showBanner, addShake, addFlash, lightFlash } from './render/fx.js';
 
 // `quiet` is used for the demo fight behind the menu: sparks yes, banners and
 // sound no.
-export function handleEvents(events, state, quiet) {
+export function handleEvents(events, state, { quiet, project }) {
+  const arena = state.mode === 'arena';
+  const nameOf = (slot) => getFighter(state.f[slot].char).name;
   for (const e of events) {
     const by = e.by !== undefined ? state.f[e.by] : null;
     const char = by ? getFighter(by.char) : null;
     switch (e.type) {
       case 'round':
         if (quiet) break;
-        showBanner(state.wins[0] === 1 && state.wins[1] === 1 ? 'FINAL ROUND' : `ROUND ${e.round}`, null, '#e8b454', 1100);
+        if (arena) showBanner(`ROUND ${e.round}`, 'OF 3 · EVERYONE FOR THEMSELVES', '#e8b454', 1100);
+        else showBanner(state.pts[0] === 1 && state.pts[1] === 1 ? 'FINAL ROUND' : `ROUND ${e.round}`, null, '#e8b454', 1100);
         play('round');
         break;
       case 'fight':
@@ -30,58 +35,95 @@ export function handleEvents(events, state, quiet) {
       case 'jump':
         if (!quiet) play('jump');
         break;
-      case 'land':
-        dust(e.x, ARENA.FLOOR, 5);
+      case 'land': {
+        const p = project(e.x, 0, e.z);
+        dust(p.x, p.y, 5);
         if (!quiet) play('land');
         break;
-      case 'thud':
-        dust(e.x, ARENA.FLOOR, 12);
+      }
+      case 'thud': {
+        const p = project(e.x, 0, e.z);
+        dust(p.x, p.y, 12);
         addShake(5);
         if (!quiet) play('thud');
         break;
-      case 'hit':
-        hitSpark(e.x, e.y, char.colors.glow, e.heavy);
-        floatText(e.x, e.y - 34, String(e.dmg), e.heavy ? '#ffd34d' : '#ffffff', e.heavy ? 30 : 23);
-        if (e.combo >= 2) floatText(e.x, e.y - 66, `${e.combo} HITS`, '#ff8a5c', 22);
+      }
+      case 'quake': {
+        // A ring of dust racing outwards from the stomp.
+        for (let i = 0; i < 14; i++) {
+          const a = (i / 14) * Math.PI * 2;
+          const p = project(e.x + Math.cos(a) * e.r * 0.8, 0, e.z + Math.sin(a) * e.r * 0.8);
+          dust(p.x, p.y, 3);
+        }
+        addShake(12);
+        lightFlash(e.x, 30, e.z, char.colors.glow, true);
+        if (!quiet) play('thud');
+        break;
+      }
+      case 'hit': {
+        const p = project(e.x, e.h, e.z);
+        hitSpark(p.x, p.y, char.colors.glow, e.heavy);
+        lightFlash(e.x, e.h, e.z, char.colors.glow, e.heavy);
+        floatText(p.x, p.y - 30, String(e.dmg), e.heavy ? '#ffd34d' : '#ffffff', e.heavy ? 28 : 22);
+        if (e.combo >= 2) floatText(p.x, p.y - 58, `${e.combo} HITS`, '#ff8a5c', 20);
         addShake(e.kind === 'super' ? 16 : e.heavy ? 8 : 4);
         if (e.kind === 'super') addFlash(0.6);
         if (!quiet) play(e.heavy ? 'heavy' : 'hit');
         break;
-      case 'block':
-        blockSpark(e.x, e.y);
+      }
+      case 'block': {
+        const p = project(e.x, e.h, e.z);
+        blockSpark(p.x, p.y);
         addShake(2);
         if (!quiet) play('block');
         break;
-      case 'special':
-        floatText(by.x, by.y - 200, char.special.name.toUpperCase(), char.colors.accent, 24);
+      }
+      case 'special': {
+        const p = project(by.x, 210, by.z);
+        floatText(p.x, p.y, char.special.name.toUpperCase(), char.colors.accent, 22);
         if (!quiet) play('special');
         break;
+      }
       case 'bolt':
         if (!quiet) play('bolt');
         break;
       case 'super':
         if (!quiet) play('super');
         break;
-      case 'clash':
-        hitSpark(e.x, e.y, '#ffffff', true);
+      case 'clash': {
+        const p = project(e.x, e.h, e.z);
+        hitSpark(p.x, p.y, '#ffffff', true);
         if (!quiet) play('block');
         break;
+      }
+      case 'out': {
+        // In the arena a knockout does not stop the round: call it out on the spot.
+        if (!arena) break;
+        const f = state.f[e.slot];
+        const p = project(f.x, 190, f.z);
+        floatText(p.x, p.y, `${nameOf(e.slot)} OUT!`, '#ff5a36', 30);
+        addShake(10);
+        addFlash(0.3);
+        if (!quiet) play('ko');
+        break;
+      }
       case 'ko':
         addShake(16);
         addFlash(0.75);
         if (quiet) break;
-        showBanner(e.winner < 0 ? 'DOUBLE K.O.' : 'K.O.', e.finisher ? 'FINISHER!' : e.perfect ? 'PERFECT!' : null, '#ff5a36', 2300);
-        play('ko');
+        if (arena) showBanner(e.winner < 0 ? 'ROUND SHARED' : `${nameOf(e.winner)} TAKES IT`, e.finisher ? 'FINISHER!' : e.perfect ? 'PERFECT!' : null, '#ff5a36', 2300);
+        else showBanner(e.winner < 0 ? 'DOUBLE K.O.' : 'K.O.', e.finisher ? 'FINISHER!' : e.perfect ? 'PERFECT!' : null, '#ff5a36', 2300);
+        if (!arena) play('ko');
         break;
       case 'timeup':
         if (quiet) break;
-        showBanner('TIME UP', e.winner < 0 ? 'DRAW' : null, '#e8b454', 2000);
+        showBanner('TIME UP', e.winner < 0 ? 'ROUND SHARED' : `${nameOf(e.winner)} TAKES IT`, '#e8b454', 2000);
         play('round');
         break;
       case 'matchEnd':
         if (quiet) break;
-        if (e.winner < 0) showBanner('DRAW', null, '#e8b454', 2600);
-        else showBanner(`${getFighter(state.f[e.winner].char).name} WINS`, getFighter(state.f[e.winner].char).title.toUpperCase(), '#e8b454', 2600);
+        if (e.winner < 0) showBanner('DRAW', arena ? 'THE TOP SPOT IS SHARED' : null, '#e8b454', 2600);
+        else showBanner(`${nameOf(e.winner)} WINS`, arena ? 'ARENA CHAMPION' : getFighter(state.f[e.winner].char).title.toUpperCase(), '#e8b454', 2600);
         play('win');
         break;
       default:

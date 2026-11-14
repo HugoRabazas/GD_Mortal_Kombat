@@ -8,7 +8,9 @@
 //   3. `head` is the circle cut out of the picture and used as the fighter's
 //      head: x / y are the centre of the face in picture pixels, r the radius.
 //   4. `special.type` picks the special move: 'dash' (lunging strike),
-//      'bolt' (projectile) or 'rise' (rising anti-air strike).
+//      'bolt' (projectile), 'rise' (spinning leap that hits all around) or
+//      'quake' (ground stomp that floors everyone nearby who is not jumping).
+//      `build` picks the body: 'standard', 'sumo' (huge) or 'slim'.
 //   5. Run `npm run build` and publish the new page.
 //
 // Stats are multipliers around 1.0 (health is absolute, 100 is standard).
@@ -29,7 +31,7 @@ export const FIGHTERS = [
       skin: '#e6b594',
       glow: '#ff2b2b',
     },
-    stats: { power: 1.0, speed: 1.0, health: 100 },
+    stats: { power: 1.03, speed: 1.0, health: 102 },
     special: { type: 'dash', name: 'Crimson Rush' },
     super: { name: 'Red Moon Howl' },
   },
@@ -48,6 +50,41 @@ export const FIGHTERS = [
     stats: { power: 1.0, speed: 1.1, health: 105 },
     special: { type: 'bolt', name: 'Storm Bolt' },
     super: { name: 'Total Eclipse' },
+  },
+  {
+    id: 'jackie',
+    name: 'JACKIE',
+    title: 'The Violet Mountain',
+    build: 'sumo',
+    head: { x: 88, y: 42, r: 40 },
+    colors: {
+      primary: '#3b2b52',
+      secondary: '#15101f',
+      accent: '#b44dff',
+      skin: '#9a93a6',
+      glow: '#c44dff',
+    },
+    stats: { power: 1.08, speed: 0.82, health: 112 },
+    special: { type: 'quake', name: 'Mountain Stomp' },
+    super: { name: 'Avalanche Charge' },
+  },
+  {
+    id: 'pixie',
+    name: 'PIXIE',
+    title: 'The Twin Flame',
+    build: 'slim',
+    head: { x: 84, y: 94, r: 46 },
+    colors: {
+      primary: '#7a2fc2',
+      secondary: '#231338',
+      accent: '#ff8a2a',
+      skin: '#f2c6a8',
+      glow: '#ff7a1a',
+      hair: '#ff8a2a',
+    },
+    stats: { power: 0.95, speed: 1.18, health: 95 },
+    special: { type: 'rise', name: 'Twin Flame Spiral' },
+    super: { name: 'Phoenix Dive' },
   },
 ];
 

@@ -6,13 +6,13 @@
 // area is a different shape in each. The layout is saved in the browser, so it
 // is remembered on that device.
 
-const STORE = 'gd-arena-touch-v1';
-const IDS = ['stick', 'p', 'k', 'blk', 'sp', 'ult'];
+const STORE = 'gd-arena-touch-v2';
+const IDS = ['stick', 'p', 'k', 'jmp', 'blk', 'sp', 'ult'];
 
 const DEFAULTS = {
   size: 1,
-  land: { stick: [0.11, 0.74], p: [0.93, 0.86], k: [0.845, 0.86], blk: [0.76, 0.86], sp: [0.93, 0.64], ult: [0.845, 0.64] },
-  port: { stick: [0.2, 0.36], p: [0.89, 0.45], k: [0.715, 0.45], blk: [0.54, 0.45], sp: [0.89, 0.2], ult: [0.715, 0.2] },
+  land: { stick: [0.11, 0.74], jmp: [0.93, 0.86], k: [0.845, 0.86], p: [0.76, 0.86], blk: [0.93, 0.64], sp: [0.845, 0.64], ult: [0.76, 0.64] },
+  port: { stick: [0.2, 0.36], jmp: [0.89, 0.45], k: [0.715, 0.45], p: [0.54, 0.45], blk: [0.89, 0.2], sp: [0.715, 0.2], ult: [0.54, 0.2] },
 };
 
 const clone = (o) => JSON.parse(JSON.stringify(o));

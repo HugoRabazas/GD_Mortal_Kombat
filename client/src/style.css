@@ -564,6 +564,10 @@ kbd {
   background: rgba(181, 18, 44, 0.75);
 }
 
+.tb-jmp {
+  background: rgba(36, 86, 201, 0.7);
+}
+
 /* Special and finisher stay dim until there is enough energy to use them. */
 .tb-sp,
 .tb-ult {
@@ -752,6 +756,65 @@ kbd {
 
 .best b {
   color: var(--gold);
+}
+
+.rules {
+  margin: 4px 0 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--ash);
+  text-align: left;
+}
+
+/* Final standings of an arena match. */
+.ranking {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 5px;
+  width: min(100%, 420px);
+}
+
+.ranking li {
+  display: grid;
+  grid-template-columns: 2.6em 34px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 12px 4px 8px;
+  background: rgba(29, 17, 36, 0.92);
+  text-align: left;
+}
+
+.ranking li.top {
+  background: linear-gradient(90deg, rgba(232, 180, 84, 0.5), rgba(29, 17, 36, 0.92) 70%);
+}
+
+.ranking .head {
+  width: 34px;
+  height: 34px;
+}
+
+.ranking .place {
+  font: 700 1.5rem/1 var(--font-display);
+  color: var(--gold);
+}
+
+.ranking .lname {
+  font: 500 1.4rem/1 var(--font-display);
+  letter-spacing: 0.05em;
+}
+
+.ranking .ltag {
+  font: 700 0.66rem var(--font-body);
+  letter-spacing: 0.12em;
+  color: var(--ash);
+}
+
+.ranking .pts {
+  font: 700 1.3rem/1 var(--font-display);
+  color: var(--bone);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Short screens (a phone held sideways): tighten the menu so it fits. */

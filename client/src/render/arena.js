@@ -4,7 +4,8 @@
 
 import { ARENA } from '../../../shared/constants.js';
 
-const { W, H, FLOOR } = ARENA;
+const { W, H } = ARENA;
+const FLOOR = 372; // where the middle of the fighting floor sits on the flat backdrop
 const TORCHES = [150, 810];
 const HORIZON = FLOOR - 46;
 

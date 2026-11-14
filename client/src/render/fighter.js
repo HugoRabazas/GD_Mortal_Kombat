@@ -1,17 +1,16 @@
-// Draws a fighter: an animated body built from simple limbs, with the alliance
-// member's picture as the head.
+// Fighter animation, shared by the 3D rig and the flat 2D fallback.
 //
 // How the animation works: for every state of the simulation (idle, walking,
 // punching, knocked down ...) we describe a *pose* - where the hips, hands and
-// feet should be. The drawing code then works out knees and elbows by itself
-// (inverse kinematics) and each frame glides the current pose towards the
-// target pose, so movements flow instead of snapping.
+// feet should be, seen from the fighter's side. The drawing code then works
+// out knees and elbows by itself (inverse kinematics) and each frame glides
+// the current pose towards the target pose, so movements flow instead of
+// snapping. rig3d.js turns the solved pose into a 3D body; drawFighter() below
+// draws the same pose flat, for devices without WebGL.
 
-import { ARENA } from '../../../shared/constants.js';
 import { MOVES } from '../../../shared/sim.js';
 import { heads } from '../assets.js';
 
-const { FLOOR } = ARENA;
 export const LEN = { thigh: 35, shin: 35, upper: 25, fore: 25, torso: 50, neck: 27, head: 32 };
 const OUTLINE = '#0b070d';
 export const ALT = { primary: '#2456c9', secondary: '#101a33', accent: '#7fd4ff', glow: '#59b7ff' };
@@ -45,12 +44,6 @@ function attackPose(f) {
       if (phase === 'pre') return pose({ lean: -0.1, ffx: 12, ffy: -34, hfx: 12, hfy: 4 });
       if (phase === 'act') return pose({ lean: -0.34, hipX: 8, ffx: 80, ffy: -84, fbx: -6, hfx: 6, hfy: 8, hbx: -18, hby: 4 });
       return pose({ lean: -0.12, ffx: 34, ffy: -26 });
-    case 'lowPunch':
-      if (phase === 'act') return pose({ ...CROUCH, lean: 0.4, hipX: 6, hfx: 54, hfy: 8, hbx: -4, hby: 12 });
-      return pose({ ...CROUCH, hfx: phase === 'pre' ? 2 : 30 });
-    case 'sweep':
-      if (phase === 'act') return pose({ hipX: 2, hipY: -30, lean: -0.28, ffx: 76, ffy: -8, fbx: -24, hfx: -6, hfy: 12, hbx: -22, hby: 6 });
-      return pose({ ...CROUCH, lean: 0.05 });
     case 'dash':
     case 'super':
       if (phase === 'pre') return pose({ hipY: -44, lean: 0.5, hfx: -8, hfy: 6, hbx: -20, hby: 8, ffx: 24, fbx: -32 });
@@ -61,15 +54,19 @@ function attackPose(f) {
       return pose({ lean: 0.3, hipX: 6, hfx: 52, hfy: -4, hbx: 46, hby: 6, fbx: -28 });
     case 'rise':
       if (phase === 'pre') return pose({ ...CROUCH });
-      if (f.vy < 2) return pose({ hipY: -64, lean: 0.12, hfx: 14, hfy: -52, hbx: -10, hby: 10, ffx: 10, ffy: -22, fbx: -12, fby: -4 });
+      if (f.vh > -2) return pose({ hipY: -64, lean: 0.12, hfx: 14, hfy: -52, hbx: -10, hby: 10, ffx: 10, ffy: -22, fbx: -12, fby: -4 });
       return pose({ ...AIR });
+    case 'quake':
+      // The sumo stomp: one leg swung high, then driven into the floor.
+      if (phase === 'pre') return pose({ hipX: -6, hipY: -52, lean: -0.2, ffx: 30, ffy: -74, fbx: -22, hfx: 20, hfy: 26, hbx: -20, hby: 24 });
+      return pose({ hipY: -34, lean: 0.3, ffx: 34, fbx: -34, hfx: 30, hfy: 24, hbx: -6, hby: 26 });
     default:
       return pose({});
   }
 }
 
 function targetPose(f, now) {
-  const air = f.y < FLOOR - 0.5;
+  const air = f.h > 0.5;
   switch (f.state) {
     case 'walk': {
       const p = f.t * 0.3;
@@ -79,22 +76,16 @@ function targetPose(f, now) {
         fbx: -16 - 15 * Math.sin(p), fby: -Math.max(0, -Math.cos(p)) * 9,
       });
     }
-    case 'crouch':
-      return pose(CROUCH);
     case 'land':
       return pose({ ...CROUCH, hipY: -46 });
     case 'jump':
-      return f.vy > 3 ? pose({ ...AIR, ffx: 14, ffy: -8, fbx: -10, fby: -2, hfy: -30, hby: -24 }) : pose(AIR);
+      return f.vh < -3 ? pose({ ...AIR, ffx: 14, ffy: -8, fbx: -10, fby: -2, hfy: -30, hby: -24 }) : pose(AIR);
     case 'airAttack':
       return pose({ hipY: -62, lean: -0.18, ffx: 52, ffy: -16, fbx: -18, fby: -36, hfx: 10, hfy: 0, hbx: -22, hby: -8 });
     case 'attack':
       return attackPose(f);
     case 'block':
-      return pose({
-        hipY: f.crouching ? -38 : -60, lean: -0.1,
-        hfx: 22, hfy: -18, hbx: 18, hby: -8,
-        ffx: f.crouching ? 22 : 16, fbx: f.crouching ? -24 : -22,
-      });
+      return pose({ hipY: -58, lean: -0.1, hfx: 22, hfy: -18, hbx: 18, hby: -8, ffx: 16, fbx: -22 });
     case 'hit': {
       const jolt = f.t < 5 ? 1 : 0.6;
       return pose({ hipX: -6, hipY: -58, lean: -0.4 * jolt, tilt: -0.3 * jolt, hfx: -4, hfy: 12, hbx: -24, hby: 2, ffx: 14, fbx: -18 });
@@ -124,29 +115,25 @@ function targetPose(f, now) {
 }
 
 // Each fighter slot keeps its own smoothed pose between frames.
-const smooth = [null, null];
+const smooth = [];
 
 export function resetPoses() {
-  smooth[0] = smooth[1] = null;
-}
-
-function glide(slot, target, f) {
-  let cur = smooth[slot];
-  if (!cur || cur.state === undefined) {
-    cur = smooth[slot] = { ...target, state: f.state };
-    return cur;
-  }
-  // Attacks snap faster so hits look crisp; everything else eases.
-  const k = f.state === 'attack' || f.state === 'hit' || f.state === 'airAttack' ? 0.62 : 0.36;
-  for (const key in target) cur[key] += (target[key] - cur[key]) * k;
-  cur.state = f.state;
-  return cur;
+  smooth.length = 0;
 }
 
 // The pose a fighter should be drawn in right now, eased from the last frame.
 // Call it once per fighter per frame.
 export function currentPose(f, now) {
-  return glide(f.slot, targetPose(f, now), f);
+  const target = targetPose(f, now);
+  let cur = smooth[f.slot];
+  if (!cur) {
+    cur = smooth[f.slot] = { ...target };
+    return cur;
+  }
+  // Attacks snap faster so hits look crisp; everything else eases.
+  const k = f.state === 'attack' || f.state === 'hit' || f.state === 'airAttack' ? 0.62 : 0.36;
+  for (const key in target) cur[key] += (target[key] - cur[key]) * k;
+  return cur;
 }
 
 // Two-bone inverse kinematics: given where a limb starts and where it should
@@ -170,6 +157,8 @@ export function joint(ax, ay, bx, by, l1, l2, bend) {
     ey: ay + dy,
   };
 }
+
+// ------------------------------------------------- flat 2D fallback only ---
 
 function limb(ctx, x1, y1, x2, y2, x3, y3, width, color) {
   ctx.lineCap = 'round';
@@ -196,55 +185,22 @@ function blob(ctx, x, y, rx, ry, color) {
   ctx.stroke();
 }
 
-function shade(hex, amount) {
-  const n = parseInt(hex.slice(1), 16);
-  const ch = (v) => Math.max(0, Math.min(255, Math.round(v * amount)));
-  return `rgb(${ch(n >> 16)},${ch((n >> 8) & 255)},${ch(n & 255)})`;
-}
-
-// Speed streaks trailing behind a dashing fighter.
-export function drawStreaks(ctx, f, color) {
-  if (!(f.state === 'attack' && (f.move === 'dash' || f.move === 'super') && f.vx !== 0)) return;
-  const D = f.facing;
-  ctx.save();
-  ctx.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < 7; i++) {
-    const y = f.y - 20 - i * 19;
-    const len = 90 + ((i * 53) % 70) + (f.move === 'super' ? 80 : 0);
-    const grad = ctx.createLinearGradient(f.x, 0, f.x - D * len, 0);
-    grad.addColorStop(0, color);
-    grad.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.strokeStyle = grad;
-    ctx.globalAlpha = 0.75;
-    ctx.lineWidth = 5;
-    ctx.beginPath();
-    ctx.moveTo(f.x - D * 10, y);
-    ctx.lineTo(f.x - D * len, y);
-    ctx.stroke();
-  }
-  ctx.restore();
-}
-
-// `char` is the roster entry, `alt` recolours the outfit for a mirror match.
-export function drawFighter(ctx, f, char, now, alt = false, flatShadow = true) {
+// Draws a fighter standing at screen point (sx, sy), facing left (-1) or
+// right (1), `lift` pixels above the floor.
+export function drawFighter(ctx, f, char, now, { sx, sy, facing, lift = 0, scale = 1, alt = false }) {
   const col = alt ? { ...char.colors, ...ALT } : char.colors;
+  const wide = char.build === 'sumo' ? 1.45 : char.build === 'slim' ? 0.82 : 1;
   const p = currentPose(f, now);
-  const D = f.facing;
-  const special = f.state === 'attack' && (f.move === 'dash' || f.move === 'super' || f.move === 'rise' || f.move === 'bolt');
+  const D = facing;
 
-  // Shadow on the floor.
-  if (flatShadow) {
-    const height = Math.max(0, FLOOR - f.y);
-    ctx.fillStyle = `rgba(0,0,0,${0.42 - Math.min(0.25, height / 500)})`;
-    ctx.beginPath();
-    ctx.ellipse(f.x, FLOOR + 5, 40 - Math.min(16, height / 10), 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  drawStreaks(ctx, f, col.glow);
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.beginPath();
+  ctx.ellipse(sx, sy + 4, 40 * scale * wide, 9 * scale, 0, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.save();
-  ctx.translate(f.x, f.y + p.lift);
+  ctx.translate(sx, sy - lift + p.lift * scale);
+  ctx.scale(scale, scale);
   ctx.rotate(p.rot * D);
 
   const hipX = p.hipX * D;
@@ -253,52 +209,19 @@ export function drawFighter(ctx, f, char, now, alt = false, flatShadow = true) {
   const shY = hipY - Math.cos(p.lean) * LEN.torso;
   const hdX = shX + Math.sin(p.lean + p.tilt) * LEN.neck * D;
   const hdY = shY - Math.cos(p.lean + p.tilt) * LEN.neck;
-
-  // Glow around a fighter using a special move.
-  if (special) {
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    const aura = ctx.createRadialGradient(hipX, hipY - 30, 10, hipX, hipY - 30, 120);
-    aura.addColorStop(0, col.glow);
-    aura.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.globalAlpha = 0.5 + 0.2 * Math.sin(now / 40);
-    ctx.fillStyle = aura;
-    ctx.fillRect(hipX - 130, hipY - 160, 260, 260);
-    ctx.restore();
-  }
-
   const legB = joint(hipX - 5 * D, hipY, p.fbx * D, p.fby, LEN.thigh, LEN.shin, -D);
   const legF = joint(hipX + 5 * D, hipY, p.ffx * D, p.ffy, LEN.thigh, LEN.shin, -D);
   const armB = joint(shX - 7 * D, shY + 6, shX + p.hbx * D, shY + p.hby, LEN.upper, LEN.fore, D);
   const armF = joint(shX + 7 * D, shY + 6, shX + p.hfx * D, shY + p.hfy, LEN.upper, LEN.fore, D);
 
-  // Far side first, so the near limbs overlap it.
-  limb(ctx, shX - 7 * D, shY + 6, armB.jx, armB.jy, armB.ex, armB.ey, 10, shade(col.skin, 0.72));
-  blob(ctx, armB.ex, armB.ey, 8, 8, shade(col.accent, 0.7));
-  limb(ctx, hipX - 5 * D, hipY, legB.jx, legB.jy, legB.ex, legB.ey - 4, 14, shade(col.secondary, 0.75));
-  blob(ctx, legB.ex + 4 * D, legB.ey - 4, 12, 6.5, shade(col.accent, 0.7));
-
-  // Torso.
-  limb(ctx, hipX, hipY - 4, (hipX + shX) / 2, (hipY + shY) / 2, shX, shY + 4, 32, col.primary);
-  ctx.lineCap = 'butt';
-  ctx.strokeStyle = col.accent; // belt
-  ctx.lineWidth = 7;
-  ctx.beginPath();
-  ctx.moveTo(hipX - 17, hipY - 6);
-  ctx.lineTo(hipX + 17, hipY - 6);
-  ctx.stroke();
-  ctx.strokeStyle = shade(col.primary, 0.62); // lapel
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(shX + 8 * D, shY + 4);
-  ctx.lineTo(hipX - 4 * D, hipY - 12);
-  ctx.stroke();
-
-  limb(ctx, hipX + 5 * D, hipY, legF.jx, legF.jy, legF.ex, legF.ey - 4, 15, col.secondary);
+  limb(ctx, shX - 7 * D, shY + 6, armB.jx, armB.jy, armB.ex, armB.ey, 10 * wide, col.skin);
+  blob(ctx, armB.ex, armB.ey, 8, 8, col.accent);
+  limb(ctx, hipX - 5 * D, hipY, legB.jx, legB.jy, legB.ex, legB.ey - 4, 14 * wide, col.secondary);
+  blob(ctx, legB.ex + 4 * D, legB.ey - 4, 12, 6.5, col.accent);
+  limb(ctx, hipX, hipY - 4, (hipX + shX) / 2, (hipY + shY) / 2, shX, shY + 4, 32 * wide, char.build === 'sumo' ? col.skin : col.primary);
+  limb(ctx, hipX + 5 * D, hipY, legF.jx, legF.jy, legF.ex, legF.ey - 4, 15 * wide, col.secondary);
   blob(ctx, legF.ex + 4 * D, legF.ey - 4, 12.5, 7, col.accent);
 
-  // Head: the member's picture inside a coloured ring.
-  const head = heads.get(char.id);
   ctx.beginPath();
   ctx.arc(hdX, hdY, LEN.head + 4, 0, Math.PI * 2);
   ctx.fillStyle = OUTLINE;
@@ -307,48 +230,24 @@ export function drawFighter(ctx, f, char, now, alt = false, flatShadow = true) {
   ctx.arc(hdX, hdY, LEN.head + 1.5, 0, Math.PI * 2);
   ctx.fillStyle = col.accent;
   ctx.fill();
-  if (head) {
-    ctx.save();
-    ctx.translate(hdX, hdY);
-    ctx.rotate((p.lean + p.tilt) * 0.35 * D);
-    ctx.drawImage(head, -LEN.head + 1.5, -LEN.head + 1.5, (LEN.head - 1.5) * 2, (LEN.head - 1.5) * 2);
-    ctx.restore();
-  }
+  const head = heads.get(char.id);
+  if (head) ctx.drawImage(head, hdX - LEN.head + 1.5, hdY - LEN.head + 1.5, (LEN.head - 1.5) * 2, (LEN.head - 1.5) * 2);
 
-  limb(ctx, shX + 7 * D, shY + 6, armF.jx, armF.jy, armF.ex, armF.ey, 11, col.skin);
+  limb(ctx, shX + 7 * D, shY + 6, armF.jx, armF.jy, armF.ex, armF.ey, 11 * wide, col.skin);
   blob(ctx, armF.ex, armF.ey, 9, 9, col.accent);
-
   ctx.restore();
 }
 
-export function drawProjectile(ctx, p, char, now) {
-  const col = char.colors;
+export function drawProjectile(ctx, x, y, char) {
   ctx.save();
   ctx.globalCompositeOperation = 'lighter';
-  const dir = Math.sign(p.vx);
-  for (let i = 5; i >= 0; i--) {
-    const x = p.x - dir * i * 12;
-    const r = 20 - i * 2.6;
-    const g = ctx.createRadialGradient(x, p.y, 1, x, p.y, r * 1.8);
-    g.addColorStop(0, i === 0 ? '#ffffff' : col.glow);
-    g.addColorStop(0.4, col.glow);
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.globalAlpha = 1 - i * 0.15;
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(x, p.y, r * 1.8, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  // Crackling arcs around the core.
-  ctx.globalAlpha = 0.9;
-  ctx.strokeStyle = col.accent;
-  ctx.lineWidth = 2;
+  const g = ctx.createRadialGradient(x, y, 1, x, y, 30);
+  g.addColorStop(0, '#ffffff');
+  g.addColorStop(0.35, char.colors.glow);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
   ctx.beginPath();
-  for (let i = 0; i < 3; i++) {
-    const a = now / 60 + i * 2.1;
-    ctx.moveTo(p.x + Math.cos(a) * 8, p.y + Math.sin(a) * 8);
-    ctx.lineTo(p.x + Math.cos(a + 0.5) * 24, p.y + Math.sin(a + 0.9) * 22);
-  }
-  ctx.stroke();
+  ctx.arc(x, y, 30, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }

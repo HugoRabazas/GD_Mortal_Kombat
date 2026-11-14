@@ -1,8 +1,11 @@
-// The CPU opponent used in practice mode (and for the demo fight behind the
-// menu). It looks at the match state and answers with the buttons it wants to
-// hold, exactly like a human player would.
+// The CPU fighter. It looks at the match state and answers with the buttons it
+// wants to hold, exactly like a human player would, so it cannot cheat.
+//
+// Each decision: pick a rival, defend if something is about to land, use the
+// special or the finisher when it is likely to connect, otherwise close the
+// distance and strike.
 
-import { INPUT, RULES, ARENA } from './constants.js';
+import { INPUT, RULES } from './constants.js';
 import { getFighter } from './fighters.js';
 
 const LEVELS = {
@@ -13,7 +16,7 @@ const LEVELS = {
 };
 
 export function createAI(level = 'normal', seed = 1) {
-  return { cfg: LEVELS[level] || LEVELS.normal, seed: seed >>> 0 || 1, wait: 0, held: 0, tap: 0, tapT: 0 };
+  return { cfg: LEVELS[level] || LEVELS.normal, seed: seed >>> 0 || 1, wait: 0, held: 0, tap: 0, tapT: 0, target: -1, retarget: 0 };
 }
 
 // Small deterministic random generator (mulberry32).
@@ -25,10 +28,42 @@ function rnd(ai) {
   return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 }
 
+function angleDiff(a, b) {
+  let d = a - b;
+  while (d > Math.PI) d -= Math.PI * 2;
+  while (d < -Math.PI) d += Math.PI * 2;
+  return Math.abs(d);
+}
+
+// The stick position (as button bits) that walks along (dx, dz).
+function toward(dx, dz) {
+  const d = Math.hypot(dx, dz) || 1;
+  let bits = 0;
+  if (dx / d < -0.38) bits |= INPUT.LEFT;
+  if (dx / d > 0.38) bits |= INPUT.RIGHT;
+  if (dz / d < -0.38) bits |= INPUT.UP;
+  if (dz / d > 0.38) bits |= INPUT.DOWN;
+  return bits;
+}
+
+function pickTarget(ai, s, f) {
+  let best = -1;
+  let bestScore = Infinity;
+  for (const o of s.f) {
+    if (o === f || o.hp <= 0) continue;
+    // Prefer whoever is close, and lean towards a rival who is nearly beaten.
+    const score = Math.hypot(o.x - f.x, o.z - f.z) + (o.hp / o.maxHp) * 120 + rnd(ai) * 80;
+    if (score < bestScore) {
+      bestScore = score;
+      best = o.slot;
+    }
+  }
+  return best;
+}
+
 export function aiInput(ai, s, me) {
-  if (s.phase !== 'fight') return 0;
   const f = s.f[me];
-  const o = s.f[1 - me];
+  if (s.phase !== 'fight' || f.hp <= 0) return 0;
   const cfg = ai.cfg;
 
   // Attack buttons are tapped (held 2 ticks) so each decision is one press.
@@ -42,10 +77,17 @@ export function aiInput(ai, s, me) {
     return ai.held | tap;
   }
 
-  const toward = o.x > f.x ? INPUT.RIGHT : INPUT.LEFT;
-  const away = o.x > f.x ? INPUT.LEFT : INPUT.RIGHT;
-  const dist = Math.abs(o.x - f.x);
+  if (ai.target < 0 || s.f[ai.target].hp <= 0 || --ai.retarget <= 0) {
+    ai.target = pickTarget(ai, s, f);
+    ai.retarget = 12;
+  }
+  if (ai.target < 0) return 0;
+  const o = s.f[ai.target];
+  const dx = o.x - f.x;
+  const dz = o.z - f.z;
+  const dist = Math.hypot(dx, dz);
   const special = getFighter(f.char).special.type;
+
   const press = (bits, extra = 0) => {
     ai.tap = bits;
     ai.tapT = 2;
@@ -59,48 +101,64 @@ export function aiInput(ai, s, me) {
     return bits;
   };
 
-  // Defence first.
-  const incoming = s.proj.find((p) => p.owner !== me && Math.sign(p.vx) === Math.sign(f.x - p.x) && Math.abs(p.x - f.x) < 190);
-  const threatened = (o.state === 'attack' || o.state === 'airAttack') && dist < 170;
-  if (incoming && rnd(ai) < cfg.block) {
-    return rnd(ai) < 0.5 ? hold(INPUT.DOWN, 16) : hold(INPUT.BLOCK, 16);
-  }
-  if (threatened && rnd(ai) < cfg.block) {
-    if (special === 'rise' && o.y < ARENA.FLOOR && f.meter >= RULES.SPECIAL_COST && rnd(ai) < 0.5) {
-      return press(INPUT.SPECIAL);
+  // --- defence ---
+  for (const e of s.f) {
+    if (e === f || e.hp <= 0) continue;
+    const ex = f.x - e.x;
+    const ez = f.z - e.z;
+    const ed = Math.hypot(ex, ez);
+    const winding = e.state === 'attack' || e.state === 'airAttack';
+    if (!winding) continue;
+    // A ground stomp cannot be blocked well: jump over it.
+    if (e.move === 'quake' && ed < 230 && rnd(ai) < cfg.block) return hold(INPUT.JUMP, 4);
+    const facingMe = angleDiff(Math.atan2(ez, ex), e.dir) < 0.9;
+    if (ed < 190 && facingMe && rnd(ai) < cfg.block) {
+      if (special === 'rise' && f.meter >= RULES.SPECIAL_COST && ed < 90 && rnd(ai) < 0.4) return press(INPUT.SPECIAL);
+      return hold(INPUT.BLOCK, 12 + Math.floor(rnd(ai) * 8));
     }
-    return hold(INPUT.BLOCK, 12 + Math.floor(rnd(ai) * 8));
+  }
+  for (const p of s.proj) {
+    if (p.owner === me) continue;
+    const px = f.x - p.x;
+    const pz = f.z - p.z;
+    const along = px * p.vx + pz * p.vz; // > 0 when it is flying towards us
+    const pd = Math.hypot(px, pz);
+    if (along <= 0 || pd > 260) continue;
+    const speed = Math.hypot(p.vx, p.vz);
+    const miss = Math.abs(px * p.vz - pz * p.vx) / speed; // how far off to the side it will pass
+    if (miss < 50 && rnd(ai) < cfg.block) {
+      // Step sideways out of its path, or put the guard up.
+      if (rnd(ai) < 0.6) return hold(toward(-p.vz, p.vx), 10);
+      return hold(INPUT.BLOCK, 14);
+    }
   }
 
-  // Finisher and special when they are likely to land.
-  if (f.meter >= RULES.SUPER_COST && dist < 330 && o.y >= ARENA.FLOOR && rnd(ai) < cfg.special * 2) {
-    return press(INPUT.SUPER);
-  }
+  // --- stay inside the ring of fire ---
+  const r = Math.hypot(f.x, f.z);
+  if (r > s.ringR - 70 && dist > 120) return hold(toward(-f.x, -f.z), 8);
+
+  // --- finisher and special when they are likely to land ---
+  if (f.meter >= RULES.SUPER_COST && dist < 340 && o.h <= 0 && rnd(ai) < cfg.special * 2) return press(INPUT.SUPER);
   if (f.meter >= RULES.SPECIAL_COST && rnd(ai) < cfg.special) {
-    if (special === 'bolt' && dist > 230) return press(INPUT.SPECIAL);
-    if (special === 'dash' && dist > 110 && dist < 260) return press(INPUT.SPECIAL);
-    if (special === 'rise' && dist < 90) return press(INPUT.SPECIAL);
+    if (special === 'bolt' && dist > 200) return press(INPUT.SPECIAL);
+    if (special === 'dash' && dist > 110 && dist < 280) return press(INPUT.SPECIAL);
+    if (special === 'rise' && dist < 85) return press(INPUT.SPECIAL);
+    if (special === 'quake' && dist < 170 && o.h <= 0) return press(INPUT.SPECIAL);
   }
 
   if (o.state === 'down' || o.state === 'getup') {
-    return dist < 120 ? hold(away, 8) : hold(0, 6); // give them room to stand
+    return dist < 120 ? hold(toward(-dx, -dz), 8) : hold(0, 6); // give them room to stand
   }
 
-  if (dist > 118) {
-    if (rnd(ai) < 0.06) return hold(toward | INPUT.UP, 3);
-    return hold(toward, 6 + Math.floor(rnd(ai) * 8));
+  if (dist > 112) {
+    if (rnd(ai) < 0.05) return hold(toward(dx, dz) | INPUT.JUMP, 3);
+    return hold(toward(dx, dz), 5 + Math.floor(rnd(ai) * 7));
   }
 
-  // In range.
-  const r = rnd(ai);
-  if (r < cfg.attack) {
-    const pick = rnd(ai);
-    if (pick < 0.4) return press(INPUT.PUNCH);
-    if (pick < 0.7) return press(INPUT.KICK);
-    if (pick < 0.85) return press(INPUT.KICK, INPUT.DOWN);
-    return press(INPUT.PUNCH, INPUT.DOWN);
-  }
-  if (r < cfg.attack + 0.15) return hold(away, 10);
-  if (r < cfg.attack + 0.25) return hold(INPUT.DOWN, 8);
+  // --- in range ---
+  const roll = rnd(ai);
+  if (roll < cfg.attack) return press(rnd(ai) < 0.55 ? INPUT.PUNCH : INPUT.KICK);
+  if (roll < cfg.attack + 0.15) return hold(toward(-dx, -dz), 10); // back off
+  if (roll < cfg.attack + 0.3) return hold(toward(-dz, dx), 9); // circle round
   return hold(0, Math.max(3, cfg.think - 2));
 }

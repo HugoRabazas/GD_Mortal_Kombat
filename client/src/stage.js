@@ -1,7 +1,7 @@
 // The stage puts a frame on screen. It layers two canvases: the WebGL canvas
-// with the 3D arena underneath, and a flat canvas on top for the HUD, the
-// announcer banners and the finisher cut-in. If the device has no WebGL the
-// flat canvas draws the whole fight on a painted 2D backdrop instead.
+// with the 3D arena underneath, and a flat canvas on top for the HUD, hit
+// sparks, name tags, announcer banners and the finisher cut-in. If the device
+// has no WebGL the flat canvas draws the whole fight on a painted backdrop.
 
 import { ARENA, TIMING } from '../../shared/constants.js';
 import { getFighter } from '../../shared/fighters.js';
@@ -10,10 +10,13 @@ import { create3D } from './render/scene3d.js';
 import { drawArena } from './render/arena.js';
 import { drawFighter, drawProjectile, resetPoses } from './render/fighter.js';
 import { updateFx, drawFx, drawOverlays, resetFx } from './render/fx.js';
-import { drawHud, resetHud } from './render/hud.js';
+import { drawHud, drawTags, resetHud } from './render/hud.js';
 
 const { W, H } = ARENA;
 const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+// The flat fallback's view of the arena: a simple slanted look from above.
+const flat = (x, h, z) => ({ x: W / 2 + x * 0.62, y: 372 + z * 0.24 - h * 0.8, k: 1 + z / 2400 });
 
 // The dramatic pause before a finisher: the screen dims and the attacker's
 // portrait slides across with the move's name.
@@ -22,7 +25,7 @@ function finisherCutIn(ctx, s) {
   const k = 1 - s.freeze / TIMING.SUPER_FREEZE;
   const f = s.f[s.freezeBy];
   const char = getFighter(f.char);
-  const side = f.slot === 0 ? -1 : 1; // which edge the portrait enters from
+  const side = f.slot % 2 === 0 ? -1 : 1; // which edge the portrait enters from
   const slide = 1 - Math.pow(1 - Math.min(1, k * 2.6), 3);
 
   ctx.save();
@@ -76,8 +79,11 @@ export function createStage(glCanvas, hudCanvas) {
   const ctx = hudCanvas.getContext('2d');
   let scale = 1;
 
+  const project = three ? three.project : flat;
+
   return {
     is3D: !!three,
+    project,
 
     resize(cssW, cssH) {
       const dpr = window.devicePixelRatio || 1;
@@ -95,7 +101,7 @@ export function createStage(glCanvas, hudCanvas) {
       three?.snapCamera();
     },
 
-    // view = { state, demo, labels }
+    // view = { state, demo, labels, boss }
     render(view, now) {
       const s = view.state;
       const shake = updateFx();
@@ -112,15 +118,30 @@ export function createStage(glCanvas, hudCanvas) {
         ctx.save();
         ctx.translate(shake.x, shake.y);
         drawArena(ctx, now);
-        const mirror = s.f[0].char === s.f[1].char;
-        const order = s.f[1].state === 'attack' || s.f[1].state === 'airAttack' ? [0, 1] : [1, 0];
-        for (const i of order) drawFighter(ctx, s.f[i], getFighter(s.f[i].char), now, mirror && i === 1);
-        for (const p of s.proj) drawProjectile(ctx, p, getFighter(p.char), now);
-        drawFx(ctx);
+        // Far fighters first, so nearer ones overlap them.
+        const seen = new Set();
+        const alts = s.f.map((f) => {
+          const alt = seen.has(f.char);
+          seen.add(f.char);
+          return alt;
+        });
+        for (const f of [...s.f].sort((a, b) => a.z - b.z)) {
+          const p = flat(f.x, 0, f.z);
+          drawFighter(ctx, f, getFighter(f.char), now, { sx: p.x, sy: p.y, facing: Math.cos(f.dir) >= 0 ? 1 : -1, lift: f.h * 0.8, scale: 0.7 * p.k, alt: alts[f.slot] });
+        }
+        for (const p of s.proj) {
+          const q = flat(p.x, p.h, p.z);
+          drawProjectile(ctx, q.x, q.y, getFighter(p.char));
+        }
         ctx.restore();
       }
 
+      // Sparks, dust and damage numbers sit on the flat layer in both views.
+      drawFx(ctx);
+
       if (!view.demo) {
+        const spots = s.f.map((f) => project(f.x, f.h + (three ? three.headTop(f.slot) * 100 - f.h : 150), f.z));
+        drawTags(ctx, s, spots, view.labels);
         finisherCutIn(ctx, s);
         drawHud(ctx, s, view.labels, now);
       }

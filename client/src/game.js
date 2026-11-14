@@ -7,14 +7,15 @@ import { TICK_RATE } from '../../shared/constants.js';
 
 const TICK_MS = 1000 / TICK_RATE;
 
-// `controllers` is a pair of functions (state, slot) => button bits.
-// `mods` optionally strengthens a fighter (arcade bosses).
-export function createGame(chars, controllers, mods = [null, null]) {
+// `controllers` holds one function per fighter: (state, slot) => button bits.
+// `mods` optionally strengthens a fighter (arcade bosses). `mode` is 'duel'
+// or 'arena'; by default more than two fighters means an arena brawl.
+export function createGame(chars, controllers, mods = [], mode) {
   let last = null;
   let acc = 0;
   let events = [];
   const game = {
-    state: createMatch(chars, mods),
+    state: createMatch(chars, mods, mode),
     paused: false,
     update(now) {
       const dt = last === null ? 0 : now - last;
@@ -26,7 +27,7 @@ export function createGame(chars, controllers, mods = [null, null]) {
       while (acc >= TICK_MS) {
         acc -= TICK_MS;
         const s = game.state;
-        step(s, [controllers[0](s, 0), controllers[1](s, 1)]);
+        step(s, controllers.map((read, slot) => read(s, slot)));
         if (s.ev.length) events.push(...s.ev);
       }
     },
