@@ -59,12 +59,12 @@ export const MOVES = {
   },
   // --- specials (cost RULES.SPECIAL_COST meter) ---
   dash: {
-    startup: 9, active: 13, recovery: 18, dmg: 15, speed: 13,
+    startup: 9, active: 13, recovery: 20, dmg: 14, speed: 13,
     box: { x: 0, y: -132, w: 78, h: 90 },
     hitstun: 0, blockstun: 16, push: 9, gain: 6, knockdown: true, heavy: true, chip: 0.25,
   },
   bolt: {
-    startup: 13, active: 1, recovery: 17, dmg: 12,
+    startup: 12, active: 1, recovery: 14, dmg: 14,
     hitstun: 18, blockstun: 11, push: 7, gain: 6, heavy: true, chip: 0.25,
   },
   rise: {
@@ -82,18 +82,22 @@ export const MOVES = {
 
 const PROJECTILE = { speed: 9.5, r: 15 };
 
-function newFighter(charId, slot) {
+// `mod` optionally strengthens a fighter (used for arcade bosses):
+// { health: 1.3, power: 1.15 } means 30% more health and 15% harder hits.
+function newFighter(charId, slot, mod) {
   const c = getFighter(charId);
+  const health = Math.round(c.stats.health * (mod?.health ?? 1));
   return {
     char: c.id,
     slot,
+    pw: mod?.power ?? 1,
     x: slot === 0 ? 310 : 650,
     y: FLOOR,
     vx: 0,
     vy: 0,
     facing: slot === 0 ? 1 : -1,
-    hp: c.stats.health,
-    maxHp: c.stats.health,
+    hp: health,
+    maxHp: health,
     meter: 0,
     state: 'idle',
     t: 0, // ticks spent in the current state
@@ -109,14 +113,15 @@ function newFighter(charId, slot) {
   };
 }
 
-export function createMatch(charIds) {
+export function createMatch(charIds, mods = [null, null]) {
   return {
+    mods,
     tick: 0,
     phase: 'intro', // intro -> fight -> ko -> (intro | over)
     pt: 0, // ticks spent in the current phase
     round: 1,
     timer: RULES.ROUND_SECONDS * TICK_RATE,
-    f: [newFighter(charIds[0], 0), newFighter(charIds[1], 1)],
+    f: [newFighter(charIds[0], 0, mods[0]), newFighter(charIds[1], 1, mods[1])],
     proj: [],
     wins: [0, 0],
     hitstop: 0,
@@ -442,7 +447,7 @@ function addMeter(f, amount) {
 function applyHit(s, att, def, m, fromX, kind) {
   const dir = def.x === fromX ? att.facing : Math.sign(def.x - fromX);
   const blocked = def.state === 'block' && def.facing === -dir;
-  const power = getFighter(att.char).stats.power;
+  const power = getFighter(att.char).stats.power * att.pw;
   const px = (Math.max(def.x - HALF_W, Math.min(def.x + HALF_W, fromX)) + def.x) / 2;
   const py = def.y - (m.low ? 50 : 110);
 
@@ -558,7 +563,7 @@ function endRound(s, winner, kind) {
 function resetRound(s) {
   const chars = [s.f[0].char, s.f[1].char];
   const meters = [s.f[0].meter, s.f[1].meter];
-  s.f = [newFighter(chars[0], 0), newFighter(chars[1], 1)];
+  s.f = [newFighter(chars[0], 0, s.mods[0]), newFighter(chars[1], 1, s.mods[1])];
   s.f[0].meter = meters[0];
   s.f[1].meter = meters[1];
   s.proj = [];

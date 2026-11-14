@@ -1,35 +1,49 @@
 # GD Arena
 
-A 1v1 fighting game for the alliance. The arena is 3D; the fighters are 2D
-character models whose heads are the members' own pictures. The whole game
-builds into **one self-contained web page**, so it can be published as a Claude
-Artifact and shared with a link.
+A 1v1 fighting game for the alliance, in full 3D: a torch-lit arena and
+articulated 3D fighters whose heads carry the members' own pictures. The whole
+game builds into **one self-contained web page**, so it can be published as a
+Claude Artifact and shared with a link.
 
 It is an original game in the classic versus-fighter genre: health bars, best
 of three rounds, a 60 second timer, punches, kicks, blocking, specials and a
 finisher. It deliberately does not reuse the name, characters, art or signature
 moves of any existing fighting game.
 
+## Modes
+
+- **Arcade** (single player): pick a fighter and climb a ladder of five fights
+  that get harder, ending in a powered-up boss. Each win scores points for the
+  stage, health left, time left and not dropping a round. Trying a stage again
+  costs 20% of the score. The best score is remembered on the device.
+- **Quick Fight** (single player): one match against the CPU on Easy, Normal
+  or Hard.
+- **2 Players**: two people on one keyboard, or with two gamepads.
+
 ## Play
 
-| | 1 Player | 2 Players · P1 | 2 Players · P2 |
-| --- | --- | --- | --- |
-| Move | `A` `D` or `←` `→` | `A` `D` | `←` `→` |
-| Jump | `W` or `↑` | `W` | `↑` |
-| Crouch | `S` or `↓` | `S` | `↓` |
-| Punch | `J` or `F` | `F` | `J` |
-| Kick | `K` or `G` | `G` | `K` |
-| Block | `L` or `H` | `H` | `L` |
-| Special | `I` or `T` | `T` | `I` |
-| Finisher | `O` or `Y` | `Y` | `O` |
+| | Single player | 2P · Player 1 | 2P · Player 2 | Gamepad |
+| --- | --- | --- | --- | --- |
+| Move | `A` `D` or `←` `→` | `A` `D` | `←` `→` | Stick / D-pad |
+| Jump | `W` or `↑` | `W` | `↑` | Up |
+| Crouch | `S` or `↓` | `S` | `↓` | Down |
+| Punch | `J` or `F` | `F` | `J` | X / Square |
+| Kick | `K` or `G` | `G` | `K` | A / Cross |
+| Block | `L` or `H` | `H` | `L` | B / Circle |
+| Special | `I` or `T` | `T` | `I` | Y / Triangle |
+| Finisher | `O` or `Y` | `Y` | `O` | RB / RT |
 
-`P` or `Esc` pauses.
+`P`, `Esc` or Start pauses.
 
 On a phone or tablet a thumb stick (move, jump, crouch) and five buttons appear
-on screen in 1 Player mode: `P` punch, `K` kick, `BLK` block, `SP` special,
-`ULT` finisher. `SP` and `ULT` light up when there is enough energy to use
-them. Held sideways the game fills the screen; held upright the controls sit
-under it. The menu has a "Touch buttons" switch to force them on or off.
+on screen in single-player modes: `P` punch, `K` kick, `BLK` block, `SP`
+special, `ULT` finisher. `SP` and `ULT` light up when there is enough energy to
+use them. Held sideways the game fills the screen; held upright the controls
+sit under it.
+
+**Arrange buttons** (in the menu and in the pause screen) lets you drag every
+control to wherever your thumbs rest and make them bigger or smaller. Upright
+and sideways layouts are saved separately, on the device.
 
 - Landing and taking hits fills the **energy** bar. A special costs 35 of 100;
   the finisher needs a full bar and spends all of it.
@@ -79,23 +93,34 @@ the roster.
   on the stone; a moon and mountains far behind. A perspective camera follows
   the fighters, pulls back when they separate, swings round for the round
   intro, pushes in on a finisher and circles the winner.
-- **2D fighters** (`fighter.js`): each fighter is drawn every frame on a flat
-  canvas from simple limbs. For each state there is a *pose* (where hips, hands
-  and feet should be); knees and elbows are solved automatically (inverse
-  kinematics) and the body glides from pose to pose. The member's picture is
-  cropped to a circle and used as the head. That canvas is then stuck on an
-  upright card in the 3D world that always turns to face the camera.
-- **HUD and effects** (`hud.js`, `fx.js`): health bars, timer, energy, sparks,
-  damage numbers, banners. Drawn on a second flat canvas laid over the 3D one.
-- If a device has no WebGL, `arena.js` paints a flat 2D backdrop instead and
-  the game still runs.
+- **3D fighters** (`rig3d.js`): each body is built from rounded limbs
+  (cylinders and spheres) with a dark cartoon outline, lit by the arena and
+  casting a real shadow. The animation is driven by *poses*: for each state
+  there is a description of where hips, hands and feet should be
+  (`fighter.js`); knees and elbows are solved automatically (inverse
+  kinematics) and the body glides from pose to pose. Those points are given
+  depth, with one arm and leg nearer the camera and the other further, to make
+  a full 3D body. The head is a ball with the member's picture wrapped over
+  the front, and it always turns to look at the camera.
+- **3D effects**: projectiles are glowing orbs that carry their own light
+  across the floor, and every landed hit throws a brief flash of light on the
+  fighters. Sparks, dust and damage numbers are painted on a clear sheet
+  standing just in front of them.
+- **HUD** (`hud.js`, `fx.js`): health bars, timer, energy, announcer banners,
+  drawn on a flat canvas laid over the 3D one.
+- **Adaptive quality**: if a device cannot keep a smooth frame rate, the game
+  first drops cast shadows and extra resolution, then lowers the resolution
+  further, so slower phones stay playable.
+- If a device has no WebGL at all, `arena.js` and `fighter.js` draw the same
+  fight flat in 2D instead.
 
 ### 3. The shell (`client/src/`)
 
-`main.js` builds the menus and runs the frame loop, `game.js` owns one running
-fight, `input.js` reads keyboard and touch, `audio.js` synthesises all sound
-effects in the browser (no audio files), `effects.js` maps rule events to
-sparks and sounds.
+`main.js` builds the menus, the arcade ladder and runs the frame loop,
+`game.js` owns one running fight, `input.js` reads keyboard, touch and
+gamepads, `touchLayout.js` is the drag-to-arrange editor for the on-screen
+controls, `audio.js` synthesises every sound effect and the music in the
+browser (no audio files), `effects.js` maps rule events to sparks and sounds.
 
 ## Add an alliance member
 
@@ -104,7 +129,9 @@ sparks and sounds.
    - `head`: the circle cut from the picture for the fighter's head. `x`, `y`
      are the centre of the face in picture pixels, `r` the radius.
    - `colors`: outfit and glow colours.
-   - `stats`: keep `power` and `speed` near 1.0.
+   - `stats`: keep `power` and `speed` near 1.0. The current roster was
+     balanced by simulating hundreds of CPU-vs-CPU matches until each fighter
+     won about half; a new fighter may need the same treatment.
    - `special.type`: `'dash'` (lunging strike), `'bolt'` (projectile) or
      `'rise'` (rising anti-air strike).
 3. `npm run build` and publish `dist/gd-arena.html` again.
@@ -138,8 +165,11 @@ npm run build
 
 ## Limits worth knowing
 
-- Two players means two people at **one keyboard**. A published page has no
-  game server behind it, so playing against someone on another device is not
-  possible in this form.
+- Two players means two people at **one device** (shared keyboard or two
+  gamepads). A published page has no game server behind it, so playing against
+  someone on another device is not possible in this form.
+- The fight itself still runs on a line, as in most 3D fighting games: the
+  fighters, arena, lights and camera are 3D, but you cannot sidestep into the
+  depth of the arena.
 - Fighters share one body shape and one move set, plus one of three specials.
   What makes each member unique is the head, colours, stats and move names.

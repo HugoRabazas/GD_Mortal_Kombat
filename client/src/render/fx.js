@@ -8,6 +8,15 @@ let banner = null;
 let shake = 0;
 let flash = 0;
 
+// Bursts of light for the 3D arena to pick up (one per landed hit).
+let flashes = [];
+export function takeFlashes() {
+  if (!flashes.length) return flashes;
+  const out = flashes;
+  flashes = [];
+  return out;
+}
+
 export function resetFx() {
   particles.length = 0;
   texts.length = 0;
@@ -30,6 +39,7 @@ export function addFlash(amount) {
 }
 
 export function hitSpark(x, y, color, heavy) {
+  flashes.push({ x, y, color, heavy });
   const n = heavy ? 18 : 10;
   for (let i = 0; i < n; i++) {
     const a = Math.random() * Math.PI * 2;

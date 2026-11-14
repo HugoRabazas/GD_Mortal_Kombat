@@ -24,6 +24,7 @@ const GAME_KEYS = new Set(Object.values(KEYMAPS.solo).flat());
 
 const held = new Set();
 let touchBits = 0;
+let touchLive = true; // false while the player is rearranging the controls
 let capture = false; // true while a fight is on screen
 
 export function readKeys(scheme) {
@@ -42,6 +43,51 @@ export function readKeys(scheme) {
 
 export function readTouch() {
   return touchBits;
+}
+
+export function setTouchLive(on) {
+  touchLive = on;
+  touchBits = 0;
+}
+
+// Game controllers. Standard layout: stick or d-pad to move, X/Square punch,
+// A/Cross kick, B/Circle or LB block, Y/Triangle special, RB or RT finisher.
+function pad(index) {
+  try {
+    const pads = [...(navigator.getGamepads?.() || [])].filter((p) => p && p.connected);
+    return pads[index] || null;
+  } catch {
+    return null; // some viewers do not allow controllers
+  }
+}
+
+export function readPad(index) {
+  const p = pad(index);
+  if (!p) return 0;
+  const on = (i) => !!p.buttons[i]?.pressed;
+  const ax = p.axes[0] || 0;
+  const ay = p.axes[1] || 0;
+  let bits = 0;
+  if (ax < -0.45 || on(14)) bits |= INPUT.LEFT;
+  if (ax > 0.45 || on(15)) bits |= INPUT.RIGHT;
+  if (ay < -0.6 || on(12)) bits |= INPUT.UP;
+  if (ay > 0.6 || on(13)) bits |= INPUT.DOWN;
+  if (on(2)) bits |= INPUT.PUNCH;
+  if (on(0)) bits |= INPUT.KICK;
+  if (on(1) || on(4)) bits |= INPUT.BLOCK;
+  if (on(3)) bits |= INPUT.SPECIAL;
+  if (on(5) || on(7)) bits |= INPUT.SUPER;
+  return bits;
+}
+
+// True once each time Start is pressed on any controller.
+let startWasDown = false;
+export function padStartPressed() {
+  let down = false;
+  for (let i = 0; i < 4; i++) down = down || !!pad(i)?.buttons[9]?.pressed;
+  const pressed = down && !startWasDown;
+  startWasDown = down;
+  return pressed;
 }
 
 export function setCapture(on) {
@@ -110,6 +156,7 @@ export function initTouch(root) {
     touchBits &= ~MOVE;
   };
   stick.addEventListener('pointerdown', (e) => {
+    if (!touchLive) return;
     stickId = e.pointerId;
     grab(stick, e.pointerId);
     moveStick(e);
@@ -128,6 +175,7 @@ export function initTouch(root) {
       btn.classList.remove('on');
     };
     btn.addEventListener('pointerdown', (e) => {
+      if (!touchLive) return;
       touchBits |= bit;
       btn.classList.add('on');
       grab(btn, e.pointerId);

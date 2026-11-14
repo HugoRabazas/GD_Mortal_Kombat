@@ -8,12 +8,13 @@ import { TICK_RATE } from '../../shared/constants.js';
 const TICK_MS = 1000 / TICK_RATE;
 
 // `controllers` is a pair of functions (state, slot) => button bits.
-export function createGame(chars, controllers) {
+// `mods` optionally strengthens a fighter (arcade bosses).
+export function createGame(chars, controllers, mods = [null, null]) {
   let last = null;
   let acc = 0;
   let events = [];
   const game = {
-    state: createMatch(chars),
+    state: createMatch(chars, mods),
     paused: false,
     update(now) {
       const dt = last === null ? 0 : now - last;

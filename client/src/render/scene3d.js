@@ -1,27 +1,25 @@
 // The 3D arena.
 //
-// The world is real 3D geometry (a stone dais, a courtyard wall, pillars,
-// torches that actually light the scene, mountains and a moon far behind),
-// viewed by a perspective camera that follows the fight. The fighters are 2D
-// character models: each one is painted every frame onto its own canvas, and
-// that canvas is used as the texture of an upright card standing in the world,
-// always turned towards the camera.
+// Everything here is real 3D geometry seen through a perspective camera that
+// follows the fight: a stone dais, a courtyard wall with pillars and banners,
+// torches that light the scene, mountains and a moon far behind - and the
+// fighters themselves, which are articulated 3D bodies (see rig3d.js) that
+// cast shadows on the floor. Projectiles are glowing 3D orbs carrying their
+// own light, and every hit throws a brief flash of light on the fighters.
 //
 // Units: 1 world unit = 100 arena pixels. The floor is y = 0, the fighters
 // move along the x axis at z = 0, and the camera looks down the -z axis.
 
 import { ARENA, TIMING } from '../../../shared/constants.js';
 import { getFighter } from '../../../shared/fighters.js';
-import { drawFighter, drawProjectile } from './fighter.js';
-import { drawFx, fxActive } from './fx.js';
+import { drawStreaks } from './fighter.js';
+import { drawFx, fxActive, takeFlashes } from './fx.js';
+import { createRig } from './rig3d.js';
 
 const S = 0.01;
 const wx = (px) => (px - ARENA.W / 2) * S;
 const wy = (py) => (ARENA.FLOOR - py) * S;
 
-// Each fighter is painted on a card this big (in arena pixels) with the feet
-// at (CARD.ox, CARD.oy), leaving room for jumps, kicks and dash trails.
-const CARD = { w: 560, h: 420, ox: 280, oy: 340, scale: 2 };
 const FX_SCALE = 1.5;
 
 function seeded(seed) {
@@ -50,6 +48,12 @@ export function create3D(canvas) {
   }
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.setClearColor(0x0b0714);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  // Colours are written as sRGB (what you see in a colour picker); lighting is
+  // calculated in linear light, so every colour is converted on the way in.
+  const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
 
   const texture = (c) => {
     const t = new THREE.CanvasTexture(c);
@@ -59,7 +63,7 @@ export function create3D(canvas) {
   };
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x2a1030, 0.02);
+  scene.fog = new THREE.FogExp2(lin(0x2a1030), 0.02);
   const camera = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 300);
 
   // ---------- sky, moon and mountains (far away, so they barely move) ----------
@@ -133,13 +137,27 @@ export function create3D(canvas) {
   ridge(8, '#260d22', 130, 10, 3, -40, 48);
 
   // ---------- lights ----------
-  scene.add(new THREE.HemisphereLight(0x8a5a9a, 0x1a0c14, 0.58));
-  const moonLight = new THREE.DirectionalLight(0xffb58a, 0.55);
+  scene.add(new THREE.HemisphereLight(lin(0xb890c8), lin(0x3a2030), 0.42));
+  // Moonlight from behind: gives the fighters a warm rim.
+  const moonLight = new THREE.DirectionalLight(lin(0xffb58a), 0.6);
   moonLight.position.set(6, 9, -8);
   scene.add(moonLight);
-  const frontFill = new THREE.DirectionalLight(0xff9c7a, 0.28);
-  frontFill.position.set(-3, 5, 9);
-  scene.add(frontFill);
+  // Key light from the front. It is the one light that casts shadows.
+  const key = new THREE.DirectionalLight(lin(0xffe2cf), 1.5);
+  key.position.set(-2.5, 10, 6);
+  key.castShadow = true;
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.camera.left = -8;
+  key.shadow.camera.right = 8;
+  key.shadow.camera.top = 6;
+  key.shadow.camera.bottom = -6;
+  key.shadow.camera.near = 1;
+  key.shadow.camera.far = 30;
+  key.shadow.bias = -0.0015;
+  key.shadow.radius = 3;
+  key.shadow.camera.updateProjectionMatrix();
+  scene.add(key);
+  scene.add(key.target);
 
   // ---------- floor ----------
   const stone = (base, seed) => {
@@ -164,7 +182,7 @@ export function create3D(canvas) {
     return t;
   };
 
-  const groundTex = stone([70, 44, 62], 5);
+  const groundTex = stone([48, 30, 44], 5);
   groundTex.repeat.set(24, 24);
   const ground = new THREE.Mesh(
     new THREE.PlaneGeometry(96, 96),
@@ -172,24 +190,26 @@ export function create3D(canvas) {
   );
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.3;
+  ground.receiveShadow = true;
   scene.add(ground);
 
   // The fighting dais: a raised stone disc.
-  const daisTex = stone([104, 66, 86], 9);
+  const daisTex = stone([84, 52, 70], 9);
   daisTex.repeat.set(5, 5);
   const dais = new THREE.Mesh(
     new THREE.CylinderGeometry(6.6, 6.9, 0.3, 64),
     [
-      new THREE.MeshStandardMaterial({ color: 0x3a2233, roughness: 0.8 }),
+      new THREE.MeshStandardMaterial({ color: lin(0x4a2c40), roughness: 0.8 }),
       new THREE.MeshStandardMaterial({ map: daisTex, roughness: 0.78, metalness: 0.05 }),
-      new THREE.MeshStandardMaterial({ color: 0x20131d }),
+      new THREE.MeshStandardMaterial({ color: lin(0x20131d) }),
     ],
   );
   dais.position.y = -0.15;
+  dais.receiveShadow = true;
   scene.add(dais);
   const rim = new THREE.Mesh(
     new THREE.TorusGeometry(6.6, 0.06, 8, 96),
-    new THREE.MeshStandardMaterial({ color: 0xd9a441, roughness: 0.4, metalness: 0.7, emissive: 0x3a2206 }),
+    new THREE.MeshStandardMaterial({ color: lin(0xd9a441), roughness: 0.4, metalness: 0.6, emissive: lin(0x7a4a10) }),
   );
   rim.rotation.x = Math.PI / 2;
   rim.position.y = 0.01;
@@ -234,8 +254,8 @@ export function create3D(canvas) {
   }
 
   // ---------- courtyard wall, pillars, banners ----------
-  const wallMat = new THREE.MeshStandardMaterial({ color: 0x33203a, roughness: 0.9 });
-  const trimMat = new THREE.MeshStandardMaterial({ color: 0x4a2f50, roughness: 0.8 });
+  const wallMat = new THREE.MeshStandardMaterial({ color: lin(0x4c3352), roughness: 0.9 });
+  const trimMat = new THREE.MeshStandardMaterial({ color: lin(0x634568), roughness: 0.8 });
   const box = (w, h, d, x, y, z, mat) => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     m.position.set(x, y, z);
@@ -291,7 +311,7 @@ export function create3D(canvas) {
     g.fillRect(0, 0, 128, 128);
     return texture(c);
   })();
-  const postMat = new THREE.MeshStandardMaterial({ color: 0x1a1016, roughness: 0.6, metalness: 0.5 });
+  const postMat = new THREE.MeshStandardMaterial({ color: lin(0x2a1a22), roughness: 0.6, metalness: 0.4 });
   const torches = [];
   for (const [x, z] of [[-7.6, -4.6], [7.6, -4.6], [-10.5, 0.8], [10.5, 0.8]]) {
     const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.11, 2.5, 10), postMat);
@@ -300,7 +320,7 @@ export function create3D(canvas) {
     const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.14, 0.26, 14), postMat);
     bowl.position.set(x, 2.3, z);
     scene.add(bowl);
-    const light = new THREE.PointLight(0xff8a3c, 1.9, 18, 2);
+    const light = new THREE.PointLight(lin(0xffa050), 1.5, 16, 2);
     light.position.set(x, 2.9, z);
     scene.add(light);
     const flame = new THREE.Sprite(
@@ -331,37 +351,63 @@ export function create3D(canvas) {
   );
   scene.add(embers);
 
-  // ---------- fighters: 2D models on upright cards ----------
-  const shadowTex = (() => {
+  // ---------- fighters ----------
+  // A soft dark patch under each fighter anchors them to the floor even where
+  // the cast shadow is faint.
+  const contactTex = (() => {
     const c = makeCanvas(128, 128);
     const g = c.getContext('2d');
     const grad = g.createRadialGradient(64, 64, 4, 64, 64, 62);
-    grad.addColorStop(0, 'rgba(0,0,0,0.7)');
+    grad.addColorStop(0, 'rgba(0,0,0,0.75)');
     grad.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = grad;
     g.fillRect(0, 0, 128, 128);
     return texture(c);
   })();
-
-  const cards = [0, 1].map(() => {
-    const c = makeCanvas(CARD.w * CARD.scale, CARD.h * CARD.scale);
-    const tex = texture(c);
-    tex.minFilter = THREE.LinearFilter;
-    tex.generateMipmaps = false;
-    const mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(CARD.w * S, CARD.h * S),
-      new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, fog: false }),
-    );
-    scene.add(mesh);
-    const shadow = new THREE.Mesh(
-      new THREE.PlaneGeometry(1, 1),
-      new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false }),
-    );
-    shadow.rotation.x = -Math.PI / 2;
-    shadow.position.y = 0.02;
-    scene.add(shadow);
-    return { canvas: c, g: c.getContext('2d'), tex, mesh, shadow };
+  const contacts = [0, 1].map(() => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: contactTex, transparent: true, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2;
+    m.position.y = 0.02;
+    scene.add(m);
+    return m;
   });
+
+  // Rigs are rebuilt whenever the pairing changes (new fight, new fighters).
+  let rigs = [];
+  let rigKey = '';
+  const ensureRigs = (view) => {
+    const s = view.state;
+    const opts = [0, 1].map((i) => ({
+      alt: i === 1 && s.f[0].char === s.f[1].char && !view.boss?.[1],
+      boss: !!view.boss?.[i],
+    }));
+    const key = s.f.map((f, i) => `${f.char}:${opts[i].alt}:${opts[i].boss}`).join('|');
+    if (key === rigKey) return;
+    rigKey = key;
+    for (const r of rigs) r.dispose();
+    rigs = s.f.map((f, i) => createRig(THREE, scene, getFighter(f.char), opts[i]));
+  };
+
+  // ---------- projectiles and hit flashes ----------
+  const orbTex = flameTex;
+  const orbs = [0, 1, 2, 3].map(() => {
+    const group = new THREE.Group();
+    const core = new THREE.Mesh(new THREE.SphereGeometry(0.11, 16, 12), new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false }));
+    const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: orbTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
+    halo.scale.set(1.1, 1.1, 1);
+    const tail = new THREE.Sprite(new THREE.SpriteMaterial({ map: orbTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false, opacity: 0.6 }));
+    const light = new THREE.PointLight(0xffffff, 0, 6, 2);
+    group.add(core, halo, tail, light);
+    group.visible = false;
+    scene.add(group);
+    return { group, halo, tail, light };
+  });
+  const flashes = [0, 1, 2].map(() => {
+    const light = new THREE.PointLight(0xffffff, 0, 7, 2);
+    scene.add(light);
+    return light;
+  });
+  let nextFlash = 0;
 
   // One more card across the whole stage for sparks, dust and projectiles.
   const fxCanvas = makeCanvas(ARENA.W * FX_SCALE, ARENA.H * FX_SCALE);
@@ -373,7 +419,7 @@ export function create3D(canvas) {
     new THREE.PlaneGeometry(ARENA.W * S, ARENA.H * S),
     new THREE.MeshBasicMaterial({ map: fxTex, transparent: true, depthWrite: false, fog: false }),
   );
-  fxMesh.position.set(0, wy(ARENA.H / 2), 0.12);
+  fxMesh.position.set(0, wy(ARENA.H / 2), 0.45);
   fxMesh.renderOrder = 20;
   scene.add(fxMesh);
 
@@ -434,10 +480,36 @@ export function create3D(canvas) {
 
   let lastNow = 0;
 
+  // Adaptive quality. If the device cannot hold a smooth frame rate, first
+  // drop the cast shadows and the extra-sharp resolution, then render at a
+  // lower resolution still. Slower devices keep a playable game.
+  const size = { w: 960, h: 540, dpr: 1 };
+  let quality = 0; // 0 = full, 1 = no cast shadows, 2 = reduced resolution
+  let sampleMs = 0;
+  let sampleFrames = 0;
+  const applyQuality = () => {
+    const ratio = quality === 0 ? Math.min(size.dpr, 2) : quality === 1 ? Math.min(size.dpr, 1.25) : 0.75;
+    renderer.setPixelRatio(ratio);
+    renderer.setSize(size.w, size.h, false);
+    key.castShadow = quality === 0;
+  };
+  const watchFrameRate = (rawDt) => {
+    if (quality >= 2 || rawDt > 250) return; // ignore pauses and tab switches
+    sampleMs += rawDt;
+    sampleFrames++;
+    if (sampleFrames < 100) return;
+    const average = sampleMs / sampleFrames;
+    sampleMs = sampleFrames = 0;
+    if (average > 27) {
+      quality++;
+      applyQuality();
+    }
+  };
+
   return {
     resize(w, h, dpr) {
-      renderer.setPixelRatio(Math.min(dpr, 2));
-      renderer.setSize(w, h, false);
+      Object.assign(size, { w, h, dpr });
+      applyQuality();
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     },
@@ -447,8 +519,10 @@ export function create3D(canvas) {
     },
 
     render(view, now, shake) {
-      const dt = Math.min(50, now - lastNow || 16);
+      const rawDt = lastNow ? now - lastNow : 16;
+      const dt = Math.min(50, rawDt);
       lastNow = now;
+      watchFrameRate(rawDt);
       const s = view.state;
 
       // Camera.
@@ -472,7 +546,7 @@ export function create3D(canvas) {
       // Torches and embers.
       for (const t of torches) {
         const flick = Math.sin(now / 83 + t.phase) * 0.5 + Math.sin(now / 37 + t.phase * 2) * 0.5;
-        t.light.intensity = 1.9 + flick * 0.4;
+        t.light.intensity = 1.5 + flick * 0.35;
         t.flame.scale.set(1.25 + flick * 0.12, 1.75 + flick * 0.28, 1);
       }
       for (let i = 0; i < EMBERS; i++) {
@@ -484,39 +558,59 @@ export function create3D(canvas) {
       }
       emberGeo.attributes.position.needsUpdate = true;
 
-      // Fighters. The mirror-match recolour applies to player 2 only.
-      const mirror = s.f[0].char === s.f[1].char;
-      const attackerOnTop = s.f[1].state === 'attack' || s.f[1].state === 'airAttack' ? 1 : 0;
+      // Fighters.
+      ensureRigs(view);
       for (let i = 0; i < 2; i++) {
         const f = s.f[i];
-        const card = cards[i];
-        const g = card.g;
-        g.setTransform(1, 0, 0, 1, 0, 0);
-        g.clearRect(0, 0, card.canvas.width, card.canvas.height);
-        g.setTransform(CARD.scale, 0, 0, CARD.scale, (CARD.ox - f.x) * CARD.scale, (CARD.oy - f.y) * CARD.scale);
-        drawFighter(g, f, getFighter(f.char), now, mirror && i === 1, false);
-        card.tex.needsUpdate = true;
-
-        const x = wx(f.x);
-        const y = wy(f.y);
-        card.mesh.position.set(x, y + (CARD.oy - CARD.h / 2) * S, i === attackerOnTop ? 0.04 : 0);
-        card.mesh.rotation.y = Math.atan2(camera.position.x - x, camera.position.z);
-        card.mesh.renderOrder = i === attackerOnTop ? 11 : 10;
-
-        const spread = 1 - Math.min(0.5, y * 0.25);
-        card.shadow.position.x = x;
-        card.shadow.scale.set(1.25 * spread, 0.62 * spread, 1);
-        card.shadow.material.opacity = 0.85 - Math.min(0.5, y * 0.3);
+        rigs[i].update(f, now, camera);
+        const height = wy(f.y);
+        const spread = 1 - Math.min(0.5, height * 0.25);
+        contacts[i].position.x = wx(f.x);
+        contacts[i].scale.set(1.15 * spread, 0.7 * spread, 1);
+        contacts[i].material.opacity = 0.7 - Math.min(0.45, height * 0.3);
       }
 
-      // Sparks and projectiles.
-      const busy = s.proj.length > 0 || fxActive();
+      // Projectiles: a white-hot core, a coloured halo and a light that
+      // sweeps across the floor and the fighters as it flies.
+      for (let i = 0; i < orbs.length; i++) {
+        const o = orbs[i];
+        const p = s.proj[i];
+        o.group.visible = !!p;
+        if (!p) {
+          o.light.intensity = 0;
+          continue;
+        }
+        const col = getFighter(p.char).colors.glow;
+        const pulse = 1 + Math.sin(now / 45 + i) * 0.15;
+        o.group.position.set(wx(p.x), wy(p.y), 0);
+        o.halo.material.color.set(col);
+        o.halo.scale.set(1.2 * pulse, 1.2 * pulse, 1);
+        o.tail.material.color.set(col);
+        o.tail.position.set(-Math.sign(p.vx) * 0.45, 0, 0);
+        o.tail.scale.set(1.5, 0.7, 1);
+        o.light.color.set(col);
+        o.light.intensity = 7 * pulse;
+      }
+
+      // Hit flashes: a short burst of light where a blow lands.
+      for (const fl of takeFlashes()) {
+        const light = flashes[nextFlash++ % flashes.length];
+        light.position.set(wx(fl.x), wy(fl.y), 0.9);
+        light.color.set(fl.color);
+        light.intensity = fl.heavy ? 14 : 8;
+      }
+      for (const light of flashes) light.intensity *= 0.78;
+
+      // Sparks, dust, damage numbers and dash trails, painted on a clear sheet
+      // standing just in front of the fighters.
+      const dashing = s.f.some((f) => f.state === 'attack' && (f.move === 'dash' || f.move === 'super'));
+      const busy = dashing || fxActive();
       fxMesh.visible = busy;
       if (busy) {
         fxG.setTransform(1, 0, 0, 1, 0, 0);
         fxG.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
         fxG.setTransform(FX_SCALE, 0, 0, FX_SCALE, 0, 0);
-        for (const p of s.proj) drawProjectile(fxG, p, getFighter(p.char), now);
+        for (const f of s.f) drawStreaks(fxG, f, getFighter(f.char).colors.glow);
         drawFx(fxG);
         fxTex.needsUpdate = true;
       }

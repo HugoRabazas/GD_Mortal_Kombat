@@ -184,3 +184,20 @@ test('the simulation is deterministic and CPU matches always finish', () => {
     }
   }
 });
+
+test('a boss modifier adds health and power, and survives the round reset', () => {
+  const s = createMatch(['shadow', 'ruko'], [null, { health: 1.3, power: 1.5 }]);
+  assert.equal(s.f[1].maxHp, 130);
+  while (s.phase !== 'fight') step(s, [0, 0]);
+  closeUp(s);
+  tap(s, 0, INPUT.KICK);
+  const boosted = s.f[0].maxHp - s.f[0].hp;
+  assert.ok(boosted > MOVES.kick.dmg, `boosted kick did ${boosted}`);
+  s.f[0].hp = 1;
+  closeUp(s);
+  tap(s, 0, INPUT.KICK, 20);
+  run(s, TIMING.KO + 20);
+  assert.equal(s.round, 2);
+  assert.equal(s.f[1].maxHp, 130, 'boss health kept in round 2');
+  assert.equal(s.f[1].pw, 1.5);
+});

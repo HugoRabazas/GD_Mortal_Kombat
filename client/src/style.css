@@ -122,7 +122,15 @@ body {
 
 #ui[data-screen='result'] {
   align-items: flex-end;
-  padding-bottom: 9vh;
+  padding-bottom: 7vh;
+}
+
+.screen.result {
+  margin: auto auto 0;
+  width: auto;
+  max-width: 100%;
+  padding: 14px 26px 16px;
+  background: radial-gradient(ellipse at center, rgba(13, 8, 18, 0.86), rgba(13, 8, 18, 0.55) 70%, rgba(13, 8, 18, 0));
 }
 
 .loading {
@@ -290,31 +298,6 @@ button:focus-visible {
   height: 44px;
   border-radius: 50%;
   display: block;
-}
-
-.roster {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 16px;
-  margin: 6px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.roster li {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font: 500 1.25rem/1 var(--font-display);
-  letter-spacing: 0.08em;
-  color: var(--ash);
-}
-
-.roster .head {
-  width: 34px;
-  height: 34px;
-  box-shadow: 0 0 0 2px var(--gold);
 }
 
 /* ------------------------------------------------------------ select --- */
@@ -513,81 +496,62 @@ kbd {
 }
 
 /* ------------------------------------------------------ touch controls --- */
+/* Each control is placed by the layout the player chose (touchLayout.js sets
+   left/top as percentages of this area). --ts is the size multiplier. */
 
 #touch {
+  --ts: 1;
   position: absolute;
   inset: 0;
   pointer-events: none;
   touch-action: none;
-  padding: 0 max(18px, env(safe-area-inset-right, 0px)) max(16px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-}
-
-#turn {
-  display: none;
 }
 
 #app.portrait #touch {
-  position: static;
-  flex: none;
+  position: relative;
+  inset: auto;
+  flex: 1 1 0;
   width: 100%;
-  box-sizing: border-box;
-  padding: 18px 4px 0;
-  flex-wrap: wrap;
-  align-items: center;
-  row-gap: 14px;
+  min-height: 200px;
 }
 
-#app.portrait #turn {
-  display: block;
-  flex-basis: 100%;
-  margin: 0;
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--ash);
+.ctl {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  touch-action: none;
 }
 
 #stick {
-  pointer-events: auto;
-  width: 132px;
-  height: 132px;
+  width: calc(min(132px, 34vw, 38vh) * var(--ts));
+  aspect-ratio: 1;
   border-radius: 50%;
   background: rgba(51, 32, 61, 0.55);
   outline: 2px solid rgba(232, 180, 84, 0.45);
   display: grid;
   place-items: center;
-  touch-action: none;
 }
 
 #knob {
-  width: 58px;
-  height: 58px;
+  width: 44%;
+  height: 44%;
   border-radius: 50%;
   background: var(--gold);
   box-shadow: 0 3px 0 var(--ink);
   pointer-events: none;
 }
 
-#pad {
-  pointer-events: auto;
-  display: grid;
-  grid-template-columns: repeat(3, 64px);
-  grid-template-rows: repeat(2, 64px);
-  gap: 9px;
-  touch-action: none;
-}
-
 .tb {
+  width: calc(min(64px, 16vw, 19vh) * var(--ts));
+  aspect-ratio: 1;
+  padding: 0;
   border: 0;
   border-radius: 50%;
   background: rgba(51, 32, 61, 0.7);
   outline: 2px solid rgba(246, 234, 216, 0.45);
   color: var(--bone);
-  font: 700 1.25rem/1 var(--font-display);
+  font: 700 calc(1.25rem * var(--ts)) / 1 var(--font-display);
   letter-spacing: 0.04em;
-  touch-action: none;
 }
 
 .tb.on {
@@ -595,10 +559,19 @@ kbd {
   color: var(--ink);
 }
 
+.tb-p,
+.tb-k {
+  background: rgba(181, 18, 44, 0.75);
+}
+
 /* Special and finisher stay dim until there is enough energy to use them. */
 .tb-sp,
 .tb-ult {
   opacity: 0.4;
+}
+
+.tb-ult {
+  color: var(--ember);
 }
 
 .tb-sp.ready,
@@ -613,39 +586,239 @@ kbd {
   color: #fff8ec;
 }
 
-.tb-p,
-.tb-k {
-  background: rgba(181, 18, 44, 0.75);
+#turn {
+  display: none;
 }
 
-.tb-p {
-  grid-column: 3;
-  grid-row: 2;
+#app.portrait #turn {
+  display: block;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 2px;
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--ash);
+  pointer-events: none;
 }
 
-.tb-k {
-  grid-column: 2;
-  grid-row: 2;
+/* Arranging: every control becomes a handle that can be dragged. */
+#touch.arranging {
+  background: rgba(13, 8, 18, 0.45);
 }
 
-.tb-blk {
-  grid-column: 1;
-  grid-row: 2;
+#touch.arranging .ctl {
+  opacity: 1;
+  outline: 2px dashed var(--gold);
+  outline-offset: 3px;
+  cursor: grab;
 }
 
-.tb-sp {
-  grid-column: 3;
-  grid-row: 1;
+#touch.arranging .ctl.dragging {
+  outline-style: solid;
+  box-shadow: 0 0 18px rgba(232, 180, 84, 0.8);
+  cursor: grabbing;
 }
 
-.tb-ult {
-  grid-column: 2;
-  grid-row: 1;
+#ui[data-screen='arrange'] {
+  align-items: flex-start;
+}
+
+.screen.arrange {
+  width: min(100%, 520px);
+  margin: 0 auto;
+  padding: 10px 14px 12px;
+  gap: 8px;
+  background: var(--veil);
+  border-bottom: 2px solid var(--gold);
+}
+
+.screen.arrange p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--ash);
+}
+
+.screen.arrange b {
+  color: var(--bone);
+}
+
+.btn.small {
+  min-height: 36px;
+  padding: 6px 16px 3px;
+  font-size: 1.2rem;
+}
+
+/* ------------------------------------------------------------ arcade --- */
+
+.ladder {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px 12px 14px;
+  background: rgba(29, 17, 36, 0.9);
+  border-bottom: 3px solid var(--gold);
+}
+
+.ladder ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.ladder li {
+  display: grid;
+  grid-template-columns: 1.4em 34px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: rgba(51, 32, 61, 0.55);
+  text-align: left;
+}
+
+.ladder .head {
+  width: 34px;
+  height: 34px;
+}
+
+.ladder .num {
+  font: 700 1.3rem/1 var(--font-display);
+  color: var(--gold);
+  font-variant-numeric: tabular-nums;
+}
+
+.ladder .lname {
+  font: 500 1.3rem/1 var(--font-display);
+  letter-spacing: 0.05em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ladder .ltag {
+  font: 700 0.66rem var(--font-body);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+.ladder li.boss {
+  background: linear-gradient(90deg, rgba(181, 18, 44, 0.75), rgba(51, 32, 61, 0.55));
+}
+
+.ladder li.boss .ltag {
+  color: var(--gold);
+}
+
+.headline {
+  margin: 0;
+  font: 700 clamp(1.7rem, 5vw, 2.4rem) / 1 var(--font-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--bone);
+  text-shadow: 0 2px 0 var(--ink), 0 0 18px rgba(13, 8, 18, 0.9);
+}
+
+.sub {
+  margin: -8px 0 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--bone);
+  font-weight: 600;
+  text-shadow: 0 1px 0 var(--ink), 0 0 12px rgba(13, 8, 18, 0.9);
+  font-variant-numeric: tabular-nums;
+}
+
+.sub .head {
+  width: 30px;
+  height: 30px;
+  box-shadow: 0 0 0 2px var(--gold);
+}
+
+.best {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  color: var(--ash);
+  font-variant-numeric: tabular-nums;
+}
+
+.best b {
+  color: var(--gold);
+}
+
+/* Short screens (a phone held sideways): tighten the menu so it fits. */
+@media (max-height: 480px) {
+  .brand {
+    font-size: clamp(2.6rem, 17vh, 4.2rem);
+  }
+
+  .tag {
+    display: none;
+  }
+
+  .screen {
+    gap: 8px;
+  }
+
+  .menu .stack {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: min(100%, 560px);
+    gap: 8px;
+  }
+
+  .menu .btn {
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding-top: 7px;
+    white-space: nowrap;
+  }
+
+  .btn {
+    min-height: 40px;
+    font-size: 1.4rem;
+  }
+
+  .head.big {
+    width: 64px;
+    height: 64px;
+  }
+
+  .moves {
+    display: none;
+  }
+
+  .screen.select,
+  .screen.help {
+    padding: 10px 14px 12px;
+  }
 }
 
 @media (max-width: 520px) {
   .versus {
     gap: 6px;
+  }
+
+  /* Narrow screens: the portraits identify the rivals, so drop the names. */
+  .ladder {
+    padding: 12px 8px 14px;
+  }
+
+  .ladder li {
+    grid-template-columns: 1.2em 34px minmax(0, 1fr);
+  }
+
+  .ladder .lname {
+    display: none;
   }
 
   .vs {

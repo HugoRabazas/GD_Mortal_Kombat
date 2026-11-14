@@ -41,6 +41,7 @@ export function unlockAudio() {
       for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
     }
     if (ctx.state === 'suspended') ctx.resume();
+    if (musicMode !== 'off' && !musicTimer) setMusic(musicMode);
   } catch {
     ctx = null;
   }
@@ -129,6 +130,97 @@ const SOUNDS = {
   },
   ui: () => tone('triangle', 700, 900, 0.06, 0.2),
 };
+
+// ------------------------------------------------------------------ music ---
+// A small step sequencer: four bars (A minor, A minor, F, G) of drums, bass
+// and a plucked melody, generated note by note. 'menu' is a sparse version of
+// the same loop, 'fight' is the full one.
+
+const BPM = 116;
+const STEP = 60 / BPM / 4; // a sixteenth note, in seconds
+const BARS = [
+  { bass: 55, notes: [220, 261.63, 329.63] },
+  { bass: 55, notes: [220, 261.63, 329.63] },
+  { bass: 43.65, notes: [174.61, 220, 261.63] },
+  { bass: 49, notes: [196, 246.94, 293.66] },
+];
+const BASS_STEPS = [0, 3, 6, 8, 11, 14];
+const LEAD_STEPS = [0, 3, 6, 10, 12, 14];
+let musicBus = null;
+let musicMode = 'off';
+let musicTimer = null;
+let musicStep = 0;
+let musicNext = 0;
+
+function note(type, freq, t, dur, gain, glideTo) {
+  const osc = ctx.createOscillator();
+  const g = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t);
+  if (glideTo) osc.frequency.exponentialRampToValueAtTime(glideTo, t + dur);
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  osc.connect(g).connect(musicBus);
+  osc.start(t);
+  osc.stop(t + dur + 0.02);
+}
+
+function hiss(t, dur, gain, freq) {
+  const src = ctx.createBufferSource();
+  src.buffer = noise;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'highpass';
+  filter.frequency.value = freq;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(gain, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(filter).connect(g).connect(musicBus);
+  src.start(t, Math.random() * 0.5);
+  src.stop(t + dur + 0.02);
+}
+
+function musicTick(i, t) {
+  const bar = BARS[Math.floor(i / 16) % BARS.length];
+  const s = i % 16;
+  const full = musicMode === 'fight';
+  if (s % 4 === 0 && (full || s % 8 === 0)) note('sine', 130, t, 0.16, 0.9, 42); // kick
+  if (full && (s === 4 || s === 12)) hiss(t, 0.12, 0.35, 1800); // snare
+  if (full ? s % 2 === 1 : s % 4 === 2) hiss(t, 0.04, 0.12, 7000); // hat
+  if (BASS_STEPS.includes(s) && (full || s % 8 === 0)) note('sawtooth', bar.bass, t, full ? 0.2 : 0.5, 0.32);
+  if (LEAD_STEPS.includes(s)) {
+    const n = bar.notes[(LEAD_STEPS.indexOf(s) + Math.floor(i / 16)) % bar.notes.length];
+    note('triangle', full ? n * 2 : n, t, 0.22, full ? 0.16 : 0.12);
+  }
+}
+
+function pumpMusic() {
+  if (!ctx || ctx.state !== 'running') return;
+  // If the tab slept, do not try to play everything that was missed.
+  if (musicNext < ctx.currentTime) musicNext = ctx.currentTime + 0.05;
+  while (musicNext < ctx.currentTime + 0.15) {
+    if (!muted) musicTick(musicStep, musicNext);
+    musicStep = (musicStep + 1) % 64;
+    musicNext += STEP;
+  }
+}
+
+// mode: 'menu', 'fight' or 'off'
+export function setMusic(mode) {
+  musicMode = mode;
+  if (!ctx) return; // starts once the audio engine is unlocked
+  if (!musicBus) {
+    musicBus = ctx.createGain();
+    musicBus.gain.value = 0.3;
+    musicBus.connect(master);
+  }
+  if (mode === 'off') {
+    clearInterval(musicTimer);
+    musicTimer = null;
+  } else if (!musicTimer) {
+    musicNext = 0;
+    musicTimer = setInterval(pumpMusic, 40);
+  }
+}
 
 export function play(name) {
   if (!ctx || muted || ctx.state !== 'running') return;

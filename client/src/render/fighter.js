@@ -12,9 +12,9 @@ import { MOVES } from '../../../shared/sim.js';
 import { heads } from '../assets.js';
 
 const { FLOOR } = ARENA;
-const LEN = { thigh: 35, shin: 35, upper: 25, fore: 25, torso: 50, neck: 27, head: 32 };
+export const LEN = { thigh: 35, shin: 35, upper: 25, fore: 25, torso: 50, neck: 27, head: 32 };
 const OUTLINE = '#0b070d';
-const ALT = { primary: '#2456c9', secondary: '#101a33', accent: '#7fd4ff', glow: '#59b7ff' };
+export const ALT = { primary: '#2456c9', secondary: '#101a33', accent: '#7fd4ff', glow: '#59b7ff' };
 
 // Pose fields. Hands are relative to the shoulder, feet relative to the spot
 // on the ground under the fighter. x points the way the fighter is facing,
@@ -143,9 +143,15 @@ function glide(slot, target, f) {
   return cur;
 }
 
+// The pose a fighter should be drawn in right now, eased from the last frame.
+// Call it once per fighter per frame.
+export function currentPose(f, now) {
+  return glide(f.slot, targetPose(f, now), f);
+}
+
 // Two-bone inverse kinematics: given where a limb starts and where it should
 // end, find the middle joint (knee or elbow). `bend` picks the bending side.
-function joint(ax, ay, bx, by, l1, l2, bend) {
+export function joint(ax, ay, bx, by, l1, l2, bend) {
   let dx = bx - ax;
   let dy = by - ay;
   let d = Math.hypot(dx, dy) || 0.001;
@@ -196,10 +202,33 @@ function shade(hex, amount) {
   return `rgb(${ch(n >> 16)},${ch((n >> 8) & 255)},${ch(n & 255)})`;
 }
 
+// Speed streaks trailing behind a dashing fighter.
+export function drawStreaks(ctx, f, color) {
+  if (!(f.state === 'attack' && (f.move === 'dash' || f.move === 'super') && f.vx !== 0)) return;
+  const D = f.facing;
+  ctx.save();
+  ctx.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 7; i++) {
+    const y = f.y - 20 - i * 19;
+    const len = 90 + ((i * 53) % 70) + (f.move === 'super' ? 80 : 0);
+    const grad = ctx.createLinearGradient(f.x, 0, f.x - D * len, 0);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.strokeStyle = grad;
+    ctx.globalAlpha = 0.75;
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(f.x - D * 10, y);
+    ctx.lineTo(f.x - D * len, y);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // `char` is the roster entry, `alt` recolours the outfit for a mirror match.
 export function drawFighter(ctx, f, char, now, alt = false, flatShadow = true) {
   const col = alt ? { ...char.colors, ...ALT } : char.colors;
-  const p = glide(f.slot, targetPose(f, now), f);
+  const p = currentPose(f, now);
   const D = f.facing;
   const special = f.state === 'attack' && (f.move === 'dash' || f.move === 'super' || f.move === 'rise' || f.move === 'bolt');
 
@@ -212,26 +241,7 @@ export function drawFighter(ctx, f, char, now, alt = false, flatShadow = true) {
     ctx.fill();
   }
 
-  // Speed streaks behind dashing fighters.
-  if (f.state === 'attack' && (f.move === 'dash' || f.move === 'super') && f.vx !== 0) {
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    for (let i = 0; i < 7; i++) {
-      const y = f.y - 20 - i * 19;
-      const len = 90 + ((i * 53) % 70) + (f.move === 'super' ? 80 : 0);
-      const grad = ctx.createLinearGradient(f.x, 0, f.x - D * len, 0);
-      grad.addColorStop(0, col.glow);
-      grad.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.strokeStyle = grad;
-      ctx.globalAlpha = 0.75;
-      ctx.lineWidth = 5;
-      ctx.beginPath();
-      ctx.moveTo(f.x - D * 10, y);
-      ctx.lineTo(f.x - D * len, y);
-      ctx.stroke();
-    }
-    ctx.restore();
-  }
+  drawStreaks(ctx, f, col.glow);
 
   ctx.save();
   ctx.translate(f.x, f.y + p.lift);

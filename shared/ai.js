@@ -7,8 +7,9 @@ import { getFighter } from './fighters.js';
 
 const LEVELS = {
   easy: { think: 16, block: 0.25, attack: 0.3, special: 0.02 },
-  normal: { think: 10, block: 0.5, attack: 0.5, special: 0.05 },
+  normal: { think: 8, block: 0.6, attack: 0.58, special: 0.07 },
   hard: { think: 5, block: 0.8, attack: 0.7, special: 0.1 },
+  boss: { think: 4, block: 0.84, attack: 0.76, special: 0.14 },
 };
 
 export function createAI(level = 'normal', seed = 1) {
