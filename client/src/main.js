@@ -2,7 +2,7 @@
 // screens (menu -> fighter select -> fight -> result).
 
 import { FIGHTERS, getFighter } from '../../shared/fighters.js';
-import { RULES, TICK_RATE } from '../../shared/constants.js';
+import { INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
 import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
@@ -63,6 +63,7 @@ const app = {
   screen: 'loading',
   mode: 'arcade', // 'arcade', 'arena' and 'quick' are single player, 'versus' is two players
   vsArena: false, // in 2-player mode: a duel, or a brawl with two CPU fighters added
+  dummy: 'still', // training partner: 'still', 'block' or 'fight'
   picks: [FIGHTERS[0].id, FIGHTERS[1 % FIGHTERS.length].id],
   level: 'normal',
   arcade: null, // { ladder, stage, score, retries, gained }
@@ -149,6 +150,7 @@ function menuScreen() {
         <button type="button" class="btn" data-act="arcade">Arcade <small>single player · ${STAGES.length} duels</small></button>
         <button type="button" class="btn" data-act="quick">Quick Fight <small>one duel vs CPU</small></button>
         <button type="button" class="btn" data-act="versus">2 Players <small>keyboard or gamepads</small></button>
+        <button type="button" class="btn quiet" data-act="training">Training <small>practise your moves</small></button>
         <button type="button" class="btn quiet" data-act="help">How to play</button>
       </div>
       ${best ? `<p class="best">Arcade best <b>${points(best)}</b></p>` : ''}
@@ -236,7 +238,7 @@ function rivalsCard(taken) {
 function selectScreen() {
   const levels = [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']];
   const { mode } = app;
-  const names = mode === 'versus' ? ['Player 1', 'Player 2'] : ['You', 'CPU'];
+  const names = mode === 'versus' ? ['Player 1', 'Player 2'] : mode === 'training' ? ['You', 'Training partner'] : ['You', 'CPU'];
   const seg = (items, current, act) => `<div class="seg" role="group">${items.map(([id, label]) => `<button type="button" class="${current === id ? 'on' : ''}" data-act="${act}" data-id="${id}" aria-pressed="${current === id}">${label}</button>`).join('')}</div>`;
   let second;
   if (mode === 'arcade') second = ladderCard();
@@ -250,6 +252,8 @@ function selectScreen() {
         ${second}
       </div>
       ${mode === 'quick' || mode === 'arena' ? seg(levels, app.level, 'level') : ''}
+      ${mode === 'training' ? seg([['still', 'Stands still'], ['block', 'Blocks'], ['fight', 'Fights back']], app.dummy, 'dummy') : ''}
+      ${mode === 'training' ? '<p class="note">No clock, and health and energy refill, so you can try every move. Pause to leave.</p>' : ''}
       ${mode === 'versus' ? seg([['duel', 'Duel'], ['brawl', 'Brawl with 2 CPU']], app.vsArena ? 'brawl' : 'duel', 'vsKind') : ''}
       ${mode === 'versus' && app.touch ? '<p class="note">Two players need a keyboard or gamepads: the on-screen buttons control one fighter only.</p>' : ''}
       <div class="row">
@@ -289,6 +293,7 @@ function helpScreen() {
         <li><b>Crystals</b> appear on the floor: gold gives energy, green gives health. Walk over one to take it.</li>
         <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
+        <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks or fights back.</li>
         <li>On a phone, use the stick and the buttons on screen. <b>Arrange buttons</b> lets you drag them where you like.</li>
         <li>Press <kbd>P</kbd>, <kbd>Esc</kbd> or Start to pause.</li>
       </ul>
@@ -551,6 +556,9 @@ function startFight() {
     controllers = [solo, cpu(app.level), cpu(app.level), cpu(app.level)];
   } else if (app.mode === 'quick') {
     controllers = [solo, cpu(app.level)];
+  } else if (app.mode === 'training') {
+    const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
+    controllers = [solo, partner];
   } else if (app.vsArena) {
     chars = [...app.picks, ...rivalsFor(app.picks)];
     controllers = [...two, cpu('normal'), cpu('normal')];
@@ -603,6 +611,14 @@ const ACTIONS = {
   },
   quick() {
     app.mode = 'quick';
+    show('select');
+  },
+  training() {
+    app.mode = 'training';
+    show('select');
+  },
+  dummy(el) {
+    app.dummy = el.dataset.id;
     show('select');
   },
   arena() {
@@ -803,11 +819,24 @@ function labels() {
   const n = app.game ? app.game.state.f.length : 2;
   if (app.mode === 'online' && app.online?.info) return app.online.info.slots.map((sl) => sl.name.toUpperCase());
   if (app.mode === 'versus') return ['P1', 'P2', 'CPU', 'CPU'].slice(0, n);
+  if (app.mode === 'training') return ['YOU', 'PARTNER'];
   if (app.mode === 'arcade' && app.arcade) {
     const st = app.arcade.ladder[app.arcade.stage];
     return ['YOU', st.boss ? 'BOSS' : `STAGE ${app.arcade.stage + 1}/${app.arcade.ladder.length}`];
   }
   return ['YOU', 'CPU', 'CPU', 'CPU'].slice(0, n);
+}
+
+// Training never ends: the clock stays full, energy is always there to spend,
+// and anyone who gets low on health is topped up once they are back on their feet.
+function keepTraining(s) {
+  if (s.phase !== 'fight') return;
+  s.timer = MODES.duel.seconds * TICK_RATE;
+  s.f[0].meter = RULES.METER_MAX;
+  for (const f of s.f) {
+    if (f.hp < f.maxHp * 0.4 && (f.state === 'idle' || f.state === 'walk' || f.state === 'block')) f.hp = f.maxHp;
+    else if (f.hp < 8) f.hp = 8; // never actually knocked out
+  }
 }
 
 function frame(now) {
@@ -817,6 +846,7 @@ function frame(now) {
   if (!g || !stage) return;
   if (padStartPressed()) togglePause();
   g.update(now);
+  if (playing && app.mode === 'training') keepTraining(g.state);
   const self = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
   handleEvents(g.drain(), g.state, { quiet: !playing, project: stage.project, me: self });
 
@@ -830,7 +860,7 @@ function frame(now) {
     : app.mode === 'versus'
       ? 'P1: WASD move · Space jump · F G punch kick · H block · T Y special finisher     P2: arrows · U · J K · L · I O'
       : 'WASD move · Space jump · J punch (x3 combo) · K kick · L block (+move = roll) · I special · O finisher';
-  stage.render({ state: g.state, demo: !playing, labels: tags, boss, humans, me: mine, net, hint }, now);
+  stage.render({ state: g.state, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: app.mode === 'training' }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {

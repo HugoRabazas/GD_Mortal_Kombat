@@ -149,7 +149,7 @@ export function createStage(glCanvas, hudCanvas) {
         finisherCutIn(ctx, s);
         drawHud(ctx, s, view.labels, now);
         // A reminder of the controls while the first round is being announced.
-        if (view.hint && s.round === 1 && s.phase === 'intro') {
+        if (view.hint && (view.hintAlways || (s.round === 1 && s.phase === 'intro'))) {
           ctx.save();
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';

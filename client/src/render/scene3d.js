@@ -492,9 +492,10 @@ export function create3D(canvas) {
   let mood = 0; // 0 dusk, 1 night, 2 storm; eases between them
   let lightning = 0; // brightness of the current flash, fading out
   let nextStrike = 4000;
+  // The moods' colours, converted once so nothing is allocated per frame.
+  const moods = MOODS.map((m) => ({ ...m, sky0: lin(m.hemi[0]), ground: lin(m.hemi[1]), keyC: lin(m.key[0]), moonC: lin(m.moon[0]), fogC: lin(m.fog[0]) }));
   const c1 = new THREE.Color();
-  const c2 = new THREE.Color();
-  const blend = (a, b, k) => c1.copy(lin(a)).lerp(c2.copy(lin(b)), k);
+  const blend = (a, b, k) => c1.copy(a).lerp(b, k);
 
   function applyMood(view, now, dt) {
     const s = view.state;
@@ -504,8 +505,8 @@ export function create3D(canvas) {
     mood += (want - mood) * Math.min(1, dt / 1400);
     const i = Math.min(1, Math.floor(mood));
     const k = Math.min(1, Math.max(0, mood - i));
-    const a = MOODS[i];
-    const b = MOODS[i + 1];
+    const a = moods[i];
+    const b = moods[i + 1];
     const mix = (x, y) => x + (y - x) * k;
 
     // How far the ring of fire has closed in (0 = wide open, 1 = fully closed).
@@ -523,14 +524,14 @@ export function create3D(canvas) {
     const flash = lightning * (0.6 + 0.4 * Math.sin(now / 23));
 
     skyMat.color.setRGB(mix(a.sky[0], b.sky[0]) + flash * 0.7, mix(a.sky[1], b.sky[1]) + flash * 0.7, mix(a.sky[2], b.sky[2]) + flash * 0.8);
-    hemi.color.copy(blend(a.hemi[0], b.hemi[0], k));
-    hemi.groundColor.copy(blend(a.hemi[1], b.hemi[1], k));
+    hemi.color.copy(blend(a.sky0, b.sky0, k));
+    hemi.groundColor.copy(blend(a.ground, b.ground, k));
     hemi.intensity = mix(a.hemi[2], b.hemi[2]) + flash * 1.6;
-    key.color.copy(blend(a.key[0], b.key[0], k));
+    key.color.copy(blend(a.keyC, b.keyC, k));
     key.intensity = mix(a.key[1], b.key[1]) + flash * 0.8;
-    moonLight.color.copy(blend(a.moon[0], b.moon[0], k));
+    moonLight.color.copy(blend(a.moonC, b.moonC, k));
     moonLight.intensity = mix(a.moon[1], b.moon[1]);
-    scene.fog.color.copy(blend(a.fog[0], b.fog[0], k));
+    scene.fog.color.copy(blend(a.fogC, b.fogC, k));
     scene.fog.density = mix(a.fog[1], b.fog[1]);
 
     // Torches burn harder at night, and flare as the ring closes.

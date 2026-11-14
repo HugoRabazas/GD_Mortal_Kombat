@@ -30,6 +30,8 @@ signature moves of any existing fighting game.
   boss, with a score and a best score remembered on the device.
 - **Quick Fight**: one duel against the CPU on Easy, Normal or Hard.
 - **2 Players**: a duel on one device, or a brawl with two CPU fighters added.
+- **Training**: a duel with no clock where health and energy refill, against a
+  partner who stands still, blocks or fights back.
 
 A duel is first to two round wins.
 

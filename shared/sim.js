@@ -127,6 +127,7 @@ function newFighter(charId, slot, count, mod) {
     move: null, // key into MOVES while attacking
     hits: [], // slots already struck by the current attack
     stun: 0,
+    stop: 0, // ticks this fighter is frozen by the impact of a hit
     inv: 0, // invulnerability ticks
     rollOk: true, // the block button must be released before the next roll
     prev: 0, // buttons held on the previous tick
@@ -641,10 +642,12 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     def.vx = dx * m.push;
     def.vz = dz * m.push;
   }
-  // In a duel every hit freezes the action for a beat; in a brawl only the
-  // finisher does, so four fighters do not stutter each other.
+  // The impact of a hit freezes the action for a beat. In a duel the whole
+  // world stops; in a brawl only the two fighters involved do, so the others
+  // are not made to stutter (the finisher still stops everyone).
   if (s.f.length === 2) s.hitstop = big ? 12 : m.heavy ? 7 : 4;
   else if (big) s.hitstop = 6;
+  else att.stop = def.stop = m.heavy ? 5 : 3;
   emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, heavy: !!m.heavy, kind, combo: def.taken });
 }
 
@@ -830,8 +833,8 @@ export function step(s, inputs) {
     s.ringR = ARENA.R - (ARENA.R - ARENA.R_MIN) * k;
   }
 
-  for (const f of s.f) control(s, f, f.prev);
-  for (const f of s.f) physics(s, f);
+  for (const f of s.f) if (f.stop <= 0) control(s, f, f.prev);
+  for (const f of s.f) if (f.stop <= 0) physics(s, f);
   for (let i = 0; i < s.f.length; i++) for (let j = i + 1; j < s.f.length; j++) separate(s, s.f[i], s.f[j]);
   for (const f of s.f) keepInside(s, f);
 
@@ -840,7 +843,10 @@ export function step(s, inputs) {
     updateItems(s);
     for (const f of s.f) if (f.inv > 0) f.inv--;
   }
-  for (const f of s.f) f.t++;
+  for (const f of s.f) {
+    if (f.stop > 0) f.stop--;
+    else f.t++;
+  }
 
   if (fighting) {
     const standing = s.f.filter((f) => !isOut(f));
