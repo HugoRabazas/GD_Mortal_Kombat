@@ -47,7 +47,14 @@ export function unlockAudio() {
   }
 }
 
+// Combat sounds are nudged up or down a little each time they play, so a
+// flurry of hits does not sound like one sample on repeat.
+const VARIED = new Set(['swing', 'hit', 'heavy', 'block', 'jump', 'land', 'thud', 'burn']);
+let pitch = 1;
+
 function tone(type, from, to, dur, gain, delay = 0) {
+  from *= pitch;
+  to *= pitch;
   const t = ctx.currentTime + delay;
   const osc = ctx.createOscillator();
   const g = ctx.createGain();
@@ -67,7 +74,7 @@ function burst(dur, gain, freq, q = 1, delay = 0, type = 'bandpass') {
   src.buffer = noise;
   const filter = ctx.createBiquadFilter();
   filter.type = type;
-  filter.frequency.value = freq;
+  filter.frequency.value = freq * pitch;
   filter.Q.value = q;
   const g = ctx.createGain();
   g.gain.setValueAtTime(gain, t);
@@ -240,6 +247,7 @@ export function setMusic(mode) {
 export function play(name) {
   if (!ctx || muted || ctx.state !== 'running') return;
   try {
+    pitch = VARIED.has(name) ? 0.9 + Math.random() * 0.2 : 1;
     SOUNDS[name]?.();
   } catch {
     // a failed sound must never break the game

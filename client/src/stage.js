@@ -73,6 +73,59 @@ function finisherCutIn(ctx, s) {
   ctx.restore();
 }
 
+// The line-up shown while the first round is announced: every fighter's
+// portrait and name, so everyone knows who is who before the bell.
+function lineUp(ctx, s, labels) {
+  if (s.round !== 1 || s.phase !== 'intro' || s.pt > 70) return;
+  const fade = Math.min(1, s.pt / 10, (70 - s.pt) / 10);
+  const n = s.f.length;
+  const r = n > 2 ? 42 : 56;
+  const gap = n > 2 ? 190 : 380;
+  const y = 388;
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, fade);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  for (const f of s.f) {
+    const char = getFighter(f.char);
+    // Portraits slide in from the sides.
+    const x = W / 2 + (f.slot - (n - 1) / 2) * gap + (f.slot < n / 2 ? -1 : 1) * (1 - Math.min(1, s.pt / 14)) * 120;
+    ctx.beginPath();
+    ctx.arc(x, y, r + 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#0b070d';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(x, y, r + 1, 0, Math.PI * 2);
+    ctx.fillStyle = char.colors.accent;
+    ctx.fill();
+    const head = heads.get(char.id);
+    if (head) ctx.drawImage(head, x - r + 3, y - r + 3, (r - 3) * 2, (r - 3) * 2);
+    ctx.font = `italic 700 ${n > 2 ? 24 : 30}px Teko, Impact, "Arial Black", sans-serif`;
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = '#0b070d';
+    ctx.strokeText(char.name, x, y + r + 20);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(char.name, x, y + r + 20);
+    if (labels[f.slot]) {
+      ctx.font = '700 11px Barlow, system-ui, sans-serif';
+      ctx.lineWidth = 3;
+      ctx.strokeText(labels[f.slot], x, y + r + 40);
+      ctx.fillStyle = '#e8b454';
+      ctx.fillText(labels[f.slot], x, y + r + 40);
+    }
+  }
+  if (n === 2) {
+    ctx.font = 'italic 700 54px Teko, Impact, "Arial Black", sans-serif';
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#0b070d';
+    ctx.strokeText('VS', W / 2, y + 4);
+    ctx.fillStyle = '#ff5a36';
+    ctx.fillText('VS', W / 2, y + 4);
+  }
+  ctx.restore();
+}
+
 export function createStage(glCanvas, hudCanvas) {
   const three = create3D(glCanvas);
   if (!three) glCanvas.hidden = true;
@@ -148,8 +201,9 @@ export function createStage(glCanvas, hudCanvas) {
         drawTags(ctx, s, spots, view.labels);
         finisherCutIn(ctx, s);
         drawHud(ctx, s, view.labels, now);
+        lineUp(ctx, s, view.labels);
         // A reminder of the controls while the first round is being announced.
-        if (view.hint && (view.hintAlways || (s.round === 1 && s.phase === 'intro'))) {
+        if (view.hint && (view.hintAlways || (s.round === 1 && s.phase === 'intro' && s.pt > 70))) {
           ctx.save();
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';

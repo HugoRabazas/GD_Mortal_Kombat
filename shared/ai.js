@@ -15,6 +15,18 @@ const LEVELS = {
   boss: { think: 4, block: 0.84, attack: 0.76, special: 0.14 },
 };
 
+// Each kind of fighter has its own way of fighting, keyed by its special move:
+//   dash  - a rusher: always pressing forward, quick to strike
+//   bolt  - a zoner: backs off to make room, then shoots
+//   quake - a bruiser: guards more, walks you down
+//   rise  - a skirmisher: rolls round your side, in and out
+const STYLES = {
+  dash: { attack: 0.02, special: 1.15 },
+  bolt: { special: 1.8, retreat: 0.1 },
+  quake: { block: 0.08 },
+  rise: { attack: 0.04, circle: 0.07 },
+};
+
 export function createAI(level = 'normal', seed = 1) {
   return { cfg: LEVELS[level] || LEVELS.normal, seed: seed >>> 0 || 1, wait: 0, held: 0, tap: 0, tapT: 0, target: -1, retarget: 0 };
 }
@@ -106,6 +118,9 @@ export function aiInput(ai, s, me) {
   const dz = o.z - f.z;
   const dist = Math.hypot(dx, dz);
   const special = getFighter(f.char).special.type;
+  const style = STYLES[special] || {};
+  const blockChance = cfg.block + (style.block || 0);
+  const specialChance = cfg.special * (style.special || 1);
 
   const press = (bits, extra = 0) => {
     ai.tap = bits;
@@ -129,9 +144,9 @@ export function aiInput(ai, s, me) {
     const winding = e.state === 'attack' || e.state === 'airAttack';
     if (!winding) continue;
     // A ground stomp cannot be blocked well: jump over it.
-    if (e.move === 'quake' && ed < 230 && rnd(ai) < cfg.block) return hold(INPUT.JUMP, 4);
+    if (e.move === 'quake' && ed < 230 && rnd(ai) < blockChance) return hold(INPUT.JUMP, 4);
     const facingMe = angleDiff(Math.atan2(ez, ex), e.dir) < 0.9;
-    if (ed < 190 && facingMe && rnd(ai) < cfg.block) {
+    if (ed < 190 && facingMe && rnd(ai) < blockChance) {
       // Sometimes roll round to the attacker's side instead of blocking.
       if (rnd(ai) < 0.22) return hold(toward(-ez, ex) | INPUT.BLOCK, 3);
       if (special === 'rise' && f.meter >= RULES.SPECIAL_COST && ed < 90 && rnd(ai) < 0.4) return press(INPUT.SPECIAL);
@@ -147,7 +162,7 @@ export function aiInput(ai, s, me) {
     if (along <= 0 || pd > 260) continue;
     const speed = Math.hypot(p.vx, p.vz);
     const miss = Math.abs(px * p.vz - pz * p.vx) / speed; // how far off to the side it will pass
-    if (miss < 50 && rnd(ai) < cfg.block) {
+    if (miss < 50 && rnd(ai) < blockChance) {
       // Roll or step sideways out of its path, or put the guard up.
       const side = rnd(ai) < 0.5 ? 1 : -1;
       const roll = rnd(ai);
@@ -172,7 +187,9 @@ export function aiInput(ai, s, me) {
 
   // --- finisher and special when they are likely to land ---
   if (f.meter >= RULES.SUPER_COST && dist < 340 && o.h <= 0 && rnd(ai) < cfg.special * 2) return press(INPUT.SUPER);
-  if (f.meter >= RULES.SPECIAL_COST && rnd(ai) < cfg.special) {
+  // A zoner with a shot in hand steps back to make the room to use it.
+  if (style.retreat && dist > 100 && dist < 190 && o.state !== 'attack' && f.meter >= RULES.SPECIAL_COST && r < s.ringR - 120 && rnd(ai) < style.retreat) return hold(toward(-dx, -dz), 10);
+  if (f.meter >= RULES.SPECIAL_COST && rnd(ai) < specialChance) {
     if (special === 'bolt' && dist > 200) return press(INPUT.SPECIAL);
     if (special === 'dash' && dist > 110 && dist < 280) return press(INPUT.SPECIAL);
     if (special === 'rise' && dist < 85) return press(INPUT.SPECIAL);
@@ -188,9 +205,12 @@ export function aiInput(ai, s, me) {
     return hold(toward(dx, dz), 5 + Math.floor(rnd(ai) * 7));
   }
 
+  // A skirmisher likes to roll round to the rival's side before striking.
+  if (style.circle && dist < 220 && rnd(ai) < style.circle) return hold(toward(-dz, dx) | INPUT.BLOCK, 3);
+
   // --- in range ---
   const roll = rnd(ai);
-  if (roll < cfg.attack) return press(rnd(ai) < 0.55 ? INPUT.PUNCH : INPUT.KICK);
+  if (roll < cfg.attack + (style.attack || 0)) return press(rnd(ai) < 0.55 ? INPUT.PUNCH : INPUT.KICK);
   if (roll < cfg.attack + 0.15) return hold(toward(-dx, -dz), 10); // back off
   if (roll < cfg.attack + 0.3) return hold(toward(-dz, dx), 9); // circle round
   return hold(0, Math.max(3, cfg.think - 2));
