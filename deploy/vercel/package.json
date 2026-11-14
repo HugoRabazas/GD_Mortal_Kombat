@@ -1,8 +1,0 @@
-{
-  "name": "gd-arena-site",
-  "private": true,
-  "description": "Builds the GD Arena website (with online play) from the game's GitHub repository. This one file is what is deployed to Vercel: Vercel runs the build script, which downloads the game, builds it and publishes the result.",
-  "scripts": {
-    "build": "rm -rf src public && git clone --depth 1 -b claude/youthful-mayer-331mu0 https://github.com/HugoRabazas/GD_Mortal_Kombat.git src && cd src && npm ci && GD_SUPABASE_URL=https://igurytkichobnljpukna.supabase.co GD_SUPABASE_KEY=sb_publishable_9jXzEsP2BYp2pWw0fk75ZQ_8nuluVsO npm run build:web && cd .. && mkdir -p public && cp -r src/dist-web/. public/"
-  }
-}
