@@ -100,9 +100,9 @@ The Artifact page cannot reach the network, so it has the offline modes only.
 - **The site is hosted on GitHub Pages**, which is free for public
   repositories and needs no payment details.
   `.github/workflows/pages.yml` tests, builds and publishes it on every push.
-  It has to be switched on once in the repository's Settings -> Pages ->
-  Source: "GitHub Actions"; the site then lives at
-  `https://hugorabazas.github.io/GD_Mortal_Kombat/`.
+  The site lives at https://hugorabazas.github.io/GD_Mortal_Kombat/ (Pages is
+  switched on in the repository's Settings -> Pages, Source: "GitHub
+  Actions").
 - The Supabase project needs no tables. On the free plan Realtime allows 200
   people connected and 100 messages a second, which is plenty while matches
   run over direct links, and about one four-player match at a time if every
