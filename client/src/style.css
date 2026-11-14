@@ -817,6 +817,64 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+/* ------------------------------------------------------------ online --- */
+
+.screen.narrow {
+  width: min(100%, 460px);
+}
+
+.field {
+  flex: 1 1 180px;
+  min-width: 0;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 6px 14px;
+  border: 0;
+  outline: 1px solid rgba(232, 180, 84, 0.5);
+  background: rgba(11, 7, 13, 0.7);
+  color: var(--bone);
+  font: 600 1.05rem var(--font-body);
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.field:focus-visible {
+  outline: 2px solid var(--gold);
+}
+
+.people {
+  max-height: 34vh;
+  overflow-y: auto;
+}
+
+.people li {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.people li:has(.head) {
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+}
+
+.ltag.ok {
+  color: var(--gold);
+}
+
+.lname.dim {
+  color: var(--ash);
+  font-size: 1.1rem;
+}
+
+.note.warn {
+  color: #ffb08a;
+}
+
+.btn[disabled] {
+  opacity: 0.4;
+  cursor: default;
+  filter: none;
+  transform: none;
+}
+
 /* Short screens (a phone held sideways): tighten the menu so it fits. */
 @media (max-height: 480px) {
   .brand {

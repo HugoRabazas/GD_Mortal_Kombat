@@ -11,6 +11,13 @@ import { handleEvents } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, setCapture, setTouchLive } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, setMusic } from './audio.js';
+import { createOnline } from './net/online.js';
+
+// Online play exists only in the web build, which is told where the bus lives
+// (see scripts/build.js). Adding ?net=local to the address swaps the internet
+// for a same-browser bus, which is what the automated tests use.
+const NET = typeof __NET__ === 'undefined' || !__NET__ ? null : new URLSearchParams(location.search).get('net') === 'local' ? { local: true } : __NET__;
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const root = document.getElementById('app');
 root.innerHTML = `
@@ -60,6 +67,10 @@ const app = {
   demo: null, // the CPU-vs-CPU fight that plays behind the menus
   resultShown: false,
   arrangeFrom: 'menu',
+  online: null, // the connection to the alliance lobby, once the player goes online
+  nick: '',
+  fill: true, // online host option: fill empty places with CPU fighters
+  notice: '',
   // On-screen buttons start switched on for phones and tablets. A touch
   // laptop keeps them off until the screen is actually touched. The menu has
   // a switch for anyone the guess gets wrong.
@@ -130,7 +141,8 @@ function menuScreen() {
       <h1 class="brand"><span>GD</span> Arena</h1>
       <p class="tag">Alliance members step into the ring. First to two rounds wins.</p>
       <div class="stack">
-        <button type="button" class="btn primary" data-act="arena">Arena <small>4-fighter brawl · 3 rounds</small></button>
+        ${NET ? '<button type="button" class="btn primary" data-act="online">Online <small>fight the alliance</small></button>' : ''}
+        <button type="button" class="btn ${NET ? '' : 'primary'}" data-act="arena">Arena <small>4-fighter brawl · 3 rounds</small></button>
         <button type="button" class="btn" data-act="arcade">Arcade <small>single player · ${STAGES.length} duels</small></button>
         <button type="button" class="btn" data-act="quick">Quick Fight <small>one duel vs CPU</small></button>
         <button type="button" class="btn" data-act="versus">2 Players <small>keyboard or gamepads</small></button>
@@ -276,9 +288,9 @@ function pauseScreen() {
       <h2>Paused</h2>
       <div class="stack">
         <button type="button" class="btn primary" data-act="resume">Resume</button>
-        <button type="button" class="btn" data-act="rematch">Restart fight</button>
+        ${app.mode === 'online' ? '' : '<button type="button" class="btn" data-act="rematch">Restart fight</button>'}
         ${app.touch ? '<button type="button" class="btn" data-act="arrange">Arrange buttons</button>' : ''}
-        <button type="button" class="btn quiet" data-act="menu">Quit to menu</button>
+        ${app.mode === 'online' ? '<button type="button" class="btn quiet" data-act="onBack">Back to the room</button>' : '<button type="button" class="btn quiet" data-act="menu">Quit to menu</button>'}
       </div>
     </section>`;
 }
@@ -299,6 +311,13 @@ function arrangeScreen() {
 function resultScreen() {
   const s = app.game.state;
   const won = s.matchWinner === 0;
+  const again =
+    app.mode === 'online'
+      ? '<button type="button" class="btn primary" data-act="onBack">Back to the room</button>'
+      : `<button type="button" class="btn primary" data-act="rematch">Rematch</button>
+          <button type="button" class="btn" data-act="select">Change fighter</button>
+          <button type="button" class="btn quiet" data-act="menu">Menu</button>`;
+  if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result"><div class="row">${again}</div></section>`;
   if (s.mode === 'arena') {
     const who = labels();
     const medal = ['1st', '2nd', '3rd', '4th'];
@@ -310,17 +329,13 @@ function resultScreen() {
               (r) => `<li class="${r.rank === 1 ? 'top' : ''}">
                 <span class="place">${medal[r.rank - 1]}</span>${head(r.char)}
                 <span class="lname">${getFighter(r.char).name}</span>
-                <span class="ltag">${who[r.slot]}</span>
+                <span class="ltag">${esc(who[r.slot])}</span>
                 <span class="pts">${r.points} pts</span>
               </li>`,
             )
             .join('')}
         </ol>
-        <div class="row">
-          <button type="button" class="btn primary" data-act="rematch">Rematch</button>
-          <button type="button" class="btn" data-act="select">Change fighter</button>
-          <button type="button" class="btn quiet" data-act="menu">Menu</button>
-        </div>
+        <div class="row">${again}</div>
       </section>`;
   }
   if (app.mode !== 'arcade') {
@@ -369,7 +384,100 @@ function resultScreen() {
     </section>`;
 }
 
-const SCREENS = { menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, arrange: arrangeScreen };
+// ---------------------------------------------------------- online screens ---
+
+function nameScreen() {
+  return `
+    <section class="screen select narrow">
+      <h2>Go online</h2>
+      <p class="note">Pick the name the alliance will see.</p>
+      <form class="row" data-form="nick">
+        <input id="nick" class="field" type="text" maxlength="14" autocomplete="off" placeholder="Your name" value="${esc(app.nick)}" />
+        <button type="submit" class="btn primary">Enter</button>
+      </form>
+      ${app.notice ? `<p class="note warn">${esc(app.notice)}</p>` : ''}
+      <div class="row"><button type="button" class="btn quiet" data-act="menu">Back</button></div>
+    </section>`;
+}
+
+function lobbyScreen() {
+  const on = app.online;
+  const rooms = on.rooms();
+  return `
+    <section class="screen select">
+      <h2>Alliance lobby</h2>
+      <div class="versus">
+        <div class="ladder">
+          <span class="who">Online now · ${on.lobbyPeers.length}</span>
+          <ol class="people">
+            ${on.lobbyPeers.map((p) => `<li><span class="lname">${esc(p.name)}${p.id === on.me.id ? ' (you)' : ''}</span><span class="ltag">${p.playing ? 'fighting' : p.room ? 'in a room' : 'in the lobby'}</span></li>`).join('')}
+          </ol>
+        </div>
+        <div class="ladder">
+          <span class="who">Rooms</span>
+          <ol class="people">
+            ${
+              rooms.length
+                ? rooms.map((r) => `<li><span class="lname">${esc(r.names.slice(0, 3).join(', '))}${r.names.length > 3 ? '…' : ''}</span><button type="button" class="btn small" data-act="joinRoom" data-id="${esc(r.code)}">${r.playing ? 'Watch' : 'Join'} · ${r.names.length}</button></li>`).join('')
+                : '<li><span class="lname dim">No rooms open yet</span></li>'
+            }
+          </ol>
+          <button type="button" class="btn primary" data-act="createRoom">Create a room</button>
+        </div>
+      </div>
+      ${app.notice ? `<p class="note warn">${esc(app.notice)}</p>` : ''}
+      <div class="row"><button type="button" class="btn quiet" data-act="offline">Leave online</button></div>
+    </section>`;
+}
+
+function roomScreen() {
+  const on = app.online;
+  const room = on.room;
+  const players = on.players();
+  const mine = room.peers.find((p) => p.id === on.me.id);
+  const watching = room.peers.slice(4);
+  const link = on.linkKind();
+  return `
+    <section class="screen select">
+      <h2>Room ${esc(room.code)}</h2>
+      <div class="versus">
+        <div class="ladder">
+          <span class="who">Fighters · ${players.length} of 4</span>
+          <ol class="people">
+            ${players
+              .map(
+                (p) => `<li>${head(p.char)}<span class="lname">${esc(p.name)}${p.id === on.me.id ? ' (you)' : ''}</span>
+                  <span class="ltag ${p.ready || p.id === room.hostId ? 'ok' : ''}">${p.id === room.hostId ? 'host' : p.ready ? 'ready' : 'choosing'}</span></li>`,
+              )
+              .join('')}
+          </ol>
+          ${watching.length ? `<p class="rules">Watching: ${esc(watching.map((p) => p.name).join(', '))}</p>` : ''}
+          <p class="rules">${link === 'direct' ? 'Connected directly.' : link === 'relayed' ? 'Connecting… (relayed for now)' : 'Waiting for others. Share the room name, or start with CPU rivals.'}</p>
+        </div>
+        <div class="slot" style="--tint:${getFighter(room.char).colors.primary};--ring:${getFighter(room.char).colors.accent}">
+          <span class="who">Your fighter</span>
+          ${head(room.char, 'big')}
+          <strong class="name">${getFighter(room.char).name}</strong>
+          <span class="title">${getFighter(room.char).title}</span>
+          <div class="picker" role="group" aria-label="Your fighter">
+            ${FIGHTERS.map((o) => `<button type="button" class="pick ${o.id === room.char ? 'on' : ''}" data-act="onChar" data-id="${o.id}" aria-pressed="${o.id === room.char}" title="${o.name}">${head(o.id)}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+      ${room.isHost ? `<div class="seg" role="group"><button type="button" class="${app.fill ? 'on' : ''}" data-act="fill" data-id="1">Fill with CPU</button><button type="button" class="${app.fill ? '' : 'on'}" data-act="fill" data-id="0">Players only</button></div>` : ''}
+      ${app.notice ? `<p class="note warn">${esc(app.notice)}</p>` : ''}
+      <div class="row">
+        <button type="button" class="btn quiet" data-act="leaveRoom">Leave room</button>
+        ${
+          room.isHost
+            ? `<button type="button" class="btn primary" data-act="onStart" ${on.canStart() ? '' : 'disabled'}>Start fight</button>`
+            : `<button type="button" class="btn primary" data-act="onReady">${mine?.ready ? 'Not ready' : 'Ready'}</button>`
+        }
+      </div>
+    </section>`;
+}
+
+const SCREENS = { menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
 
 // Show the on-screen controls during single-player fights and while arranging.
 function refreshTouch() {
@@ -392,7 +500,7 @@ function show(screen) {
   setCapture(screen === 'fight');
   if (!inFight) app.game = null;
   setMusic(screen === 'fight' ? 'fight' : 'menu');
-  ui.querySelector('.primary')?.focus({ preventScroll: true });
+  if (screen !== 'nick') ui.querySelector('.primary:not([disabled])')?.focus({ preventScroll: true });
 }
 
 // ---------------------------------------------------------------- fights ---
@@ -461,7 +569,7 @@ function scoreMatch() {
 function togglePause() {
   if (!app.game) return;
   if (app.screen === 'fight') {
-    app.game.paused = true;
+    app.game.paused = app.mode !== 'online'; // an online fight goes on without you
     show('pause');
   } else if (app.screen === 'pause') {
     app.game.paused = false;
@@ -483,6 +591,50 @@ const ACTIONS = {
   arena() {
     app.mode = 'arena';
     show('select');
+  },
+  // --- online ---
+  online() {
+    app.notice = '';
+    if (app.online) return show(app.online.room ? 'room' : 'lobby');
+    try {
+      app.nick = app.nick || localStorage.getItem('gd-arena-nick') || '';
+    } catch {
+      // no saved name
+    }
+    show('nick');
+    ui.querySelector('#nick')?.focus();
+  },
+  async offline() {
+    await app.online?.close();
+    app.online = null;
+    show('menu');
+  },
+  async createRoom() {
+    await app.online.createRoom();
+    show('room');
+  },
+  async joinRoom(el) {
+    await app.online.joinRoom(el.dataset.id);
+    show('room');
+  },
+  async leaveRoom() {
+    await app.online.leaveRoom();
+    app.notice = '';
+    show('lobby');
+  },
+  onChar: (el) => app.online.setChar(el.dataset.id),
+  onReady() {
+    const mine = app.online.room.peers.find((p) => p.id === app.online.me.id);
+    app.online.setReady(!mine?.ready);
+  },
+  fill(el) {
+    app.fill = el.dataset.id === '1';
+    show('room');
+  },
+  onStart: () => app.online.start({ fill: app.fill }),
+  onBack() {
+    if (app.online?.game) app.online.endMatch();
+    else show(app.online?.room ? 'room' : 'lobby');
   },
   vsKind(el) {
     app.vsArena = el.dataset.id === 'brawl';
@@ -546,6 +698,59 @@ const ACTIONS = {
   },
 };
 
+async function goOnline(name) {
+  app.nick = name.trim().slice(0, 14) || 'Fighter';
+  try {
+    localStorage.setItem('gd-arena-nick', app.nick);
+  } catch {
+    // not remembered on this device
+  }
+  ui.innerHTML = '<p class="loading">Connecting…</p>';
+  const online = createOnline({
+    config: NET,
+    name: app.nick,
+    char: () => app.picks[0],
+    readInput: () => readKeys('solo') | readTouch() | readPad(0),
+    // Redraw the lobby or the room whenever someone joins, leaves or changes.
+    onChange() {
+      if (app.online !== online) return;
+      if (app.screen === 'lobby' || (app.screen === 'room' && online.room)) show(app.screen);
+    },
+    onStart() {
+      app.mode = 'online';
+      app.game = online.game;
+      app.resultShown = false;
+      app.notice = '';
+      stage.reset();
+      show('fight');
+      document.activeElement?.blur?.();
+    },
+    onEnd(reason) {
+      app.game = null;
+      app.notice = reason === 'host_left' ? 'The host left, so the fight ended.' : '';
+      stage.reset();
+      show(online.room ? 'room' : 'lobby');
+    },
+  });
+  try {
+    await online.connect();
+    app.online = online;
+    app.notice = '';
+    show('lobby');
+  } catch {
+    app.notice = 'Could not reach the lobby. Check your connection and try again.';
+    show('nick');
+  }
+}
+
+ui.addEventListener('submit', (e) => {
+  e.preventDefault();
+  if (e.target.dataset.form === 'nick') {
+    unlockAudio();
+    goOnline(ui.querySelector('#nick').value);
+  }
+});
+
 ui.addEventListener('click', (e) => {
   const el = e.target.closest('[data-act]');
   if (!el) return;
@@ -560,6 +765,7 @@ pauseBtn.addEventListener('click', togglePause);
 // What to call each fighter in the HUD and on the floating tags.
 function labels() {
   const n = app.game ? app.game.state.f.length : 2;
+  if (app.mode === 'online' && app.online?.info) return app.online.info.slots.map((sl) => sl.name.toUpperCase());
   if (app.mode === 'versus') return ['P1', 'P2', 'CPU', 'CPU'].slice(0, n);
   if (app.mode === 'arcade' && app.arcade) {
     const st = app.arcade.ladder[app.arcade.stage];
@@ -579,15 +785,17 @@ function frame(now) {
 
   const boss = playing && app.mode === 'arcade' ? [false, !!app.arcade.ladder[app.arcade.stage].boss] : null;
   const tags = playing ? labels() : [];
-  const humans = tags.map((t) => t === 'YOU' || t === 'P1' || t === 'P2');
-  stage.render({ state: g.state, demo: !playing, labels: tags, boss, humans, me: playing && app.mode !== 'versus' ? 0 : -1 }, now);
+  const mine = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
+  const humans = app.mode === 'online' ? tags.map((_, i) => i === mine) : tags.map((t) => t === 'YOU' || t === 'P1' || t === 'P2');
+  stage.render({ state: g.state, demo: !playing, labels: tags, boss, humans, me: mine }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {
     // Thumbs can cover the energy bar, so the buttons themselves light up
     // when the special and the finisher can be used.
-    spBtn.classList.toggle('ready', s.f[0].meter >= RULES.SPECIAL_COST);
-    ultBtn.classList.toggle('ready', s.f[0].meter >= RULES.SUPER_COST);
+    const own = s.f[Math.max(0, mine)];
+    spBtn.classList.toggle('ready', own.meter >= RULES.SPECIAL_COST);
+    ultBtn.classList.toggle('ready', own.meter >= RULES.SUPER_COST);
   }
   if (playing) {
     if (s.phase === 'over' && !app.resultShown && s.pt > 150) {

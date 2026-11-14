@@ -64,6 +64,39 @@ each one where you like and resize them, saved per orientation on the device.
 - As the clock runs down a **ring of fire** closes in. A fighter knocked into
   it is scorched and bounced back.
 
+## Online play
+
+The website build adds an **Online** mode for the whole alliance:
+
+- You pick a name and enter the **alliance lobby**, which shows who is online
+  and which rooms are open.
+- A **room** holds up to four fighters (more can watch). Everyone picks a
+  fighter and presses Ready; the host starts the fight, optionally filling the
+  empty places with CPU fighters. Two fighters play a duel, three or four an
+  arena brawl.
+- How a match travels: the host's browser runs the real fight with the same
+  rules code as offline; the others send only their buttons and receive a
+  snapshot of the fight twenty times a second, which they draw gliding from
+  one to the next. One copy of the truth, so nobody drifts out of sync.
+- Players find each other through Supabase Realtime (`client/src/net/bus.js`).
+  The game data then goes over a direct browser-to-browser link
+  (`link.js`, WebRTC) when the networks allow it, and is relayed through
+  Supabase at a lower rate when they do not.
+
+The Artifact page cannot reach the network, so it has the offline modes only.
+
+### Hosting
+
+- `npm run build:web` writes `dist-web/index.html`. It needs two environment
+  variables: `GD_SUPABASE_URL` and `GD_SUPABASE_KEY` (the project's
+  *publishable* key, which is meant to be public).
+- Any static host works. On Vercel: build command `npm run build:web`, output
+  directory `dist-web`, and the two variables set on the project.
+- The Supabase project needs no tables. On the free plan Realtime allows 200
+  people connected and 100 messages a second, which is plenty while matches
+  run over direct links, and about one four-player match at a time if every
+  player has to be relayed.
+
 ## The arena lives in time
 
 Round one is fought at dusk, round two under a cold night sky, round three in
@@ -161,8 +194,8 @@ npm run build
 
 ## Limits worth knowing
 
-- Everyone plays on **one device**. A published page has no game server
-  behind it, so fighting someone on another device is not possible in this
-  form.
+- The Artifact page is offline only; online play needs the website build.
+- Online, your own fighter answers after a short delay (the trip to the host
+  and back) unless you are the host. If the host leaves, the fight ends.
 - Fighters share one skeleton and the basic moves; what sets them apart is the
   build, the special, the stats, the colours and the head.

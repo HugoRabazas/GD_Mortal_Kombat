@@ -17,10 +17,23 @@ const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const THREE_URL = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
 const FONTS_URL = 'https://fonts.googleapis.com/css2?family=Teko:wght@500;700&family=Barlow:wght@400;600;700&display=swap';
 
+// `node scripts/build.js` builds the Artifact page (offline modes only).
+// `node scripts/build.js web` builds the website with online play; it reads
+// where the lobby lives from the environment:
+//   GD_SUPABASE_URL  the Supabase project address
+//   GD_SUPABASE_KEY  its publishable key (public by design, safe in a web page)
+const web = process.argv[2] === 'web';
+const net = web && process.env.GD_SUPABASE_URL && process.env.GD_SUPABASE_KEY ? { url: process.env.GD_SUPABASE_URL, key: process.env.GD_SUPABASE_KEY } : null;
+if (web && !net) console.warn('GD_SUPABASE_URL / GD_SUPABASE_KEY not set: building the website without online play.');
+
 const result = await build({
   configFile: false,
   root: path.join(root, 'client'),
   logLevel: 'warn',
+  define: { __NET__: JSON.stringify(net) },
+  // The Artifact page cannot reach the network, so it leaves the online
+  // library out altogether.
+  resolve: web ? {} : { alias: { '@supabase/supabase-js': path.join(root, 'scripts', 'no-online.js') } },
   build: {
     write: false,
     target: 'es2020',
@@ -62,7 +75,13 @@ ${page}</body>
 </html>
 `;
 
-mkdirSync(path.join(root, 'dist'), { recursive: true });
-writeFileSync(path.join(root, 'dist', 'gd-arena.html'), page);
-writeFileSync(path.join(root, 'dist', 'index.html'), preview);
-console.log(`dist/gd-arena.html  ${(page.length / 1024).toFixed(0)} KB`);
+if (web) {
+  mkdirSync(path.join(root, 'dist-web'), { recursive: true });
+  writeFileSync(path.join(root, 'dist-web', 'index.html'), preview.replace('<head>', '<head>\n<meta name="description" content="GD Arena: a 3D arena fighting game for the alliance, playable online.">'));
+  console.log(`dist-web/index.html  ${(preview.length / 1024).toFixed(0)} KB  online: ${net ? 'yes' : 'no'}`);
+} else {
+  mkdirSync(path.join(root, 'dist'), { recursive: true });
+  writeFileSync(path.join(root, 'dist', 'gd-arena.html'), page);
+  writeFileSync(path.join(root, 'dist', 'index.html'), preview);
+  console.log(`dist/gd-arena.html  ${(page.length / 1024).toFixed(0)} KB`);
+}
