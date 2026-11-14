@@ -23,7 +23,13 @@ moves of any existing fighting game.
 | Special | `I` or `T` | `T` | `I` |
 | Finisher | `O` or `Y` | `Y` | `O` |
 
-`P` or `Esc` pauses. On a phone a thumb stick and five buttons appear on screen.
+`P` or `Esc` pauses.
+
+On a phone or tablet a thumb stick (move, jump, crouch) and five buttons appear
+on screen in 1 Player mode: `P` punch, `K` kick, `BLK` block, `SP` special,
+`ULT` finisher. `SP` and `ULT` light up when there is enough energy to use
+them. Held sideways the game fills the screen; held upright the controls sit
+under it. The menu has a "Touch buttons" switch to force them on or off.
 
 - Landing and taking hits fills the **energy** bar. A special costs 35 of 100;
   the finisher needs a full bar and spends all of it.

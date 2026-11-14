@@ -2,6 +2,7 @@
 // screens (menu -> fighter select -> fight -> result).
 
 import { FIGHTERS, getFighter } from '../../shared/fighters.js';
+import { RULES } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
 import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
@@ -26,6 +27,7 @@ root.innerHTML = `
       <button type="button" class="tb tb-k" data-bit="32">K</button>
       <button type="button" class="tb tb-p" data-bit="16">P</button>
     </div>
+    <p id="turn">Turn your phone sideways for a bigger view.</p>
   </div>
   <div id="ui"></div>
 `;
@@ -35,6 +37,8 @@ const stageEl = $('#stage');
 const ui = $('#ui');
 const touchEl = $('#touch');
 const pauseBtn = $('#pause-btn');
+const spBtn = $('.tb-sp');
+const ultBtn = $('.tb-ult');
 
 const app = {
   screen: 'loading',
@@ -44,7 +48,13 @@ const app = {
   game: null, // the fight being played, if any
   demo: null, // the CPU-vs-CPU fight that plays behind the menus
   resultShown: false,
-  touch: window.matchMedia?.('(pointer: coarse)').matches || false,
+  // On-screen buttons start switched on for phones and tablets. A touch
+  // laptop keeps them off until the screen is actually touched. The menu has
+  // a switch for anyone the guess gets wrong.
+  touch:
+    window.matchMedia?.('(pointer: coarse)').matches ||
+    (navigator.maxTouchPoints > 0 && !window.matchMedia?.('(any-pointer: fine)').matches) ||
+    false,
 };
 let stage = null;
 
@@ -84,10 +94,13 @@ function menuScreen() {
       </ul>
       <div class="foot">
         <button type="button" class="link" data-act="mute">${isMuted() ? 'Sound off' : 'Sound on'}</button>
+        <button type="button" class="link" data-act="touch">${touchLabel()}</button>
         <button type="button" class="link" data-act="fullscreen">Full screen</button>
       </div>
     </section>`;
 }
+
+const touchLabel = () => (app.touch ? 'Touch buttons on' : 'Touch buttons off');
 
 function slotCard(slot) {
   const f = getFighter(app.picks[slot]);
@@ -125,7 +138,9 @@ function selectScreen() {
           ? `<div class="seg" role="group" aria-label="CPU difficulty">
               ${levels.map(([id, label]) => `<button type="button" class="${app.level === id ? 'on' : ''}" data-act="level" data-id="${id}" aria-pressed="${app.level === id}">${label}</button>`).join('')}
             </div>`
-          : ''
+          : app.touch
+            ? '<p class="note">Two players need a keyboard: the on-screen buttons control one fighter only.</p>'
+            : ''
       }
       <div class="row">
         <button type="button" class="btn quiet" data-act="menu">Back</button>
@@ -198,14 +213,19 @@ function show(screen) {
   ui.innerHTML = SCREENS[screen] ? SCREENS[screen]() : '';
   ui.dataset.screen = screen;
   pauseBtn.hidden = screen !== 'fight';
-  const wantTouch = screen === 'fight' && app.touch && app.mode === 'solo';
-  if (touchEl.hidden === wantTouch) {
-    touchEl.hidden = !wantTouch;
-    layout();
-  }
+  refreshTouch();
   setCapture(screen === 'fight');
   if (!inFight) app.game = null;
   ui.querySelector('.primary')?.focus({ preventScroll: true });
+}
+
+// Show the on-screen controls only while a one-player fight is running.
+function refreshTouch() {
+  const want = app.screen === 'fight' && app.touch && app.mode === 'solo';
+  if (touchEl.hidden === want) {
+    touchEl.hidden = !want;
+    layout();
+  }
 }
 
 // ---------------------------------------------------------------- fights ---
@@ -276,6 +296,10 @@ const ACTIONS = {
     setMuted(!isMuted());
     el.textContent = isMuted() ? 'Sound off' : 'Sound on';
   },
+  touch(el) {
+    app.touch = !app.touch;
+    el.textContent = touchLabel();
+  },
   fullscreen() {
     // Not every viewer allows this (phones, some apps); it is fine if it fails.
     const el = document.documentElement;
@@ -307,6 +331,12 @@ function frame(now) {
   stage.render({ state: g.state, demo: !playing, labels }, now);
 
   const s = g.state;
+  if (playing && !touchEl.hidden) {
+    // Thumbs can cover the energy bar, so the buttons themselves light up
+    // when the special and the finisher can be used.
+    spBtn.classList.toggle('ready', s.f[0].meter >= RULES.SPECIAL_COST);
+    ultBtn.classList.toggle('ready', s.f[0].meter >= RULES.SUPER_COST);
+  }
   if (playing) {
     if (s.phase === 'over' && !app.resultShown && s.pt > 150) {
       app.resultShown = true;
@@ -332,7 +362,11 @@ async function boot() {
   initTouch(touchEl);
   window.addEventListener('resize', layout);
   window.addEventListener('pointerdown', (e) => {
-    if (e.pointerType === 'touch') app.touch = true;
+    // The first real touch switches the on-screen buttons on, even mid-fight.
+    if (e.pointerType === 'touch' && !app.touch) {
+      app.touch = true;
+      refreshTouch();
+    }
     unlockAudio();
   });
   window.addEventListener('keydown', unlockAudio);

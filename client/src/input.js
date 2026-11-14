@@ -68,6 +68,16 @@ export function initKeyboard(onPauseKey) {
   window.addEventListener('blur', () => held.clear());
 }
 
+// Keep receiving a finger's events even if it slides off the control. Some
+// browsers refuse this; the control still works without it.
+function grab(el, pointerId) {
+  try {
+    el.setPointerCapture(pointerId);
+  } catch {
+    // not supported here
+  }
+}
+
 // On-screen controls: a thumb stick on the left, five buttons on the right.
 export function initTouch(root) {
   const stick = root.querySelector('#stick');
@@ -101,7 +111,7 @@ export function initTouch(root) {
   };
   stick.addEventListener('pointerdown', (e) => {
     stickId = e.pointerId;
-    stick.setPointerCapture(e.pointerId);
+    grab(stick, e.pointerId);
     moveStick(e);
     e.preventDefault();
   });
@@ -120,7 +130,7 @@ export function initTouch(root) {
     btn.addEventListener('pointerdown', (e) => {
       touchBits |= bit;
       btn.classList.add('on');
-      btn.setPointerCapture(e.pointerId);
+      grab(btn, e.pointerId);
       e.preventDefault();
     });
     btn.addEventListener('pointerup', off);

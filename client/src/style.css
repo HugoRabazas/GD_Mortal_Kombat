@@ -30,7 +30,9 @@ body {
   overflow: hidden;
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
   -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
 }
 
 #app {
@@ -271,7 +273,16 @@ button:focus-visible {
 
 .foot {
   display: flex;
-  gap: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 18px;
+}
+
+.note {
+  margin: 0;
+  max-width: 40ch;
+  font-size: 0.85rem;
+  color: var(--ash);
 }
 
 .head {
@@ -514,14 +525,28 @@ kbd {
   justify-content: space-between;
 }
 
+#turn {
+  display: none;
+}
+
 #app.portrait #touch {
   position: static;
   flex: none;
   width: 100%;
-  height: 216px;
   box-sizing: border-box;
-  padding: 14px 4px 0;
+  padding: 18px 4px 0;
+  flex-wrap: wrap;
   align-items: center;
+  row-gap: 14px;
+}
+
+#app.portrait #turn {
+  display: block;
+  flex-basis: 100%;
+  margin: 0;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--ash);
 }
 
 #stick {
@@ -548,9 +573,9 @@ kbd {
 #pad {
   pointer-events: auto;
   display: grid;
-  grid-template-columns: repeat(3, 60px);
-  grid-template-rows: repeat(2, 60px);
-  gap: 8px;
+  grid-template-columns: repeat(3, 64px);
+  grid-template-rows: repeat(2, 64px);
+  gap: 9px;
   touch-action: none;
 }
 
@@ -570,9 +595,22 @@ kbd {
   color: var(--ink);
 }
 
+/* Special and finisher stay dim until there is enough energy to use them. */
+.tb-sp,
 .tb-ult {
-  outline-color: var(--ember);
-  color: var(--ember);
+  opacity: 0.4;
+}
+
+.tb-sp.ready,
+.tb-ult.ready {
+  opacity: 1;
+  outline-color: var(--gold);
+  box-shadow: 0 0 14px rgba(232, 180, 84, 0.7);
+}
+
+.tb-ult.ready {
+  background: linear-gradient(180deg, var(--ember), var(--ember-deep));
+  color: #fff8ec;
 }
 
 .tb-p,
