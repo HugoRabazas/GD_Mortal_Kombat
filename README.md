@@ -47,7 +47,9 @@ A duel is first to two round wins.
 | Special | `I` or `T` | `T` | `I` | Y / Triangle |
 | Finisher | `O` or `Y` | `Y` | `O` | RB / RT |
 
-`P`, `Esc` or Start pauses. A gamepad also works the menus: stick or D-pad
+`P`, `Esc` or Start pauses, and the pause screen shows the **move list** of
+the fighter you are playing, written with the keys or on-screen buttons you
+are actually using. A gamepad also works the menus: stick or D-pad
 moves between buttons, A chooses, B goes back. On a phone or tablet a thumb stick and six buttons
 appear on screen; **Arrange buttons** (menu and pause screen) lets you drag
 each one where you like and resize them, saved per orientation on the device.
@@ -60,6 +62,13 @@ each one where you like and resize them, saved per orientation on the device.
   goes straight through a guard.
 - **Block + a direction** is a dodge roll: attacks pass through you for most
   of it.
+- **Block at the last moment** - the button pressed in the last 5 ticks
+  (about 80 ms) before a blow lands - is a **perfect guard**: no chip damage,
+  extra energy, and a kick or any other heavy blow thrown from the ground
+  leaves its owner reeling long enough to punish. The guard must have been
+  down for a third of a second first, so hammering the button earns nothing,
+  and a guard that is simply held is an ordinary block. The CPU manages it
+  rarely on Normal, more often on Hard, and the arcade boss most of all.
 - Hits fill the **energy** bar: a special costs 35 of 100, the finisher needs
   it full.
 - **Block** only stops what comes from the front, and a blocked hit can never
@@ -141,6 +150,10 @@ the same ring of fire - they differ in paint, light, weather and sound.
 
 The arcade ladder moves to the other arena after every fight. Online, the
 host picks the arena in the room and everyone fights there.
+
+Every round opens with the camera low and wide, looking up at the sky and
+the mountains over the wall, and cranes down to the fighters before the call
+to fight - so each change of light and weather is seen as it arrives.
 
 A crowd on the stands sways while it watches and jumps and roars when heavy
 blows and knockouts land. Inside every round, the ring of fire shrinks the

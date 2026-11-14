@@ -527,6 +527,52 @@ kbd {
   color: var(--bone);
 }
 
+/* The pause screen: the buttons on one side, the move list on the other. */
+.screen.pause {
+  width: min(100%, 760px);
+}
+
+.cols {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 16px 28px;
+  width: 100%;
+}
+
+.cols .stack {
+  width: min(100%, 260px);
+}
+
+.movelist {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 5px 12px;
+  align-items: baseline;
+  width: min(100%, 400px);
+  margin: 0;
+  padding: 12px 14px;
+  background: var(--veil);
+  border-left: 2px solid var(--gold);
+  text-align: left;
+  font-size: 0.84rem;
+  color: var(--ash);
+}
+
+.movelist dt {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.movelist dd {
+  margin: 0;
+}
+
+.movelist b {
+  color: var(--bone);
+}
+
 .help {
   max-height: 100%;
   overflow-y: auto;

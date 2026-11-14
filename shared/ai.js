@@ -7,13 +7,18 @@
 
 import { INPUT, RULES } from './constants.js';
 import { getFighter } from './fighters.js';
+import { MOVES } from './sim.js';
 
+// `parry` is how often the CPU manages a last-moment guard (a perfect guard,
+// see GUARD in sim.js). A guard raised that late is always perfect, so when
+// the CPU fails this roll it is simply too slow: it rolls away or gets hit.
 const LEVELS = {
-  easy: { think: 16, block: 0.25, attack: 0.3, special: 0.02 },
-  normal: { think: 8, block: 0.6, attack: 0.58, special: 0.07 },
-  hard: { think: 5, block: 0.8, attack: 0.7, special: 0.1 },
-  boss: { think: 4, block: 0.84, attack: 0.76, special: 0.14 },
+  easy: { think: 16, block: 0.25, attack: 0.3, special: 0.02, parry: 0 },
+  normal: { think: 8, block: 0.6, attack: 0.58, special: 0.07, parry: 0.1 },
+  hard: { think: 5, block: 0.8, attack: 0.7, special: 0.1, parry: 0.28 },
+  boss: { think: 4, block: 0.84, attack: 0.76, special: 0.14, parry: 0.45 },
 };
+const LATE = 4; // a guard raised this many ticks before the blow, or fewer, is a perfect guard
 
 // Each kind of fighter has its own way of fighting, keyed by its special move:
 //   dash  - a rusher: always pressing forward, quick to strike
@@ -136,6 +141,10 @@ export function aiInput(ai, s, me) {
   };
 
   // --- defence ---
+  // Is it too late to guard in the ordinary way? If the blow is `due` within
+  // the perfect-guard window and the guard has been down long enough to earn
+  // one, raising it now would be a perfect guard - which takes skill.
+  const fumbles = (due) => f.state !== 'block' && f.open >= 20 && due <= LATE && rnd(ai) >= cfg.parry;
   for (const e of s.f) {
     if (e === f || e.hp <= 0) continue;
     const ex = f.x - e.x;
@@ -149,6 +158,10 @@ export function aiInput(ai, s, me) {
     if (ed < 190 && facingMe && rnd(ai) < blockChance) {
       // Sometimes roll round to the attacker's side instead of blocking.
       if (rnd(ai) < 0.22) return hold(toward(-ez, ex) | INPUT.BLOCK, 3);
+      if (fumbles((MOVES[e.move]?.startup ?? 0) - e.t)) {
+        if (rnd(ai) < 0.5) return hold(toward(-ez, ex) | INPUT.BLOCK, 3);
+        continue; // caught flat-footed
+      }
       if (special === 'rise' && f.meter >= RULES.SPECIAL_COST && ed < 90 && rnd(ai) < 0.4) return press(INPUT.SPECIAL);
       return hold(INPUT.BLOCK, 12 + Math.floor(rnd(ai) * 8));
     }
@@ -168,6 +181,7 @@ export function aiInput(ai, s, me) {
       const roll = rnd(ai);
       if (roll < 0.35) return hold(toward(-p.vz * side, p.vx * side) | INPUT.BLOCK, 3);
       if (roll < 0.7) return hold(toward(-p.vz * side, p.vx * side), 10);
+      if (fumbles((pd - 45) / speed)) return hold(toward(-p.vz * side, p.vx * side) | INPUT.BLOCK, 3);
       return hold(INPUT.BLOCK, 14);
     }
   }

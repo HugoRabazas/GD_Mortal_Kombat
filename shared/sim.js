@@ -29,6 +29,11 @@ const GETUP_TICKS = 18;
 const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle of where you face
 const ROLL = { ticks: 15, safe: 11, speed: 8.5, rest: 7 }; // the dodge roll
 const SPLAT = { speed: 3.2, dmg: 5 }; // being knocked into the ring of fire
+// A perfect guard: the block button pressed in the last `window` ticks before
+// a blow lands. It costs no health, and a heavy blow from a rival standing on
+// the ground leaves that rival reeling for `stagger` ticks. The guard has to
+// be down for `rest` ticks first, so hammering the button does not work.
+const GUARD = { window: 5, rest: 20, stagger: 26, gain: 12 };
 // Crystals that appear on the floor: walk over one to take it.
 const ITEMS = { first: 7, every: [9, 14], life: 12, max: 2, reach: 44, energy: 40, heal: 15 };
 
@@ -136,6 +141,8 @@ function newFighter(charId, slot, count, mod) {
     stop: 0, // ticks this fighter is frozen by the impact of a hit
     inv: 0, // invulnerability ticks
     rollOk: true, // the block button must be released before the next roll
+    guard: 0, // ticks left in which a blocked blow counts as a perfect guard
+    open: 99, // ticks since this fighter last had the guard up
     prev: 0, // buttons held on the previous tick
     buf: 0, // remembered attack presses
     bufT: 0,
@@ -317,6 +324,9 @@ function stick(inp) {
 // Decide what a fighter does this tick, from its state and the held buttons.
 function control(s, f, inp) {
   const held = (bit) => (inp & bit) !== 0;
+  if (f.guard > 0) f.guard--;
+  if (f.state === 'block') f.open = 0;
+  else if (f.open < 99) f.open++;
   switch (f.state) {
     case 'idle':
     case 'walk':
@@ -342,7 +352,10 @@ function control(s, f, inp) {
           emit(s, 'roll', { by: f.slot });
           break;
         }
-        if (f.state !== 'block') aim(s, f, 360);
+        if (f.state !== 'block') {
+          aim(s, f, 360);
+          f.guard = f.open >= GUARD.rest ? GUARD.window : 0;
+        }
         setState(f, 'block');
         f.vx = 0;
         f.vz = 0;
@@ -605,6 +618,27 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   const power = getFighter(att.char).stats.power * att.pw;
   const at = { x: def.x - dx * 14, z: def.z - dz * 14, h: def.h + (m.y1 < 60 ? 30 : 105) };
 
+  if (blocked && def.guard > 0) {
+    // Perfect guard: nothing gets through, and a heavy blow thrown from the
+    // ground bounces off and leaves its owner open.
+    def.guard = 0;
+    def.stun = 3;
+    addMeter(def, GUARD.gain);
+    const stagger = !!m.heavy && kind !== 'bolt' && kind !== 'super' && att.h <= 0 && !isOut(att);
+    if (stagger) {
+      att.state = 'hit';
+      att.t = 0;
+      att.move = null;
+      att.buf = 0;
+      att.stun = GUARD.stagger;
+      att.vx = -dx * 5;
+      att.vz = -dz * 5;
+    }
+    if (s.f.length === 2) s.hitstop = 8;
+    else att.stop = def.stop = 5;
+    emit(s, 'parry', { by: def.slot, on: att.slot, ...at, stagger });
+    return;
+  }
   if (blocked) {
     const chip = Math.max(1, Math.round(m.dmg * power * (m.chip ?? 0.15)));
     def.hp = Math.max(1, def.hp - chip); // a blocked hit never knocks out

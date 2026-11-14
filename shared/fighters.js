@@ -86,7 +86,7 @@ export const FIGHTERS = [
       glow: '#ff7a1a',
       hair: '#ff8a2a',
     },
-    stats: { power: 0.95, speed: 1.18, health: 100 },
+    stats: { power: 0.95, speed: 1.18, health: 102 },
     special: { type: 'rise', name: 'Twin Flame Spiral' },
     super: { name: 'Phoenix Dive' },
   },

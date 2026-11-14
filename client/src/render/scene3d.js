@@ -843,6 +843,8 @@ export function create3D(canvas) {
       y: 0.9 + lift * 0.3,
       dist: Math.min(17, Math.max(8.2, 6.8 + spread * 1.75)),
       yaw: Math.sin(now / 5200) * 0.05,
+      rise: 0.46, // how high the camera sits, as a share of its distance
+      look: 0, // how far above the fighters it aims
       ease: 0.08,
     };
     if (view.demo) {
@@ -858,9 +860,16 @@ export function create3D(canvas) {
       shot.yaw = -Math.cos(f.dir) * 0.45;
       shot.ease = 0.16;
     } else if (s.phase === 'intro') {
+      // Every round opens low and wide, looking up at the sky over the wall,
+      // and cranes down to the fighters before the call to fight.
       const k = Math.min(1, s.pt / TIMING.INTRO);
+      const far = Math.max(0, 1 - k / 0.7);
+      const open = far * far * (3 - 2 * far);
       shot.yaw = (1 - k) * (1 - k) * 0.75;
-      shot.dist += (1 - k) * 2.5;
+      shot.dist += (1 - k) * 2.5 + open * 4;
+      shot.rise = 0.46 - open * 0.36;
+      shot.look = open * 3.2;
+      shot.ease = 0.08 + open * 0.1;
     } else if (s.phase === 'ko' && s.winner >= 0) {
       const w = s.f[s.winner];
       const k = Math.min(1, s.pt / 120);
@@ -942,7 +951,7 @@ export function create3D(canvas) {
       // Camera.
       const shot = wantedShot(view, now);
       if (!cam.ready) {
-        Object.assign(cam, { x: shot.x, z: shot.z, y: shot.y, dist: shot.dist, yaw: shot.yaw, ready: true });
+        Object.assign(cam, { x: shot.x, z: shot.z, y: shot.y, dist: shot.dist, yaw: shot.yaw, rise: shot.rise, look: shot.look, ready: true });
       } else {
         const k = 1 - Math.pow(1 - shot.ease, dt / 16.7);
         cam.x += (shot.x - cam.x) * k;
@@ -950,14 +959,16 @@ export function create3D(canvas) {
         cam.y += (shot.y - cam.y) * k;
         cam.dist += (shot.dist - cam.dist) * k;
         cam.yaw += (shot.yaw - cam.yaw) * k;
+        cam.rise += (shot.rise - cam.rise) * k;
+        cam.look += (shot.look - cam.look) * k;
       }
       const reach = cam.dist - kick * 0.7;
       camera.position.set(
         cam.x + Math.sin(cam.yaw) * reach + shake.x * S * 1.5,
-        cam.y + 0.8 + reach * 0.46 + shake.y * S * 1.5,
+        cam.y + 0.8 + reach * cam.rise + shake.y * S * 1.5,
         cam.z + Math.cos(cam.yaw) * reach,
       );
-      camera.lookAt(cam.x, cam.y, cam.z);
+      camera.lookAt(cam.x, cam.y + cam.look, cam.z);
       camera.updateMatrixWorld();
 
       setTheme(view.theme);

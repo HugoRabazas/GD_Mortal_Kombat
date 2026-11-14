@@ -318,6 +318,7 @@ function helpScreen() {
         <li><b>Punch three times</b> for a combo that ends in a knockdown; each punch must land to continue.</li>
         <li><b>Punch + Kick together</b> is a grab: short reach, but it goes straight through a guard.</li>
         <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment.</li>
+        <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling. Hold the guard and it is an ordinary block.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
         <li><b>Block</b> only stops what comes from the front. Get behind a blocking rival, or step out of the way of a projectile.</li>
         <li><b>Jump</b> over a ground stomp; punch or kick in the air for a diving attack.</li>
@@ -333,15 +334,61 @@ function helpScreen() {
     </section>`;
 }
 
+// What each kind of special move does, in a few words.
+const SPECIAL_NOTES = {
+  dash: 'a lunge across the arena that knocks down',
+  bolt: 'a projectile that flies where you face',
+  rise: 'a spinning leap that hits all around you',
+  quake: 'a stomp that floors everyone near who is not in the air',
+};
+
+// The move list on the pause screen: every move of the fighter being played,
+// with the keys (or on-screen buttons) this player is actually using.
+function movesCard() {
+  const s = app.game?.state;
+  if (!s) return '';
+  const two = app.mode === 'versus';
+  const touch = app.touch && !two;
+  const key = touch
+    ? { p: 'P', k: 'K', b: 'BLK', s: 'SP', u: 'ULT', j: 'JMP' }
+    : two
+      ? { p: 'F / J', k: 'G / K', b: 'H / L', s: 'T / I', u: 'Y / O', j: 'Space / U' }
+      : { p: 'J', k: 'K', b: 'L', s: 'I', u: 'O', j: 'Space' };
+  const k = (...names) => names.map((n) => `<kbd>${n}</kbd>`).join(' ');
+  const slots = two ? [0, 1] : [app.mode === 'online' ? Math.max(0, app.online?.mySlot ?? 0) : 0];
+  const own = slots
+    .map((slot) => {
+      const f = getFighter(s.f[slot].char);
+      const who = two ? `${f.name}: ` : '';
+      return `
+        <dt>${k(key.s)}</dt><dd>${who}<b>${f.special.name}</b> - ${SPECIAL_NOTES[f.special.type] || 'special move'}. Costs a third of the energy bar.</dd>
+        <dt>${k(key.u)}</dt><dd>${who}<b>${f.super.name}</b> - the finisher. Needs the whole bar.</dd>`;
+    })
+    .join('');
+  return `
+    <dl class="movelist" aria-label="Moves">
+      <dt>${k(key.p, key.p, key.p)}</dt><dd><b>Three-punch combo</b>; each punch must land, the third knocks down.</dd>
+      <dt>${k(key.k)}</dt><dd><b>Kick</b>: slower than a punch, heavier, longer reach.</dd>
+      <dt>${k(key.p)} + ${k(key.k)}</dt><dd><b>Grab</b>: short reach, goes straight through a guard.</dd>
+      <dt>${k(key.j)}, ${k(key.p)}</dt><dd><b>Diving attack</b> from the air.</dd>
+      <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b>.</dd>
+      <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b>: attacks pass through you.</dd>
+      ${own}
+    </dl>`;
+}
+
 function pauseScreen() {
   return `
     <section class="screen pause">
       <h2>Paused</h2>
-      <div class="stack">
-        <button type="button" class="btn primary" data-act="resume">Resume</button>
-        ${app.mode === 'online' ? '' : '<button type="button" class="btn" data-act="rematch">Restart fight</button>'}
-        <button type="button" class="btn" data-act="settings">Settings</button>
-        ${app.mode === 'online' ? '<button type="button" class="btn quiet" data-act="onBack">Back to the room</button>' : '<button type="button" class="btn quiet" data-act="menu">Quit to menu</button>'}
+      <div class="cols">
+        <div class="stack">
+          <button type="button" class="btn primary" data-act="resume">Resume</button>
+          ${app.mode === 'online' ? '' : '<button type="button" class="btn" data-act="rematch">Restart fight</button>'}
+          <button type="button" class="btn" data-act="settings">Settings</button>
+          ${app.mode === 'online' ? '<button type="button" class="btn quiet" data-act="onBack">Back to the room</button>' : '<button type="button" class="btn quiet" data-act="menu">Quit to menu</button>'}
+        </div>
+        ${movesCard()}
       </div>
     </section>`;
 }

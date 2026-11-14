@@ -128,6 +128,19 @@ export function handleEvents(events, state, { quiet, project, me = -1 }) {
         if (!quiet) play('block');
         break;
       }
+      case 'parry': {
+        // A perfect guard: a bright ring of sparks and a clear ring of steel.
+        const p = project(e.x, e.h, e.z);
+        blockSpark(p.x, p.y);
+        blockSpark(p.x, p.y);
+        lightFlash(e.x, e.h, e.z, '#9fe8ff', true);
+        floatText(p.x, p.y - 34, 'PERFECT GUARD', '#9fe8ff', 24);
+        addShake(5);
+        addFlash(0.18);
+        if (!quiet) play('parry');
+        if (!quiet && e.by === me) buzz(30);
+        break;
+      }
       case 'special': {
         const p = project(by.x, 210, by.z);
         floatText(p.x, p.y, char.special.name.toUpperCase(), char.colors.accent, 22);

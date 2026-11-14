@@ -84,6 +84,45 @@ test('a guard stops blows from the front but not from behind', () => {
   assert.ok(back.f[1].maxHp - back.f[1].hp >= MOVES.kick.dmg, 'hit from behind lands in full');
 });
 
+test('a guard raised just before the blow is a perfect guard; a held or hammered guard is not', () => {
+  // Kick first, guard at the last moment: no damage, and the kicker reels.
+  const s = startFight();
+  closeUp(s);
+  step(s, [INPUT.KICK, 0]);
+  run(s, MOVES.kick.startup - 3);
+  const seen = [];
+  for (let i = 0; i < 12; i++) {
+    step(s, [0, INPUT.BLOCK]);
+    seen.push(...s.ev.map((e) => e.type));
+  }
+  assert.ok(seen.includes('parry'), 'a parry was announced');
+  assert.ok(!seen.includes('block'));
+  assert.equal(s.f[1].hp, s.f[1].maxHp, 'no chip damage');
+  assert.equal(s.f[0].state, 'hit', 'the attacker is left open');
+  assert.equal(s.f[0].move, null);
+  assert.ok(s.f[1].meter > 0);
+
+  // A light punch can be guarded perfectly too, but its owner is not staggered.
+  const light = startFight();
+  closeUp(light);
+  step(light, [INPUT.PUNCH, 0]);
+  run(light, MOVES.punch.startup - 2);
+  run(light, 3, [0, INPUT.BLOCK]);
+  assert.equal(light.f[1].hp, light.f[1].maxHp);
+  assert.notEqual(light.f[0].state, 'hit');
+
+  // Letting go and pressing again at once does not earn a second window.
+  const mash = startFight();
+  closeUp(mash);
+  run(mash, 6, [0, INPUT.BLOCK]);
+  run(mash, 2);
+  step(mash, [INPUT.KICK, 0]);
+  run(mash, MOVES.kick.startup - 3);
+  run(mash, 12, [0, INPUT.BLOCK]);
+  assert.ok(mash.f[1].hp < mash.f[1].maxHp, 'an ordinary block: chip damage');
+  assert.notEqual(mash.f[0].state, 'hit');
+});
+
 test('a blocked hit never knocks out', () => {
   const s = startFight();
   closeUp(s);
