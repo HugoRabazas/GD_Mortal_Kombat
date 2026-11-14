@@ -208,6 +208,9 @@ export function aiInput(ai, s, me) {
   // A skirmisher likes to roll round to the rival's side before striking.
   if (style.circle && dist < 220 && rnd(ai) < style.circle) return hold(toward(-dz, dx) | INPUT.BLOCK, 3);
 
+  // A rival hiding behind a guard gets grabbed.
+  if (o.state === 'block' && dist < 84 && rnd(ai) < cfg.attack * 0.35) return press(INPUT.PUNCH | INPUT.KICK);
+
   // --- in range ---
   const roll = rnd(ai);
   if (roll < cfg.attack + (style.attack || 0)) return press(rnd(ai) < 0.55 ? INPUT.PUNCH : INPUT.KICK);

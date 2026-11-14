@@ -320,6 +320,19 @@ export function create3D(canvas) {
       }
     }
   }
+  // Stands down both sides too, where the camera actually looks.
+  {
+    const rand = seeded(57);
+    for (const side of [-1, 1]) {
+      for (let row = 0; row < 3; row++) {
+        const x = side * (11.6 + row * 0.95);
+        box(1.0, 0.5, 13, x, 0.05 + row * 0.5, -1.2, wallMat);
+        for (let z = -7.2; z <= 4.6; z += 0.95 + rand() * 0.3) {
+          fans.push({ x, y: 0.6 + row * 0.5, z: z + (rand() - 0.5) * 0.3, phase: rand() * 6.28, keen: 0.6 + rand() * 0.8 });
+        }
+      }
+    }
+  }
   const fanBodies = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.21, 0.62, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }), fans.length);
   const fanHeads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 10, 8), new THREE.MeshLambertMaterial({ color: lin(0xd9a98a) }), fans.length);
   {

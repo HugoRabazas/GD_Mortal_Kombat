@@ -55,6 +55,8 @@ each one where you like and resize them, saved per orientation on the device.
   aim does not have to be exact.
 - **Punch three times** for a combo that ends in a knockdown; each punch has
   to land for the next to come out.
+- **Punch + Kick together** is a grab: short reach, open if it misses, but it
+  goes straight through a guard.
 - **Block + a direction** is a dodge roll: attacks pass through you for most
   of it.
 - Hits fill the **energy** bar: a special costs 35 of 100, the finisher needs
@@ -76,6 +78,8 @@ The website build adds an **Online** mode for the whole alliance:
   fighter and presses Ready; the host starts the fight, optionally filling the
   empty places with CPU fighters. Two fighters play a duel, three or four an
   arena brawl.
+- The lobby and every room have a **chat**. Messages reach whoever is there at
+  that moment and are not stored anywhere.
 - **Copy invite link** in a room gives an address ending in `#room-ABCD`;
   whoever opens it only has to type a name to land in that room.
 - Everyone in a room must be on the same version of the game. If someone has

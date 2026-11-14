@@ -86,6 +86,15 @@ const app = {
 let stage = null;
 let touchLayout = null;
 
+// True until this device has started its first fight.
+function isNewcomer() {
+  try {
+    return localStorage.getItem('gd-arena-played') !== '1';
+  } catch {
+    return false;
+  }
+}
+
 function bestScore() {
   try {
     return Number(localStorage.getItem('gd-arena-best')) || 0;
@@ -154,6 +163,7 @@ function menuScreen() {
         <button type="button" class="btn quiet" data-act="help">How to play</button>
       </div>
       ${best ? `<p class="best">Arcade best <b>${points(best)}</b></p>` : ''}
+      ${isNewcomer() ? '<p class="note">New here? <b>Training</b> lets you try every move with no clock.</p>' : ''}
       <div class="foot">
         <button type="button" class="link" data-act="settings">Settings</button>
         <button type="button" class="link" data-act="touch">${touchLabel()}</button>
@@ -287,6 +297,7 @@ function helpScreen() {
       <ul class="tips">
         <li><b>Walk anywhere</b> on the arena: left, right, into the depth and back. Attacks turn you towards the nearest rival, so you do not need perfect aim.</li>
         <li><b>Punch three times</b> for a combo that ends in a knockdown; each punch must land to continue.</li>
+        <li><b>Punch + Kick together</b> is a grab: short reach, but it goes straight through a guard.</li>
         <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
         <li><b>Block</b> only stops what comes from the front. Get behind a blocking rival, or step out of the way of a projectile.</li>
@@ -425,6 +436,19 @@ function resultScreen() {
 
 // ---------------------------------------------------------- online screens ---
 
+// The chat box shared by the lobby and the rooms.
+function chatBox() {
+  const lines = app.online.chat.slice(-8);
+  return `
+    <div class="chat">
+      <ol>${lines.length ? lines.map((m) => `<li class="${m.mine ? 'mine' : ''}"><b>${esc(m.name)}</b> ${esc(m.text)}</li>`).join('') : '<li class="dim">Say hello. Messages are not saved.</li>'}</ol>
+      <form class="row" data-form="chat">
+        <input id="chat" class="field" type="text" maxlength="140" autocomplete="off" placeholder="Message" />
+        <button type="submit" class="btn small">Send</button>
+      </form>
+    </div>`;
+}
+
 function nameScreen() {
   return `
     <section class="screen select narrow">
@@ -464,6 +488,7 @@ function lobbyScreen() {
           <button type="button" class="btn primary" data-act="createRoom">Create a room</button>
         </div>
       </div>
+      ${chatBox()}
       ${app.notice ? `<p class="note warn">${esc(app.notice)}</p>` : ''}
       <div class="row"><button type="button" class="btn quiet" data-act="offline">Leave online</button></div>
     </section>`;
@@ -505,6 +530,7 @@ function roomScreen() {
         </div>
       </div>
       ${room.isHost ? `<div class="seg" role="group"><button type="button" class="${app.fill ? 'on' : ''}" data-act="fill" data-id="1">Fill with CPU</button><button type="button" class="${app.fill ? '' : 'on'}" data-act="fill" data-id="0">Players only</button></div>` : ''}
+      ${chatBox()}
       ${room.mixed ? '<p class="note warn">Someone here has an older or newer version of the game. Everyone should reload the page before fighting.</p>' : ''}
       ${app.notice ? `<p class="note warn">${esc(app.notice)}</p>` : ''}
       <div class="row">
@@ -548,6 +574,10 @@ function refreshTouch() {
 }
 
 function show(screen) {
+  // The lobby and the rooms redraw whenever someone joins or speaks: carry a
+  // half-typed chat message (and the cursor) across the redraw.
+  const draft = ui.querySelector('#chat');
+  const kept = draft ? { value: draft.value, focus: document.activeElement === draft } : null;
   app.screen = screen;
   const inFight = screen === 'fight' || screen === 'pause' || screen === 'result' || ((screen === 'arrange' || screen === 'settings') && app.game);
   ui.innerHTML = SCREENS[screen] ? SCREENS[screen]() : '';
@@ -560,7 +590,12 @@ function show(screen) {
   if (!inFight) app.game = null;
   setMusic(screen === 'fight' ? 'fight' : 'menu');
   keepAwake(screen === 'fight');
-  if (screen !== 'nick') ui.querySelector('.primary:not([disabled])')?.focus({ preventScroll: true });
+  const chat = ui.querySelector('#chat');
+  if (chat && kept) {
+    chat.value = kept.value;
+    if (kept.focus) chat.focus({ preventScroll: true });
+  }
+  if (screen !== 'nick' && !(chat && kept?.focus)) ui.querySelector('.primary:not([disabled])')?.focus({ preventScroll: true });
 }
 
 // ---------------------------------------------------------------- fights ---
@@ -604,6 +639,11 @@ function startFight() {
     controllers = two;
   }
   app.game = createGame(chars, controllers, mods);
+  try {
+    localStorage.setItem('gd-arena-played', '1');
+  } catch {
+    // not remembered
+  }
   app.resultShown = false;
   stage.reset();
   show('fight');
@@ -852,6 +892,12 @@ ui.addEventListener('submit', (e) => {
   if (e.target.dataset.form === 'nick') {
     unlockAudio();
     goOnline(ui.querySelector('#nick').value);
+  } else if (e.target.dataset.form === 'chat') {
+    const box = ui.querySelector('#chat');
+    if (app.online?.say(box.value)) {
+      box.value = '';
+      box.focus({ preventScroll: true });
+    }
   }
 });
 
@@ -911,7 +957,7 @@ function frame(now) {
     ? ''
     : app.mode === 'versus'
       ? 'P1: WASD move · Space jump · F G punch kick · H block · T Y special finisher     P2: arrows · U · J K · L · I O'
-      : 'WASD move · Space jump · J punch (x3 combo) · K kick · L block (+move = roll) · I special · O finisher';
+      : 'WASD move · Space jump · J punch (x3 combo) · K kick · J+K grab · L block (+move = roll) · I special · O finisher';
   stage.render({ state: g.state, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: app.mode === 'training' }, now);
 
   const s = g.state;

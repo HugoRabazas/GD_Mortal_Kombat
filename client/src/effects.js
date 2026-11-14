@@ -114,6 +114,7 @@ export function handleEvents(events, state, { quiet, project, me = -1 }) {
         lightFlash(e.x, e.h, e.z, char.colors.glow, e.heavy);
         floatText(p.x, p.y - 30, String(e.dmg), e.heavy ? '#ffd34d' : '#ffffff', e.heavy ? 28 : 22);
         if (e.combo >= 2) floatText(p.x, p.y - 58, `${e.combo} HITS`, '#ff8a5c', 20);
+        if (e.kind === 'grab') floatText(p.x, p.y - 58, 'GRAB!', '#59c7ff', 24);
         addShake(e.kind === 'super' ? 16 : e.heavy ? 8 : 4);
         if (e.kind === 'super') addFlash(0.6);
         if (!quiet) play(e.heavy ? 'heavy' : 'hit');

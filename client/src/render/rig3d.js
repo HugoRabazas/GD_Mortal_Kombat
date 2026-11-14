@@ -249,7 +249,7 @@ export function createRig(THREE, scene, char, { alt = false, boss = false } = {}
       if (f.state === 'hit' && f.t < 5) {
         tint = white;
         amount = 0.75;
-      } else if (f.state === 'attack' && !f.move.startsWith('punch') && f.move !== 'kick') {
+      } else if (f.state === 'attack' && !f.move.startsWith('punch') && f.move !== 'kick' && f.move !== 'grab') {
         tint = glow;
         amount = 0.55 + 0.2 * Math.sin(now / 40);
       } else if (boss) {

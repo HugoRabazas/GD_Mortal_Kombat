@@ -28,6 +28,7 @@ const LEAD_MAX = 14; // never draw a guest's own fighter more than this many tic
 
 const newId = () => Math.random().toString(36).slice(2, 12);
 const newCode = () => Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[(Math.random() * 24) | 0]).join('');
+const cleanText = (v) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 140);
 const cleanName = (v) => String(v ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 14) || 'Fighter';
 // Shorten floats so snapshots stay small on the wire.
 const compact = (key, value) => (typeof value === 'number' && !Number.isInteger(value) ? Math.round(value * 10) / 10 : value);
@@ -48,6 +49,7 @@ export function createOnline({ config, name, char, version, readInput, onChange,
     me,
     kind: bus.kind,
     lobbyPeers: [],
+    chat: [], // the last few messages heard, in the lobby or in the room
     get room() {
       return room;
     },
@@ -62,6 +64,28 @@ export function createOnline({ config, name, char, version, readInput, onChange,
     },
   };
 
+  // ----------------------------------------------------------------- chat ---
+  // Messages go to whoever is in the same place (the lobby, or your room) at
+  // that moment. Nothing is stored anywhere: leave, and they are gone.
+  let lastSaid = 0;
+  function heard(msg, mine) {
+    const text = cleanText(msg?.text);
+    if (!text) return;
+    online.chat.push({ name: cleanName(msg.name), text, mine: !!mine });
+    if (online.chat.length > 40) online.chat.shift();
+    onChange();
+  }
+  online.say = (text) => {
+    const clean = cleanText(text);
+    const now = Date.now();
+    if (!clean || now - lastSaid < 700) return false; // no flooding
+    lastSaid = now;
+    const msg = { name: me.name, text: clean };
+    (room ? room.ch : lobby)?.send('chat', msg);
+    heard(msg, true);
+    return true;
+  };
+
   // ---------------------------------------------------------------- lobby ---
 
   const lobbyState = () => ({ name: me.name, room: room ? room.code : null, playing: !!match });
@@ -71,6 +95,9 @@ export function createOnline({ config, name, char, version, readInput, onChange,
     lobby.onPeers((list) => {
       online.lobbyPeers = list.map((p) => ({ id: p.id, name: cleanName(p.name), room: typeof p.room === 'string' ? p.room.slice(0, 8) : null, playing: !!p.playing }));
       onChange();
+    });
+    lobby.on('chat', (m) => {
+      if (!room) heard(m);
     });
     await lobby.ready;
   };
@@ -142,6 +169,7 @@ export function createOnline({ config, name, char, version, readInput, onChange,
     if (room) await online.leaveRoom();
     code = String(code).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || newCode();
     room = { code, ch: null, peers: [], hostId: null, isHost: false, links: new Map(), at: Date.now(), char: char(), ready: false };
+    online.chat = []; // a room starts with a clean slate
     const ch = bus.channel(`room-${code}`, me.id, roomState());
     room.ch = ch;
     ch.on('sig', (m) => {
@@ -153,6 +181,7 @@ export function createOnline({ config, name, char, version, readInput, onChange,
     ch.on('relay', (m) => {
       if (m.to === me.id || m.to === '*') onData(m.from, m.d);
     });
+    ch.on('chat', (m) => heard(m));
     ch.on('start', (info) => {
       if (!room.isHost) beginClient(info);
     });
@@ -174,6 +203,7 @@ export function createOnline({ config, name, char, version, readInput, onChange,
     for (const link of room.links.values()) link.close();
     room.ch.leave();
     room = null;
+    online.chat = [];
     lobby?.track(lobbyState());
     onChange();
   };

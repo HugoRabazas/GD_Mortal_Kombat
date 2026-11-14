@@ -362,3 +362,20 @@ test('in a brawl a hit freezes only the two fighters involved', () => {
   assert.ok(bystanderMoved, 'a fighter elsewhere kept walking');
   assert.equal(s.hitstop, 0, 'the world did not stop');
 });
+
+test('punch and kick together is a grab that goes through a guard, but not through the air', () => {
+  const s = startFight();
+  closeUp(s, 56);
+  step(s, [INPUT.PUNCH | INPUT.KICK, INPUT.BLOCK]);
+  run(s, 14, [0, INPUT.BLOCK]);
+  assert.equal(s.f[0].move === 'grab' || s.f[1].state === 'down', true);
+  assert.equal(s.f[1].state, 'down', 'the blocker is thrown');
+  assert.ok(s.f[1].maxHp - s.f[1].hp >= MOVES.grab.dmg - 1);
+
+  const far = startFight();
+  closeUp(far, 120);
+  step(far, [INPUT.PUNCH | INPUT.KICK, 0]);
+  run(far, 14);
+  assert.equal(far.f[1].hp, far.f[1].maxHp, 'out of reach: the grab misses');
+  assert.equal(far.f[0].state, 'attack', 'and leaves the grabber open');
+});

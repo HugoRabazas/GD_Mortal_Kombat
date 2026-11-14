@@ -57,6 +57,12 @@ export const MOVES = {
     startup: 8, active: 4, recovery: 13, dmg: 10, reach: 104, arc: 0.75, y0: 30, y1: 140, aim: 210,
     hitstun: 19, blockstun: 12, push: 9, gain: 12, heavy: true,
   },
+  // Punch and kick together: a grab. Short reach and slow to recover if it
+  // misses, but a guard does not stop it - the answer to a rival who only blocks.
+  grab: {
+    startup: 7, active: 3, recovery: 24, dmg: 10, reach: 62, arc: 0.7, y0: 40, y1: 150, aim: 150,
+    hitstun: 0, blockstun: 0, push: 6, gain: 10, knockdown: true, heavy: true, unblockable: true,
+  },
   airKick: {
     startup: 5, active: 999, recovery: 0, dmg: 9, reach: 80, arc: 1.0, y0: -20, y1: 90, aim: 0,
     hitstun: 18, blockstun: 11, push: 6, gain: 10, heavy: true,
@@ -281,6 +287,10 @@ function tryAttack(s, f) {
     startAttack(s, f, type);
     if (type === 'rise') f.inv = MOVES.rise.startup + 6;
     emit(s, 'special', { by: f.slot, move: type });
+    return true;
+  }
+  if (b & INPUT.KICK && b & INPUT.PUNCH) {
+    startAttack(s, f, 'grab');
     return true;
   }
   if (b & INPUT.KICK) {
@@ -591,7 +601,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     dx /= d;
     dz /= d;
   }
-  const blocked = def.state === 'block' && angleDiff(def.dir, Math.atan2(-dz, -dx)) <= BLOCK_ARC;
+  const blocked = !m.unblockable && def.state === 'block' && angleDiff(def.dir, Math.atan2(-dz, -dx)) <= BLOCK_ARC;
   const power = getFighter(att.char).stats.power * att.pw;
   const at = { x: def.x - dx * 14, z: def.z - dz * 14, h: def.h + (m.y1 < 60 ? 30 : 105) };
 

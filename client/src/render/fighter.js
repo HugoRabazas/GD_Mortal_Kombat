@@ -48,6 +48,10 @@ function attackPose(f) {
       if (phase === 'pre') return pose({ ...CROUCH, lean: 0.3, hfx: 8, hfy: 28, hbx: -10, hby: 14 });
       if (phase === 'act') return pose({ hipX: 10, hipY: -68, lean: 0.08, hfx: 34, hfy: -50, hbx: -16, hby: 12, ffx: 22, fbx: -20, fby: -6 });
       return pose({ lean: 0.1, hfx: 22, hfy: -28 });
+    case 'grab': // both hands reach out, then heave
+      if (phase === 'pre') return pose({ lean: 0.25, hfx: 30, hfy: -10, hbx: 26, hby: -2 });
+      if (phase === 'act') return pose({ lean: 0.45, hipX: 10, hfx: 50, hfy: -10, hbx: 48, hby: 2, fbx: -28 });
+      return pose({ lean: -0.2, hfx: 10, hfy: -40, hbx: 4, hby: -34 });
     case 'kick':
       if (phase === 'pre') return pose({ lean: -0.1, ffx: 12, ffy: -34, hfx: 12, hfy: 4 });
       if (phase === 'act') return pose({ lean: -0.34, hipX: 8, ffx: 80, ffy: -84, fbx: -6, hfx: 6, hfy: 8, hbx: -18, hby: 4 });

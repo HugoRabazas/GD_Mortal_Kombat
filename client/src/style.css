@@ -864,6 +864,43 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+.chat {
+  width: 100%;
+  display: grid;
+  gap: 6px;
+}
+
+.chat ol {
+  margin: 0;
+  padding: 6px 10px;
+  list-style: none;
+  max-height: 7.2em;
+  overflow-y: auto;
+  background: rgba(11, 7, 13, 0.55);
+  text-align: left;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.chat li {
+  overflow-wrap: anywhere;
+}
+
+.chat b {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+.chat .mine b {
+  color: var(--bone);
+}
+
+.chat .dim {
+  color: var(--ash);
+}
+
 .slider {
   display: grid;
   grid-template-columns: 5.5em 1fr;
