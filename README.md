@@ -113,10 +113,17 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   run over direct links, and about one four-player match at a time if every
   player has to be relayed.
 
+## Settings
+
+Music and effects have their own volume sliders (menu and pause screen),
+remembered on the device, next to the sound switch, the touch-button switch
+and the button arranger.
+
 ## The arena lives in time
 
 Round one is fought at dusk, round two under a cold night sky, round three in
-a storm with rain and lightning. Inside every round, the ring of fire shrinks
+a storm with rain and lightning. A crowd on the stands sways while it watches
+and jumps and roars when heavy blows and knockouts land. Inside every round, the ring of fire shrinks
 the fighting ground as time runs out.
 
 ## How it is built, from the ground up

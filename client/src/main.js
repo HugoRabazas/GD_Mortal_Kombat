@@ -10,7 +10,7 @@ import { createGame } from './game.js';
 import { handleEvents } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, setCapture, setTouchLive } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
-import { unlockAudio, play, isMuted, setMuted, setMusic } from './audio.js';
+import { unlockAudio, play, isMuted, setMuted, setMusic, getVolume, setVolume } from './audio.js';
 import { createOnline } from './net/online.js';
 
 // Online play exists only in the web build, which is told where the bus lives
@@ -155,7 +155,7 @@ function menuScreen() {
       </div>
       ${best ? `<p class="best">Arcade best <b>${points(best)}</b></p>` : ''}
       <div class="foot">
-        <button type="button" class="link" data-act="mute">${isMuted() ? 'Sound off' : 'Sound on'}</button>
+        <button type="button" class="link" data-act="settings">Settings</button>
         <button type="button" class="link" data-act="touch">${touchLabel()}</button>
         <button type="button" class="link" data-act="arrange">Arrange buttons</button>
         <button type="button" class="link" data-act="fullscreen">Full screen</button>
@@ -309,9 +309,28 @@ function pauseScreen() {
       <div class="stack">
         <button type="button" class="btn primary" data-act="resume">Resume</button>
         ${app.mode === 'online' ? '' : '<button type="button" class="btn" data-act="rematch">Restart fight</button>'}
-        ${app.touch ? '<button type="button" class="btn" data-act="arrange">Arrange buttons</button>' : ''}
+        <button type="button" class="btn" data-act="settings">Settings</button>
         ${app.mode === 'online' ? '<button type="button" class="btn quiet" data-act="onBack">Back to the room</button>' : '<button type="button" class="btn quiet" data-act="menu">Quit to menu</button>'}
       </div>
+    </section>`;
+}
+
+function settingsScreen() {
+  const slider = (id, label, value) => `
+    <label class="slider" for="${id}"><span>${label}</span>
+      <input id="${id}" type="range" min="0" max="100" step="5" value="${Math.round(value * 100)}" data-vol="${id === 'vol-music' ? 'music' : 'sfx'}" />
+    </label>`;
+  return `
+    <section class="screen select narrow">
+      <h2>Settings</h2>
+      ${slider('vol-music', 'Music', getVolume('music'))}
+      ${slider('vol-sfx', 'Effects', getVolume('sfx'))}
+      <div class="row">
+        <button type="button" class="btn small" data-act="mute">${isMuted() ? 'Sound off' : 'Sound on'}</button>
+        <button type="button" class="btn small" data-act="touch">${touchLabel()}</button>
+        <button type="button" class="btn small" data-act="arrange">Arrange buttons</button>
+      </div>
+      <div class="row"><button type="button" class="btn primary" data-act="settingsDone">Done</button></div>
     </section>`;
 }
 
@@ -500,7 +519,7 @@ function roomScreen() {
     </section>`;
 }
 
-const SCREENS = { menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
+const SCREENS = { settings: settingsScreen, menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
 
 // Keep a phone's screen from dimming or locking in the middle of a fight.
 let wakeLock = null;
@@ -530,7 +549,7 @@ function refreshTouch() {
 
 function show(screen) {
   app.screen = screen;
-  const inFight = screen === 'fight' || screen === 'pause' || screen === 'result' || (screen === 'arrange' && app.game);
+  const inFight = screen === 'fight' || screen === 'pause' || screen === 'result' || ((screen === 'arrange' || screen === 'settings') && app.game);
   ui.innerHTML = SCREENS[screen] ? SCREENS[screen]() : '';
   ui.dataset.screen = screen;
   pauseBtn.hidden = screen !== 'fight';
@@ -742,6 +761,11 @@ const ACTIONS = {
     app.arrangeFrom = app.game ? 'pause' : 'menu';
     show('arrange');
   },
+  settings() {
+    app.settingsFrom = app.game ? 'pause' : 'menu';
+    show('settings');
+  },
+  settingsDone: () => show(app.settingsFrom || 'menu'),
   arrangeDone: () => show(app.arrangeFrom),
   smaller: () => touchLayout.resize(-0.1),
   bigger: () => touchLayout.resize(0.1),
@@ -813,6 +837,15 @@ async function goOnline(name) {
     show('nick');
   }
 }
+
+// Volume sliders act while they are dragged, with a sound to judge by.
+ui.addEventListener('input', (e) => {
+  const kind = e.target.dataset?.vol;
+  if (!kind) return;
+  unlockAudio();
+  setVolume(kind, Number(e.target.value) / 100);
+  if (kind === 'sfx') play('hit');
+});
 
 ui.addEventListener('submit', (e) => {
   e.preventDefault();

@@ -306,6 +306,31 @@ export function create3D(canvas) {
     }
   }
 
+  // ---------- the crowd ----------
+  // Spectators on stands behind the wall. They sway while they watch and
+  // jump when a heavy blow lands. All of them are drawn in two batches (bodies
+  // and heads), so a full stand costs almost nothing.
+  for (let row = 0; row < 3; row++) box(44, 0.5, 1.0, 0, 1.4 + row * 0.55, WALL_Z - 1.0 - row * 0.95, wallMat);
+  const fans = [];
+  {
+    const rand = seeded(21);
+    for (let row = 0; row < 3; row++) {
+      for (let x = -17; x <= 17; x += 0.95 + rand() * 0.3) {
+        fans.push({ x: x + (rand() - 0.5) * 0.3, y: 1.95 + row * 0.55, z: WALL_Z - 1.0 - row * 0.95, phase: rand() * 6.28, keen: 0.6 + rand() * 0.8 });
+      }
+    }
+  }
+  const fanBodies = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.21, 0.62, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }), fans.length);
+  const fanHeads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 10, 8), new THREE.MeshLambertMaterial({ color: lin(0xd9a98a) }), fans.length);
+  {
+    const rand = seeded(33);
+    const cloaks = [0x5a1626, 0x2a1a3a, 0x3a2a1a, 0x1f2f3f, 0x6a4a1a, 0x3a1a2a];
+    fans.forEach((_, i) => fanBodies.setColorAt(i, lin(cloaks[Math.floor(rand() * cloaks.length)])));
+  }
+  scene.add(fanBodies, fanHeads);
+  const fanDummy = new THREE.Object3D();
+  let excite = 0; // 0 calm ... 1 on their feet
+
   // ---------- torches ----------
   const flameTex = (() => {
     const c = makeCanvas(128, 128);
@@ -830,9 +855,26 @@ export function create3D(canvas) {
         light.color.set(fl.color);
         light.intensity = fl.heavy ? 14 : 8;
         if (fl.heavy) kick = 1; // the camera lunges in on a heavy blow
+        excite = Math.min(1, excite + (fl.heavy ? 0.6 : 0.2));
       }
       kick *= Math.pow(0.86, dt / 16.7);
       for (const light of flashes) light.intensity *= 0.78;
+
+      // The crowd: a slow sway, and jumping when excited.
+      excite *= Math.pow(0.985, dt / 16.7);
+      for (let i = 0; i < fans.length; i++) {
+        const fan = fans[i];
+        const hop = Math.abs(Math.sin(now / 130 + fan.phase)) * 0.28 * excite * fan.keen;
+        const y = fan.y + Math.sin(now / 700 + fan.phase) * 0.03 + hop;
+        fanDummy.position.set(fan.x + Math.sin(now / 900 + fan.phase) * 0.04, y, fan.z);
+        fanDummy.updateMatrix();
+        fanBodies.setMatrixAt(i, fanDummy.matrix);
+        fanDummy.position.y = y + 0.46;
+        fanDummy.updateMatrix();
+        fanHeads.setMatrixAt(i, fanDummy.matrix);
+      }
+      fanBodies.instanceMatrix.needsUpdate = true;
+      fanHeads.instanceMatrix.needsUpdate = true;
 
       renderer.render(scene, camera);
     },

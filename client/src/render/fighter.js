@@ -82,6 +82,9 @@ function targetPose(f, now) {
         hipY: -61 + Math.abs(Math.sin(p)) * 1.5,
         ffx: 16 + 15 * Math.sin(p), ffy: -Math.max(0, Math.cos(p)) * 9,
         fbx: -16 - 15 * Math.sin(p), fby: -Math.max(0, -Math.cos(p)) * 9,
+        // Arms swing against the legs, the way people walk.
+        hfx: 24 - 12 * Math.sin(p), hfy: 2, hbx: 6 + 12 * Math.sin(p), hby: 10,
+        lean: 0.2,
       });
     }
     case 'land':

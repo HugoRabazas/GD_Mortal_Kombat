@@ -154,6 +154,7 @@ export function handleEvents(events, state, { quiet, project, me = -1 }) {
         addShake(10);
         addFlash(0.3);
         if (!quiet) play('ko');
+        if (!quiet) play('cheer');
         break;
       }
       case 'ko':
@@ -164,6 +165,7 @@ export function handleEvents(events, state, { quiet, project, me = -1 }) {
         if (arena) showBanner(e.winner < 0 ? 'ROUND SHARED' : `${nameOf(e.winner)} TAKES IT`, e.finisher ? 'FINISHER!' : e.perfect ? 'PERFECT!' : null, '#ff5a36', 2300);
         else showBanner(e.winner < 0 ? 'DOUBLE K.O.' : 'K.O.', e.finisher ? 'FINISHER!' : e.perfect ? 'PERFECT!' : null, '#ff5a36', 2300);
         if (!arena) play('ko');
+        play('cheer');
         break;
       case 'timeup':
         if (arena) showRoundPoints(state, project);

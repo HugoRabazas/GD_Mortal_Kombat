@@ -4,6 +4,7 @@
 
 let ctx = null;
 let master = null;
+let sfxBus = null; // every sound effect passes through here, so it has its own volume
 let noise = null;
 let muted = false;
 
@@ -11,6 +12,30 @@ try {
   muted = localStorage.getItem('gd-arena-muted') === '1';
 } catch {
   // storage unavailable: keep the default
+}
+
+// Separate volumes for effects and music, 0 to 1, remembered on the device.
+const volume = { sfx: 1, music: 1 };
+try {
+  for (const k of ['sfx', 'music']) {
+    const v = Number(localStorage.getItem(`gd-arena-vol-${k}`));
+    if (localStorage.getItem(`gd-arena-vol-${k}`) !== null && v >= 0 && v <= 1) volume[k] = v;
+  }
+} catch {
+  // storage unavailable: full volume
+}
+
+export const getVolume = (kind) => volume[kind];
+
+export function setVolume(kind, value) {
+  volume[kind] = Math.min(1, Math.max(0, value));
+  if (kind === 'sfx' && sfxBus) sfxBus.gain.value = volume.sfx;
+  if (kind === 'music' && musicBus) musicBus.gain.value = 0.3 * volume.music;
+  try {
+    localStorage.setItem(`gd-arena-vol-${kind}`, String(volume[kind]));
+  } catch {
+    // not remembered
+  }
 }
 
 export function isMuted() {
@@ -35,6 +60,9 @@ export function unlockAudio() {
       ctx = new AC();
       master = ctx.createGain();
       master.gain.value = muted ? 0 : 0.5;
+      sfxBus = ctx.createGain();
+      sfxBus.gain.value = volume.sfx;
+      sfxBus.connect(master);
       master.connect(ctx.destination);
       noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
       const data = noise.getChannelData(0);
@@ -63,7 +91,7 @@ function tone(type, from, to, dur, gain, delay = 0) {
   osc.frequency.exponentialRampToValueAtTime(Math.max(20, to), t + dur);
   g.gain.setValueAtTime(gain, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  osc.connect(g).connect(master);
+  osc.connect(g).connect(sfxBus);
   osc.start(t);
   osc.stop(t + dur + 0.02);
 }
@@ -79,7 +107,7 @@ function burst(dur, gain, freq, q = 1, delay = 0, type = 'bandpass') {
   const g = ctx.createGain();
   g.gain.setValueAtTime(gain, t);
   g.gain.exponentialRampToValueAtTime(0.001, t + dur);
-  src.connect(filter).connect(g).connect(master);
+  src.connect(filter).connect(g).connect(sfxBus);
   src.start(t, Math.random() * 0.5);
   src.stop(t + dur + 0.02);
 }
@@ -141,6 +169,12 @@ const SOUNDS = {
     tone('triangle', 660, 660, 0.08, 0.3);
     tone('triangle', 990, 990, 0.1, 0.3, 0.07);
     tone('triangle', 1320, 1320, 0.16, 0.3, 0.14);
+  },
+  // The crowd roaring at a knockout.
+  cheer: () => {
+    burst(1.5, 0.3, 1100, 0.35);
+    burst(1.1, 0.22, 2300, 0.5, 0.08);
+    burst(0.9, 0.18, 600, 0.4, 0.15);
   },
   burn: () => {
     burst(0.35, 0.7, 1200, 0.6);
@@ -232,7 +266,7 @@ export function setMusic(mode) {
   if (!ctx) return; // starts once the audio engine is unlocked
   if (!musicBus) {
     musicBus = ctx.createGain();
-    musicBus.gain.value = 0.3;
+    musicBus.gain.value = 0.3 * volume.music;
     musicBus.connect(master);
   }
   if (mode === 'off') {

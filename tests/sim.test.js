@@ -343,3 +343,22 @@ test('crystals appear on the floor and give energy or health to whoever walks ov
   run(s, 2);
   assert.equal(s.f[1].hp, 65);
 });
+
+test('in a brawl a hit freezes only the two fighters involved', () => {
+  const s = startFight(ALL);
+  Object.assign(s.f[0], { x: 0, z: 0 });
+  Object.assign(s.f[1], { x: 60, z: 0 });
+  Object.assign(s.f[2], { x: -300, z: -300 });
+  step(s, [INPUT.KICK, 0, INPUT.RIGHT, 0]);
+  let frozeBoth = false;
+  let bystanderMoved = true;
+  for (let i = 0; i < 16; i++) {
+    const before = s.f[2].x;
+    step(s, [0, 0, INPUT.RIGHT, 0]);
+    if (s.f[0].stop > 0 && s.f[1].stop > 0) frozeBoth = true;
+    if (s.f[2].x === before) bystanderMoved = false;
+  }
+  assert.ok(frozeBoth, 'attacker and victim paused on impact');
+  assert.ok(bystanderMoved, 'a fighter elsewhere kept walking');
+  assert.equal(s.hitstop, 0, 'the world did not stop');
+});
