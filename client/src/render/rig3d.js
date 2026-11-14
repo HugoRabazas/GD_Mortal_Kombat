@@ -130,6 +130,11 @@ export function createRig(THREE, scene, char, { alt = false, boss = false } = {}
   const tail = slim ? [ball(0.1, 0.1, 0.1, mats.hair), ball(0.085, 0.085, 0.085, mats.hair), ball(0.065, 0.065, 0.065, mats.hair)] : [];
   const knot = sumo ? ball(0.09, 0.07, 0.09, mats.secondary) : null; // topknot
 
+  // Accessories.
+  const gear = char.gear || [];
+  const scarf = gear.includes('scarf') ? { knot: ball(0.11, 0.075, 0.13, mats.accent), a: seg(0.03, mats.accent, 0.085), b: seg(0.026, mats.accent, 0.07) } : null;
+  const pads = gear.includes('pads') ? [ball(0.135, 0.075, 0.13, mats.accent), ball(0.135, 0.075, 0.13, mats.accent)] : null;
+
   // Head.
   const tex = new THREE.CanvasTexture(heads.get(char.id));
   tex.encoding = THREE.sRGBEncoding;
@@ -212,6 +217,22 @@ export function createRig(THREE, scene, char, { alt = false, boss = false } = {}
       for (let i = 0; i < tail.length; i++) {
         const sway = Math.sin(now / 170 + i) * 2 + (f.state === 'walk' ? 5 : 0) * i;
         put(tail[i], nx - 30 - i * 9 - sway, ny - 8 + i * 13, 0);
+      }
+
+      if (scarf) {
+        // The scarf hangs at rest and streams out behind when the fighter moves.
+        const rushing = f.state === 'attack' && (f.move === 'dash' || f.move === 'super');
+        const flow = rushing ? 1.5 : f.state === 'walk' || f.state === 'jump' ? 1 : 0.2;
+        const wave = Math.sin(now / 140 + f.slot) * 3;
+        const mx = sx - 12 - 20 * flow;
+        const my = sy + 18 - 16 * flow + wave;
+        put(scarf.knot, sx - 3, sy - 3, 0);
+        stretch(scarf.a, sx - 8, sy - 2, 0.05, mx, my, 0.07);
+        stretch(scarf.b, mx, my, 0.07, mx - 8 - 16 * flow, my + 16 - 14 * flow - wave, 0.03);
+      }
+      if (pads) {
+        put(pads[0], sx, sy + 1, build.shoulder * 1.08);
+        put(pads[1], sx, sy + 1, -build.shoulder * 1.08);
       }
 
       for (const [l, handX, handY, footX, footY] of [

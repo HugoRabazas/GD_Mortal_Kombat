@@ -192,7 +192,8 @@ editor), `audio.js` (every sound and the music are generated in the browser),
 1. Save their picture as `client/src/fighters/<id>.png`.
 2. Add an entry to `shared/fighters.js` (copy an existing one): `head` is the
    circle cut from the picture (centre `x`, `y` and radius `r` in picture
-   pixels); `build` is `standard`, `sumo` or `slim`; `special.type` is `dash`,
+   pixels); `build` is `standard`, `sumo` or `slim`; `gear` adds a `scarf` or
+   shoulder `pads`; `special.type` is `dash`,
    `bolt`, `rise` or `quake`; keep `stats` near 1.0.
 3. `npm run build` and publish `dist/gd-arena.html` again.
 

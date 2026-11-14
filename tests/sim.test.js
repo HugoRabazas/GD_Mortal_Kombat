@@ -379,3 +379,46 @@ test('punch and kick together is a grab that goes through a guard, but not throu
   assert.equal(far.f[1].hp, far.f[1].maxHp, 'out of reach: the grab misses');
   assert.equal(far.f[0].state, 'attack', 'and leaves the grabber open');
 });
+
+test('random button mashing never breaks the match (duel and arena)', () => {
+  // A deterministic stream of random controller states, held for random spans.
+  let seed = 12345;
+  const rnd = () => {
+    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const STATES = new Set(['idle', 'walk', 'jump', 'airAttack', 'attack', 'block', 'roll', 'hit', 'land', 'down', 'getup', 'ko', 'win', 'lose']);
+  for (const chars of [['ruko', 'shadow'], ['jackie', 'pixie'], ALL, ['pixie', 'pixie', 'jackie']]) {
+    for (let game = 0; game < 6; game++) {
+      const s = createMatch(chars, [], undefined, game + 1);
+      const held = chars.map(() => 0);
+      const until = chars.map(() => 0);
+      let ticks = 0;
+      while (s.phase !== 'over' && ticks++ < 60 * 60 * 12) {
+        for (let i = 0; i < chars.length; i++) {
+          if (ticks >= until[i]) {
+            held[i] = Math.floor(rnd() * 1024);
+            if (rnd() < 0.5) held[i] &= ~64; // do not sit in block all day
+            until[i] = ticks + 1 + Math.floor(rnd() * 14);
+          }
+        }
+        step(s, held);
+        // A fighter with a full bar gets one each time, to exercise finishers too.
+        if (ticks % 400 === 0) for (const f of s.f) f.meter = 100;
+        for (const f of s.f) {
+          assert.ok(STATES.has(f.state), `known state, got ${f.state}`);
+          assert.ok(Number.isFinite(f.x) && Number.isFinite(f.z) && Number.isFinite(f.h) && Number.isFinite(f.dir), 'finite position');
+          assert.ok(Math.hypot(f.x, f.z) <= s.ringR + 0.01, 'inside the ring');
+          assert.ok(f.h >= 0 && f.h < 400, `sane height ${f.h}`);
+          assert.ok(f.hp >= 0 && f.hp <= f.maxHp, 'health in range');
+          assert.ok(f.meter >= 0 && f.meter <= 100, 'energy in range');
+          assert.ok(f.state !== 'attack' || MOVES[f.move], 'an attacking fighter has a move');
+        }
+        assert.ok(s.proj.length <= 12 && s.items.length <= 2);
+      }
+      assert.equal(s.phase, 'over', `${chars.join(' v ')} game ${game} finished`);
+      assert.equal(s.ranking.length, chars.length);
+      assert.equal(s.pts.reduce((a, b) => a + b, 0) > 0 || s.matchWinner === -1, true);
+    }
+  }
+});

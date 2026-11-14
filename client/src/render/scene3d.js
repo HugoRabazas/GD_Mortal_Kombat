@@ -343,6 +343,7 @@ export function create3D(canvas) {
   scene.add(fanBodies, fanHeads);
   const fanDummy = new THREE.Object3D();
   let excite = 0; // 0 calm ... 1 on their feet
+  let crowdTurn = false;
 
   // ---------- torches ----------
   const flameTex = (() => {
@@ -873,9 +874,11 @@ export function create3D(canvas) {
       kick *= Math.pow(0.86, dt / 16.7);
       for (const light of flashes) light.intensity *= 0.78;
 
-      // The crowd: a slow sway, and jumping when excited.
+      // The crowd: a slow sway, and jumping when excited. Moving a couple of
+      // hundred figures every other frame is plenty for a background.
       excite *= Math.pow(0.985, dt / 16.7);
-      for (let i = 0; i < fans.length; i++) {
+      crowdTurn = !crowdTurn;
+      for (let i = 0; crowdTurn && i < fans.length; i++) {
         const fan = fans[i];
         const hop = Math.abs(Math.sin(now / 130 + fan.phase)) * 0.28 * excite * fan.keen;
         const y = fan.y + Math.sin(now / 700 + fan.phase) * 0.03 + hop;
@@ -886,8 +889,10 @@ export function create3D(canvas) {
         fanDummy.updateMatrix();
         fanHeads.setMatrixAt(i, fanDummy.matrix);
       }
-      fanBodies.instanceMatrix.needsUpdate = true;
-      fanHeads.instanceMatrix.needsUpdate = true;
+      if (crowdTurn) {
+        fanBodies.instanceMatrix.needsUpdate = true;
+        fanHeads.instanceMatrix.needsUpdate = true;
+      }
 
       renderer.render(scene, camera);
     },

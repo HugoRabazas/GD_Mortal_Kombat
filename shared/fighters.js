@@ -11,6 +11,8 @@
 //      'bolt' (projectile), 'rise' (spinning leap that hits all around) or
 //      'quake' (ground stomp that floors everyone nearby who is not jumping).
 //      `build` picks the body: 'standard', 'sumo' (huge) or 'slim'.
+//      `gear` adds accessories: 'scarf' (trails behind when moving) and
+//      'pads' (shoulder guards).
 //   5. Run `npm run build` and publish the new page.
 //
 // Stats are multipliers around 1.0 (health is absolute, 100 is standard).
@@ -23,6 +25,7 @@ export const FIGHTERS = [
     id: 'ruko',
     name: 'RUKO',
     title: 'The Crimson Wolf',
+    gear: ['scarf'],
     head: { x: 81, y: 68, r: 30 },
     colors: {
       primary: '#b5122c',
@@ -39,6 +42,7 @@ export const FIGHTERS = [
     id: 'shadow',
     name: 'SHADOW',
     title: 'The Silent Storm',
+    gear: ['pads'],
     head: { x: 88, y: 99, r: 43 },
     colors: {
       primary: '#2c9a4b',

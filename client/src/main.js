@@ -943,7 +943,7 @@ function keepTraining(s) {
 // buttons, A presses, B goes back.
 function padMenus() {
   const nav = padMenu();
-  if (app.screen === 'fight') return;
+  if (app.screen === 'fight' || (!nav.dir && !nav.ok && !nav.back)) return; // nothing pressed: no work
   const items = [...ui.querySelectorAll('button:not([disabled]), input')];
   if (!items.length) return;
   if (nav.dir) {
