@@ -92,6 +92,11 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   *publishable* key, which is meant to be public).
 - Any static host works. On Vercel: build command `npm run build:web`, output
   directory `dist-web`, and the two variables set on the project.
+- The live site is https://gd-arena-chi.vercel.app (Vercel project
+  `gd-arena`). It is deployed from the single file `deploy/vercel/package.json`
+  with install command `echo skip-install`, build command `npm run build` and
+  output directory `public`: Vercel downloads this repository, builds it and
+  publishes the result. Deploy again after pushing changes.
 - The Supabase project needs no tables. On the free plan Realtime allows 200
   people connected and 100 messages a second, which is plenty while matches
   run over direct links, and about one four-player match at a time if every
