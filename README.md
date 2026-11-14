@@ -92,6 +92,11 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   *publishable* key, which is meant to be public).
 - Any static host works. On Vercel: build command `npm run build:web`, output
   directory `dist-web`, and the two variables set on the project.
+- **Free hosting on GitHub Pages**: `.github/workflows/pages.yml` builds and
+  publishes the site on every push. Switch it on once in the repository's
+  Settings -> Pages -> Source: "GitHub Actions"; the site then lives at
+  `https://hugorabazas.github.io/GD_Mortal_Kombat/`. Free for public
+  repositories, no payment details involved.
 - The live site is https://gd-arena-chi.vercel.app (Vercel project
   `gd-arena`). It is deployed from the single file `deploy/vercel/package.json`
   with install command `echo skip-install`, build command `npm run build` and

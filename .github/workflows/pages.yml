@@ -1,0 +1,65 @@
+# Publishes the website (with online play) on GitHub Pages, which is free for
+# public repositories and needs no payment details.
+#
+# It runs on every push. Until GitHub Pages is switched on for the repository
+# (Settings -> Pages -> Source: "GitHub Actions") it does nothing and passes.
+name: Deploy website
+
+on:
+  push:
+    branches: ['claude/youthful-mayer-331mu0']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Is GitHub Pages switched on?
+        id: pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${{ github.repository }}/pages" >/dev/null 2>&1; then
+            echo "on=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "on=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::GitHub Pages is not switched on for this repository yet, so nothing was published."
+          fi
+      - uses: actions/checkout@v4
+        if: steps.pages.outputs.on == 'true'
+      - uses: actions/setup-node@v4
+        if: steps.pages.outputs.on == 'true'
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install, test and build
+        if: steps.pages.outputs.on == 'true'
+        env:
+          # The publishable key is meant to be public: it ends up in the web page.
+          GD_SUPABASE_URL: https://igurytkichobnljpukna.supabase.co
+          GD_SUPABASE_KEY: sb_publishable_9jXzEsP2BYp2pWw0fk75ZQ_8nuluVsO
+        run: |
+          npm ci
+          npm test
+          npm run build:web
+      - uses: actions/configure-pages@v5
+        if: steps.pages.outputs.on == 'true'
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.pages.outputs.on == 'true'
+        with:
+          path: dist-web
+      - id: deployment
+        if: steps.pages.outputs.on == 'true'
+        uses: actions/deploy-pages@v4
