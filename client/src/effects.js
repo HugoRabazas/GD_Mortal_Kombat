@@ -35,6 +35,22 @@ export function handleEvents(events, state, { quiet, project }) {
       case 'jump':
         if (!quiet) play('jump');
         break;
+      case 'roll': {
+        const p = project(by.x, 0, by.z);
+        dust(p.x, p.y, 4);
+        if (!quiet) play('swing');
+        break;
+      }
+      case 'burn': {
+        // Thrown into the ring of fire.
+        const p = project(e.x, 70, e.z);
+        hitSpark(p.x, p.y, '#ff7a1a', true);
+        lightFlash(e.x, 70, e.z, '#ff7a1a', true);
+        floatText(p.x, p.y - 34, `BURN ${e.dmg}`, '#ff8a2a', 22);
+        addShake(7);
+        if (!quiet) play('burn');
+        break;
+      }
       case 'land': {
         const p = project(e.x, 0, e.z);
         dust(p.x, p.y, 5);

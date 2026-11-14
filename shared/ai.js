@@ -81,6 +81,16 @@ export function aiInput(ai, s, me) {
     ai.tapT--;
     tap = ai.tap;
   }
+  // Keep a punch string going once the first blow has landed.
+  if (f.state === 'attack' && (f.move === 'punch' || f.move === 'punch2') && f.hits.length && ai.tapT === 0 && !ai.chained) {
+    ai.chained = true;
+    if (rnd(ai) < cfg.attack + 0.15) {
+      ai.tap = INPUT.PUNCH;
+      ai.tapT = 2;
+      return INPUT.PUNCH;
+    }
+  }
+  if (f.state !== 'attack') ai.chained = false;
   if (ai.wait > 0) {
     ai.wait--;
     return ai.held | tap;
@@ -122,6 +132,8 @@ export function aiInput(ai, s, me) {
     if (e.move === 'quake' && ed < 230 && rnd(ai) < cfg.block) return hold(INPUT.JUMP, 4);
     const facingMe = angleDiff(Math.atan2(ez, ex), e.dir) < 0.9;
     if (ed < 190 && facingMe && rnd(ai) < cfg.block) {
+      // Sometimes roll round to the attacker's side instead of blocking.
+      if (rnd(ai) < 0.22) return hold(toward(-ez, ex) | INPUT.BLOCK, 3);
       if (special === 'rise' && f.meter >= RULES.SPECIAL_COST && ed < 90 && rnd(ai) < 0.4) return press(INPUT.SPECIAL);
       return hold(INPUT.BLOCK, 12 + Math.floor(rnd(ai) * 8));
     }
@@ -136,8 +148,11 @@ export function aiInput(ai, s, me) {
     const speed = Math.hypot(p.vx, p.vz);
     const miss = Math.abs(px * p.vz - pz * p.vx) / speed; // how far off to the side it will pass
     if (miss < 50 && rnd(ai) < cfg.block) {
-      // Step sideways out of its path, or put the guard up.
-      if (rnd(ai) < 0.6) return hold(toward(-p.vz, p.vx), 10);
+      // Roll or step sideways out of its path, or put the guard up.
+      const side = rnd(ai) < 0.5 ? 1 : -1;
+      const roll = rnd(ai);
+      if (roll < 0.35) return hold(toward(-p.vz * side, p.vx * side) | INPUT.BLOCK, 3);
+      if (roll < 0.7) return hold(toward(-p.vz * side, p.vx * side), 10);
       return hold(INPUT.BLOCK, 14);
     }
   }

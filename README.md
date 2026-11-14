@@ -51,12 +51,17 @@ each one where you like and resize them, saved per orientation on the device.
 
 - You walk in any direction. Attacks turn you towards the nearest rival, so
   aim does not have to be exact.
+- **Punch three times** for a combo that ends in a knockdown; each punch has
+  to land for the next to come out.
+- **Block + a direction** is a dodge roll: attacks pass through you for most
+  of it.
 - Hits fill the **energy** bar: a special costs 35 of 100, the finisher needs
   it full.
 - **Block** only stops what comes from the front, and a blocked hit can never
   knock you out.
 - **Jump** over a ground stomp; attack in the air for a diving kick.
-- As the clock runs down a **ring of fire** closes in.
+- As the clock runs down a **ring of fire** closes in. A fighter knocked into
+  it is scorched and bounced back.
 
 ## The arena lives in time
 

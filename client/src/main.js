@@ -255,10 +255,12 @@ function helpScreen() {
       </div>
       <ul class="tips">
         <li><b>Walk anywhere</b> on the arena: left, right, into the depth and back. Attacks turn you towards the nearest rival, so you do not need perfect aim.</li>
+        <li><b>Punch three times</b> for a combo that ends in a knockdown; each punch must land to continue.</li>
+        <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
         <li><b>Block</b> only stops what comes from the front. Get behind a blocking rival, or step out of the way of a projectile.</li>
         <li><b>Jump</b> over a ground stomp; punch or kick in the air for a diving attack.</li>
-        <li>As the clock runs down, a <b>ring of fire</b> closes in and squeezes everyone together.</li>
+        <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
         <li>On a phone, use the stick and the buttons on screen. <b>Arrange buttons</b> lets you drag them where you like.</li>
         <li>Press <kbd>P</kbd>, <kbd>Esc</kbd> or Start to pause.</li>

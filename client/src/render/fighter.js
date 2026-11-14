@@ -40,6 +40,14 @@ function attackPose(f) {
       if (phase === 'pre') return pose({ lean: 0.02, hfx: 2, hfy: 2 });
       if (phase === 'act') return pose({ lean: 0.34, hipX: 8, hfx: 54, hfy: -6, hbx: -6, hby: 10, fbx: -26 });
       return pose({ lean: 0.2, hfx: 32, hfy: 0 });
+    case 'punch2': // the cross: the other hand, with the hips behind it
+      if (phase === 'pre') return pose({ lean: 0.18, hbx: -10, hby: 4, hfx: 20, hfy: 2 });
+      if (phase === 'act') return pose({ lean: 0.4, hipX: 12, hbx: 56, hby: -8, hfx: 4, hfy: 8, fbx: -30 });
+      return pose({ lean: 0.22, hbx: 30, hby: 0 });
+    case 'punch3': // the finisher of the string: a rising uppercut
+      if (phase === 'pre') return pose({ ...CROUCH, lean: 0.3, hfx: 8, hfy: 28, hbx: -10, hby: 14 });
+      if (phase === 'act') return pose({ hipX: 10, hipY: -68, lean: 0.08, hfx: 34, hfy: -50, hbx: -16, hby: 12, ffx: 22, fbx: -20, fby: -6 });
+      return pose({ lean: 0.1, hfx: 22, hfy: -28 });
     case 'kick':
       if (phase === 'pre') return pose({ lean: -0.1, ffx: 12, ffy: -34, hfx: 12, hfy: 4 });
       if (phase === 'act') return pose({ lean: -0.34, hipX: 8, ffx: 80, ffy: -84, fbx: -6, hfx: 6, hfy: 8, hbx: -18, hby: 4 });
@@ -78,6 +86,9 @@ function targetPose(f, now) {
     }
     case 'land':
       return pose({ ...CROUCH, hipY: -46 });
+    case 'roll':
+      // Tucked into a ball, turning head over heels.
+      return pose({ hipY: -30, lean: 0.9, tilt: 0.5, hfx: 16, hfy: 22, hbx: 10, hby: 22, ffx: 14, ffy: -8, fbx: -6, fby: -8, rot: f.t * 0.42, lift: -6 });
     case 'jump':
       return f.vh < -3 ? pose({ ...AIR, ffx: 14, ffy: -8, fbx: -10, fby: -2, hfy: -30, hby: -24 }) : pose(AIR);
     case 'airAttack':
@@ -133,6 +144,8 @@ export function currentPose(f, now) {
   // Attacks snap faster so hits look crisp; everything else eases.
   const k = f.state === 'attack' || f.state === 'hit' || f.state === 'airAttack' ? 0.62 : 0.36;
   for (const key in target) cur[key] += (target[key] - cur[key]) * k;
+  if (f.state === 'roll') cur.rot = target.rot; // a spin must not be smoothed away
+  else if (Math.abs(cur.rot) > Math.PI) cur.rot = 0; // coming out of a roll: do not unwind it
   return cur;
 }
 

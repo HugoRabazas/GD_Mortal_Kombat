@@ -281,3 +281,48 @@ test('the simulation is deterministic and CPU matches always finish, duel and ar
     }
   }
 });
+
+test('three punches in a row chain into a knockdown, but only if they connect', () => {
+  const s = startFight();
+  closeUp(s);
+  for (let i = 0; i < 3; i++) {
+    step(s, [INPUT.PUNCH, 0]);
+    run(s, 9);
+  }
+  run(s, 8);
+  assert.equal(s.f[1].state, 'down', 'the third punch floors the rival');
+  assert.ok(s.f[1].maxHp - s.f[1].hp >= 17, 'all three landed');
+
+  const air = startFight(); // nobody in reach: the string never starts
+  step(air, [INPUT.PUNCH, 0]);
+  run(air, 9);
+  step(air, [INPUT.PUNCH, 0]);
+  run(air, 3);
+  assert.equal(air.f[0].move, 'punch');
+});
+
+test('block plus a direction is a dodge roll that attacks pass through', () => {
+  const s = startFight();
+  closeUp(s, 70);
+  step(s, [INPUT.KICK, 0]);
+  run(s, 5);
+  step(s, [0, INPUT.BLOCK | INPUT.UP]); // roll away as the kick comes out
+  assert.equal(s.f[1].state, 'roll');
+  run(s, 10, [0, INPUT.BLOCK | INPUT.UP]);
+  assert.equal(s.f[1].hp, s.f[1].maxHp, 'the kick missed');
+  assert.ok(s.f[1].z < -50, 'and the roll covered ground');
+  run(s, 30, [0, INPUT.BLOCK | INPUT.UP]);
+  assert.equal(s.f[1].state, 'block', 'holding block afterwards guards instead of rolling again');
+});
+
+test('being knocked into the ring of fire burns and bounces back', () => {
+  const s = startFight();
+  Object.assign(s.f[0], { x: ARENA.R - 140, z: 0, dir: 0 });
+  Object.assign(s.f[1], { x: ARENA.R - 70, z: 0, dir: Math.PI });
+  s.f[0].meter = RULES.SPECIAL_COST;
+  step(s, [INPUT.SPECIAL, 0]); // the dash throws them at the edge
+  run(s, 40);
+  const lost = s.f[1].maxHp - s.f[1].hp;
+  assert.ok(lost > MOVES.dash.dmg, `dash plus burn cost ${lost}`);
+  assert.ok(Math.hypot(s.f[1].x, s.f[1].z) <= ARENA.R - 23.9);
+});

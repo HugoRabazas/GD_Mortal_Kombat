@@ -27,6 +27,8 @@ const BUFFER_TICKS = 8; // how long a button press is remembered
 const DOWN_TICKS = 34; // time spent lying on the floor after a knockdown
 const GETUP_TICKS = 18;
 const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle of where you face
+const ROLL = { ticks: 15, safe: 11, speed: 8.5, rest: 7 }; // the dodge roll
+const SPLAT = { speed: 3.2, dmg: 5 }; // being knocked into the ring of fire
 
 // Every attack is a row of numbers:
 //   startup / active / recovery - ticks before it can hit, while it hits, after
@@ -35,9 +37,19 @@ const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle o
 //   y0,y1 - the band of height it covers, measured from the attacker's feet
 //   aim   - within this distance the attacker turns to the nearest rival first
 export const MOVES = {
+  // Punch, punch, punch is a three-hit string: each blow that connects can be
+  // followed by the next (`next`), and the third one knocks down.
   punch: {
     startup: 4, active: 3, recovery: 8, dmg: 6, reach: 84, arc: 0.85, y0: 70, y1: 150, aim: 190,
-    hitstun: 15, blockstun: 9, push: 5, gain: 9,
+    hitstun: 15, blockstun: 9, push: 4, gain: 9, next: 'punch2',
+  },
+  punch2: {
+    startup: 4, active: 3, recovery: 10, dmg: 6, reach: 88, arc: 0.85, y0: 70, y1: 150, aim: 190,
+    hitstun: 16, blockstun: 10, push: 4, gain: 9, next: 'punch3',
+  },
+  punch3: {
+    startup: 6, active: 4, recovery: 17, dmg: 9, reach: 92, arc: 0.9, y0: 40, y1: 170, aim: 190,
+    hitstun: 0, blockstun: 14, push: 9, gain: 11, knockdown: true, heavy: true,
   },
   kick: {
     startup: 8, active: 4, recovery: 13, dmg: 10, reach: 104, arc: 0.75, y0: 30, y1: 140, aim: 210,
@@ -114,6 +126,7 @@ function newFighter(charId, slot, count, mod) {
     hits: [], // slots already struck by the current attack
     stun: 0,
     inv: 0, // invulnerability ticks
+    rollOk: true, // the block button must be released before the next roll
     prev: 0, // buttons held on the previous tick
     buf: 0, // remembered attack presses
     bufT: 0,
@@ -262,14 +275,27 @@ function control(s, f, inp) {
       }
       f.taken = 0;
       if (f.buf && tryAttack(s, f)) break;
+      const dir = stick(inp);
+      if (!held(INPUT.BLOCK)) f.rollOk = true;
       if (held(INPUT.BLOCK)) {
+        // Block pressed while pushing a direction is a dodge roll that way:
+        // quick, and nothing can hit you for most of it.
+        if (dir && f.rollOk && f.state !== 'block') {
+          f.rollOk = false;
+          setState(f, 'roll');
+          f.dir = Math.atan2(dir.z, dir.x);
+          f.vx = dir.x * ROLL.speed;
+          f.vz = dir.z * ROLL.speed;
+          f.inv = ROLL.safe;
+          emit(s, 'roll', { by: f.slot });
+          break;
+        }
         if (f.state !== 'block') aim(s, f, 360);
         setState(f, 'block');
         f.vx = 0;
         f.vz = 0;
         break;
       }
-      const dir = stick(inp);
       if (held(INPUT.JUMP)) {
         setState(f, 'jump');
         f.vh = JUMP_V;
@@ -288,6 +314,14 @@ function control(s, f, inp) {
         setState(f, 'idle');
         f.vx = 0;
         f.vz = 0;
+      }
+      break;
+    }
+    case 'roll': {
+      if (f.t >= ROLL.ticks) {
+        setState(f, 'land');
+        f.stun = ROLL.rest;
+        f.vx = f.vz = 0;
       }
       break;
     }
@@ -328,6 +362,11 @@ function control(s, f, inp) {
           life: PROJECTILE.life,
         });
         emit(s, 'bolt', { by: f.slot });
+      }
+      // A punch that connected can flow straight into the next one.
+      if (m.next && f.hits.length && t >= activeEnd && f.buf & INPUT.PUNCH) {
+        startAttack(s, f, m.next);
+        break;
       }
       if (t >= activeEnd + m.recovery) {
         f.move = null;
@@ -414,13 +453,24 @@ function physics(s, f) {
   }
 }
 
-// Nobody leaves the ring.
+// Nobody leaves the ring. A fighter who is knocked into its edge is scorched
+// by the ring of fire and bounced back in.
 function keepInside(s, f) {
   const limit = s.ringR - BODY_R;
   const r = Math.hypot(f.x, f.z);
-  if (r > limit) {
-    f.x *= limit / r;
-    f.z *= limit / r;
+  if (r <= limit) return;
+  const nx = f.x / r;
+  const nz = f.z / r;
+  f.x = nx * limit;
+  f.z = nz * limit;
+  const outward = f.vx * nx + f.vz * nz;
+  const flung = f.state === 'hit' || f.state === 'down';
+  if (flung && outward > SPLAT.speed && s.phase === 'fight' && !f.scorched) {
+    f.scorched = true; // once per knockback
+    f.vx -= nx * outward * 1.7;
+    f.vz -= nz * outward * 1.7;
+    f.hp = Math.max(1, f.hp - SPLAT.dmg); // the fire hurts but never finishes a fighter
+    emit(s, 'burn', { slot: f.slot, x: f.x, z: f.z, dmg: SPLAT.dmg });
   }
 }
 
@@ -517,6 +567,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   }
 
   def.taken++;
+  def.scorched = false;
   const scale = Math.max(0.5, 1 - 0.12 * (def.taken - 1)); // long combos hit softer
   const dmg = Math.max(1, Math.round(m.dmg * power * scale));
   def.hp = Math.max(0, def.hp - dmg);
