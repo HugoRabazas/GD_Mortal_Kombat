@@ -21,7 +21,7 @@ const LEVELS = {
 //   quake - a bruiser: guards more, walks you down
 //   rise  - a skirmisher: rolls round your side, in and out
 const STYLES = {
-  dash: { attack: 0.02, special: 1.15 },
+  dash: { attack: 0.02, special: 1.15, wary: 0.55 },
   bolt: { special: 1.8, retreat: 0.1 },
   quake: { block: 0.08 },
   rise: { attack: 0.04, circle: 0.07 },
@@ -170,6 +170,20 @@ export function aiInput(ai, s, me) {
       if (roll < 0.7) return hold(toward(-p.vz * side, p.vx * side), 10);
       return hold(INPUT.BLOCK, 14);
     }
+  }
+
+  // --- in a brawl, do not stand between two rivals ---
+  if (s.f.length > 2) {
+    let near = 0;
+    let cx = 0;
+    let cz = 0;
+    for (const e of s.f) {
+      if (e === f || e.hp <= 0 || Math.hypot(e.x - f.x, e.z - f.z) > 150) continue;
+      near++;
+      cx += e.x;
+      cz += e.z;
+    }
+    if (near >= 2 && rnd(ai) < (style.wary ?? 0.25)) return hold(toward(f.x - cx / near, f.z - cz / near), 10);
   }
 
   // --- stay inside the ring of fire ---

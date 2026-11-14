@@ -83,6 +83,29 @@ export function readPad(index) {
   return bits;
 }
 
+// For moving round the menus with a controller: what was newly pressed since
+// the last call. dir is -1 (up / left), 1 (down / right) or 0.
+const menuWas = { dir: 0, ok: false, back: false };
+export function padMenu() {
+  let dir = 0;
+  let ok = false;
+  let back = false;
+  for (let i = 0; i < 4; i++) {
+    const p = pad(i);
+    if (!p) continue;
+    const on = (b) => !!p.buttons[b]?.pressed;
+    const ax = p.axes[0] || 0;
+    const ay = p.axes[1] || 0;
+    if (on(12) || on(14) || ay < -0.6 || ax < -0.6) dir = -1;
+    if (on(13) || on(15) || ay > 0.6 || ax > 0.6) dir = 1;
+    ok = ok || on(0);
+    back = back || on(1);
+  }
+  const out = { dir: dir !== menuWas.dir ? dir : 0, ok: ok && !menuWas.ok, back: back && !menuWas.back };
+  Object.assign(menuWas, { dir, ok, back });
+  return out;
+}
+
 // True once each time Start is pressed on any controller.
 let startWasDown = false;
 export function padStartPressed() {

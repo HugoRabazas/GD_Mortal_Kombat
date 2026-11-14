@@ -2,13 +2,13 @@
 // screens (menu -> fighter select -> fight -> result).
 
 import { FIGHTERS, getFighter } from '../../shared/fighters.js';
-import { INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
+import { ARENA, INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
 import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
 import { createGame } from './game.js';
 import { handleEvents } from './effects.js';
-import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, setCapture, setTouchLive } from './input.js';
+import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, setCapture, setTouchLive } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, setMusic, getVolume, setVolume } from './audio.js';
 import { createOnline } from './net/online.js';
@@ -307,6 +307,7 @@ function helpScreen() {
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
         <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks or fights back.</li>
         <li>On a phone, use the stick and the buttons on screen. <b>Arrange buttons</b> lets you drag them where you like.</li>
+        <li>With a <b>gamepad</b> you can also work the menus: stick or D-pad to move, A to choose, B to go back.</li>
         <li>Press <kbd>P</kbd>, <kbd>Esc</kbd> or Start to pause.</li>
       </ul>
       <div class="row"><button type="button" class="btn primary" data-act="menu">Back</button></div>
@@ -588,7 +589,8 @@ function show(screen) {
   setTouchLive(screen !== 'arrange');
   setCapture(screen === 'fight');
   if (!inFight) app.game = null;
-  setMusic(screen === 'fight' ? 'fight' : 'menu');
+  app.music = screen === 'fight' ? 'fight' : 'menu';
+  setMusic(app.music);
   keepAwake(screen === 'fight');
   const chat = ui.querySelector('#chat');
   if (chat && kept) {
@@ -937,14 +939,43 @@ function keepTraining(s) {
   }
 }
 
+// Menus can be worked with a controller: stick or D-pad moves between the
+// buttons, A presses, B goes back.
+function padMenus() {
+  const nav = padMenu();
+  if (app.screen === 'fight') return;
+  const items = [...ui.querySelectorAll('button:not([disabled]), input')];
+  if (!items.length) return;
+  if (nav.dir) {
+    const at = items.indexOf(document.activeElement);
+    items[(at + nav.dir + items.length) % items.length].focus({ preventScroll: true });
+  }
+  if (nav.ok && items.includes(document.activeElement)) document.activeElement.click();
+  if (nav.back) {
+    const back = ['resume', 'settingsDone', 'arrangeDone', 'leaveRoom', 'offline', 'menu'].map((a) => ui.querySelector(`[data-act=${a}]`)).find(Boolean);
+    back?.click();
+  }
+}
+
 function frame(now) {
   requestAnimationFrame(frame);
+  padMenus();
   const playing = app.game;
   const g = playing || app.demo;
   if (!g || !stage) return;
   if (padStartPressed()) togglePause();
   g.update(now);
   if (playing && app.mode === 'training') keepTraining(g.state);
+  if (playing && app.screen === 'fight') {
+    // The music pushes harder when the ring is closing or the round decides the match.
+    const st = g.state;
+    const deciding = st.mode === 'arena' ? st.round === MODES.arena.maxRounds : st.pts[0] === 1 && st.pts[1] === 1;
+    const want = st.phase === 'fight' && app.mode !== 'training' && (st.ringR < ARENA.R - 1 || deciding) ? 'final' : 'fight';
+    if (want !== app.music) {
+      app.music = want;
+      setMusic(want);
+    }
+  }
   const self = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
   handleEvents(g.drain(), g.state, { quiet: !playing, project: stage.project, me: self });
 

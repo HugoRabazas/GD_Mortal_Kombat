@@ -192,8 +192,9 @@ const SOUNDS = {
 // and a plucked melody, generated note by note. 'menu' is a sparse version of
 // the same loop, 'fight' is the full one.
 
-const BPM = 116;
-const STEP = 60 / BPM / 4; // a sixteenth note, in seconds
+// 'final' is the fight loop pushed harder, for deciding rounds and the last
+// seconds of any round: faster, busier drums, the melody an octave up.
+const stepSeconds = () => 60 / (musicMode === 'final' ? 130 : 116) / 4; // a sixteenth note
 const BARS = [
   { bass: 55, notes: [220, 261.63, 329.63] },
   { bass: 55, notes: [220, 261.63, 329.63] },
@@ -238,14 +239,16 @@ function hiss(t, dur, gain, freq) {
 function musicTick(i, t) {
   const bar = BARS[Math.floor(i / 16) % BARS.length];
   const s = i % 16;
-  const full = musicMode === 'fight';
+  const final = musicMode === 'final';
+  const full = final || musicMode === 'fight';
   if (s % 4 === 0 && (full || s % 8 === 0)) note('sine', 130, t, 0.16, 0.9, 42); // kick
   if (full && (s === 4 || s === 12)) hiss(t, 0.12, 0.35, 1800); // snare
-  if (full ? s % 2 === 1 : s % 4 === 2) hiss(t, 0.04, 0.12, 7000); // hat
+  if (final || (full ? s % 2 === 1 : s % 4 === 2)) hiss(t, 0.04, final && s % 2 === 0 ? 0.07 : 0.12, 7000); // hat
+  if (final && (s === 14 || s === 15)) hiss(t, 0.08, 0.25, 1800); // a snare roll into the next bar
   if (BASS_STEPS.includes(s) && (full || s % 8 === 0)) note('sawtooth', bar.bass, t, full ? 0.2 : 0.5, 0.32);
   if (LEAD_STEPS.includes(s)) {
     const n = bar.notes[(LEAD_STEPS.indexOf(s) + Math.floor(i / 16)) % bar.notes.length];
-    note('triangle', full ? n * 2 : n, t, 0.22, full ? 0.16 : 0.12);
+    note('triangle', final ? n * 4 : full ? n * 2 : n, t, 0.22, full ? 0.16 : 0.12);
   }
 }
 
@@ -256,11 +259,11 @@ function pumpMusic() {
   while (musicNext < ctx.currentTime + 0.15) {
     if (!muted) musicTick(musicStep, musicNext);
     musicStep = (musicStep + 1) % 64;
-    musicNext += STEP;
+    musicNext += stepSeconds();
   }
 }
 
-// mode: 'menu', 'fight' or 'off'
+// mode: 'menu', 'fight', 'final' or 'off'
 export function setMusic(mode) {
   musicMode = mode;
   if (!ctx) return; // starts once the audio engine is unlocked

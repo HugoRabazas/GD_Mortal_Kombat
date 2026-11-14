@@ -47,7 +47,8 @@ A duel is first to two round wins.
 | Special | `I` or `T` | `T` | `I` | Y / Triangle |
 | Finisher | `O` or `Y` | `Y` | `O` | RB / RT |
 
-`P`, `Esc` or Start pauses. On a phone or tablet a thumb stick and six buttons
+`P`, `Esc` or Start pauses. A gamepad also works the menus: stick or D-pad
+moves between buttons, A chooses, B goes back. On a phone or tablet a thumb stick and six buttons
 appear on screen; **Arrange buttons** (menu and pause screen) lets you drag
 each one where you like and resize them, saved per orientation on the device.
 
