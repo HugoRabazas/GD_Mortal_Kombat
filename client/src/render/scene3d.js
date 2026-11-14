@@ -466,6 +466,16 @@ export function create3D(canvas) {
     return m;
   });
 
+  // ---------- dash trails ----------
+  // A fighter lunging across the arena leaves a string of fading glows behind.
+  const trail = Array.from({ length: 28 }, () => {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false, opacity: 0 }));
+    sp.visible = false;
+    scene.add(sp);
+    return { sp, life: 0 };
+  });
+  let nextTrail = 0;
+
   // ---------- rain ----------
   const DROPS = 900;
   const rainPos = new Float32Array(DROPS * 6);
@@ -632,6 +642,7 @@ export function create3D(canvas) {
   }
 
   let lastNow = 0;
+  let kick = 0;
   const probe = new THREE.Vector3();
 
   // Adaptive quality. If the device cannot hold a smooth frame rate, first
@@ -700,10 +711,11 @@ export function create3D(canvas) {
         cam.dist += (shot.dist - cam.dist) * k;
         cam.yaw += (shot.yaw - cam.yaw) * k;
       }
+      const reach = cam.dist - kick * 0.7;
       camera.position.set(
-        cam.x + Math.sin(cam.yaw) * cam.dist + shake.x * S * 1.5,
-        cam.y + 0.8 + cam.dist * 0.46 + shake.y * S * 1.5,
-        cam.z + Math.cos(cam.yaw) * cam.dist,
+        cam.x + Math.sin(cam.yaw) * reach + shake.x * S * 1.5,
+        cam.y + 0.8 + reach * 0.46 + shake.y * S * 1.5,
+        cam.z + Math.cos(cam.yaw) * reach,
       );
       camera.lookAt(cam.x, cam.y, cam.z);
       camera.updateMatrixWorld();
@@ -772,6 +784,25 @@ export function create3D(canvas) {
         g.group.visible = fade > 0.5 || Math.floor(now / 90) % 2 === 0;
       }
 
+      // Dash trails.
+      for (const f of s.f) {
+        if (f.state !== 'attack' || (f.move !== 'dash' && f.move !== 'super') || (!f.vx && !f.vz)) continue;
+        const t = trail[nextTrail++ % trail.length];
+        t.life = 1;
+        t.big = f.move === 'super' ? 1.5 : 1;
+        t.sp.material.color.set(getFighter(f.char).colors.glow);
+        t.sp.position.set(f.x * S, 1.0 + f.h * S, f.z * S);
+        t.sp.visible = true;
+      }
+      for (const t of trail) {
+        if (t.life <= 0) continue;
+        t.life -= dt / 320;
+        t.sp.visible = t.life > 0;
+        t.sp.material.opacity = Math.max(0, t.life) * 0.8;
+        const size = (0.9 + t.life * 1.3) * t.big;
+        t.sp.scale.set(size, size * 1.5, 1);
+      }
+
       // Projectiles: a white-hot core, a coloured halo and a light that
       // sweeps across the floor and the fighters as it flies.
       for (let i = 0; i < orbs.length; i++) {
@@ -797,7 +828,9 @@ export function create3D(canvas) {
         light.position.set(fl.x * S, fl.h * S, fl.z * S + 0.6);
         light.color.set(fl.color);
         light.intensity = fl.heavy ? 14 : 8;
+        if (fl.heavy) kick = 1; // the camera lunges in on a heavy blow
       }
+      kick *= Math.pow(0.86, dt / 16.7);
       for (const light of flashes) light.intensity *= 0.78;
 
       renderer.render(scene, camera);

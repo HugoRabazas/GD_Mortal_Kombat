@@ -19,7 +19,18 @@ function showRoundPoints(state, project) {
 
 // `quiet` is used for the demo fight behind the menu: sparks yes, banners and
 // sound no.
-export function handleEvents(events, state, { quiet, project }) {
+// A short buzz on phones that support it. Some browsers refuse; that is fine.
+function buzz(ms) {
+  try {
+    navigator.vibrate?.(ms);
+  } catch {
+    // not available here
+  }
+}
+
+// `me` is the slot of the player at this screen (-1 when there is none), used
+// to make the phone buzz when their own fighter takes a hit.
+export function handleEvents(events, state, { quiet, project, me = -1 }) {
   const arena = state.mode === 'arena';
   const nameOf = (slot) => getFighter(state.f[slot].char).name;
   for (const e of events) {
@@ -106,6 +117,7 @@ export function handleEvents(events, state, { quiet, project }) {
         addShake(e.kind === 'super' ? 16 : e.heavy ? 8 : 4);
         if (e.kind === 'super') addFlash(0.6);
         if (!quiet) play(e.heavy ? 'heavy' : 'hit');
+        if (!quiet && e.on === me) buzz(e.kind === 'super' ? 120 : e.heavy ? 45 : 20);
         break;
       }
       case 'block': {

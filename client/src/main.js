@@ -817,7 +817,8 @@ function frame(now) {
   if (!g || !stage) return;
   if (padStartPressed()) togglePause();
   g.update(now);
-  handleEvents(g.drain(), g.state, { quiet: !playing, project: stage.project });
+  const self = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
+  handleEvents(g.drain(), g.state, { quiet: !playing, project: stage.project, me: self });
 
   const boss = playing && app.mode === 'arcade' ? [false, !!app.arcade.ladder[app.arcade.stage].boss] : null;
   const tags = playing ? labels() : [];
