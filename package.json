@@ -1,0 +1,18 @@
+{
+  "name": "gd-arena",
+  "version": "0.1.0",
+  "private": true,
+  "description": "GD Arena - a 1v1 fighting game with a 3D arena and 2D fighters built from alliance members' pictures. Ships as a single web page.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/build.js",
+    "test": "node --test \"tests/*.test.js\""
+  },
+  "devDependencies": {
+    "vite": "^8.3.8"
+  }
+}
