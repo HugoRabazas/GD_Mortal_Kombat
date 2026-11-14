@@ -785,6 +785,14 @@ kbd {
   box-shadow: 0 0 0 2px var(--gold);
 }
 
+.ver {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: var(--ash);
+  opacity: 0.6;
+}
+
 .best {
   margin: 0;
   font-size: 0.85rem;

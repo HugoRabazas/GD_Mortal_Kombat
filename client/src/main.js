@@ -160,6 +160,7 @@ function menuScreen() {
         <button type="button" class="link" data-act="arrange">Arrange buttons</button>
         <button type="button" class="link" data-act="fullscreen">Full screen</button>
       </div>
+      <p class="ver">version ${BUILD}</p>
     </section>`;
 }
 
@@ -501,6 +502,23 @@ function roomScreen() {
 
 const SCREENS = { menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
 
+// Keep a phone's screen from dimming or locking in the middle of a fight.
+let wakeLock = null;
+async function keepAwake(on) {
+  try {
+    if (on && !wakeLock && navigator.wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => {
+        wakeLock = null;
+      });
+    } else if (!on && wakeLock) {
+      await wakeLock.release();
+    }
+  } catch {
+    // not allowed here: the fight goes on, the screen follows the phone's own timer
+  }
+}
+
 // Show the on-screen controls during single-player fights and while arranging.
 function refreshTouch() {
   const want = app.screen === 'arrange' || (app.screen === 'fight' && app.touch && app.mode !== 'versus');
@@ -522,6 +540,7 @@ function show(screen) {
   setCapture(screen === 'fight');
   if (!inFight) app.game = null;
   setMusic(screen === 'fight' ? 'fight' : 'menu');
+  keepAwake(screen === 'fight');
   if (screen !== 'nick') ui.querySelector('.primary:not([disabled])')?.focus({ preventScroll: true });
 }
 
@@ -911,6 +930,7 @@ async function boot() {
       setMusic('off');
     } else {
       setMusic(app.screen === 'fight' ? 'fight' : 'menu');
+      keepAwake(app.screen === 'fight'); // the lock is dropped whenever the page is hidden
     }
   });
 

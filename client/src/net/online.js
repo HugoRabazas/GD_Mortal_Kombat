@@ -17,12 +17,14 @@ import { createLink } from './link.js';
 import { createGame } from '../game.js';
 import { createMatch } from '../../../shared/sim.js';
 import { createAI, aiInput } from '../../../shared/ai.js';
-import { FIGHTERS, isFighterId } from '../../../shared/fighters.js';
-import { INPUT_MASK } from '../../../shared/constants.js';
+import { FIGHTERS, getFighter, isFighterId } from '../../../shared/fighters.js';
+import { INPUT, INPUT_MASK } from '../../../shared/constants.js';
 
 const SNAP_EVERY = 3; // ticks between snapshots on a direct link (20 a second)
 const RELAY_EVERY = 8; // ticks between snapshots when relayed (7.5 a second)
 const MAX_PLAYERS = 4;
+const WALK = 3.5; // walking speed in the rules, pixels a tick
+const LEAD_MAX = 14; // never draw a guest's own fighter more than this many ticks ahead
 
 const newId = () => Math.random().toString(36).slice(2, 12);
 const newCode = () => Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[(Math.random() * 24) | 0]).join('');
@@ -288,6 +290,7 @@ export function createOnline({ config, name, char, version, readInput, onChange,
     let lastBits = -1;
     let lastSendAt = 0;
     let lastPingAt = 0;
+    const lead = { x: 0, z: 0 }; // how far ahead of the host's word our own fighter is drawn
     const lerp = (a, b, k) => a + (b - a) * k;
 
     const game = {
@@ -317,8 +320,45 @@ export function createOnline({ config, name, char, version, readInput, onChange,
           lastPingAt = now;
           sendTo(room.hostId, { ping: performance.now() }, true);
         }
+        const bits = mySlot >= 0 ? readInput() : 0;
+
+        // What the guest sees of their own fighter is the host's answer, which
+        // arrives late. While simply walking, we know where the fighter will be
+        // by the time the host's answer catches up - so draw it there. The lead
+        // grows as you set off and melts away as you stop, attack or get hit,
+        // and the host's word is still what decides every hit.
+        if (mySlot >= 0 && cur) {
+          const f = view.f[mySlot];
+          const free = cur.phase === 'fight' && (f.state === 'idle' || f.state === 'walk') && !f.stun;
+          const mx = (bits & INPUT.RIGHT ? 1 : 0) - (bits & INPUT.LEFT ? 1 : 0);
+          const mz = (bits & INPUT.DOWN ? 1 : 0) - (bits & INPUT.UP ? 1 : 0);
+          const moving = free && (mx || mz) && !(bits & INPUT.BLOCK);
+          let tx = 0;
+          let tz = 0;
+          if (moving) {
+            const len = Math.hypot(mx, mz);
+            const ticks = Math.min(LEAD_MAX, ((match?.ping ?? 60) + 75) / 16.7);
+            const step = WALK * getFighter(f.char).stats.speed * ticks;
+            tx = (mx / len) * step;
+            tz = (mz / len) * step;
+          }
+          lead.x += (tx - lead.x) * 0.25;
+          lead.z += (tz - lead.z) * 0.25;
+          if (Math.abs(lead.x) + Math.abs(lead.z) > 0.5) {
+            let x = f.x + lead.x;
+            let z = f.z + lead.z;
+            const r = Math.hypot(x, z);
+            const limit = cur.ringR - 24;
+            if (r > limit) {
+              x *= limit / r;
+              z *= limit / r;
+            }
+            const mine = { ...f, x, z, dir: moving ? Math.atan2(mz, mx) : f.dir, state: moving ? 'walk' : f.state };
+            view = { ...view, f: view.f.map((o, i) => (i === mySlot ? mine : o)) };
+          }
+        }
+
         if (mySlot >= 0) {
-          const bits = readInput();
           if (bits !== lastBits || now - lastSendAt > 100) {
             sendTo(room.hostId, { i: bits }, bits !== lastBits || now - lastSendAt > 250);
             lastBits = bits;

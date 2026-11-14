@@ -86,6 +86,9 @@ The website build adds an **Online** mode for the whole alliance:
   rules code as offline; the others send only their buttons and receive a
   snapshot of the fight twenty times a second, which they draw gliding from
   one to the next. One copy of the truth, so nobody drifts out of sync.
+- A guest's own fighter is drawn slightly ahead of the host's word while it
+  is simply walking (where it will be once the host's answer arrives), so
+  moving feels immediate; the host still decides every hit.
 - Players find each other through Supabase Realtime (`client/src/net/bus.js`).
   The game data then goes over a direct browser-to-browser link
   (`link.js`, WebRTC) when the networks allow it, and is relayed through
