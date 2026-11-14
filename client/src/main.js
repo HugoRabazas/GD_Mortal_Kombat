@@ -12,6 +12,7 @@ import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed,
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, setMusic, getVolume, setVolume } from './audio.js';
 import { createOnline } from './net/online.js';
+import { ARENAS, isArenaId } from './arenas.js';
 
 // Online play exists only in the web build, which is told where the bus lives
 // (see scripts/build.js). Adding ?net=local to the address swaps the internet
@@ -66,6 +67,8 @@ const app = {
   dummy: 'still', // training partner: 'still', 'block' or 'fight'
   picks: [FIGHTERS[0].id, FIGHTERS[1 % FIGHTERS.length].id],
   level: 'normal',
+  place: ARENAS[0].id, // the arena the player chose; the fight behind the menus shows it
+  fightPlace: ARENAS[0].id, // the arena of the fight being played
   arcade: null, // { ladder, stage, score, retries, gained }
   game: null, // the fight being played, if any
   demo: null, // the CPU-vs-CPU fight that plays behind the menus
@@ -85,6 +88,18 @@ const app = {
 };
 let stage = null;
 let touchLayout = null;
+
+try {
+  const saved = localStorage.getItem('gd-arena-place');
+  if (isArenaId(saved)) app.place = saved;
+} catch {
+  // storage unavailable: the first arena
+}
+
+// The row of buttons that picks the arena.
+function placePicker() {
+  return `<div class="seg places" role="group" aria-label="Arena">${ARENAS.map((a) => `<button type="button" class="${app.place === a.id ? 'on' : ''}" data-act="place" data-id="${a.id}" aria-pressed="${app.place === a.id}">${a.name}</button>`).join('')}</div>`;
+}
 
 // True until this device has started its first fight.
 function isNewcomer() {
@@ -262,11 +277,15 @@ function selectScreen() {
         ${slotCard(0, names[0])}
         ${second}
       </div>
-      ${mode === 'quick' || mode === 'arena' ? seg(levels, app.level, 'level') : ''}
-      ${mode === 'training' ? seg([['still', 'Stands still'], ['block', 'Blocks'], ['fight', 'Fights back']], app.dummy, 'dummy') : ''}
+      <div class="row">
+        ${mode === 'quick' || mode === 'arena' ? seg(levels, app.level, 'level') : ''}
+        ${mode === 'training' ? seg([['still', 'Stands still'], ['block', 'Blocks'], ['fight', 'Fights back']], app.dummy, 'dummy') : ''}
+        ${mode === 'versus' ? seg([['duel', 'Duel'], ['brawl', 'Brawl with 2 CPU']], app.vsArena ? 'brawl' : 'duel', 'vsKind') : ''}
+        ${placePicker()}
+      </div>
       ${mode === 'training' ? '<p class="note">No clock, and health and energy refill, so you can try every move. Pause to leave.</p>' : ''}
-      ${mode === 'versus' ? seg([['duel', 'Duel'], ['brawl', 'Brawl with 2 CPU']], app.vsArena ? 'brawl' : 'duel', 'vsKind') : ''}
       ${mode === 'versus' && app.touch ? '<p class="note">Two players need a keyboard or gamepads: the on-screen buttons control one fighter only.</p>' : ''}
+      ${mode === 'arcade' ? '<p class="note">The ladder moves to the other arena after every fight.</p>' : ''}
       <div class="row">
         <button type="button" class="btn quiet" data-act="menu">Back</button>
         <button type="button" class="btn primary" data-act="fight">${mode === 'arcade' ? 'Start' : 'Fight'}</button>
@@ -530,7 +549,7 @@ function roomScreen() {
           </div>
         </div>
       </div>
-      ${room.isHost ? `<div class="seg" role="group"><button type="button" class="${app.fill ? 'on' : ''}" data-act="fill" data-id="1">Fill with CPU</button><button type="button" class="${app.fill ? '' : 'on'}" data-act="fill" data-id="0">Players only</button></div>` : ''}
+      ${room.isHost ? `<div class="row"><div class="seg" role="group"><button type="button" class="${app.fill ? 'on' : ''}" data-act="fill" data-id="1">Fill with CPU</button><button type="button" class="${app.fill ? '' : 'on'}" data-act="fill" data-id="0">Players only</button></div>${placePicker()}</div>` : ''}
       ${chatBox()}
       ${room.mixed ? '<p class="note warn">Someone here has an older or newer version of the game. Everyone should reload the page before fighting.</p>' : ''}
       ${app.notice ? `<p class="note warn">${esc(app.notice)}</p>` : ''}
@@ -641,6 +660,9 @@ function startFight() {
     controllers = two;
   }
   app.game = createGame(chars, controllers, mods);
+  // The arcade ladder alternates between the arenas, starting from the chosen one.
+  const first = ARENAS.findIndex((a) => a.id === app.place);
+  app.fightPlace = app.mode === 'arcade' ? ARENAS[(first + app.arcade.stage) % ARENAS.length].id : app.place;
   try {
     localStorage.setItem('gd-arena-played', '1');
   } catch {
@@ -756,7 +778,17 @@ const ACTIONS = {
     app.fill = el.dataset.id === '1';
     show('room');
   },
-  onStart: () => app.online.start({ fill: app.fill }),
+  place(el) {
+    if (!isArenaId(el.dataset.id)) return;
+    app.place = el.dataset.id;
+    try {
+      localStorage.setItem('gd-arena-place', app.place);
+    } catch {
+      // not remembered
+    }
+    show(app.screen);
+  },
+  onStart: () => app.online.start({ fill: app.fill, arena: app.place }),
   onBack() {
     if (app.online?.game) app.online.endMatch();
     else show(app.online?.room ? 'room' : 'lobby');
@@ -847,8 +879,9 @@ async function goOnline(name) {
       if (app.online !== online) return;
       if (app.screen === 'lobby' || (app.screen === 'room' && online.room)) show(app.screen);
     },
-    onStart() {
+    onStart(info) {
       app.mode = 'online';
+      app.fightPlace = isArenaId(info?.arena) ? info.arena : ARENAS[0].id;
       app.game = online.game;
       app.resultShown = false;
       app.notice = '';
@@ -989,7 +1022,7 @@ function frame(now) {
     : app.mode === 'versus'
       ? 'P1: WASD move · Space jump · F G punch kick · H block · T Y special finisher     P2: arrows · U · J K · L · I O'
       : 'WASD move · Space jump · J punch (x3 combo) · K kick · J+K grab · L block (+move = roll) · I special · O finisher';
-  stage.render({ state: g.state, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: app.mode === 'training' }, now);
+  stage.render({ state: g.state, theme: playing ? app.fightPlace : app.place, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: app.mode === 'training' }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {

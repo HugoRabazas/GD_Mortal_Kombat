@@ -191,7 +191,7 @@ function paintBackdrop() {
   return c;
 }
 
-export function drawArena(ctx, now) {
+export function drawArena(ctx, now, theme) {
   if (!backdrop) backdrop = paintBackdrop();
   ctx.drawImage(backdrop, 0, 0, W, H);
 
@@ -235,4 +235,13 @@ export function drawArena(ctx, now) {
     ctx.fillRect(e.x, e.y, 2, 2);
   }
   ctx.restore();
+
+  // The frozen arena is the same picture with every colour turned to ice.
+  if (theme === 'frost') {
+    ctx.save();
+    ctx.globalCompositeOperation = 'hue';
+    ctx.fillStyle = '#2f86d8';
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+  }
 }

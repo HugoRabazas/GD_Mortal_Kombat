@@ -21,14 +21,69 @@ import { play } from '../audio.js';
 
 const S = 0.01;
 
-// How the light and weather look at each time of the fight.
+// The arenas. Every arena is the same place built from the same shapes; what
+// changes is the paint, the light and the weather.
+//
+// `moods` says how the light and weather look at each time of the fight:
 //   sky: tint of the far backdrop; hemi: [sky colour, ground colour, strength];
-//   key / moon: [colour, strength]; fog: [colour, density].
-const MOODS = [
-  { sky: [1, 1, 1], hemi: [0xb890c8, 0x3a2030, 0.42], key: [0xffe2cf, 1.5], moon: [0xffb58a, 0.6], fog: [0x2a1030, 0.018], torch: 1.5, rain: 0 }, // dusk
-  { sky: [0.34, 0.42, 0.78], hemi: [0x7f9ad8, 0x141828, 0.5], key: [0xcfe0ff, 1.2], moon: [0x9fc0ff, 0.95], fog: [0x0e1630, 0.02], torch: 2.4, rain: 0 }, // night
-  { sky: [0.3, 0.3, 0.38], hemi: [0x8a8fa8, 0x15121c, 0.42], key: [0xe6ecff, 1.0], moon: [0x8892b8, 0.35], fog: [0x181824, 0.028], torch: 3.0, rain: 1 }, // storm
-];
+//   key / moon: [colour, strength]; fog: [colour, density]; torch: strength of
+//   the torches; rain: how hard it rains (or snows), 0 to 1.
+const THEMES = {
+  // A walled courtyard at dusk, then night, then a thunderstorm.
+  courtyard: {
+    sky: ['#07050f', '#2a0f2e', '#7a1c2c', '#d1542b', '#e9823a'],
+    stars: '255,236,224',
+    moon: { halo: ['255,176,124', '255,120,80'], disc: ['#fff4de', '#f2a56b'], marks: '190,100,70' },
+    aurora: false,
+    ridges: [['#3d1532', null], ['#260d22', null]],
+    ground: [48, 30, 44],
+    dais: [84, 52, 70],
+    daisSide: 0x4a2c40,
+    snow: false,
+    wall: 0x4c3352,
+    trim: 0x634568,
+    banner: ['#8c1226', 'rgba(255,214,130,0.85)', 'rgba(255,226,165,0.95)'],
+    flame: ['255,250,220', '255,190,80', '255,90,30', '255,60,20'],
+    torch: 0xffa050,
+    ember: 0xffa040,
+    cloaks: [0x5a1626, 0x2a1a3a, 0x3a2a1a, 0x1f2f3f, 0x6a4a1a, 0x3a1a2a],
+    weather: 'rain',
+    lightning: true,
+    moods: [
+      { sky: [1, 1, 1], hemi: [0xb890c8, 0x3a2030, 0.42], key: [0xffe2cf, 1.5], moon: [0xffb58a, 0.6], fog: [0x2a1030, 0.018], torch: 1.5, rain: 0 }, // dusk
+      { sky: [0.34, 0.42, 0.78], hemi: [0x7f9ad8, 0x141828, 0.5], key: [0xcfe0ff, 1.2], moon: [0x9fc0ff, 0.95], fog: [0x0e1630, 0.02], torch: 2.4, rain: 0 }, // night
+      { sky: [0.3, 0.3, 0.38], hemi: [0x8a8fa8, 0x15121c, 0.42], key: [0xe6ecff, 1.0], moon: [0x8892b8, 0.35], fog: [0x181824, 0.028], torch: 3.0, rain: 1 }, // storm
+    ],
+  },
+  // A shrine on a frozen peak: northern lights, then deep night, then a blizzard.
+  frost: {
+    sky: ['#02040d', '#081a3a', '#14406a', '#3f86a6', '#b9e2ea'],
+    stars: '226,240,255',
+    moon: { halo: ['170,220,255', '110,170,255'], disc: ['#ffffff', '#b8d8f4'], marks: '110,150,200' },
+    aurora: true,
+    ridges: [['#31476e', '#dcecff'], ['#18243e', '#9db8dc']],
+    ground: [56, 64, 80],
+    dais: [100, 110, 128],
+    daisSide: 0x34425e,
+    snow: true,
+    wall: 0x3a4660,
+    trim: 0x566a8e,
+    banner: ['#12397c', 'rgba(205,232,255,0.85)', 'rgba(228,243,255,0.95)'],
+    flame: ['240,255,255', '120,225,255', '40,130,255', '20,70,255'],
+    torch: 0x66c8ff,
+    ember: 0x9fdcff,
+    cloaks: [0x1c3a5c, 0x2a2a4a, 0x4a5a6a, 0x16303a, 0x5a3a5a, 0x2c4a44],
+    weather: 'snow',
+    lightning: false,
+    moods: [
+      { sky: [1, 1, 1], hemi: [0xa8b8cc, 0x1c2838, 0.44], key: [0xfff4ea, 1.4], moon: [0x7fe8cc, 0.75], fog: [0x0c1c30, 0.018], torch: 1.6, rain: 0.12 }, // northern lights
+      { sky: [0.5, 0.58, 0.9], hemi: [0x7c8cb8, 0x10182c, 0.44], key: [0xd4dcf4, 1.15], moon: [0x8fb8ff, 0.95], fog: [0x0a1228, 0.021], torch: 2.4, rain: 0.35 }, // deep night
+      { sky: [0.62, 0.68, 0.78], hemi: [0xb8c6dc, 0x1a2232, 0.5], key: [0xf0f4ff, 1.0], moon: [0xa0b0c8, 0.35], fog: [0x2c3848, 0.034], torch: 3.0, rain: 1 }, // blizzard
+    ],
+  },
+};
+
+export const THEME_IDS = Object.keys(THEMES);
 
 function seeded(seed) {
   let s = seed;
@@ -75,73 +130,97 @@ export function create3D(canvas) {
   const camera = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 300);
 
   // ---------- sky, moon and mountains (far away, so they barely move) ----------
-  let skyMat;
-  {
+  const paintSky = (th) => {
     const c = makeCanvas(2048, 1024);
     const g = c.getContext('2d');
     const rand = seeded(11);
     const sky = g.createLinearGradient(0, 0, 0, 1024);
-    sky.addColorStop(0, '#07050f');
-    sky.addColorStop(0.4, '#2a0f2e');
-    sky.addColorStop(0.68, '#7a1c2c');
-    sky.addColorStop(0.85, '#d1542b');
-    sky.addColorStop(1, '#e9823a');
+    [0, 0.4, 0.68, 0.85, 1].forEach((at, i) => sky.addColorStop(at, th.sky[i]));
     g.fillStyle = sky;
     g.fillRect(0, 0, 2048, 1024);
     for (let i = 0; i < 420; i++) {
-      g.fillStyle = `rgba(255,236,224,${0.2 + rand() * 0.7})`;
+      g.fillStyle = `rgba(${th.stars},${0.2 + rand() * 0.7})`;
       g.beginPath();
       g.arc(rand() * 2048, rand() * 600, rand() * 1.6 + 0.3, 0, Math.PI * 2);
       g.fill();
     }
+    if (th.aurora) {
+      // Northern lights: curtains of light, each a thin strip that fades upwards.
+      g.globalCompositeOperation = 'lighter';
+      for (const [base, tall, hue, wave] of [[560, 300, '70,255,170', 210], [500, 240, '90,200,255', 150], [610, 210, '190,110,255', 260]]) {
+        for (let x = 0; x < 2048; x += 4) {
+          const y = base + Math.sin(x / wave + base) * 70 + Math.sin(x / 47 + wave) * 16;
+          const h = tall * (0.6 + 0.4 * Math.sin(x / 83 + base));
+          const strip = g.createLinearGradient(0, y - h, 0, y);
+          strip.addColorStop(0, `rgba(${hue},0)`);
+          strip.addColorStop(0.75, `rgba(${hue},${0.1 + 0.07 * Math.sin(x / 29)})`);
+          strip.addColorStop(1, `rgba(${hue},0)`);
+          g.fillStyle = strip;
+          g.fillRect(x, y - h, 4, h);
+        }
+      }
+      g.globalCompositeOperation = 'source-over';
+    }
     const mx = 1270;
-    const my = 700;
+    const my = th.aurora ? 560 : 700;
     const halo = g.createRadialGradient(mx, my, 30, mx, my, 260);
-    halo.addColorStop(0, 'rgba(255,176,124,0.6)');
-    halo.addColorStop(1, 'rgba(255,120,80,0)');
+    halo.addColorStop(0, `rgba(${th.moon.halo[0]},0.6)`);
+    halo.addColorStop(1, `rgba(${th.moon.halo[1]},0)`);
     g.fillStyle = halo;
     g.fillRect(mx - 270, my - 270, 540, 540);
     const moon = g.createRadialGradient(mx - 14, my - 14, 5, mx, my, 74);
-    moon.addColorStop(0, '#fff4de');
-    moon.addColorStop(1, '#f2a56b');
+    moon.addColorStop(0, th.moon.disc[0]);
+    moon.addColorStop(1, th.moon.disc[1]);
     g.fillStyle = moon;
     g.beginPath();
     g.arc(mx, my, 72, 0, Math.PI * 2);
     g.fill();
-    g.fillStyle = 'rgba(190,100,70,0.22)';
+    g.fillStyle = `rgba(${th.moon.marks},0.22)`;
     for (const [dx, dy, r] of [[-24, -15, 14], [20, 9, 19], [-7, 31, 9], [30, -29, 7]]) {
       g.beginPath();
       g.arc(mx + dx, my + dy, r, 0, Math.PI * 2);
       g.fill();
     }
-    skyMat = new THREE.MeshBasicMaterial({ map: texture(c), fog: false, depthWrite: false });
+    return texture(c);
+  };
+  const skyMat = new THREE.MeshBasicMaterial({ fog: false, depthWrite: false });
+  {
     const mesh = new THREE.Mesh(new THREE.PlaneGeometry(190, 60), skyMat);
     mesh.position.set(0, 22, -70);
     mesh.renderOrder = -10;
     scene.add(mesh);
   }
 
-  const ridge = (seed, color, width, height, y, z, step) => {
+  // A mountain range: a jagged outline filled with rock. With `snow`, the
+  // outline is painted twice, the rock a little lower, which leaves white peaks.
+  const paintRidge = (seed, step, rock, snow) => {
     const c = makeCanvas(1024, 256);
     const g = c.getContext('2d');
     const rand = seeded(seed);
-    g.fillStyle = color;
-    g.beginPath();
-    g.moveTo(0, 256);
-    for (let x = 0; x <= 1024 + step; x += step) g.lineTo(x, 40 + rand() * 170);
-    g.lineTo(1024, 256);
-    g.closePath();
-    g.fill();
-    const mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(width, height),
-      new THREE.MeshBasicMaterial({ map: texture(c), transparent: true, fog: false, depthWrite: false }),
-    );
+    const peaks = [];
+    for (let x = 0; x <= 1024 + step; x += step) peaks.push([x, 40 + rand() * 170]);
+    const fill = (color, drop) => {
+      g.fillStyle = color;
+      g.beginPath();
+      g.moveTo(0, 256);
+      for (const [x, y] of peaks) g.lineTo(x, y + drop);
+      g.lineTo(1024, 256);
+      g.closePath();
+      g.fill();
+    };
+    if (snow) fill(snow, 0);
+    fill(rock, snow ? 26 : 0);
+    return texture(c);
+  };
+  const ridge = (seed, width, height, y, z, step) => {
+    const mat = new THREE.MeshBasicMaterial({ transparent: true, fog: false, depthWrite: false });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(width, height), mat);
     mesh.position.set(0, y, z);
     mesh.renderOrder = -9;
     scene.add(mesh);
+    return { mat, seed, step };
   };
-  ridge(3, '#3d1532', 170, 16, 5, -58, 70);
-  ridge(8, '#260d22', 130, 10, 3, -40, 48);
+  const ridges = [ridge(3, 170, 16, 5, -58, 70), ridge(8, 130, 10, 3, -40, 48)];
 
   // ---------- lights ----------
   const hemi = new THREE.HemisphereLight(lin(0xb890c8), lin(0x3a2030), 0.42);
@@ -168,7 +247,7 @@ export function create3D(canvas) {
   scene.add(key.target);
 
   // ---------- floor ----------
-  const stone = (base, seed) => {
+  const stone = (base, seed, snow) => {
     const c = makeCanvas(512, 512);
     const g = c.getContext('2d');
     const rand = seeded(seed);
@@ -185,32 +264,42 @@ export function create3D(canvas) {
       g.fillStyle = `rgba(${rand() < 0.5 ? '0,0,0' : '255,220,200'},${rand() * 0.07})`;
       g.fillRect(rand() * 512, rand() * 512, 2 + rand() * 3, 2 + rand() * 3);
     }
+    if (snow) {
+      // Snow blown into drifts across the slabs.
+      for (let i = 0; i < 26; i++) {
+        const x = rand() * 512;
+        const y = rand() * 512;
+        const r = 30 + rand() * 70;
+        // Painted nine times, shifted by one tile, so the drifts cross the seams.
+        for (const ox of [-512, 0, 512]) {
+          for (const oy of [-512, 0, 512]) {
+            const drift = g.createRadialGradient(x + ox, y + oy, 0, x + ox, y + oy, r);
+            drift.addColorStop(0, 'rgba(236,246,255,0.3)');
+            drift.addColorStop(1, 'rgba(236,246,255,0)');
+            g.fillStyle = drift;
+            g.fillRect(x + ox - r, y + oy - r, r * 2, r * 2);
+          }
+        }
+      }
+    }
     const t = texture(c);
     t.wrapS = t.wrapT = THREE.RepeatWrapping;
     return t;
   };
 
-  const groundTex = stone([48, 30, 44], 5);
-  groundTex.repeat.set(24, 24);
-  const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(96, 96),
-    new THREE.MeshStandardMaterial({ map: groundTex, roughness: 0.92, metalness: 0 }),
-  );
+  const groundMat = new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0 });
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(96, 96), groundMat);
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.3;
   ground.receiveShadow = true;
   scene.add(ground);
 
   // The fighting dais: a raised stone disc.
-  const daisTex = stone([84, 52, 70], 9);
-  daisTex.repeat.set(5, 5);
+  const daisSideMat = new THREE.MeshStandardMaterial({ roughness: 0.8 });
+  const daisMat = new THREE.MeshStandardMaterial({ roughness: 0.78, metalness: 0.05 });
   const dais = new THREE.Mesh(
     new THREE.CylinderGeometry(6.6, 6.9, 0.3, 64),
-    [
-      new THREE.MeshStandardMaterial({ color: lin(0x4a2c40), roughness: 0.8 }),
-      new THREE.MeshStandardMaterial({ map: daisTex, roughness: 0.78, metalness: 0.05 }),
-      new THREE.MeshStandardMaterial({ color: lin(0x20131d) }),
-    ],
+    [daisSideMat, daisMat, new THREE.MeshStandardMaterial({ color: lin(0x20131d) })],
   );
   dais.position.y = -0.15;
   dais.receiveShadow = true;
@@ -262,8 +351,12 @@ export function create3D(canvas) {
   }
 
   // ---------- courtyard wall, pillars, banners ----------
-  const wallMat = new THREE.MeshStandardMaterial({ color: lin(0x4c3352), roughness: 0.9 });
-  const trimMat = new THREE.MeshStandardMaterial({ color: lin(0x634568), roughness: 0.8 });
+  const wallMat = new THREE.MeshStandardMaterial({ roughness: 0.9 });
+  const trimMat = new THREE.MeshStandardMaterial({ roughness: 0.8 });
+  // Snow lying on top of the wall and the pillars; only the frozen arena shows it.
+  const snowMat = new THREE.MeshStandardMaterial({ color: lin(0xe6f0ff), roughness: 1 });
+  const snowCaps = new THREE.Group();
+  scene.add(snowCaps);
   const box = (w, h, d, x, y, z, mat) => {
     const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
     m.position.set(x, y, z);
@@ -273,15 +366,17 @@ export function create3D(canvas) {
   const WALL_Z = -8.2;
   box(44, 2.6, 0.7, 0, 1.0, WALL_Z, wallMat);
   box(44, 0.22, 0.95, 0, 2.4, WALL_Z, trimMat);
+  snowCaps.add(box(44, 0.09, 1.0, 0, 2.55, WALL_Z, snowMat));
   for (let x = -19.2; x <= 19.2; x += 3.2) {
     box(0.7, 4.2, 0.7, x, 1.8, WALL_Z + 0.5, wallMat);
     box(0.95, 0.2, 0.95, x, 3.95, WALL_Z + 0.5, trimMat);
+    snowCaps.add(box(1.0, 0.12, 1.0, x, 4.1, WALL_Z + 0.5, snowMat));
     box(0.95, 0.25, 0.95, x, -0.18, WALL_Z + 0.5, trimMat);
   }
-  {
+  const paintBanner = ([cloth, border, letters]) => {
     const c = makeCanvas(256, 512);
     const g = c.getContext('2d');
-    g.fillStyle = '#8c1226';
+    g.fillStyle = cloth;
     g.beginPath();
     g.moveTo(0, 0);
     g.lineTo(256, 0);
@@ -290,20 +385,21 @@ export function create3D(canvas) {
     g.lineTo(0, 512);
     g.closePath();
     g.fill();
-    g.strokeStyle = 'rgba(255,214,130,0.85)';
+    g.strokeStyle = border;
     g.lineWidth = 8;
     g.strokeRect(22, 22, 212, 360);
-    g.fillStyle = 'rgba(255,226,165,0.95)';
+    g.fillStyle = letters;
     g.font = 'italic 700 170px Teko, Impact, "Arial Black", sans-serif';
     g.textAlign = 'center';
     g.textBaseline = 'middle';
     g.fillText('GD', 124, 215);
-    const mat = new THREE.MeshLambertMaterial({ map: texture(c), transparent: true, side: THREE.DoubleSide });
-    for (const x of [-8, -4.8, -1.6, 1.6, 4.8, 8]) {
-      const b = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 2.3), mat);
-      b.position.set(x, 1.15, WALL_Z + 0.4);
-      scene.add(b);
-    }
+    return texture(c);
+  };
+  const bannerMat = new THREE.MeshLambertMaterial({ transparent: true, side: THREE.DoubleSide });
+  for (const x of [-8, -4.8, -1.6, 1.6, 4.8, 8]) {
+    const b = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 2.3), bannerMat);
+    b.position.set(x, 1.15, WALL_Z + 0.4);
+    scene.add(b);
   }
 
   // ---------- the crowd ----------
@@ -335,29 +431,33 @@ export function create3D(canvas) {
   }
   const fanBodies = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.21, 0.62, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }), fans.length);
   const fanHeads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 10, 8), new THREE.MeshLambertMaterial({ color: lin(0xd9a98a) }), fans.length);
-  {
+  const dressCrowd = (cloaks) => {
     const rand = seeded(33);
-    const cloaks = [0x5a1626, 0x2a1a3a, 0x3a2a1a, 0x1f2f3f, 0x6a4a1a, 0x3a1a2a];
     fans.forEach((_, i) => fanBodies.setColorAt(i, lin(cloaks[Math.floor(rand() * cloaks.length)])));
-  }
+    fanBodies.instanceColor.needsUpdate = true;
+  };
   scene.add(fanBodies, fanHeads);
   const fanDummy = new THREE.Object3D();
   let excite = 0; // 0 calm ... 1 on their feet
   let crowdTurn = false;
 
   // ---------- torches ----------
-  const flameTex = (() => {
+  const paintFlame = ([core, body, edge, out]) => {
     const c = makeCanvas(128, 128);
     const g = c.getContext('2d');
     const grad = g.createRadialGradient(64, 76, 2, 64, 64, 62);
-    grad.addColorStop(0, 'rgba(255,250,220,1)');
-    grad.addColorStop(0.25, 'rgba(255,190,80,0.95)');
-    grad.addColorStop(0.6, 'rgba(255,90,30,0.45)');
-    grad.addColorStop(1, 'rgba(255,60,20,0)');
+    grad.addColorStop(0, `rgba(${core},1)`);
+    grad.addColorStop(0.25, `rgba(${body},0.95)`);
+    grad.addColorStop(0.6, `rgba(${edge},0.45)`);
+    grad.addColorStop(1, `rgba(${out},0)`);
     g.fillStyle = grad;
     g.fillRect(0, 0, 128, 128);
     return texture(c);
-  })();
+  };
+  // Real fire: the ring that closes in, the dash trails and the glows. The
+  // torches have a flame of their own, which each arena colours.
+  const flameTex = paintFlame(THEMES.courtyard.flame);
+  const torchFlameMat = new THREE.SpriteMaterial({ blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false });
   const postMat = new THREE.MeshStandardMaterial({ color: lin(0x2a1a22), roughness: 0.6, metalness: 0.4 });
   const torches = [];
   for (const [x, z] of [[-7.6, -4.6], [7.6, -4.6], [-10.5, 0.8], [10.5, 0.8]]) {
@@ -370,9 +470,7 @@ export function create3D(canvas) {
     const light = new THREE.PointLight(lin(0xffa050), 1.5, 16, 2);
     light.position.set(x, 2.9, z);
     scene.add(light);
-    const flame = new THREE.Sprite(
-      new THREE.SpriteMaterial({ map: flameTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }),
-    );
+    const flame = new THREE.Sprite(torchFlameMat);
     flame.position.set(x, 2.85, z);
     scene.add(flame);
     torches.push({ light, flame, phase: x * 3 + z });
@@ -392,10 +490,8 @@ export function create3D(canvas) {
   for (let i = 0; i < EMBERS; i++) spawnEmber(i, true);
   const emberGeo = new THREE.BufferGeometry();
   emberGeo.setAttribute('position', new THREE.BufferAttribute(emberPos, 3));
-  const embers = new THREE.Points(
-    emberGeo,
-    new THREE.PointsMaterial({ color: 0xffa040, size: 0.07, map: flameTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }),
-  );
+  const emberMat = new THREE.PointsMaterial({ size: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false });
+  const embers = new THREE.Points(emberGeo, emberMat);
   scene.add(embers);
 
   // ---------- fighters ----------
@@ -527,12 +623,86 @@ export function create3D(canvas) {
   rain.frustumCulled = false;
   scene.add(rain);
 
+  // ---------- snow ----------
+  // Flakes drift down slowly and sway; in the blizzard the wind takes them.
+  const FLAKES = 1300;
+  const snowPos = new Float32Array(FLAKES * 3);
+  const snowSeed = [];
+  for (let i = 0; i < FLAKES; i++) snowSeed.push({ x: (Math.random() - 0.5) * 30, z: (Math.random() - 0.5) * 22 + 2, y: Math.random() * 12, v: 0.9 + Math.random() * 1.1, sway: Math.random() * 6.28 });
+  const snowGeo = new THREE.BufferGeometry();
+  snowGeo.setAttribute('position', new THREE.BufferAttribute(snowPos, 3));
+  const flakeTex = (() => {
+    const c = makeCanvas(32, 32);
+    const g = c.getContext('2d');
+    const grad = g.createRadialGradient(16, 16, 0, 16, 16, 15);
+    grad.addColorStop(0, 'rgba(255,255,255,1)');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 32, 32);
+    return texture(c);
+  })();
+  const snowFallMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.2, map: flakeTex, transparent: true, opacity: 0, depthWrite: false, fog: false });
+  const snowFall = new THREE.Points(snowGeo, snowFallMat);
+  snowFall.frustumCulled = false;
+  snowFall.visible = false;
+  scene.add(snowFall);
+
   // ---------- time of day and weather ----------
   let mood = 0; // 0 dusk, 1 night, 2 storm; eases between them
   let lightning = 0; // brightness of the current flash, fading out
   let nextStrike = 4000;
-  // The moods' colours, converted once so nothing is allocated per frame.
-  const moods = MOODS.map((m) => ({ ...m, sky0: lin(m.hemi[0]), ground: lin(m.hemi[1]), keyC: lin(m.key[0]), moonC: lin(m.moon[0]), fogC: lin(m.fog[0]) }));
+
+  // ---------- which arena ----------
+  // Everything an arena paints is made the first time it is shown and kept,
+  // so going back and forth between arenas costs nothing.
+  const painted = {};
+  let theme = null; // the arena on show
+  let moods = null;
+  function setTheme(id) {
+    const name = THEMES[id] ? id : 'courtyard';
+    if (theme && theme.name === name) return;
+    const th = THEMES[name];
+    if (!painted[name]) {
+      const groundTex = stone(th.ground, 5, th.snow);
+      groundTex.repeat.set(24, 24);
+      const daisTex = stone(th.dais, 9, th.snow);
+      daisTex.repeat.set(5, 5);
+      painted[name] = {
+        name,
+        th,
+        sky: paintSky(th),
+        ridges: ridges.map((r, i) => paintRidge(r.seed, r.step, th.ridges[i][0], th.ridges[i][1])),
+        ground: groundTex,
+        dais: daisTex,
+        banner: paintBanner(th.banner),
+        flame: name === 'courtyard' ? flameTex : paintFlame(th.flame),
+        // The moods' colours, converted once so nothing is allocated per frame.
+        moods: th.moods.map((m) => ({ ...m, sky0: lin(m.hemi[0]), ground: lin(m.hemi[1]), keyC: lin(m.key[0]), moonC: lin(m.moon[0]), fogC: lin(m.fog[0]) })),
+      };
+    }
+    theme = painted[name];
+    moods = theme.moods;
+    skyMat.map = theme.sky;
+    ridges.forEach((r, i) => {
+      r.mat.map = theme.ridges[i];
+      r.mat.needsUpdate = true;
+    });
+    groundMat.map = theme.ground;
+    daisMat.map = theme.dais;
+    daisSideMat.color.copy(lin(th.daisSide));
+    wallMat.color.copy(lin(th.wall));
+    trimMat.color.copy(lin(th.trim));
+    bannerMat.map = theme.banner;
+    torchFlameMat.map = theme.flame;
+    emberMat.map = theme.flame;
+    emberMat.color.set(th.ember);
+    for (const t of torches) t.light.color.copy(lin(th.torch));
+    for (const m of [skyMat, groundMat, daisMat, bannerMat, torchFlameMat, emberMat]) m.needsUpdate = true;
+    snowCaps.visible = th.snow;
+    dressCrowd(th.cloaks);
+    lightning = 0;
+  }
+  setTheme('courtyard');
   const c1 = new THREE.Color();
   const blend = (a, b, k) => c1.copy(a).lerp(b, k);
 
@@ -553,10 +723,15 @@ export function create3D(canvas) {
 
     // Lightning: a sudden flash that decays, with thunder.
     const rainNow = mix(a.rain, b.rain);
-    if (rainNow > 0.5 && now > nextStrike) {
+    if (theme.th.lightning && rainNow > 0.5 && now > nextStrike) {
       lightning = 1;
       nextStrike = now + 3500 + Math.random() * 6000;
       if (!view.demo) play('thunder');
+    }
+    // Where it snows instead, the blizzard howls in gusts.
+    if (theme.th.weather === 'snow' && rainNow > 0.5 && now > nextStrike) {
+      nextStrike = now + 3000 + Math.random() * 4500;
+      if (!view.demo) play('wind');
     }
     lightning *= Math.pow(0.9, dt / 16.7);
     if (lightning < 0.01) lightning = 0;
@@ -570,6 +745,9 @@ export function create3D(canvas) {
     key.intensity = mix(a.key[1], b.key[1]) + flash * 0.8;
     moonLight.color.copy(blend(a.moonC, b.moonC, k));
     moonLight.intensity = mix(a.moon[1], b.moon[1]);
+    // Under the northern lights the rim light on the fighters wanders between
+    // green and violet; the blizzard hides it.
+    if (theme.th.aurora) moonLight.color.offsetHSL(Math.sin(now / 5200) * 0.1 * (1 - rainNow), 0, 0);
     scene.fog.color.copy(blend(a.fogC, b.fogC, k));
     scene.fog.density = mix(a.fog[1], b.fog[1]);
 
@@ -581,9 +759,31 @@ export function create3D(canvas) {
       t.flame.scale.set(1.25 + flick * 0.12 + closing * 0.4, 1.75 + flick * 0.28 + closing * 0.7, 1);
     }
 
+    // Snow, where it snows: it falls at walking pace and the wind grows with it.
+    const snowing = theme.th.weather === 'snow';
+    snowFall.visible = snowing && rainNow > 0.02;
+    if (snowFall.visible) {
+      snowFallMat.opacity = Math.min(0.95, 0.45 + rainNow * 0.5);
+      const wind = rainNow * rainNow * 5.5;
+      const count = Math.round(FLAKES * (0.25 + 0.75 * rainNow));
+      for (let d = 0; d < count; d++) {
+        const r = snowSeed[d];
+        r.y -= r.v * (1 + rainNow) * dt * 0.001;
+        r.x += (wind + Math.sin(now / 900 + r.sway) * 0.5) * dt * 0.001;
+        if (r.y < 0) r.y += 12;
+        if (r.x > 15) r.x -= 30;
+        const o = d * 3;
+        snowPos[o] = r.x;
+        snowPos[o + 1] = r.y;
+        snowPos[o + 2] = r.z;
+      }
+      snowGeo.setDrawRange(0, count);
+      snowGeo.attributes.position.needsUpdate = true;
+    }
+
     // Rain.
-    rainMat.opacity = rainNow * 0.42;
-    rain.visible = rainNow > 0.02;
+    rainMat.opacity = snowing ? 0 : rainNow * 0.42;
+    rain.visible = !snowing && rainNow > 0.02;
     if (rain.visible) {
       for (let d = 0; d < DROPS; d++) {
         const r = rainSeed[d];
@@ -760,6 +960,7 @@ export function create3D(canvas) {
       camera.lookAt(cam.x, cam.y, cam.z);
       camera.updateMatrixWorld();
 
+      setTheme(view.theme);
       applyMood(view, now, dt);
 
       // Embers.

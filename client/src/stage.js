@@ -170,7 +170,7 @@ export function createStage(glCanvas, hudCanvas) {
       } else {
         ctx.save();
         ctx.translate(shake.x, shake.y);
-        drawArena(ctx, now);
+        drawArena(ctx, now, view.theme);
         // Far fighters first, so nearer ones overlap them.
         const seen = new Set();
         const alts = s.f.map((f) => {

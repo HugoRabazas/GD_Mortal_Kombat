@@ -100,6 +100,7 @@ function burst(dur, gain, freq, q = 1, delay = 0, type = 'bandpass') {
   const t = ctx.currentTime + delay;
   const src = ctx.createBufferSource();
   src.buffer = noise;
+  src.loop = true; // the noise is one second long; thunder rumbles for longer
   const filter = ctx.createBiquadFilter();
   filter.type = type;
   filter.frequency.value = freq * pitch;
@@ -110,6 +111,28 @@ function burst(dur, gain, freq, q = 1, delay = 0, type = 'bandpass') {
   src.connect(filter).connect(g).connect(sfxBus);
   src.start(t, Math.random() * 0.5);
   src.stop(t + dur + 0.02);
+}
+
+// A gust of wind: hiss that swells, whistles a little higher and dies away.
+function gust(dur, gain) {
+  const t = ctx.currentTime;
+  const src = ctx.createBufferSource();
+  src.buffer = noise;
+  src.loop = true;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.Q.value = 1.6;
+  const low = 260 + Math.random() * 120;
+  filter.frequency.setValueAtTime(low, t);
+  filter.frequency.linearRampToValueAtTime(low * (2.2 + Math.random()), t + dur * 0.45);
+  filter.frequency.linearRampToValueAtTime(low * 1.2, t + dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.linearRampToValueAtTime(gain, t + dur * 0.4);
+  g.gain.linearRampToValueAtTime(0.001, t + dur);
+  src.connect(filter).connect(g).connect(sfxBus);
+  src.start(t, Math.random() * 0.5);
+  src.stop(t + dur + 0.05);
 }
 
 const SOUNDS = {
@@ -185,6 +208,7 @@ const SOUNDS = {
     burst(0.25, 0.7, 2400, 0.5);
     tone('sine', 70, 28, 1.4, 0.8, 0.05);
   },
+  wind: () => gust(2.6 + Math.random() * 1.4, 0.34),
 };
 
 // ------------------------------------------------------------------ music ---

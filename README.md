@@ -124,12 +124,31 @@ Music and effects have their own volume sliders (menu and pause screen),
 remembered on the device, next to the sound switch, the touch-button switch
 and the button arranger.
 
-## The arena lives in time
+## Two arenas, and both live in time
 
-Round one is fought at dusk, round two under a cold night sky, round three in
-a storm with rain and lightning. A crowd on the stands sways while it watches
-and jumps and roars when heavy blows and knockouts land. Inside every round, the ring of fire shrinks
-the fighting ground as time runs out.
+Every select screen has a row that picks where the fight is held; the fight
+playing behind the menus moves there at once, so the choice is a preview. The
+device remembers it. The two places share the same floor, the same rules and
+the same ring of fire - they differ in paint, light, weather and sound.
+
+- **Ember Courtyard**: round one at dusk, round two under a cold night sky,
+  round three in a storm with rain, lightning and thunder.
+- **Frost Summit**: a shrine on a frozen peak, with snow on the walls, blue
+  spirit flames in the torches and ice-blue banners. Round one under the
+  northern lights (the rim light on the fighters wanders between green and
+  violet), round two in deep night with light snow, round three in a blizzard
+  with gusts of wind.
+
+The arcade ladder moves to the other arena after every fight. Online, the
+host picks the arena in the room and everyone fights there.
+
+A crowd on the stands sways while it watches and jumps and roars when heavy
+blows and knockouts land. Inside every round, the ring of fire shrinks the
+fighting ground as time runs out.
+
+To add a third arena: add an entry to `THEMES` in
+`client/src/render/scene3d.js` (colours, weather and the three moods) and its
+name to `client/src/arenas.js`.
 
 ## How it is built, from the ground up
 
@@ -165,8 +184,10 @@ exactly like a human, so it cannot cheat. `shared/fighters.js` is the roster.
 ### 2. The picture (`client/src/render/`)
 
 - **Arena** (`scene3d.js`, three.js): stone dais, wall, pillars, banners,
-  torches, moon and mountains; time of day, rain, lightning and the ring of
-  fire; a camera that keeps every standing fighter in frame.
+  torches, moon and mountains; time of day, rain, snow, lightning and the ring
+  of fire; a camera that keeps every standing fighter in frame. The shapes
+  are built once; an arena is a *theme* laid over them (textures painted on
+  first use, colours, weather), so changing arena costs nothing.
 - **Fighters** (`rig3d.js`): bodies built from rounded limbs with a cartoon
   outline, lit by the arena and casting real shadows. For each state there is
   a *pose* (`fighter.js`): where hips, hands and feet should be. Knees and
@@ -220,6 +241,11 @@ npm run build
 
 `npm run build` writes `dist/gd-arena.html` (the page to publish) and
 `dist/index.html` (the same page wrapped so any browser can open it).
+
+`npm test` first runs a linter (`eslint.config.js`) and then the rules tests.
+The linter is not a style guide: it only catches a name used without being
+imported or declared, and things declared but never used - the kind of
+mistake in browser code that the rules tests cannot see.
 
 ## Limits worth knowing
 

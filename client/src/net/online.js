@@ -15,6 +15,7 @@
 import { createBus } from './bus.js';
 import { createLink } from './link.js';
 import { createGame } from '../game.js';
+import { ARENAS, isArenaId } from '../arenas.js';
 import { createMatch } from '../../../shared/sim.js';
 import { createAI, aiInput } from '../../../shared/ai.js';
 import { FIGHTERS, getFighter, isFighterId } from '../../../shared/fighters.js';
@@ -246,14 +247,14 @@ export function createOnline({ config, name, char, version, readInput, onChange,
   }
 
   // Host: start a match with everyone who is in the room.
-  online.start = ({ fill = true } = {}) => {
+  online.start = ({ fill = true, arena = ARENAS[0].id } = {}) => {
     if (!online.canStart()) return;
     const slots = online.players().map((p) => ({ id: p.id, name: p.name, char: p.char }));
     const spare = FIGHTERS.map((f) => f.id).filter((id) => !slots.some((sl) => sl.char === id));
     while (slots.length < 2 || (fill && slots.length < MAX_PLAYERS)) {
       slots.push({ cpu: true, name: 'CPU', char: spare.shift() || FIGHTERS[slots.length % FIGHTERS.length].id });
     }
-    const info = { slots, mode: slots.length > 2 ? 'arena' : 'duel' };
+    const info = { slots, mode: slots.length > 2 ? 'arena' : 'duel', arena: isArenaId(arena) ? arena : ARENAS[0].id };
     room.ch.send('start', info);
     beginHost(info);
   };
@@ -308,7 +309,7 @@ export function createOnline({ config, name, char, version, readInput, onChange,
   function beginClient(info) {
     if (!info || !Array.isArray(info.slots) || info.slots.length < 2 || info.slots.length > MAX_PLAYERS) return;
     const slots = info.slots.map((sl) => ({ id: sl.id || null, cpu: !!sl.cpu, name: cleanName(sl.name), char: isFighterId(sl.char) ? sl.char : FIGHTERS[0].id }));
-    const clean = { slots, mode: slots.length > 2 ? 'arena' : 'duel' };
+    const clean = { slots, mode: slots.length > 2 ? 'arena' : 'duel', arena: isArenaId(info.arena) ? info.arena : ARENAS[0].id };
     const mySlot = slots.findIndex((sl) => sl.id === me.id);
     let prev = null;
     let cur = null;
