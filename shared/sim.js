@@ -61,7 +61,7 @@ export const MOVES = {
     hitstun: 0, blockstun: 14, push: 6, gain: 6, knockdown: true, heavy: true, chip: 0.25,
   },
   quake: {
-    startup: 20, active: 3, recovery: 22, dmg: 11, reach: 155, arc: Math.PI, y0: -5, y1: 30, aim: 0,
+    startup: 20, active: 3, recovery: 28, dmg: 11, reach: 150, arc: Math.PI, y0: -5, y1: 30, aim: 0,
     hitstun: 0, blockstun: 14, push: 8, gain: 6, knockdown: true, heavy: true, chip: 0.25,
   },
   // --- finisher (costs the whole energy bar) ---

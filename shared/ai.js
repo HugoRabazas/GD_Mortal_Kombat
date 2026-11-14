@@ -49,10 +49,19 @@ function toward(dx, dz) {
 function pickTarget(ai, s, f) {
   let best = -1;
   let bestScore = Infinity;
-  for (const o of s.f) {
-    if (o === f || o.hp <= 0) continue;
-    // Prefer whoever is close, and lean towards a rival who is nearly beaten.
-    const score = Math.hypot(o.x - f.x, o.z - f.z) + (o.hp / o.maxHp) * 120 + rnd(ai) * 80;
+  const rivals = s.f.filter((o) => o !== f && o.hp > 0);
+  const lead = Math.max(...rivals.map((o) => s.pts[o.slot]));
+  const fittest = Math.max(...rivals.map((o) => o.hp / o.maxHp));
+  for (const o of rivals) {
+    // Whoever is close comes first. In a brawl the pack also turns on whoever
+    // is ahead on points or still fresh, the way players gang up on a leader,
+    // and a rival who is nearly beaten is worth finishing.
+    let score = Math.hypot(o.x - f.x, o.z - f.z) + rnd(ai) * 80;
+    if (rivals.length > 1) {
+      if (s.pts[o.slot] === lead && lead > s.pts[f.slot]) score -= 110;
+      if (o.hp / o.maxHp === fittest) score -= 70;
+      if (o.hp / o.maxHp < 0.25) score -= 60;
+    }
     if (score < bestScore) {
       bestScore = score;
       best = o.slot;
@@ -79,7 +88,7 @@ export function aiInput(ai, s, me) {
 
   if (ai.target < 0 || s.f[ai.target].hp <= 0 || --ai.retarget <= 0) {
     ai.target = pickTarget(ai, s, f);
-    ai.retarget = 12;
+    ai.retarget = 10;
   }
   if (ai.target < 0) return 0;
   const o = s.f[ai.target];
