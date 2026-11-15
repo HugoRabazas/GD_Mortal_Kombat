@@ -258,6 +258,11 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   run over direct links, and about one four-player match at a time if every
   player has to be relayed.
 
+A brawl's standings hand out up to three awards to whoever alone led
+the way: **Heavy hitter** (most damage), **Combo master** (the longest combo,
+3 hits or more) and **Iron guard** (most perfect guards) - so a fighter who
+placed low but hit hardest still gets a word. Ties earn nothing.
+
 ## Your record
 
 **Record** (at the foot of the menu) keeps a lifetime tally of your own

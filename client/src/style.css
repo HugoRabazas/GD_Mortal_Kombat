@@ -1095,6 +1095,21 @@ kbd {
   letter-spacing: 0.05em;
 }
 
+/* A brawl's awards, after a fighter's numbers. */
+.ranking .award {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border: 1px solid var(--gold);
+  border-radius: 3px;
+  color: var(--gold);
+  font: 700 0.58rem/1.1 var(--font-body);
+  letter-spacing: 0.06em;
+  vertical-align: top; /* sits in the numbers' line without making it taller */
+  text-transform: uppercase;
+}
+
 .ranking .ltag {
   font: 700 0.66rem var(--font-body);
   letter-spacing: 0.12em;
@@ -1363,6 +1378,12 @@ kbd {
 
   .tag {
     display: none;
+  }
+
+  /* Sideways, the brawl standings take more of the width, so a fighter's
+     numbers and awards stay on one line. */
+  .result .ranking {
+    width: min(100%, 600px);
   }
 
   /* A phone held sideways: the version number goes, and the menu's tip keeps

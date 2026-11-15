@@ -705,9 +705,26 @@ function statsCard() {
 }
 
 // In a brawl the numbers ride along in the ranking, under each name.
-function statsLine(slot) {
+function statsLine(slot, extra = '') {
   const st = app.statsFor === app.game ? app.stats?.[slot] : null;
-  return st ? `<small>${st.dmg} damage · ${st.hits} hits · combo ${st.combo}${st.perfect ? ` · ${st.perfect} perfect` : ''}</small>` : '';
+  return st ? `<small>${st.dmg} damage · ${st.hits} hits · combo ${st.combo}${st.perfect ? ` · ${st.perfect} perfect` : ''}${extra}</small>` : '';
+}
+
+// A brawl's awards: whoever alone did the most damage, strung the longest
+// combo (3 hits or more) or made the most perfect guards - so a fighter who
+// placed low but hit hardest still gets a word. Ties earn nothing.
+const AWARDS = [
+  ['dmg', 'Heavy hitter', 1],
+  ['combo', 'Combo master', 3],
+  ['perfect', 'Iron guard', 1],
+];
+function awardsFor(slot) {
+  const all = app.statsFor === app.game ? app.stats : null;
+  if (!all) return [];
+  return AWARDS.filter(([key, , least]) => {
+    const best = Math.max(...all.map((st) => st[key]));
+    return best >= least && all[slot][key] === best && all.filter((st) => st[key] === best).length === 1;
+  }).map(([, name]) => name);
 }
 
 // The final standings of a brawl, with each fighter's numbers under the name.
@@ -721,7 +738,7 @@ function rankingList() {
         .map(
           (r) => `<li class="${r.rank === 1 ? 'top' : ''}">
             <span class="place">${medal[r.rank - 1]}</span>${head(r.char)}
-            <span class="lname">${getFighter(r.char).name}${statsLine(r.slot)}</span>
+            <span class="lname">${getFighter(r.char).name}${statsLine(r.slot, awardsFor(r.slot).map((n) => ` <span class="award">${n}</span>`).join(''))}</span>
             <span class="ltag">${esc(who[r.slot])}</span>
             <span class="pts">${r.points} pts</span>
           </li>`,
