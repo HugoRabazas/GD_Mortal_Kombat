@@ -393,7 +393,7 @@ function helpScreen() {
         <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling. Hold the guard and it is an ordinary block.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
         <li>Under a quarter of your health you are in your <b>last stand</b>: the energy bar fills half as fast again. A round is not over until it is over.</li>
-        <li><b>Block</b> only stops what comes from the front. Get behind a blocking rival, or step out of the way of a projectile.</li>
+        <li><b>Block</b> only stops what comes from the front. Raising it turns you to face whoever is already swinging, but a guard held too early stays put: get behind a blocking rival, or step out of the way of a projectile.</li>
         <li><b>Jump</b> over a ground stomp; punch or kick in the air for a diving attack.</li>
         <li><b>Crystals</b> appear on the floor: gold gives energy, green gives health. Walk over one to take it.</li>
         <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage.</li>

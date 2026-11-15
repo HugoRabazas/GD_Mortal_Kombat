@@ -38,6 +38,19 @@ export function addFlash(amount) {
   flash = Math.max(flash, amount);
 }
 
+// Tell the 3D arena's crowd that a fighter gave their supporters something to
+// cheer about (k: 0 to 1).
+let cheers = [];
+export function cheerFor(slot, k) {
+  if (slot >= 0) cheers.push({ slot, k });
+}
+export function takeCheers() {
+  if (!cheers.length) return cheers;
+  const out = cheers;
+  cheers = [];
+  return out;
+}
+
 // Ask the 3D arena for a burst of light at a point of the arena floor.
 export function lightFlash(x, h, z, color, heavy) {
   flashes.push({ x, h, z, color, heavy });

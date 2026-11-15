@@ -16,7 +16,7 @@
 import { ARENA, TIMING } from '../../../shared/constants.js';
 import { getFighter, dressLineUp, dressColors } from '../../../shared/fighters.js';
 import { MOVES, BLOCK_ARC } from '../../../shared/sim.js';
-import { takeFlashes } from './fx.js';
+import { takeFlashes, takeCheers } from './fx.js';
 import { createRig } from './rig3d.js';
 import { play } from '../audio.js';
 import { THEMES } from './themes.js';
@@ -399,9 +399,28 @@ export function create3D(canvas) {
 
   const fanBodies = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.21, 0.62, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }), fans.length);
   const fanHeads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 10, 8), new THREE.MeshLambertMaterial({ color: lin(0xd9a98a) }), fans.length);
-  const dressCrowd = (cloaks) => {
+  // Some of the crowd came for one fighter: each stretch of the stands (left
+  // to right, one per fighter in the line-up) has supporters wearing that
+  // fighter's colours, and they are the ones on their feet when that fighter
+  // lands something big. The rest wear the arena's own cloaks.
+  // Stretches of equal size: each fan's place counted round the U of the
+  // stands from the left (by the angle seen from the front of the arena), so
+  // a side stand's rows all belong to the same stretch.
+  const round = (fan) => Math.atan2(fan.x, 6 - fan.z);
+  [...fans].sort((p, q) => round(p) - round(q)).forEach((fan, i) => (fan.rank = i));
+  let crowdCloaks = ['#555555'];
+  let crowdTeams = [];
+  const teamCheer = [0, 0, 0, 0];
+  const dressCrowd = (cloaks = crowdCloaks, teams = crowdTeams) => {
+    crowdCloaks = cloaks;
+    crowdTeams = teams;
     const rand = seeded(33);
-    fans.forEach((_, i) => fanBodies.setColorAt(i, lin(cloaks[Math.floor(rand() * cloaks.length)])));
+    fans.forEach((fan, i) => {
+      const cloak = cloaks[Math.floor(rand() * cloaks.length)];
+      const team = teams.length ? Math.floor((fan.rank / fans.length) * teams.length) : -1;
+      fan.team = team >= 0 && fan.rank % 7 < 3 ? team : -1; // three in seven, evenly spread
+      fanBodies.setColorAt(i, lin(fan.team >= 0 ? teams[fan.team] : cloak));
+    });
     fanBodies.instanceColor.needsUpdate = true;
   };
   scene.add(fanBodies, fanHeads);
@@ -493,11 +512,12 @@ export function create3D(canvas) {
     worn = dressColors(s.f.map((f) => f.char), view.looks);
     const looks = dressLineUp(s.f.map((f) => f.char), view.looks);
     const opts = s.f.map((f, i) => ({ look: looks[i], boss: !!view.boss?.[i] }));
-    const key = s.f.map((f, i) => `${f.char}:${opts[i].look}:${opts[i].boss}`).join('|');
+    const key = (view.demo ? 'demo|' : '') + s.f.map((f, i) => `${f.char}:${opts[i].look}:${opts[i].boss}`).join('|');
     if (key === rigKey) return;
     rigKey = key;
     for (const r of rigs) r.dispose();
     rigs = s.f.map((f, i) => createRig(THREE, scene, getFighter(f.char), opts[i]));
+    dressCrowd(undefined, view.demo ? [] : worn.map((c) => c.primary));
   };
 
   // ---------- projectiles and hit flashes ----------
@@ -979,7 +999,7 @@ export function create3D(canvas) {
         seen[kind] = (seen[kind] || 0) + 1;
         if (o.castShadow) seen.casters = (seen.casters || 0) + 1;
       });
-      return { calls: r.calls, triangles: r.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, quality, graphics, pixelRatio: renderer.getPixelRatio(), seen };
+      return { calls: r.calls, triangles: r.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, quality, graphics, pixelRatio: renderer.getPixelRatio(), seen, cheer: teamCheer.map((c) => +c.toFixed(2)), supporters: crowdTeams.map((_, t) => fans.filter((f) => f.team === t).length) };
     },
 
     // Where a point of the arena (in arena pixels) lands on the flat HUD
@@ -1196,16 +1216,19 @@ export function create3D(canvas) {
         if (fl.heavy) kick = 1; // the camera lunges in on a heavy blow
         excite = Math.min(1, excite + (fl.heavy ? 0.6 : 0.2));
       }
+      for (const c of takeCheers()) if (c.slot < teamCheer.length) teamCheer[c.slot] = Math.min(1, teamCheer[c.slot] + c.k);
       kick *= Math.pow(0.86, dt / 16.7);
       for (const light of flashes) light.intensity *= 0.78;
 
       // The crowd: a slow sway, and jumping when excited. Moving a couple of
       // hundred figures every other frame is plenty for a background.
       excite *= Math.pow(0.985, dt / 16.7);
+      for (let t = 0; t < teamCheer.length; t++) teamCheer[t] *= Math.pow(0.98, dt / 16.7);
       crowdTurn = !crowdTurn && (graphics !== 'fast' || Math.floor(now / 100) % 3 === 0);
       for (let i = 0; crowdTurn && i < fans.length; i++) {
         const fan = fans[i];
-        const hop = Math.abs(Math.sin(now / 130 + fan.phase)) * 0.28 * excite * fan.keen;
+        const keen = fan.team >= 0 ? Math.min(1.4, excite * 0.7 + teamCheer[fan.team]) : excite;
+        const hop = Math.abs(Math.sin(now / 130 + fan.phase)) * 0.28 * keen * fan.keen;
         const y = fan.y + Math.sin(now / 700 + fan.phase) * 0.03 + hop;
         fanDummy.position.set(fan.x + Math.sin(now / 900 + fan.phase) * 0.04, y, fan.z);
         fanDummy.updateMatrix();

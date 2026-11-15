@@ -294,7 +294,11 @@ barely at first, hard in the storm, the blizzard and the sandstorm.
 A crowd on the stands sways while it watches and jumps and roars when heavy
 blows and knockouts land - and it is heard: a low murmur under every fight
 (not in Training) that swells with heavy blows, perfect guards, finishers and
-knockouts, then settles back down. Inside every round, the ring of fire shrinks the
+knockouts, then settles back down. Part of the crowd came for one fighter:
+each stretch of the stands, left to right, has supporters wearing the colours
+of one fighter in the line-up, and they are the ones on their feet when that
+fighter lands a heavy blow or wins a round (no extra draws: the crowd is one
+batch either way). Inside every round, the ring of fire shrinks the
 fighting ground as time runs out.
 
 To add another arena: add its name to `client/src/arenas.js`, its look to

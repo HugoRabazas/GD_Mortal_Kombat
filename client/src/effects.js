@@ -7,7 +7,7 @@
 
 import { getFighter } from '../../shared/fighters.js';
 import { play } from './audio.js';
-import { hitSpark, blockSpark, dust, floatText as showText, showBanner, addShake, addFlash, lightFlash } from './render/fx.js';
+import { hitSpark, blockSpark, dust, floatText as showText, showBanner, addShake, addFlash, lightFlash, cheerFor } from './render/fx.js';
 
 // At the end of a brawl round, show over each fighter the points it earned.
 function showRoundPoints(state, project) {
@@ -141,6 +141,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         const p = project(e.x, e.h, e.z);
         hitSpark(p.x, p.y, tint.glow, e.heavy);
         lightFlash(e.x, e.h, e.z, tint.glow, e.heavy);
+        cheerFor(e.by, e.heavy ? 0.8 : 0.25);
         floatText(p.x, p.y - 30, String(e.dmg), e.heavy ? '#ffd34d' : '#ffffff', e.heavy ? 28 : 22);
         if (e.combo >= 2) floatText(p.x, p.y - 58, `${e.combo} HITS`, '#ff8a5c', 20);
         if (e.kind === 'grab') floatText(p.x, p.y - 58, 'GRAB!', '#59c7ff', 24);
@@ -205,6 +206,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         break;
       }
       case 'ko':
+        cheerFor(e.winner, 1);
         addShake(16);
         addFlash(0.75);
         if (arena) showRoundPoints(state, project);
@@ -221,6 +223,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         play('round');
         break;
       case 'matchEnd':
+        cheerFor(e.winner, 1);
         if (quiet) break;
         if (e.winner < 0) showBanner('DRAW', arena ? 'THE TOP SPOT IS SHARED' : null, '#e8b454', 2600);
         else showBanner(`${nameOf(e.winner)} WINS`, arena ? 'ARENA CHAMPION' : getFighter(state.f[e.winner].char).title.toUpperCase(), '#e8b454', 2600);
