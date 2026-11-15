@@ -32,6 +32,7 @@ export const LESSONS = [
     steps: [
       { id: 'block', name: 'Block a kick', how: (k) => `hold ${k('b')} as the kick comes`, ev: (e) => e.type === 'block' && e.on === 0 },
       { id: 'perfect', name: 'Perfect guard', how: (k) => `press ${k('b')} just before the kick lands`, ev: mine('parry') },
+      { id: 'riposte', name: 'Riposte', how: (k) => `after a perfect guard, ${k('p')} at once: a palm strike while they are still open`, ev: hit('riposte') },
       { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction sideways or forwards: the kick passes through you`, ev: mine('roll') },
       { id: 'backstep', name: 'Back-step', how: (k) => `${k('b')} + the stick away from the partner: a quick hop back out of reach`, ev: mine('backstep') },
     ],
@@ -44,6 +45,7 @@ export const LESSONS = [
     steps: [
       { id: 'tech', name: 'Quick rise', how: (k) => `${k('b')} while lying on the floor`, ev: mine('tech') },
       { id: 'escape', name: 'Throw escape', how: (k) => `${k('g')} the moment you are seized: the throw is broken`, ev: mine('escape') },
+      { id: 'wakeRoll', name: 'Rolling rise', how: (k) => `hold ${k('b')} + a direction as you get up: you roll clear as you rise`, ev: (e) => e.type === 'roll' && e.by === 0 && e.wake },
       { id: 'riseKick', name: 'Rising sweep', how: (k) => `${k('p')} or ${k('k')} while getting up: it cannot be hit as it starts`, ev: swing('riseKick') },
     ],
   },

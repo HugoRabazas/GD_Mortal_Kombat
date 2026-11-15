@@ -545,6 +545,62 @@ test('in a brawl a hit freezes only the two fighters involved', () => {
   assert.equal(s.hitstop, 0, 'the world did not stop');
 });
 
+test('a punch right after a perfect guard is a riposte; later it is a punch again', () => {
+  const guardThen = (wait) => {
+    const s = startFight();
+    closeUp(s, 64);
+    step(s, [0, INPUT.PUNCH]);
+    let parried = false;
+    for (let i = 0; i < 12 && !parried; i++) {
+      step(s, [s.f[1].t >= MOVES.punch.startup - 2 ? INPUT.BLOCK : 0, 0]);
+      parried = s.ev.some((e) => e.type === 'parry' && e.by === 0);
+    }
+    assert.ok(parried, 'the punch met a perfect guard');
+    run(s, wait);
+    const hp = s.f[1].hp;
+    const seen = [];
+    step(s, [INPUT.PUNCH, 0]);
+    let move = s.f[0].move; // (the press may wait out the pause of the guard)
+    for (let i = 0; i < 24; i++) {
+      step(s, idle(s));
+      move ||= s.f[0].move;
+      seen.push(...s.ev);
+    }
+    return { move, lost: hp - s.f[1].hp, hit: seen.find((e) => e.type === 'hit' && e.by === 0) };
+  };
+  const quick = guardThen(3);
+  assert.equal(quick.move, 'riposte');
+  assert.equal(quick.hit?.kind, 'riposte', 'it lands while the rival is still open');
+  assert.ok(quick.lost >= 8, `worth more than a jab: ${quick.lost}`);
+  assert.equal(guardThen(30).move, 'punch', 'the chance passes');
+});
+
+test('block with a direction while getting up rolls clear of the rise', () => {
+  const s = startFight();
+  closeUp(s);
+  Object.assign(s.f[0], { state: 'down', t: 0, stun: 3, h: 0, vh: 0 });
+  let rolled = null;
+  for (let i = 0; i < 40 && !rolled; i++) {
+    step(s, [INPUT.BLOCK | INPUT.LEFT, 0]);
+    rolled = s.ev.find((e) => e.type === 'roll' && e.by === 0) || null;
+  }
+  assert.ok(rolled?.wake, 'a roll straight out of getting up');
+  assert.equal(s.f[0].state, 'roll');
+  const x = s.f[0].x;
+  run(s, 12, [INPUT.BLOCK | INPUT.LEFT, 0]);
+  assert.ok(s.f[0].x < x - 50, 'away from where they lay');
+  // Without the direction they simply stand up (and may raise a guard).
+  const t = startFight();
+  closeUp(t);
+  Object.assign(t.f[0], { state: 'down', t: 0, stun: 3, h: 0, vh: 0 });
+  let any = false;
+  for (let i = 0; i < 40; i++) {
+    step(t, [INPUT.BLOCK, 0]);
+    any ||= t.ev.some((e) => e.type === 'roll');
+  }
+  assert.ok(!any);
+});
+
 // A finisher thrown at fighter 1 from up close, the others (if any) far away.
 function finisherAt(chars) {
   const s = startFight(chars);

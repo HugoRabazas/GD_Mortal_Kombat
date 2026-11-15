@@ -34,7 +34,7 @@ const AIR_MOVES = { airDash: 1, airBolt: 1, bodyPress: 1, airSpiral: 1 };
 // The bolt thrown from the air strikes lighter than the one from the ground.
 const AIR_BOLT_HIT = { dmg: 10, hitstun: 16, blockstun: 10, push: 6, gain: 6, heavy: true, chip: 0.2 };
 // One arrow of Gleh's Crescent Rain (five of them make the finisher).
-const RAIN_HIT = { dmg: 5, hitstun: 20, blockstun: 10, push: 3, gain: 0, heavy: true, chip: 0.3, noScale: true, final: true };
+const RAIN_HIT = { dmg: 6, hitstun: 20, blockstun: 10, push: 3, gain: 0, heavy: true, chip: 0.3, noScale: true, final: true };
 // A launched rival can be hit this many more times in the air.
 const JUGGLE = 2;
 // Kick held down: after `hold` ticks the kick coils into a charge, which is
@@ -43,7 +43,7 @@ const JUGGLE = 2;
 const CHARGE = { hold: 8, min: 8, max: 40, reel: 30 };
 // The ordinary blows that can be cancelled into a special once they land.
 const CANCEL_DMG = 0.6;
-const CANCELS = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'hook', 'lunge', 'slide', 'launch']);
+const CANCELS = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'hook', 'lunge', 'slide', 'launch', 'riposte']);
 // Grab with no rival within `near`: the signature move instead of a throw.
 const SIG = { near: 100 };
 // A throw can be broken: grab pressed by the one seized within `window`
@@ -98,7 +98,7 @@ const COUNTER = { dmg: 1.25, stop: 3 };
 // a blow lands. It costs no health, and a heavy blow from a rival standing on
 // the ground leaves that rival reeling for `stagger` ticks. The guard has to
 // be down for `rest` ticks first, so hammering the button does not work.
-const GUARD = { window: 5, rest: 20, stagger: 26, gain: 12 };
+const GUARD = { window: 5, rest: 20, stagger: 26, gain: 12, riposte: 16 }; // `riposte`: ticks after a perfect guard in which punch is a riposte
 // Crystals that appear on the floor: walk over one to take it.
 const ITEMS = { first: 7, every: [9, 14], life: 12, max: 2, reach: 44, energy: 40, heal: 15 };
 
@@ -186,6 +186,13 @@ export const MOVES = {
   lunge: {
     startup: 6, active: 4, recovery: 12, dmg: 7, reach: 92, arc: 0.8, y0: 70, y1: 150, aim: 240,
     hitstun: 17, blockstun: 10, push: 6, gain: 10, next: 'punch2', nextK: 'hook', speed: 5.5, go: [0, 10],
+  },
+  // Punch right after a perfect guard: a riposte, a palm strike driven in
+  // while the rival is still open. Quick, and it leaves them reeling long
+  // enough to follow up (it can be cancelled into a special as well).
+  riposte: {
+    startup: 3, active: 3, recovery: 13, dmg: 9, reach: 90, arc: 1, y0: 60, y1: 150, aim: 240,
+    hitstun: 21, blockstun: 10, push: 7, gain: 9, heavy: true, speed: 6, go: [0, 5],
   },
   // Kick on the move: a slide along the floor, feet first. Low, so a rival
   // in the air is over it; it sweeps whoever it catches off their feet, but
@@ -473,6 +480,7 @@ function newFighter(charId, slot, count, mod) {
     guard: 0, // ticks left in which a blocked blow counts as a perfect guard
     open: 99, // ticks since this fighter last had the guard up
     deflect: 0, // ticks left of the shove that follows a perfect guard (for show)
+    rip: 0, // ticks left in which a punch is a riposte (after a perfect guard)
     reel: 0, // ticks left staggering after a heavy blow was guarded perfectly
     prev: 0, // buttons held on the previous tick
     held: -1, // slot of the rival being thrown, or -1
@@ -726,7 +734,9 @@ function tryAttack(s, f, inp = 0) {
     return true;
   }
   if (b & INPUT.PUNCH) {
-    startAttack(s, f, moving ? 'lunge' : 'punch');
+    const rip = f.rip > 0;
+    f.rip = 0;
+    startAttack(s, f, rip ? 'riposte' : moving ? 'lunge' : 'punch');
     return true;
   }
   f.buf = 0;
@@ -747,6 +757,7 @@ function control(s, f, inp) {
   const held = (bit) => (inp & bit) !== 0;
   if (f.guard > 0) f.guard--;
   if (f.deflect > 0) f.deflect--;
+  if (f.rip > 0) f.rip--;
   if (f.reel > 0) f.reel--;
   if (f.state === 'block') f.open = 0;
   else if (f.open < 99) f.open++;
@@ -1098,6 +1109,18 @@ function control(s, f, inp) {
         f.inv = MOVES.riseKick.startup;
         break;
       }
+      // Block held with a direction: roll that way out of the rise.
+      const way = stick(inp);
+      if (f.t >= OUT_OF.rise && way && held(INPUT.BLOCK)) {
+        setState(f, 'roll');
+        f.rollOk = false;
+        f.dir = Math.atan2(way.z, way.x);
+        f.vx = way.x * ROLL.speed;
+        f.vz = way.z * ROLL.speed;
+        f.inv = ROLL.safe;
+        emit(s, 'roll', { by: f.slot, wake: true });
+        break;
+      }
       if (f.t >= GETUP_TICKS) setState(f, 'idle');
       break;
     }
@@ -1392,6 +1415,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     // ground bounces off and leaves its owner open.
     def.guard = 0;
     def.deflect = 14;
+    if (kind !== 'bolt') def.rip = GUARD.riposte; // (a shot turned aside leaves nobody to strike)
     def.stun = 3;
     addMeter(def, GUARD.gain);
     const stagger = !!m.heavy && kind !== 'bolt' && kind !== 'super' && att.h <= 0 && !isOut(att);

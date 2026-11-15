@@ -280,6 +280,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
           hitSpark(p.x + 8, p.y - 6, tint.glow, true);
           lightFlash(e.x, e.h, e.z, tint.glow, true);
         }
+        if (e.kind === 'riposte') floatText(p.x, p.y - 58, 'RIPOSTE!', '#9fe8ff', 26);
         if (e.kind === 'launch') floatText(p.x, p.y - 58, 'LAUNCH!', '#ffb050', 26);
         else if (e.juggle) floatText(p.x, p.y - 86, 'JUGGLE!', '#7fe0ff', 24);
         if (e.counter) floatText(p.x, p.y - 86, 'COUNTER', '#ff9a3c', 22);

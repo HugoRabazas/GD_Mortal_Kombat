@@ -45,7 +45,7 @@ const turnOf = (t, ticks) => Math.min(1, t / ticks) * Math.PI * 2;
 // poses: the wind-up builds over the whole startup instead of snapping into
 // place, the first tick of the strike overshoots a little, and the recovery
 // settles back towards the guard rather than holding the extended pose.
-const SHAPED = new Set(['punch', 'punch2', 'punch3', 'hook', 'breaker', 'kick', 'kick2', 'lunge', 'grab', 'launch', 'rollUpper', 'riseKick', 'howl3', 'eclipse3', 'cuts3', 'shieldRam', 'bladeDash']);
+const SHAPED = new Set(['punch', 'punch2', 'punch3', 'hook', 'breaker', 'kick', 'kick2', 'lunge', 'grab', 'launch', 'rollUpper', 'riseKick', 'howl3', 'eclipse3', 'cuts3', 'shieldRam', 'bladeDash', 'riposte']);
 const GUARD = { hipX: 0, hipY: -60, lean: 0.15, tilt: 0, hfx: 26, hfy: -6, hbx: 14, hby: 6, ffx: 18, ffy: 0, fbx: -22, fby: 0, rot: 0, lift: 0, spin: 0 };
 function attackPose(f) {
   const key = attackKey(f);
@@ -176,6 +176,11 @@ function attackKey(f) {
       if (phase === 'pre') return pose({ spin, lean: 0.24, ffx: 2, ffy: -12, fbx: -26, fby: -20, hfx: -16, hfy: 6, hbx: 18, hby: 2 });
       if (phase === 'act') return pose({ spin, hipY: -60, lean: -0.52, tilt: 0.3, ffx: 88, ffy: -78, fbx: -6, hfx: -16, hfy: -8, hbx: -30, hby: 0 });
       return pose({ lean: -0.18, ffx: 34, ffy: -24, hfx: 6, hfy: 6 });
+    }
+    case 'riposte': { // out of a perfect guard: the open palm driven straight in, the other arm still up
+      if (phase === 'pre') return pose({ hipY: -58, lean: 0.1, hfx: 10, hfy: -4, hbx: 20, hby: -14, ffx: 20, fbx: -24 });
+      if (phase === 'act') return pose({ hipX: 12, hipY: -56, lean: 0.5, hfx: 70, hfy: -12, hbx: 10, hby: -6, ffx: 34, fbx: -40, fby: -4 });
+      return pose({ lean: 0.28, hfx: 40, hfy: -6, hbx: 12, hby: 0, ffx: 24, fbx: -28 });
     }
     case 'lunge': { // a straight thrown on the run: the whole body behind the fist
       if (phase === 'pre') return pose({ hipY: -56, lean: 0.42, hfx: 6, hfy: 4, hbx: -14, hby: 8, ffx: 26, fbx: -30 });

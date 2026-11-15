@@ -159,6 +159,30 @@ export function aiInput(ai, s, me) {
       }
     }
   } else ai.heldSeen = false;
+  // A perfect guard just made: answer with the riposte, as often as it
+  // punishes (decided once per guard).
+  if (f.rip > 0 && !ai.ripSeen) {
+    ai.ripSeen = true;
+    if (rnd(ai) < cfg.punish) {
+      ai.tap = INPUT.PUNCH;
+      ai.tapT = 2;
+      return INPUT.PUNCH;
+    }
+  } else if (f.rip <= 0) ai.ripSeen = false;
+  // Getting up with a rival close: now and then roll clear instead.
+  if (f.state === 'getup' && f.t === 4 && ai.target >= 0) {
+    const o = s.f[ai.target];
+    const d = Math.hypot(o.x - f.x, o.z - f.z);
+    if (o.hp > 0 && d < 130 && rnd(ai) < cfg.block * 0.25) {
+      // Away from them, but never out towards the fire.
+      let wx = f.x - o.x;
+      let wz = f.z - o.z;
+      if (Math.hypot(f.x + (wx / (d || 1)) * 130, f.z + (wz / (d || 1)) * 130) > s.ringR - 60) [wx, wz] = [-wz, wx];
+      ai.held = toward(wx, wz) | INPUT.BLOCK;
+      ai.wait = 3;
+      return ai.held;
+    }
+  }
   // Out of a roll, or getting up, with a rival close: sometimes strike
   // (decided once, at the tick the move becomes possible).
   if ((f.state === 'roll' && f.t === 7) || (f.state === 'getup' && f.t === 4)) {

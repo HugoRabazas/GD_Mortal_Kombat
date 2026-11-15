@@ -195,6 +195,8 @@ const TIPS = [
   (c) => `Tip: hold <kbd>${c.k}</kbd> to charge a <b>guard-breaker</b>; let go and it smashes a guard open.`,
   (c) => `Tip: <kbd>${c.g}</kbd> with the rival out of reach is your fighter's <b>signature move</b> for crossing the gap.`,
   (c) => `Tip: <kbd>${c.s}</kbd> in the air is your special's own <b>air version</b>.`,
+  (c) => `Tip: <kbd>${c.p}</kbd> right after a perfect guard is a <b>riposte</b> that opens a combo.`,
+  (c) => `Tip: getting up, hold <kbd>${c.b}</kbd> and a direction to <b>roll clear</b> as you rise.`,
   (c) => `Tip: new to a move? The <b>Tutorial</b> has a short lesson for it.`,
   // Only on the website, on a touch screen, when not opened from the home screen.
   () => (NET && app.touch && !installed ? `Tip: add GD Arena to your <b>home screen</b> to play full screen.` : ''),
@@ -493,7 +495,7 @@ function helpScreen() {
         <li>Knocked down? Press <b>block</b> on the floor for a <b>quick rise</b>: you are back up in a blink. Punch or kick while getting up for a <b>rising sweep</b>.</li>
         <li><b>Taunt</b>: block held and grab, standing still. A little energy, but any blow on you is a counter.</li>
         <li>Hit a rival while they are <b>winding up</b> a blow of their own for a <b>counter</b>: a quarter more damage.</li>
-        <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling - stars circle their head while you have the chance to punish. Hold the guard and it is an ordinary block.</li>
+        <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling - stars circle their head while you have the chance to punish. Punch at once after it for a <b>riposte</b>, a palm strike that opens a combo. Hold the guard and it is an ordinary block.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
         <li>Under a quarter of your health you are in your <b>last stand</b>: the energy bar fills half as fast again. A round is not over until it is over.</li>
         <li><b>Block</b> only stops what comes from the front. Raising it turns you to face whoever is already swinging, but a guard held too early stays put: get behind a blocking rival, or step out of the way of a projectile.</li>
@@ -626,13 +628,13 @@ function movesCard() {
       <dt>Air ${k(key.g)}</dt><dd><b>Stomp</b>: feet first onto whoever is below - they bounce off the floor. Rooted if it misses.</dd>
       <dt>Air ${k(key.s)}</dt><dd><b>Air special</b>: your special's own air version.</dd>`],
     defence: ['Defence', `
-      <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b>.</dd>
+      <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b> - then ${k(key.p)} is a <b>riposte</b>.</dd>
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b> sideways or forwards: attacks pass through you.</dd>
       <dt>${k(key.b)} + away</dt><dd><b>Back-step</b>: a quick hop back, still facing the rival.</dd>
       <dt>Roll, ${k(key.p)} / ${k(key.k)}</dt><dd>Late in a roll: a <b>rising uppercut</b>, or a <b>spinning heel kick</b>.</dd>
       <dt>${k(key.g)}</dt><dd>The moment you are seized: a <b>throw escape</b>.</dd>
       <dt>${k(key.b)}</dt><dd>On the floor: a <b>quick rise</b>.</dd>
-      <dt>Getting up, ${k(key.p)}</dt><dd><b>Rising sweep</b>: can't be hit while it starts. Slow if guarded.</dd>`],
+      <dt>Getting up</dt><dd>${k(key.p)}: a <b>rising sweep</b>, safe as it starts, slow if guarded. ${k(key.b)} + move: <b>roll clear</b>.</dd>`],
     yours: [two ? 'Fighters' : 'Yours', own],
   };
   const tab = groups[app.moveTab] ? app.moveTab : 'basics';

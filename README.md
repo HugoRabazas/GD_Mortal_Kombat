@@ -437,6 +437,21 @@ and the heartbeat, the crowd and the weather go quiet.
     0.95 / 97, Zelrith 1.09 / 105. Now: duels 48-53 % for all eight, brawl
     wins 15-23 % each (they were 13-29 %), ladder 100 / 74 / 61 %, boss
     beats Hard 90 %.
+- **Riposte**: punch within 16 ticks of a perfect guard is a riposte, a palm
+  strike driven in while the rival is still open (9 damage, quick, RIPOSTE!
+  on screen). It leaves them reeling long enough to follow with a string,
+  and can be cancelled into a special. A shot turned aside gives no riposte
+  (there is nobody in front to strike). The CPU answers with it as often as
+  it punishes.
+- **Rolling rise**: block held with a direction while getting up rolls that
+  way out of the rise (the same roll, nothing can hit it for most of it).
+  The CPU does it now and then with a rival close, never towards the fire.
+  Both are taught in the Tutorial (Defence: Riposte; Getting up: Rolling
+  rise), listed in the pause screen's Defence tab and the help, and each
+  step is played by a scripted player in the tests. Measured with them in
+  (Gleh 1.05 power / 105 health, Jackie 1.08 / 112, Crescent Rain's arrows
+  back to 6): duels 47-54 %, brawl wins 15-24 % (1120 brawls), ladder
+  100 / 73 / 58 %, boss beats Hard 88 %. 91 tests.
 - **Reading an unstoppable finisher**: a finisher that has caught its rival
   burns brighter from that moment, and the CPU (Normal and up) turns to
   someone it can stop instead of wasting blows on it. Avalanche's crash
