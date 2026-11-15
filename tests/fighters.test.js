@@ -26,3 +26,13 @@ test('every slot gets the colours it really wears, for the scoreboard and the ef
   assert.equal(b.primary, lookColors('ruko', 0).primary, 'the mirror copy wears the other costume');
   assert.notEqual(a.glow, b.glow, 'their sparks and trails differ too');
 });
+
+test('every fighter is complete: picture circle, special, costumes, a celebration and a winning line', () => {
+  for (const f of FIGHTERS) {
+    assert.ok(f.head && f.head.r > 0, `${f.id} head`);
+    assert.ok(['dash', 'bolt', 'rise', 'quake'].includes(f.special.type), `${f.id} special`);
+    assert.ok(['howl', 'calm', 'stomp', 'cheer'].includes(f.victory), `${f.id} celebration`);
+    assert.ok(typeof f.quote === 'string' && f.quote.length > 0 && f.quote.length <= 60, `${f.id} quote fits the result screen`);
+    for (const k of ['primary', 'secondary', 'accent', 'skin', 'glow']) assert.match(f.colors[k], /^#[0-9a-f]{6}$/i, `${f.id} ${k}`);
+  }
+});

@@ -17,7 +17,8 @@
 //      'stomp' (high stamping steps) or 'cheer' (hopping and waving).
 //      `looks` are the costumes a player can pick: the first is the fighter's
 //      own colours, the second changes some of them (any of primary,
-//      secondary, accent, glow, hair).
+//      secondary, accent, glow, hair). `quote` is the line shown on the
+//      result screen when they win.
 //   5. Run `npm run build` and publish the new page.
 //
 // Stats are multipliers around 1.0 (health is absolute, 100 is standard).
@@ -32,6 +33,7 @@ export const FIGHTERS = [
     title: 'The Crimson Wolf',
     gear: ['scarf'],
     victory: 'howl',
+    quote: 'The moon saw that one coming. You did not.',
     head: { x: 81, y: 68, r: 30 },
     colors: {
       primary: '#b5122c',
@@ -51,6 +53,7 @@ export const FIGHTERS = [
     title: 'The Silent Storm',
     gear: ['pads'],
     victory: 'calm',
+    quote: 'Quiet. Quick. Finished.',
     head: { x: 88, y: 99, r: 43 },
     colors: {
       primary: '#2c9a4b',
@@ -70,6 +73,7 @@ export const FIGHTERS = [
     title: 'The Violet Mountain',
     build: 'sumo',
     victory: 'stomp',
+    quote: 'The mountain does not move. You did.',
     head: { x: 88, y: 42, r: 40 },
     colors: {
       primary: '#3b2b52',
@@ -89,6 +93,7 @@ export const FIGHTERS = [
     title: 'The Twin Flame',
     build: 'slim',
     victory: 'cheer',
+    quote: 'Two flames, one winner!',
     head: { x: 84, y: 94, r: 46 },
     colors: {
       primary: '#7a2fc2',

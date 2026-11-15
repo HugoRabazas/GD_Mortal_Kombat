@@ -63,7 +63,10 @@ controls in use.
 When a match ends, every fighter who won celebrates in their own way - Ruko
 raises a fist to the sky, Shadow stands with arms folded, Jackie stamps like a sumo
 wrestler, Pixie hops and waves - turned three-quarters to the camera so it
-reads. The result screen shows the numbers of the fight: damage really dealt
+reads. The result screen opens with the winner's own line (Ruko: "The moon
+saw that one coming. You did not."; Shadow: "Quiet. Quick. Finished.";
+Jackie: "The mountain does not move. You did."; Pixie: "Two flames, one
+winner!") and shows the numbers of the fight: damage really dealt
 (a finishing blow counts only what was left), blows landed, the longest combo
 and perfect guards, the better figure of each in gold. In a brawl they ride
 along in the ranking, under each name.
@@ -236,6 +239,9 @@ Every round opens with the camera low and wide, looking up at the sky and
 the mountains over the wall, and cranes down to the fighters before the call
 to fight - so each change of light and weather is seen as it arrives.
 
+The banners on the wall hang from their top edge and move in the wind -
+barely at first, hard in the storm, the blizzard and the sandstorm.
+
 A crowd on the stands sways while it watches and jumps and roars when heavy
 blows and knockouts land - and it is heard: a low murmur under every fight
 (not in Training) that swells with heavy blows, perfect guards, finishers and
@@ -317,7 +323,8 @@ editor), `audio.js` (every sound and the music are generated in the browser),
    circle cut from the picture (centre `x`, `y` and radius `r` in picture
    pixels); `build` is `standard`, `sumo` or `slim`; `gear` adds a `scarf` or
    shoulder `pads`; `victory` is how they celebrate a won match (`howl`,
-   `calm`, `stomp` or `cheer`); `looks` are their costumes (the first is their
+   `calm`, `stomp` or `cheer`); `quote` is their winning line (60 characters
+   at most); `looks` are their costumes (the first is their
    own colours, the second names the colours it changes); `special.type` is `dash`,
    `bolt`, `rise` or `quake`; keep `stats` near 1.0.
 3. `npm run build` and publish `dist/gd-arena.html` again.

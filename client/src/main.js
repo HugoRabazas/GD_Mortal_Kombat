@@ -655,6 +655,14 @@ function rankingList() {
 // What a finished arcade fight shows: the duel's numbers, or a brawl's standings.
 const outcome = () => (app.game.state.mode === 'arena' ? rankingList() : statsCard());
 
+// The winner's own line, shown at the top of the result screen.
+function winnerQuote() {
+  const s = app.game?.state;
+  if (!s || s.matchWinner < 0) return '';
+  const f = getFighter(s.f[s.matchWinner].char);
+  return f.quote ? `<p class="quote">“${f.quote}” <span>${f.name}</span></p>` : '';
+}
+
 function resultScreen() {
   const s = app.game.state;
   const won = s.matchWinner === 0;
@@ -664,10 +672,11 @@ function resultScreen() {
       : `<button type="button" class="btn primary" data-act="rematch">Rematch</button>
           <button type="button" class="btn" data-act="select">Change fighter</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>`;
-  if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result">${statsCard()}<div class="row">${again}</div></section>`;
+  if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result">${winnerQuote()}${statsCard()}<div class="row">${again}</div></section>`;
   if (s.mode === 'arena' && app.mode !== 'arcade') {
     return `
       <section class="screen result">
+        ${winnerQuote()}
         ${rankingList()}
         <div class="row">${again}</div>
       </section>`;
@@ -675,6 +684,7 @@ function resultScreen() {
   if (app.mode !== 'arcade') {
     return `
       <section class="screen result">
+        ${winnerQuote()}
         ${statsCard()}
         <div class="row">
           <button type="button" class="btn primary" data-act="rematch">Rematch</button>

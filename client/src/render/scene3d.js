@@ -338,11 +338,17 @@ export function create3D(canvas) {
     return texture(c);
   };
   const bannerMat = new THREE.MeshLambertMaterial({ transparent: true, side: THREE.DoubleSide });
-  for (const x of [-8, -4.8, -1.6, 1.6, 4.8, 8]) {
-    const b = new THREE.Mesh(new THREE.PlaneGeometry(1.15, 2.3), bannerMat);
-    b.position.set(x, 1.15, WALL_Z + 0.4);
+  // Each banner hangs from its top edge (the geometry is moved down by half
+  // its height) so it can sway in the wind - gently at first, hard in the
+  // storm, the blizzard or the sandstorm (see applyMood).
+  const bannerCloth = new THREE.PlaneGeometry(1.15, 2.3);
+  bannerCloth.translate(0, -1.15, 0);
+  const banners = [-8, -4.8, -1.6, 1.6, 4.8, 8].map((x, i) => {
+    const b = new THREE.Mesh(bannerCloth, bannerMat);
+    b.position.set(x, 2.3, WALL_Z + 0.4);
     scene.add(b);
-  }
+    return { b, phase: i * 1.7 };
+  });
 
   // ---------- the crowd ----------
   // Spectators on stands behind the wall. They sway while they watch and
@@ -738,6 +744,13 @@ export function create3D(canvas) {
       const flick = Math.sin(now / 83 + t.phase) * 0.5 + Math.sin(now / 37 + t.phase * 2) * 0.5;
       t.light.intensity = torchBase * (1 + flick * 0.22);
       t.flame.scale.set(1.25 + flick * 0.12 + closing * 0.4, 1.75 + flick * 0.28 + closing * 0.7, 1);
+    }
+
+    // Banners in the wind.
+    for (const { b, phase } of banners) {
+      const gust = 0.04 + rainNow * 0.22;
+      b.rotation.x = -Math.abs(Math.sin(now / (900 - rainNow * 500) + phase)) * gust - rainNow * 0.08;
+      b.rotation.z = Math.sin(now / 1300 + phase * 2) * gust * 0.35;
     }
 
     // Snow, where it snows: it falls at walking pace and the wind grows with
