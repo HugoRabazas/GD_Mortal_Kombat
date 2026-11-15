@@ -144,6 +144,93 @@ body {
   padding: 0 4px;
 }
 
+/* The tutorial's lesson panel: done steps dimmed with a tick, the step to
+   do next in full with how to do it. */
+#drill li.ok {
+  color: var(--gold);
+  opacity: 0.8;
+}
+
+#drill li.got {
+  font-weight: 700;
+}
+
+#drill .intro {
+  font-style: italic;
+}
+
+/* Two quieter menu entries side by side (the tutorial and training). */
+.stack .pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.stack .pair .btn {
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 520px) {
+  .stack .pair .btn {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  .stack .pair small {
+    display: none;
+  }
+}
+
+/* The tutorial's list of lessons: two columns where there is room. */
+.lessons .lesson-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 8px;
+  width: min(100%, 470px);
+}
+
+.lessons .lesson-list .btn {
+  width: 100%;
+}
+
+.lessons .lesson-list small {
+  white-space: nowrap;
+}
+
+/* On a phone held sideways: three columns, no blurb, slimmer buttons. */
+@media (max-height: 480px) {
+  .screen.lessons {
+    width: min(100%, 760px);
+  }
+
+  .lessons .note {
+    display: none;
+  }
+
+  .lessons .lesson-list {
+    grid-template-columns: repeat(3, 1fr);
+    width: 100%;
+    gap: 6px;
+  }
+
+  .lessons .lesson-list .btn {
+    padding-top: 6px;
+    padding-bottom: 6px;
+    font-size: 1.15rem;
+  }
+}
+
+.lessons .who {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
 .chip {
   position: absolute;
   z-index: 3; /* above the reach of the floating stick */

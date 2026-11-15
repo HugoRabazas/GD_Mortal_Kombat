@@ -57,10 +57,24 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   (one kick every 100 ticks, about 1.7 s) - the way to learn the timing of
   the perfect guard. That partner always kicks from the outer side, so its
   kicks push you back towards the middle and never into the ring of fire.
-  A checklist of thirteen moves sits in the corner and ticks each one off the
+  A checklist of twelve moves sits in the corner and ticks each one off the
   first time you really do it (a combo has to land, a block has to stop a
   blow), with how to do the next ones; the device remembers it, and the menu
   shows how many you have learned.
+- **Tutorial**: nine short lessons (Basics, Defence, Getting up, Throws, On
+  the run, In the air, Combos, Counters, Specials), each against a partner
+  scripted for it: one stands still, one kicks on the beat (to block, perfect
+  guard, roll through and counter), one keeps a guard up (to see a punch
+  stopped and a throw go through it), and one walks up and **throws you down
+  again and again** so the quick rise and the rising sweep can actually be
+  practised. The steps of the lesson sit in the corner, named in the
+  controls being used, and tick off from what really happens in the fight;
+  when they are all done the lesson ends with Next lesson / Again / All
+  lessons. Progress is kept per lesson on the device, and the menu shows how
+  many lessons are done. The lessons and their partners are shared code
+  (`shared/tutorial.js`), tested against the real rules: the throwing
+  partner floors a player at least three times in 25 seconds, and holding
+  guard on the floor and punching while getting up tick both steps.
 
 A duel is first to two round wins.
 

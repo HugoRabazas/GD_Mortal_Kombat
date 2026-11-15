@@ -6,6 +6,7 @@ import { ritualSounds } from './render/fighter.js';
 import { awardsFor as brawlAwards } from './awards.js';
 import { ARENA, INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
+import { LESSONS, lessonById, stepsDone, tutorPartner, drummer } from '../../shared/tutorial.js';
 import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
 import { createGame } from './game.js';
@@ -285,11 +286,14 @@ function menuScreen() {
         <button type="button" class="btn" data-act="arcade">Arcade <small>single player · ${STAGES.length} duels</small></button>
         <button type="button" class="btn" data-act="quick">Quick Fight <small>one duel vs CPU</small></button>
         <button type="button" class="btn" data-act="versus">2 Players <small>keyboard or gamepads</small></button>
-        <button type="button" class="btn quiet" data-act="training">Training <small>${drillsDone().size ? `${drillsDone().size} of ${DRILLS.length} moves learned` : 'practise your moves'}</small></button>
+        <div class="pair">
+          <button type="button" class="btn quiet" data-act="tutorial">Tutorial <small>${LESSONS.filter(lessonComplete).length ? `${LESSONS.filter(lessonComplete).length} of ${LESSONS.length} lessons` : 'step by step'}</small></button>
+          <button type="button" class="btn quiet" data-act="training">Training <small>${drillsDone().size ? `${drillsDone().size} of ${DRILLS.length} moves` : 'free practice'}</small></button>
+        </div>
         <button type="button" class="btn quiet" data-act="help">How to play</button>
       </div>
       ${best ? `<p class="best">Arcade best <b>${points(best)}</b></p>` : ''}
-      ${isNewcomer() ? '<p class="note">New here? <b>Training</b> lets you try every move with no clock.</p>' : `<p class="note tip">${menuTip()}</p>`}
+      ${isNewcomer() ? '<p class="note">New here? The <b>Tutorial</b> teaches every move, step by step.</p>' : `<p class="note tip">${menuTip()}</p>`}
       <div class="foot">
         <button type="button" class="link" data-act="settings">Settings</button>
         <button type="button" class="link" data-act="record">Record</button>
@@ -610,6 +614,110 @@ function arrangeScreen() {
     </section>`;
 }
 
+// Training and the tutorial: no clock, health refills, no record kept.
+const practising = () => app.mode === 'training' || app.mode === 'tutorial';
+
+// -------------------------------------------------------------- tutorial ---
+// Lessons of a few steps each (shared/tutorial.js), against a partner who
+// does what the lesson needs. Progress is kept per lesson on the device.
+let lessonMemo = null;
+function lessonsDone() {
+  if (!lessonMemo) {
+    lessonMemo = {};
+    try {
+      const saved = JSON.parse(localStorage.getItem('gd-arena-lessons') || '{}');
+      for (const l of LESSONS) lessonMemo[l.id] = new Set(Array.isArray(saved[l.id]) ? saved[l.id] : []);
+    } catch {
+      // nothing remembered
+    }
+  }
+  for (const l of LESSONS) lessonMemo[l.id] ??= new Set();
+  return lessonMemo;
+}
+const lessonComplete = (l) => l.steps.every((st) => lessonsDone()[l.id].has(st.id));
+
+function saveLessons() {
+  try {
+    const out = {};
+    for (const [id, set] of Object.entries(lessonsDone())) out[id] = [...set];
+    localStorage.setItem('gd-arena-lessons', JSON.stringify(out));
+  } catch {
+    // not remembered
+  }
+}
+
+function lessonsScreen() {
+  const all = lessonsDone();
+  const me = getFighter(app.picks[0]);
+  const first = LESSONS.findIndex((x) => !lessonComplete(x));
+  return `
+    <section class="screen select narrow lessons">
+      <h2>Tutorial</h2>
+      <p class="note">Short lessons, each with a partner who does what the lesson needs. Steps tick themselves off as you do them.</p>
+      <div class="row who"><span>Fighting as <b>${me.name}</b></span><button type="button" class="btn small quiet" data-act="tutorFighter">Change</button></div>
+      <ol class="lesson-list">
+        ${LESSONS.map((l, i) => {
+          const n = l.steps.filter((st) => all[l.id].has(st.id)).length;
+          const full = n === l.steps.length;
+          return `<li><button type="button" class="btn${i === first ? ' primary' : ''}" data-act="lesson" data-id="${l.id}">${full ? '✓ ' : ''}${l.title} <small>${n} / ${l.steps.length}</small></button></li>`;
+        }).join('')}
+      </ol>
+      <button type="button" class="btn quiet" data-act="menu">Back</button>
+    </section>`;
+}
+
+function lessonDoneScreen() {
+  const l = lessonById(app.lesson);
+  const next = LESSONS[LESSONS.indexOf(l) + 1];
+  return `
+    <section class="screen select narrow">
+      <h2>Lesson complete</h2>
+      <p class="note"><b>${l.title}</b>: every step done.${next ? ` Next: <b>${next.title}</b>.` : ' That was the last lesson - try a Quick Fight or the Arcade.'}</p>
+      <div class="stack">
+        ${next ? `<button type="button" class="btn primary" data-act="lesson" data-id="${next.id}">Next lesson</button>` : ''}
+        <button type="button" class="btn${next ? '' : ' primary'}" data-act="lesson" data-id="${l.id}">Again</button>
+        <button type="button" class="btn quiet" data-act="tutorial">All lessons</button>
+      </div>
+    </section>`;
+}
+
+// The lesson panel: the title, the steps (ticked as they are done) and how
+// to do the next one, in the controls being used.
+function drawLesson(justDone) {
+  const l = lessonById(app.lesson);
+  if (!l) return;
+  const done = lessonsDone()[l.id];
+  const names = controlNames();
+  const k = (id) => `<kbd>${names[id] ?? id}</kbd>`;
+  const next = l.steps.find((st) => !app.lessonRun.has(st.id));
+  drillEl.innerHTML = `
+    <b>${l.title}</b>
+    ${l.intro ? `<p class="intro">${l.intro}</p>` : ''}
+    <ol>${l.steps
+      .map((st) => {
+        const ok = app.lessonRun.has(st.id);
+        return `<li class="${ok ? 'ok' : ''}${st.id === justDone ? ' got' : ''}">${ok ? '✓ ' : done.has(st.id) ? '· ' : ''}${st.name}${st === next ? `<span>${st.how(k, names)}</span>` : ''}</li>`;
+      })
+      .join('')}</ol>
+    ${next ? '' : '<p class="got">Lesson complete!</p>'}`;
+}
+
+// Tick off the steps of the lesson being played.
+function watchLesson(s, events) {
+  const l = lessonById(app.lesson);
+  if (!l || s.phase !== 'fight') return;
+  const got = stepsDone(l, s, events, app.lessonRun);
+  if (!got.length) return;
+  for (const id of got) {
+    app.lessonRun.add(id);
+    lessonsDone()[l.id].add(id);
+  }
+  saveLessons();
+  play('pickup');
+  drawLesson(got[got.length - 1]);
+  if (l.steps.every((st) => app.lessonRun.has(st.id)) && !app.lessonEnd) app.lessonEnd = performance.now() + 1600;
+}
+
 // --------------------------------------------------------------- drills ---
 // Training keeps a checklist of every move. Each one ticks itself off the
 // first time the player really does it (a combo has to land, a block has to
@@ -622,7 +730,6 @@ const DRILLS = [
   { id: 'grab', name: 'Throw', how: (k) => `${k('g')} up close` },
   { id: 'dive', name: 'Diving attack', how: (k) => `${k('j')}, then ${k('p')} in the air` },
   { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction` },
-  { id: 'tech', name: 'Quick rise', how: (k) => `${k('b')} while knocked down (the Fights back partner floors you)` },
   { id: 'block', name: 'Block a blow', how: (k) => `${k('b')} as a blow comes (pick a partner who attacks)` },
   { id: 'perfect', name: 'Perfect guard', how: (k) => `${k('b')} just before a blow lands (the Kicks partner helps)` },
   { id: 'counter', name: 'Counter hit', how: (k) => `${k('p')} while the rival winds up a blow (the Kicks partner helps)` },
@@ -662,7 +769,6 @@ function watchDrills(s, events) {
   for (const e of events) {
     if (e.type === 'jump' && e.by === 0) markDrill('jump');
     else if (e.type === 'roll' && e.by === 0) markDrill('roll');
-    else if (e.type === 'tech' && e.by === 0) markDrill('tech');
     else if (e.type === 'special' && e.by === 0) markDrill('special');
     else if (e.type === 'super' && e.by === 0) markDrill('super');
     else if (e.type === 'parry' && e.by === 0) markDrill('perfect');
@@ -991,7 +1097,7 @@ function roomScreen() {
     </section>`;
 }
 
-const SCREENS = { record: recordScreen, settings: settingsScreen, menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
+const SCREENS = { lessons: lessonsScreen, lessonDone: lessonDoneScreen, record: recordScreen, settings: settingsScreen, menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
 
 // Keep a phone's screen from dimming or locking in the middle of a fight.
 let wakeLock = null;
@@ -1029,8 +1135,11 @@ function show(screen) {
   ui.innerHTML = SCREENS[screen] ? SCREENS[screen]() : '';
   ui.dataset.screen = screen;
   pauseBtn.hidden = screen !== 'fight';
-  drillEl.hidden = !(screen === 'fight' && app.mode === 'training');
-  if (!drillEl.hidden) drawDrills();
+  drillEl.hidden = !(screen === 'fight' && practising());
+  if (!drillEl.hidden) {
+    if (app.mode === 'tutorial') drawLesson();
+    else drawDrills();
+  }
   refreshTouch();
   touchLayout.setEditing(screen === 'arrange');
   setTouchLive(screen !== 'arrange');
@@ -1059,60 +1168,6 @@ function show(screen) {
 function cpu(level) {
   const ai = createAI(level, (Math.random() * 1e9) | 0);
   return (state, slot) => aiInput(ai, state, slot);
-}
-
-// A training partner who kicks on a steady beat, so guards, perfect guards and
-// rolls can be practised against a known rhythm. It stands on the outer side
-// of the player, so every kick pushes them towards the middle of the arena
-// and never into the ring of fire. The beat is counted in real ticks (hit
-// pauses included), so it stays steady to the ear.
-const BEAT = 100;
-function drummer() {
-  let beat = BEAT;
-  const walk = (dx, dz) => {
-    const d = Math.hypot(dx, dz) || 1;
-    let bits = 0;
-    if (dx / d < -0.38) bits |= INPUT.LEFT;
-    if (dx / d > 0.38) bits |= INPUT.RIGHT;
-    if (dz / d < -0.38) bits |= INPUT.UP;
-    if (dz / d > 0.38) bits |= INPUT.DOWN;
-    return bits;
-  };
-  return (s, slot) => {
-    const me = s.f[slot];
-    const you = s.f[0];
-    if (beat > 0) beat--;
-    const r = Math.hypot(you.x, you.z);
-    const gap = Math.hypot(you.x - me.x, you.z - me.z) || 1;
-    // Away from the middle, take the outer side; near it, any side will do.
-    const out = r > 150;
-    const vx = out ? you.x / r : (me.x - you.x) / gap;
-    const vz = out ? you.z / r : (me.z - you.z) / gap;
-    if (out && ((me.x - you.x) * vx + (me.z - you.z) * vz) / gap < 0.5) {
-      // Not on the outer side yet: walk round the player, not into them.
-      const sgn = (me.x - you.x) * -vz + (me.z - you.z) * vx >= 0 ? 1 : -1;
-      return walk(you.x - vz * sgn * 115 + vx * 95 - me.x, you.z + vx * sgn * 115 + vz * 95 - me.z);
-    }
-    let tx = you.x + vx * 80;
-    let tz = you.z + vz * 80;
-    const limit = s.ringR - 50;
-    const tr = Math.hypot(tx, tz);
-    const clamped = tr > limit;
-    if (clamped) {
-      tx *= limit / tr;
-      tz *= limit / tr;
-    }
-    const there = Math.hypot(tx - me.x, tz - me.z) < 20 || (clamped && gap < 105);
-    if (!there) return walk(tx - me.x, tz - me.z);
-    // Never kick a player towards the fire from the inside.
-    const inside = (me.x - you.x) * you.x + (me.z - you.z) * you.z < 0;
-    const risky = inside && r > s.ringR - 160;
-    if (beat === 0 && gap < 105 && !risky && (me.state === 'idle' || me.state === 'walk')) {
-      beat = BEAT;
-      return INPUT.KICK;
-    }
-    return 0;
-  };
 }
 
 function startDemo() {
@@ -1147,6 +1202,12 @@ function startFight() {
   } else if (app.mode === 'training') {
     const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'beat' ? drummer() : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
     controllers = [solo, partner];
+  } else if (app.mode === 'tutorial') {
+    // The lesson's partner: a fighter other than your own.
+    chars = [app.picks[0], FIGHTERS.find((f) => f.id !== app.picks[0]).id];
+    controllers = [solo, tutorPartner(lessonById(app.lesson).partner)];
+    app.lessonRun = new Set();
+    app.lessonEnd = 0;
   } else if (app.vsArena) {
     chars = [...app.picks, ...rivalsFor(app.picks)];
     controllers = [...two, cpu('normal'), cpu('normal')];
@@ -1218,7 +1279,7 @@ function readRecord() {
 const WIN_MILESTONES = [10, 25, 50, 100, 250, 500, 1000];
 
 function noteRecord() {
-  if (app.mode === 'training' || app.mode === 'versus') return;
+  if (practising() || app.mode === 'versus') return;
   const s = app.game.state;
   const me = app.mode === 'online' ? app.online?.mySlot ?? -1 : 0;
   if (me < 0 || !s.f[me]) return;
@@ -1323,6 +1384,21 @@ const ACTIONS = {
   training() {
     app.mode = 'training';
     show('select');
+  },
+  tutorial() {
+    app.mode = 'tutorial';
+    show('lessons');
+  },
+  lesson(el) {
+    app.mode = 'tutorial';
+    app.lesson = el.dataset.id;
+    startFight();
+  },
+  // The tutorial uses the fighter picked last; this steps to the next one.
+  tutorFighter() {
+    const i = FIGHTERS.findIndex((f) => f.id === app.picks[0]);
+    app.picks[0] = FIGHTERS[(i + 1) % FIGHTERS.length].id;
+    show('lessons');
   },
   dummy(el) {
     app.dummy = el.dataset.id;
@@ -1639,7 +1715,7 @@ function labels() {
   const n = app.game ? app.game.state.f.length : 2;
   if (app.mode === 'online' && app.online?.info) return app.online.info.slots.map((sl) => sl.name.toUpperCase());
   if (app.mode === 'versus') return ['P1', 'P2', 'CPU', 'CPU'].slice(0, n);
-  if (app.mode === 'training') return ['YOU', 'PARTNER'];
+  if (practising()) return ['YOU', 'PARTNER'];
   if (app.mode === 'arcade' && app.arcade) {
     const st = app.arcade.ladder[app.arcade.stage];
     if (st.brawl) return ['YOU', ...st.rivals.map(() => 'CPU')];
@@ -1652,7 +1728,7 @@ function labels() {
 // chose for, as picked; CPU rivals in their own colours.
 function fightLooks() {
   if (app.mode === 'online') return app.online?.info?.slots.map((sl) => sl.look || 0) ?? null;
-  if (app.mode === 'versus' || app.mode === 'quick' || app.mode === 'training') return [app.looks[0], app.looks[1], 0, 0];
+  if (app.mode === 'versus' || app.mode === 'quick' || practising()) return [app.looks[0], app.looks[1], 0, 0];
   return [app.looks[0], 0, 0, 0];
 }
 
@@ -1661,7 +1737,7 @@ function fightLooks() {
 function keepTraining(s) {
   if (s.phase !== 'fight') return;
   s.timer = MODES.duel.seconds * TICK_RATE;
-  s.f[0].meter = RULES.METER_MAX;
+  if (app.mode === 'training' || lessonById(app.lesson)?.energy) s.f[0].meter = RULES.METER_MAX;
   for (const f of s.f) {
     if (f.hp < f.maxHp * 0.4 && (f.state === 'idle' || f.state === 'walk' || f.state === 'block')) f.hp = f.maxHp;
     else if (f.hp < 8) f.hp = 8; // never actually knocked out
@@ -1699,7 +1775,7 @@ function frame(now) {
   if (!g || !stage) return;
   if (padStartPressed()) togglePause();
   g.update(now);
-  if (playing && app.mode === 'training') keepTraining(g.state);
+  if (playing && practising()) keepTraining(g.state);
   if (playing && app.screen === 'fight') {
     // The music pushes harder when the ring is closing or the round decides the match.
     const st = g.state;
@@ -1707,7 +1783,7 @@ function frame(now) {
     // ...and when a player's own fighter is down to a last stand.
     const ownSlots = app.mode === 'versus' ? [0, 1] : app.mode === 'online' ? [app.online?.mySlot ?? -1] : [0];
     const atTheEdge = ownSlots.some((i) => st.f[i] && st.f[i].hp > 0 && st.f[i].hp < st.f[i].maxHp * 0.25);
-    const want = st.phase === 'fight' && app.mode !== 'training' && (st.ringR < ARENA.R - 1 || deciding || atTheEdge) ? 'final' : 'fight';
+    const want = st.phase === 'fight' && !practising() && (st.ringR < ARENA.R - 1 || deciding || atTheEdge) ? 'final' : 'fight';
     if (want !== app.music) {
       app.music = want;
       setMusic(want);
@@ -1717,14 +1793,24 @@ function frame(now) {
   const events = g.drain();
   if (playing) tallyFight(g, events);
   if (playing && app.mode === 'training') watchDrills(g.state, events);
+  if (playing && app.mode === 'tutorial') {
+    watchLesson(g.state, events);
+    // Every step done: a moment to see the last tick, then the lesson's end.
+    if (app.lessonEnd && performance.now() >= app.lessonEnd && app.screen === 'fight') {
+      app.lessonEnd = 0;
+      g.paused = true;
+      show('lessonDone');
+    }
+  }
   // A change of controller renames the controls in the checklist at once.
-  if (playing && app.mode === 'training' && !drillEl.hidden && lastDevice() !== app.drillDevice) {
+  if (playing && practising() && !drillEl.hidden && lastDevice() !== app.drillDevice) {
     app.drillDevice = lastDevice();
-    drawDrills();
+    if (app.mode === 'tutorial') drawLesson();
+    else drawDrills();
   }
   // A heartbeat when a player's fighter is nearly out: tension, and a warning
   // that reaches the player even when their eyes are off the health bar.
-  if (playing && g.state.phase === 'fight' && app.mode !== 'training' && !g.paused) {
+  if (playing && g.state.phase === 'fight' && !practising() && !g.paused) {
     const players = app.mode === 'versus' ? [0, 1] : self >= 0 ? [self] : [];
     const low = players.some((i) => g.state.f[i] && g.state.f[i].hp > 0 && g.state.f[i].hp < g.state.f[i].maxHp * 0.25);
     if (low && now >= (app.nextBeat || 0)) {
@@ -1740,7 +1826,7 @@ function frame(now) {
     else if (e.type === 'ko' || e.type === 'out' || e.type === 'parry') app.roar = Math.min(1, (app.roar || 0) + (e.type === 'parry' ? 0.25 : 0.7));
   }
   app.roar = (app.roar || 0) * Math.pow(0.985, frames);
-  const crowdOn = playing && app.mode !== 'training' && g.state.phase !== 'over' && !app.game?.paused;
+  const crowdOn = playing && !practising() && g.state.phase !== 'over' && !app.game?.paused;
   setCrowd(crowdOn ? 0.18 + app.roar * 0.82 : 0);
   // The weather, heard: as strong as the round's mood makes it (see THEMES).
   const sky = THEMES[app.fightPlace] || THEMES.courtyard;
@@ -1784,7 +1870,7 @@ function frame(now) {
     app.demoSkip = !app.demoSkip;
     if (app.demoSkip) return;
   }
-  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: app.mode === 'training' }, now);
+  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: practising() }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {
