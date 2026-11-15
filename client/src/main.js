@@ -298,7 +298,7 @@ function rivalsCard(taken) {
           .map((id) => `<li><span class="num">vs</span>${head(id)}<span class="lname">${getFighter(id).name}</span><span class="ltag">CPU</span></li>`)
           .join('')}
       </ol>
-      <p class="rules">Everyone fights at once. Three rounds; each round scores by how long you last. Level on points is a shared place.</p>
+      <p class="rules aside">Everyone fights at once. Three rounds; each round scores by how long you last. Level on points is a shared place.</p>
     </div>`;
 }
 
@@ -367,6 +367,7 @@ function helpScreen() {
         <li>Hit a rival while they are <b>winding up</b> a blow of their own for a <b>counter</b>: a quarter more damage.</li>
         <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling. Hold the guard and it is an ordinary block.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
+        <li>Under a quarter of your health you are in your <b>last stand</b>: the energy bar fills half as fast again. A round is not over until it is over.</li>
         <li><b>Block</b> only stops what comes from the front. Get behind a blocking rival, or step out of the way of a projectile.</li>
         <li><b>Jump</b> over a ground stomp; punch or kick in the air for a diving attack.</li>
         <li><b>Crystals</b> appear on the floor: gold gives energy, green gives health. Walk over one to take it.</li>
@@ -762,7 +763,7 @@ function lobbyScreen() {
             <button type="button" class="btn primary" data-act="quickMatch">Quick match</button>
             <button type="button" class="btn" data-act="createRoom">New room</button>
           </div>
-          <p class="rules">Quick match joins the open room with the most people, or opens one.</p>
+          <p class="rules aside">Quick match joins the open room with the most people, or opens one.</p>
         </div>
       </div>
       ${chatBox()}

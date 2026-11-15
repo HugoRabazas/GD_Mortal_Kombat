@@ -1368,7 +1368,9 @@ kbd {
     font-size: 1.1rem;
   }
 
-  .ladder .rules,
+  /* Explanations that can go when space is short. Status lines (the room's
+     connection, who is watching) stay. */
+  .rules.aside,
   .note.aside {
     display: none;
   }

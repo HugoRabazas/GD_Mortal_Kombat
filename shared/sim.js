@@ -605,8 +605,14 @@ function activeMove(f) {
   return null;
 }
 
+// Last stand: a fighter under a quarter of their health fills the energy bar
+// half as fast again, so the one behind gets a special or a finisher sooner
+// and a round is not over before it is over.
+const LAST_STAND = { below: 0.25, gain: 1.5 };
+const lastStand = (f) => f.hp > 0 && f.hp < f.maxHp * LAST_STAND.below;
+
 function addMeter(f, amount) {
-  f.meter = Math.min(RULES.METER_MAX, f.meter + amount);
+  f.meter = Math.min(RULES.METER_MAX, f.meter + amount * (lastStand(f) ? LAST_STAND.gain : 1));
 }
 
 // Apply one connected attack. (fromX, fromZ) is where the blow comes from,
@@ -671,7 +677,9 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   const scale = Math.max(0.5, 1 - 0.12 * (def.taken - 1)); // long combos hit softer
   const dmg = Math.max(1, Math.round(m.dmg * power * scale * (counter ? COUNTER.dmg : 1)));
   const dealt = Math.min(dmg, def.hp); // a finishing blow cannot take more than is left
+  const wasStanding = lastStand(def);
   def.hp = Math.max(0, def.hp - dmg);
+  if (!wasStanding && lastStand(def)) emit(s, 'lastStand', { slot: def.slot });
   addMeter(att, m.gain);
   addMeter(def, m.gain * 0.6 + dmg * 0.4);
   def.move = null;

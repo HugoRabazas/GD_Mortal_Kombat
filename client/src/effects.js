@@ -70,6 +70,13 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet) play('spawn');
         break;
       }
+      case 'lastStand': {
+        // Under a quarter of their health: the energy bar now fills faster.
+        const f = state.f[e.slot];
+        const p = project(f.x, 260, f.z);
+        floatText(p.x, p.y, 'LAST STAND', '#ff4a3c', 22);
+        break;
+      }
       case 'pickup': {
         const energy = e.kind === 'energy';
         const p = project(e.x, 120, e.z);

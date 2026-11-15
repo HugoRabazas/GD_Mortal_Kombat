@@ -147,6 +147,27 @@ test('a blow that lands while the rival winds up is a counter hit: more damage',
   assert.ok(counter.dmg > normal, `counter ${counter.dmg} beats ordinary ${normal}`);
 });
 
+test('a fighter under a quarter of their health fills the energy bar half as fast again', () => {
+  const gainFrom = (hp) => {
+    const s = startFight();
+    closeUp(s);
+    s.f[1].hp = hp;
+    const events = [];
+    step(s, [INPUT.PUNCH, 0]);
+    for (let i = 0; i < 30; i++) {
+      step(s, idle(s));
+      events.push(...s.ev);
+    }
+    return { meter: s.f[1].meter, events };
+  };
+  const healthy = gainFrom(100);
+  const low = gainFrom(20);
+  assert.ok(Math.abs(low.meter / healthy.meter - 1.5) < 0.01, `${low.meter} against ${healthy.meter}`);
+  const crossing = gainFrom(30); // a punch takes this fighter under a quarter
+  assert.ok(crossing.events.some((e) => e.type === 'lastStand' && e.slot === 1), 'crossing the line is announced');
+  assert.ok(!low.events.some((e) => e.type === 'lastStand'), 'only once, when it begins');
+});
+
 test('a hit reports the health it really took, never more than was left', () => {
   const s = startFight();
   closeUp(s);
