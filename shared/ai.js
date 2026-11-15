@@ -148,8 +148,27 @@ export function aiInput(ai, s, me) {
   }
   // In the air: now and then a second jump at the top of the first, and a
   // stomp on a rival found right underneath (each decided once per jump).
-  if (f.state !== 'jump') ai.airPlan = 0;
-  else if (ai.target >= 0) {
+  // An air punch that landed: follow it with the axe kick (as often as it punishes).
+  if (f.state === 'airAttack' && f.move === 'airPunch' && f.hits.length && f.t >= 3 && ai.airPlan < 4) {
+    ai.airPlan = 4;
+    if (rnd(ai) < cfg.punish) {
+      ai.tap = INPUT.KICK;
+      ai.tapT = 2;
+      return INPUT.KICK;
+    }
+  }
+  if (f.state !== 'jump' && f.state !== 'airAttack') ai.airPlan = 0;
+  else if (f.state === 'jump' && ai.target >= 0 && f.runJump && f.t >= 2 && f.t < 12 && ai.airPlan < 2) {
+    // A jump out of a run: the flying knee once the rival is in reach.
+    const o = s.f[ai.target];
+    if (Math.hypot(o.x - f.x, o.z - f.z) < 150) {
+      ai.airPlan = 2;
+      ai.tap = INPUT.KICK;
+      ai.tapT = 2;
+      return INPUT.KICK;
+    }
+  }
+  if (f.state === 'jump' && ai.target >= 0) {
     const o = s.f[ai.target];
     const d = Math.hypot(o.x - f.x, o.z - f.z);
     if (!f.air2 && f.t === 9 && !ai.airPlan) {
@@ -314,6 +333,8 @@ export function aiInput(ai, s, me) {
   if (dist > 112) {
     // Running in from just out of reach: a lunging straight or a slide.
     if (dist < 170 && f.state === 'walk' && f.t >= 8 && o.h <= 0 && rnd(ai) < cfg.attack * 0.3) return press(rnd(ai) < 0.6 ? INPUT.PUNCH : INPUT.KICK, toward(dx, dz));
+    // ...or a jump out of the run for a flying knee.
+    if (dist < 240 && f.state === 'walk' && f.t >= 8 && o.h <= 0 && rnd(ai) < cfg.attack * 0.1) return hold(toward(dx, dz) | INPUT.JUMP, 2);
     if (rnd(ai) < 0.05) return hold(toward(dx, dz) | INPUT.JUMP, 3);
     return hold(toward(dx, dz), 5 + Math.floor(rnd(ai) * 7));
   }

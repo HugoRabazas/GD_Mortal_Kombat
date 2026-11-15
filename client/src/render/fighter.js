@@ -44,7 +44,7 @@ const turnOf = (t, ticks) => Math.min(1, t / ticks) * Math.PI * 2;
 // poses: the wind-up builds over the whole startup instead of snapping into
 // place, the first tick of the strike overshoots a little, and the recovery
 // settles back towards the guard rather than holding the extended pose.
-const SHAPED = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'lunge', 'grab', 'launch', 'rollUpper', 'riseKick', 'howl3', 'eclipse3']);
+const SHAPED = new Set(['punch', 'punch2', 'punch3', 'hook', 'kick', 'kick2', 'lunge', 'grab', 'launch', 'rollUpper', 'riseKick', 'howl3', 'eclipse3']);
 const GUARD = { hipX: 0, hipY: -60, lean: 0.15, tilt: 0, hfx: 26, hfy: -6, hbx: 14, hby: 6, ffx: 18, ffy: 0, fbx: -22, fby: 0, rot: 0, lift: 0, spin: 0 };
 function attackPose(f) {
   const key = attackKey(f);
@@ -81,6 +81,11 @@ function attackKey(f) {
       if (phase === 'pre') return pose({ ...CROUCH, lean: 0.3, hfx: 8, hfy: 28, hbx: -10, hby: 14 });
       if (phase === 'act') return pose({ hipX: 10, hipY: -68, lean: 0.08, hfx: 34, hfy: -50, hbx: -16, hby: 12, ffx: 22, fbx: -20, fby: -6 });
       return pose({ lean: 0.1, hfx: 22, hfy: -28 });
+    case 'hook': { // punch, kick: the knee chambered across, then the heel swung round at the head
+      if (phase === 'pre') return pose({ hipY: -60, lean: -0.15, tilt: -0.12, ffx: 6, ffy: -54, fbx: -20, hfx: 16, hfy: -6, hbx: -10, hby: 6 });
+      if (phase === 'act') return pose({ hipX: 4, hipY: -62, lean: -0.5, tilt: 0.3, ffx: 76, ffy: -92, fbx: -10, hfx: -12, hfy: -2, hbx: -28, hby: 6 });
+      return pose({ lean: -0.18, ffx: 30, ffy: -26, hfx: 8, hfy: 4 });
+    }
     case 'launch': { // the end of punch, punch, kick: a rising kick straight up under the chin
       if (phase === 'pre') return pose({ ...CROUCH, hipY: -42, lean: 0.34, ffx: 4, ffy: -6, hfx: 10, hfy: 10, hbx: -12, hby: 14 });
       if (phase === 'act') return pose({ hipX: -4, hipY: -66, lean: -0.42, ffx: 38, ffy: -116, fbx: -14, hfx: -8, hfy: -10, hbx: -28, hby: -4, lift: -8 });
@@ -348,6 +353,16 @@ function targetPose(f, now) {
         // A fist driven down and forward at whoever is below.
         if (pre) return pose({ hipY: -62, lean: 0.2, hfx: 2, hfy: -14, hbx: -16, hby: 2, ffx: 12, ffy: -24, fbx: -14, fby: -14 });
         return pose({ hipY: -62, lean: 0.5, hfx: 46, hfy: 30, hbx: -22, hby: -8, ffx: 8, ffy: -28, fbx: -24, fby: -14 });
+      }
+      if (f.move === 'axeKick') {
+        // The leg thrown up over the head, then chopped straight down.
+        if (pre) return pose({ hipY: -64, lean: -0.3, ffx: 26, ffy: -126, fbx: -14, fby: -20, hfx: 14, hfy: -20, hbx: -18, hby: -10 });
+        return pose({ hipY: -62, lean: 0.35, ffx: 48, ffy: 8, fbx: -18, fby: -28, hfx: 18, hfy: 6, hbx: -24, hby: -12 });
+      }
+      if (f.move === 'flyKnee') {
+        // Driving forward off the run: the knee up in front, the arms pulled back.
+        if (pre) return pose({ hipY: -64, lean: 0.1, ffx: 12, ffy: -24, fbx: -24, fby: -10, hfx: 20, hfy: -16, hbx: 6, hby: -10 });
+        return pose({ hipX: 6, hipY: -66, lean: 0.2, ffx: 16, ffy: -44, fbx: -32, fby: -6, hfx: -6, hfy: -20, hbx: -22, hby: -8 });
       }
       if (f.move === 'stomp') {
         // Knees drawn up while hanging, then both feet driven straight down.

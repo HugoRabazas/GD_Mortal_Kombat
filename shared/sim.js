@@ -81,7 +81,13 @@ export const MOVES = {
   // followed by the next (`next`), and the third one knocks down.
   punch: {
     startup: 4, active: 3, recovery: 8, dmg: 6, reach: 84, arc: 0.85, y0: 70, y1: 150, aim: 190,
-    hitstun: 15, blockstun: 9, push: 4, gain: 9, next: 'punch2',
+    hitstun: 15, blockstun: 9, push: 4, gain: 9, next: 'punch2', nextK: 'hook',
+  },
+  // Punch, kick: a hook kick swung round from the side that spins the rival
+  // round (`turn`), leaving their back to you for a moment.
+  hook: {
+    startup: 6, active: 4, recovery: 15, dmg: 7, reach: 96, arc: 1.2, y0: 60, y1: 170, aim: 190,
+    hitstun: 22, blockstun: 12, push: 3, gain: 10, heavy: true, turn: true,
   },
   punch2: {
     startup: 4, active: 3, recovery: 10, dmg: 6, reach: 88, arc: 0.85, y0: 70, y1: 150, aim: 190,
@@ -158,6 +164,17 @@ export const MOVES = {
   airKick: {
     startup: 5, active: 999, recovery: 0, dmg: 9, reach: 80, arc: 1.0, y0: -20, y1: 90, aim: 0,
     hitstun: 18, blockstun: 11, push: 6, gain: 10, heavy: true,
+  },
+  // An air punch that lands can be followed in the same jump by kick: an
+  // axe kick brought straight down that knocks over.
+  axeKick: {
+    startup: 4, active: 999, recovery: 0, dmg: 7, reach: 78, arc: 1.1, y0: -90, y1: 80, aim: 0,
+    hitstun: 0, blockstun: 12, push: 6, gain: 10, knockdown: true, heavy: true,
+  },
+  // Jumping out of a run, kick is a flying knee: fast, far and it knocks down.
+  flyKnee: {
+    startup: 3, active: 999, recovery: 0, dmg: 9, reach: 80, arc: 1.0, y0: -10, y1: 140, aim: 0,
+    hitstun: 0, blockstun: 12, push: 8, gain: 10, knockdown: true, heavy: true,
   },
   stomp: {
     startup: 5, active: 999, recovery: 0, dmg: 10, reach: 44, arc: Math.PI, y0: -110, y1: 30, aim: 0,
@@ -305,6 +322,7 @@ function newFighter(charId, slot, count, mod) {
     prev: 0, // buttons held on the previous tick
     held: -1, // slot of the rival being thrown, or -1
     jumpT: 0, // ticks left on a remembered press of jump (for the air jump)
+    runJump: false, // the jump was taken out of a run (kick is a flying knee)
     juggle: 0, // hits a launched fighter can still take before landing
     air2: false, // the air jump is spent
     buf: 0, // remembered attack presses
@@ -585,6 +603,7 @@ function control(s, f, inp) {
         break;
       }
       if (held(INPUT.JUMP)) {
+        f.runJump = f.state === 'walk' && f.t >= RUN_TICKS && !!dir; // a jump out of a run
         setState(f, 'jump');
         f.vh = JUMP_V;
         f.jumpT = 0; // this press is the take-off, not an air jump
@@ -622,7 +641,8 @@ function control(s, f, inp) {
     case 'jump': {
       const b = f.buf;
       if (b & (INPUT.PUNCH | INPUT.KICK | INPUT.GRAB)) {
-        airAttack(s, f, b & INPUT.GRAB || (b & INPUT.PUNCH && b & INPUT.KICK) ? 'stomp' : b & INPUT.KICK ? 'airKick' : 'airPunch');
+        const kick = f.runJump && !f.air2 && f.t < 16 ? 'flyKnee' : 'airKick';
+        airAttack(s, f, b & INPUT.GRAB || (b & INPUT.PUNCH && b & INPUT.KICK) ? 'stomp' : b & INPUT.KICK ? kick : 'airPunch');
         break;
       }
       if (f.jumpT > 0 && !f.air2 && f.t >= AIR_JUMP.from) {
@@ -643,6 +663,11 @@ function control(s, f, inp) {
       // The other button a beat after the first makes a stomp, as on the ground.
       if (f.move !== 'stomp' && f.t < GRAB_WINDOW && f.buf & (f.move === 'airPunch' ? INPUT.KICK : INPUT.PUNCH)) {
         airAttack(s, f, 'stomp');
+        break;
+      }
+      // An air punch that landed: kick follows it with the axe kick.
+      if (f.move === 'airPunch' && f.hits.length && f.t >= GRAB_WINDOW && f.buf & INPUT.KICK) {
+        airAttack(s, f, 'axeKick');
         break;
       }
       if (f.move === 'stomp') {
@@ -816,6 +841,12 @@ function carryThrow(s, f) {
 }
 
 function airAttack(s, f, move) {
+  if (move === 'flyKnee') {
+    // The knee drives on along the run.
+    const v = Math.max(Math.hypot(f.vx, f.vz), AIR_SPEED * 1.6);
+    f.vx = Math.cos(f.dir) * v;
+    f.vz = Math.sin(f.dir) * v;
+  }
   f.state = 'airAttack';
   f.move = move;
   f.t = 0;
@@ -1094,6 +1125,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   addMeter(def, m.gain * 0.6 + dmg * 0.4);
   def.move = null;
   def.buf = 0;
+  if (m.turn && def.hp > 0) def.dir += Math.PI; // spun round: back to the attacker
   const big = kind === 'super' && !m.light;
 
   if (def.hp <= 0) {

@@ -62,6 +62,7 @@ export const LESSONS = [
     steps: [
       { id: 'lunge', name: 'Lunging straight', how: (k) => `walk a few steps, then ${k('p')} with the stick still held`, ev: swing('lunge') },
       { id: 'slide', name: 'Slide', how: (k) => `walk a few steps, then ${k('k')}: a sweep along the floor`, ev: hit('slide') },
+      { id: 'flyKnee', name: 'Flying knee', how: (k) => `walk a few steps, ${k('j')} with the stick still held, then ${k('k')}`, ev: hit('flyKnee') },
     ],
   },
   {
@@ -83,6 +84,8 @@ export const LESSONS = [
       { id: 'launch', name: 'Launcher', how: (k) => `${k('p')} ${k('p')} ${k('k')}: the kick throws the partner up`, ev: hit('launch') },
       { id: 'juggle', name: 'Juggle', how: (k) => `after the launcher, hold ${k('j')} to jump after them and ${k('p')} in the air`, ev: (e) => e.type === 'hit' && e.by === 0 && e.juggle },
       { id: 'kick2', name: 'Kick string', how: (k) => `${k('k')} ${k('k')}: a kick that lands flows into a roundhouse`, ev: hit('kick2') },
+      { id: 'hook', name: 'Hook kick', how: (k) => `${k('p')} ${k('k')}: the kick spins the partner round`, ev: hit('hook') },
+      { id: 'axeKick', name: 'Air string', how: (k) => `${k('j')}, ${k('p')} in the air and, once it lands, ${k('k')}: an axe kick`, ev: hit('axeKick') },
     ],
   },
   {

@@ -183,6 +183,17 @@ and the heartbeat, the crowd and the weather go quiet.
   by holding jump, and the launched rival can be struck **twice more** in
   the air before landing (a **juggle**; each juggle hit pops them up a
   little). Punch, punch, kick, jump, air punch works with taps alone.
+- **Punch, kick**: a punch that lands flows into a **hook kick** swung round
+  at the head that spins the rival round, back to you (7 damage).
+- **Air string**: an air punch that lands can be followed in the same jump by
+  kick, an **axe kick** chopped straight down that knocks over (7).
+- **Flying knee**: jump out of a run (about eight ticks of walking, the stick
+  still held at take-off) and kick: the knee drives on along the run, fast
+  and far, and knocks down (9). From a standing jump kick is still the
+  flying kick. The CPU uses all three (hook from its strings, the axe kick
+  as often as it punishes, the knee when closing in); measured with them in:
+  duels 47-53 %, brawl firsts 16-20 %, ladder 100 / 81 / 61 %. The Tutorial
+  teaches them (Combos: hook kick and air string; On the run: flying knee).
 - **Kick, kick**: a kick that lands flows into a spinning **roundhouse**
   that steps in after the rival and knocks down. The lunge also opens the
   punch string, so running punch, punch, kick launches too.

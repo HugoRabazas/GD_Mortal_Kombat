@@ -546,6 +546,9 @@ function movesCard() {
       <dt>${k(key.p, key.p, key.p)}</dt><dd><b>Three-punch combo</b>; each punch must land, the third knocks down.</dd>
       <dt>${k(key.p, key.p, key.k)}</dt><dd><b>Launcher</b>: the string ends in a rising kick that throws the rival up. Then ${k(key.j)} to chase and hit them in the air (a <b>juggle</b>, twice at most).</dd>
       <dt>${k(key.k, key.k)}</dt><dd><b>Kick string</b>: a kick that lands flows into a spinning roundhouse that knocks down.</dd>
+      <dt>${k(key.p, key.k)}</dt><dd><b>Hook kick</b>: a punch that lands, then a kick swung round that spins the rival, back to you.</dd>
+      <dt>Air ${k(key.p)}, ${k(key.k)}</dt><dd><b>Air string</b>: an air punch that lands, then an axe kick chopped down.</dd>
+      <dt>Run, ${k(key.j)}, ${k(key.k)}</dt><dd><b>Flying knee</b>: jump out of a run and kick - far, fast, knocks down.</dd>
       <dt>${k(key.k)}</dt><dd><b>Kick</b>: slower than a punch, heavier, longer reach.</dd>
       <dt>Run + ${k(key.p)}</dt><dd><b>Lunging straight</b>: after a few steps, punch with the stick held to leap in from long range. Chains into the second punch.</dd>
       <dt>Run + ${k(key.k)}</dt><dd><b>Slide</b>: kick while running to slide in feet-first and sweep the rival off their feet. Low: jump it.</dd>

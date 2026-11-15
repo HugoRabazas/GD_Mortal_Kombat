@@ -721,6 +721,50 @@ test('kick, kick: a kick that lands flows into a roundhouse that knocks down', (
   assert.notEqual(miss.f[0].move, 'kick2');
 });
 
+test('punch, kick: a hook kick that spins the rival round', () => {
+  const s = startFight();
+  closeUp(s);
+  const before = s.f[1].dir;
+  step(s, [INPUT.PUNCH, 0]);
+  run(s, 9);
+  step(s, [INPUT.KICK, 0]);
+  const kinds = [];
+  for (let i = 0; i < 40; i++) {
+    step(s, idle(s));
+    for (const e of s.ev) if (e.type === 'hit' && e.by === 0) kinds.push(e.kind);
+  }
+  assert.ok(kinds.includes('hook'), kinds.join());
+  assert.ok(Math.cos(s.f[1].dir - before) < -0.9, 'the rival was turned round');
+});
+
+test('an air punch that lands flows into an axe kick; a jump out of a run kicks with a flying knee', () => {
+  const s = startFight();
+  closeUp(s, 70);
+  const kinds = [];
+  for (let t = 0; t < 60; t++) {
+    step(s, [t === 0 ? INPUT.JUMP | INPUT.RIGHT : t === 10 ? INPUT.PUNCH : t === 16 ? INPUT.KICK : 0, 0]);
+    for (const e of s.ev) if (e.type === 'hit' && e.by === 0) kinds.push(e.kind);
+  }
+  assert.deepEqual(kinds, ['airPunch', 'axeKick']);
+  assert.ok(s.f[1].state === 'down' || s.f[1].state === 'getup');
+
+  const knee = startFight();
+  closeUp(knee, 200);
+  const k2 = [];
+  for (let t = 0; t < 60; t++) {
+    step(knee, [t < 10 ? INPUT.RIGHT : t === 10 ? INPUT.RIGHT | INPUT.JUMP : t === 13 ? INPUT.KICK : 0, 0]);
+    for (const e of knee.ev) if (e.type === 'hit' && e.by === 0) k2.push(e.kind);
+  }
+  assert.deepEqual(k2, ['flyKnee']);
+  // From a standing jump the same kick is the ordinary flying kick.
+  const still = startFight();
+  closeUp(still, 70);
+  step(still, [INPUT.JUMP, 0]);
+  run(still, 7);
+  step(still, [INPUT.KICK, 0]);
+  assert.equal(still.f[0].move, 'airKick');
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);
