@@ -224,7 +224,8 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (quiet) break;
         if (e.winner < 0) showBanner('DRAW', arena ? 'THE TOP SPOT IS SHARED' : null, '#e8b454', 2600);
         else showBanner(`${nameOf(e.winner)} WINS`, arena ? 'ARENA CHAMPION' : getFighter(state.f[e.winner].char).title.toUpperCase(), '#e8b454', 2600);
-        play('win');
+        // The fanfare is for winners: whoever lost at this screen hears the fall.
+        play(me >= 0 && e.winner >= 0 && e.winner !== me ? 'defeat' : 'win');
         break;
       default:
         break;

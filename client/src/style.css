@@ -910,6 +910,15 @@ kbd {
   text-overflow: ellipsis;
 }
 
+/* Fights won in this online room, next to the player's name. */
+.ladder .lname .wins {
+  font: 700 0.62rem var(--font-body);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  white-space: nowrap;
+}
+
 .ladder .ltag {
   font: 700 0.66rem var(--font-body);
   letter-spacing: 0.12em;

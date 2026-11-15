@@ -235,6 +235,12 @@ const SOUNDS = {
   win: () => {
     [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.22, 0.35, i * 0.13));
   },
+  // A match lost at this screen: the fanfare's notes turned downwards, in a
+  // minor key, ending on a long note that sags a semitone.
+  defeat: () => {
+    [440, 349.23, 293.66].forEach((f, i) => tone('triangle', f, f, 0.3, 0.26, i * 0.2));
+    tone('triangle', 220, 207.65, 0.9, 0.28, 0.62);
+  },
   ui: () => tone('triangle', 700, 900, 0.06, 0.2),
   spawn: () => tone('sine', 900, 1500, 0.18, 0.12),
   pickup: () => {

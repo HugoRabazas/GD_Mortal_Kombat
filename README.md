@@ -104,6 +104,9 @@ of the screen brings the stick under it, and letting go sends it home - so a
 fight never stalls because a thumb missed the circle by a finger.
 When your fighter is nearly out (under a quarter of their health), a quiet
 heartbeat plays, so the danger reaches you even with your eyes off the bar.
+The match's last moment sounds like its result: a rising fanfare when your
+fighter wins (or when nobody at the screen is playing one side, as in
+2 Players), a falling minor phrase when your fighter loses.
 Being hit makes a phone buzz and a gamepad with motors rumble (your own heavy
 blows give a light rumble too), where the browser allows it.
 
@@ -165,7 +168,10 @@ The website build adds an **Online** mode for the whole alliance:
   empty places with CPU fighters. Two fighters play a duel, three or four an
   arena brawl. After a fight that finished, everyone who fought stays ready,
   so one more is a single press for the host; anyone who wants to sit the
-  next one out presses Not ready.
+  next one out presses Not ready. The room keeps score: each player's fights
+  won there show next to their name, and the result screen says who leads
+  ("In this room: Ana 2 · Beto 1"). Each screen counts from the results it
+  sees, so the score starts from the fights you were there for.
 - The lobby and every room have a **chat**. Messages reach whoever is there at
   that moment and are not stored anywhere.
 - **Copy invite link** in a room gives an address ending in `#room-ABCD`;

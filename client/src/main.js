@@ -84,6 +84,9 @@ const app = {
   resultShown: false,
   arrangeFrom: 'menu',
   online: null, // the connection to the alliance lobby, once the player goes online
+  // Fights won by each player in the current online room, counted on this
+  // screen from the results everyone sees: { code, slots, wins: { id: n } }.
+  roomWins: { code: '', slots: [], wins: {} },
   nick: '',
   fill: true, // online host option: fill empty places with CPU fighters
   notice: '',
@@ -680,12 +683,13 @@ function resultScreen() {
       : `<button type="button" class="btn primary" data-act="rematch">Rematch</button>
           <button type="button" class="btn" data-act="select">Change fighter</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>`;
-  if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result">${winnerQuote()}${statsCard()}<div class="row">${again}</div></section>`;
+  if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result">${winnerQuote()}${statsCard()}${roomScoreNote()}<div class="row">${again}</div></section>`;
   if (s.mode === 'arena' && app.mode !== 'arcade') {
     return `
       <section class="screen result">
         ${winnerQuote()}
         ${rankingList()}
+        ${app.mode === 'online' ? roomScoreNote() : ''}
         ${app.levelMoved ? `<p class="note">The CPU is now on <b>${LEVEL_NAMES[app.levelMoved]}</b> for your next fight.</p>` : ''}
         <div class="row">${again}</div>
       </section>`;
@@ -811,10 +815,25 @@ function lobbyScreen() {
     </section>`;
 }
 
+// One online fight is over: count it for whoever won, if that was a person.
+function countRoomWin(s) {
+  const sl = app.roomWins.slots[s.matchWinner];
+  if (sl?.id) app.roomWins.wins[sl.id] = (app.roomWins.wins[sl.id] || 0) + 1;
+}
+
+// After an online fight: who has won how many in this room, best first.
+function roomScoreNote() {
+  const people = app.roomWins.slots.filter((sl) => sl.id && app.roomWins.wins[sl.id]);
+  if (!people.length) return '';
+  people.sort((a, b) => app.roomWins.wins[b.id] - app.roomWins.wins[a.id]);
+  return `<p class="note">In this room: ${people.map((sl) => `${esc(sl.name)} <b>${app.roomWins.wins[sl.id]}</b>`).join(' · ')}</p>`;
+}
+
 function roomScreen() {
   const on = app.online;
   const room = on.room;
   const players = on.players();
+  const wins = app.roomWins.code === room.code ? app.roomWins.wins : {};
   const mine = room.peers.find((p) => p.id === on.me.id);
   const watching = room.peers.slice(4);
   const link = on.linkKind();
@@ -827,7 +846,7 @@ function roomScreen() {
           <ol class="people">
             ${players
               .map(
-                (p) => `<li>${head(p.char)}<span class="lname">${esc(p.name)}${p.id === on.me.id ? ' (you)' : ''}</span>
+                (p) => `<li>${head(p.char)}<span class="lname">${esc(p.name)}${p.id === on.me.id ? ' (you)' : ''}${wins[p.id] ? ` <span class="wins" title="Fights won in this room">${wins[p.id]} ${wins[p.id] === 1 ? 'win' : 'wins'}</span>` : ''}</span>
                   <span class="ltag ${p.ready || p.id === room.hostId ? 'ok' : ''}">${p.id === room.hostId ? 'host' : p.ready ? 'ready' : 'choosing'}</span></li>`,
               )
               .join('')}
@@ -1388,6 +1407,9 @@ async function goOnline(name) {
     },
     onStart(info) {
       app.mode = 'online';
+      const code = online.room?.code ?? '';
+      if (app.roomWins.code !== code) app.roomWins = { code, slots: [], wins: {} };
+      app.roomWins.slots = info?.slots ?? [];
       app.fightPlace = isArenaId(info?.arena) ? info.arena : ARENAS[0].id;
       app.game = online.game;
       app.resultShown = false;
@@ -1594,6 +1616,7 @@ function frame(now) {
   if (playing) {
     if (s.phase === 'over' && !app.resultShown && s.pt > 150) {
       app.resultShown = true;
+      if (app.mode === 'online') countRoomWin(s);
       scoreMatch();
       show('result');
     }
