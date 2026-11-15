@@ -68,6 +68,16 @@ function pad(index) {
   }
 }
 
+// Which family the first controller belongs to, from the name the browser
+// reports: 'ps' (PlayStation), 'nintendo' or 'xbox' (also the default). The
+// buttons sit in the same places on all of them; only their labels differ.
+export function padStyle() {
+  const id = pad(0)?.id || '';
+  if (/054c|playstation|dualshock|dualsense|sony/i.test(id)) return 'ps';
+  if (/057e|nintendo|pro controller|joy-con/i.test(id)) return 'nintendo';
+  return 'xbox';
+}
+
 export function readPad(index) {
   const p = pad(index);
   if (!p) return 0;

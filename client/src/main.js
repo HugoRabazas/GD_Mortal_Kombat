@@ -9,7 +9,7 @@ import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
 import { createGame } from './game.js';
 import { handleEvents } from './effects.js';
-import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, setCapture, setTouchLive, lastDevice } from './input.js';
+import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, padStyle, setCapture, setTouchLive, lastDevice } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, getVolume, setVolume } from './audio.js';
 import { THEMES } from './render/themes.js';
@@ -81,7 +81,10 @@ function toast(text, ms = 3600) {
 // Controllers: say when one arrives (browsers only report it after a button
 // is pressed), and pause a fight if one is unplugged mid-fight - nobody
 // should be beaten while reaching for a cable. Online fights cannot pause.
-window.addEventListener('gamepadconnected', () => toast('Controller connected. Stick and A in the menus; Start pauses a fight.'));
+window.addEventListener('gamepadconnected', () => {
+  const ok = PAD_NAMES[padStyle()].j;
+  toast(`Controller connected. Stick and ${ok} in the menus; Start pauses a fight.`);
+});
 window.addEventListener('gamepaddisconnected', () => {
   if (app.screen === 'fight' && app.game && app.mode !== 'online') {
     togglePause();
@@ -455,7 +458,7 @@ function helpScreen() {
         <li><b>Record</b> at the foot of the menu keeps your lifetime tally on this device: wins, best run, best combo and how you do with each fighter.</li>
         <li>A <b>heartbeat</b> means your fighter is nearly out.</li>
         <li>On a phone, use the stick and the buttons on screen. The stick follows your thumb: touch anywhere free on its side of the screen. <b>Arrange buttons</b> lets you drag them where you like.</li>
-        <li>With a <b>gamepad</b> you can also work the menus: stick or D-pad to move, A to choose, B to go back.</li>
+        <li>With a <b>gamepad</b> you can also work the menus: stick or D-pad to move, A / Cross to choose, B / Circle to go back. Hints in a fight name your controller's own buttons (Xbox, PlayStation or Nintendo labels).</li>
         <li>Press <kbd>P</kbd>, <kbd>Esc</kbd> or Start to pause.</li>
       </ul>
       <div class="row"><button type="button" class="btn primary" data-act="menu">Back</button></div>
@@ -473,9 +476,16 @@ const SPECIAL_NOTES = {
 // The move list on the pause screen: every move of the fighter being played,
 // with the keys (or on-screen buttons) this player is actually using.
 // The names of the controls on the device the player is using right now.
+// The face and shoulder buttons by controller family (same places, own labels).
+const PAD_NAMES = {
+  xbox: { p: 'X', k: 'B', b: 'LB', s: 'Y', u: 'RB', j: 'A' },
+  ps: { p: '□', k: '○', b: 'L1', s: '△', u: 'R1', j: '✕' },
+  nintendo: { p: 'Y', k: 'A', b: 'L', s: 'X', u: 'R', j: 'B' },
+};
+
 function controlNames() {
   const d = lastDevice() ?? (app.touch ? 'touch' : 'keys');
-  if (d === 'pad') return { p: 'X', k: 'B', b: 'LB', s: 'Y', u: 'RB', j: 'A', move: 'the stick', walk: 'Stick' };
+  if (d === 'pad') return { ...PAD_NAMES[padStyle()], move: 'the stick', walk: 'Stick' };
   if (d === 'touch' && app.touch) return { p: 'P', k: 'K', b: 'BLK', s: 'SP', u: 'ULT', j: 'JMP', move: 'the stick', walk: 'Stick' };
   return { p: 'J', k: 'K', b: 'L', s: 'I', u: 'O', j: 'Space', move: 'W A S D', walk: 'WASD' };
 }
@@ -1702,7 +1712,7 @@ function frame(now) {
   const hint = !playing || !touchEl.hidden
     ? ''
     : app.mode === 'versus' && lastDevice() === 'pad'
-      ? 'Pad 1 and pad 2: stick move · A jump · X punch · B kick · X+B grab · LB block · Y special · RB finisher'
+      ? (({ p, k, b, s, u, j }) => `Pad 1 and pad 2: stick move · ${j} jump · ${p} punch · ${k} kick · ${p}+${k} grab · ${b} block · ${s} special · ${u} finisher`)(PAD_NAMES[padStyle()])
       : app.mode === 'versus'
       ? 'P1: WASD move · Space jump · F G punch kick · H block · T Y special finisher     P2: arrows · U · J K · L · I O'
       : (({ p, k, b, s, u, j, walk }) => `${walk} move · ${j} jump · ${p} punch (x3 combo) · ${k} kick · ${p}+${k} grab · ${b} block (+move = roll) · ${s} special · ${u} finisher`)(controlNames());

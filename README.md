@@ -127,7 +127,10 @@ The match's last moment sounds like its result: a rising fanfare when your
 fighter wins (or when nobody at the screen is playing one side, as in
 2 Players), a falling minor phrase when your fighter loses.
 Being hit makes a phone buzz and a gamepad with motors rumble (your own heavy
-blows give a light rumble too), where the browser allows it. A controller
+blows give a light rumble too), where the browser allows it. Hints and the
+moves card name a controller's own buttons: Xbox letters, PlayStation
+symbols (✕ ○ □ △, L1, R1) or Nintendo letters (whose A and B, X and Y sit
+the other way round), read from the name the browser reports. A controller
 that arrives is greeted with a short notice (how to use it in the menus,
 and that Start pauses); one that is unplugged in the middle of a fight
 pauses it, so nobody is beaten while reaching for a cable (an online fight
