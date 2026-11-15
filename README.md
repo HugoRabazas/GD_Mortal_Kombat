@@ -287,6 +287,12 @@ and the heartbeat, the crowd and the weather go quiet.
   knockdown, let Ruko's rush land every time (67 % of duels), and the CPU
   cancels only now and then. Taught in the Tutorial (Specials). Duels
   46-53 % with all of this.
+- **Throw escape**: grab pressed by the one seized within nine ticks of
+  the throw (about a fifth of a second after the seize, its pause included)
+  breaks it: both are pushed apart and stagger for 12 ticks, the thrower six
+  more. Pressed later the throw lands as ever. The CPU escapes as often as
+  it manages a perfect guard (never on Easy); taught in the Tutorial
+  (Getting up, against the partner who throws you).
 - **Taunt**: block held and grab pressed, standing still: each fighter's
   own gesture (Ruko's howl at the sky, Shadow's folded arms, Jackie's sumo
   stamp, Pixie's wave) and line ("Awoo!", "Too slow.", "Hmph!", "Catch

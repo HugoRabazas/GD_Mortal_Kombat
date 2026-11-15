@@ -46,6 +46,10 @@ const CANCEL_DMG = 0.6;
 const CANCELS = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'hook', 'lunge', 'slide', 'launch']);
 // Grab with no rival within `near`: the signature move instead of a throw.
 const SIG = { near: 100 };
+// A throw can be broken: grab pressed by the one seized within `window`
+// ticks of the thrower's throw. Both are pushed apart and stagger for `stun`
+// ticks, the thrower `edge` longer (the escaper moves first).
+const ESCAPE = { window: 9, stun: 12, edge: 6 };
 // A taunt (block held, grab pressed, standing still): each fighter's own
 // gesture for `ticks`; energy is gained at tick `at`, and until it ends any
 // blow lands as a counter hit (it is still winding up).
@@ -1073,6 +1077,28 @@ function control(s, f, inp) {
     case 'throw':
       carryThrow(s, f);
       break;
+    case 'held': {
+      // Seized: a fresh press of grab in the first moments breaks the hold.
+      // Both stagger apart, the thrower a little longer.
+      const by = s.f.find((o) => o.held === f.slot && o.state === 'throw');
+      if (by && by.t < ESCAPE.window && f.buf & INPUT.GRAB) {
+        const a = angleTo(by.x, by.z, f.x, f.z);
+        by.held = -1;
+        for (const [who, away, stun] of [[by, -1, ESCAPE.stun + ESCAPE.edge], [f, 1, ESCAPE.stun]]) {
+          who.state = 'hit';
+          who.t = 0;
+          who.move = null;
+          who.buf = 0;
+          who.h = 0;
+          who.vh = 0;
+          who.stun = stun;
+          who.vx = Math.cos(a) * 5 * away;
+          who.vz = Math.sin(a) * 5 * away;
+        }
+        emit(s, 'escape', { by: f.slot, on: by.slot, x: (f.x + by.x) / 2, z: (f.z + by.z) / 2, h: 100 });
+      }
+      break;
+    }
     default:
       break; // airAttack, ko, win, lose: nothing to decide
   }

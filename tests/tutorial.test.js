@@ -166,6 +166,7 @@ const BOTS = {
   roll: () => (s, t) => (t % 40 < 2 ? INPUT.BLOCK | INPUT.UP : 0),
   backstep: () => (s, t) => (t % 40 < 2 ? INPUT.BLOCK | (s.f[1].x > s.f[0].x ? INPUT.LEFT : INPUT.RIGHT) : 0),
   tech: () => (s) => (s.f[0].state === 'down' ? INPUT.BLOCK : 0),
+  escape: () => (s) => (s.f[0].state === 'held' ? INPUT.GRAB : 0),
   riseKick: () => (s) => (s.f[0].state === 'getup' && s.f[0].t >= 5 ? INPUT.PUNCH : 0),
   guarded: () => routine(60, 30, (k) => (k === 0 ? INPUT.PUNCH : 0)),
   grab: () => routine(50, 40, (k) => (k === 0 ? INPUT.GRAB : 0)),

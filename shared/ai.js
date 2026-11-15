@@ -142,6 +142,17 @@ export function aiInput(ai, s, me) {
     }
   }
   if (f.state !== 'attack') ai.chained = false;
+  // Seized: break the throw, as often as it manages a perfect guard (decided once).
+  if (f.state === 'held') {
+    if (!ai.heldSeen) {
+      ai.heldSeen = true;
+      if (rnd(ai) < cfg.parry) {
+        ai.tap = INPUT.GRAB;
+        ai.tapT = 2;
+        return INPUT.GRAB;
+      }
+    }
+  } else ai.heldSeen = false;
   // Out of a roll, or getting up, with a rival close: sometimes strike
   // (decided once, at the tick the move becomes possible).
   if ((f.state === 'roll' && f.t === 7) || (f.state === 'getup' && f.t === 4)) {

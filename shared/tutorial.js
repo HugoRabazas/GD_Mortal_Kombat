@@ -43,6 +43,7 @@ export const LESSONS = [
     intro: 'Your partner walks up and throws you to the floor, again and again.',
     steps: [
       { id: 'tech', name: 'Quick rise', how: (k) => `${k('b')} while lying on the floor`, ev: mine('tech') },
+      { id: 'escape', name: 'Throw escape', how: (k) => `${k('g')} the moment you are seized: the throw is broken`, ev: mine('escape') },
       { id: 'riseKick', name: 'Rising sweep', how: (k) => `${k('p')} or ${k('k')} while getting up: it cannot be hit as it starts`, ev: swing('riseKick') },
     ],
   },

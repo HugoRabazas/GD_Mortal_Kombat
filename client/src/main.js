@@ -485,6 +485,7 @@ function helpScreen() {
         <li><b>Hold kick</b> to charge a <b>guard-breaker</b>: let go and it smashes a guard open.</li>
         <li><b>Grab</b> (its own button, or punch + kick together) seizes a rival up close, lifts them over your head and slams them down behind you. Short reach, but it goes straight through a guard; in a brawl, anyone can break it with a blow.</li>
         <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment; punch or kick late in it strikes out of it. Block with the stick straight away from the rival is a quick <b>back-step</b>.</li>
+        <li>Seized? Press <b>grab</b> at once to <b>break the throw</b>: both of you stagger apart.</li>
         <li>Knocked down? Press <b>block</b> on the floor for a <b>quick rise</b>: you are back up in a blink. Punch or kick while getting up for a <b>rising sweep</b>.</li>
         <li><b>Taunt</b>: block held and grab, standing still. A little energy, but any blow on you is a counter.</li>
         <li>Hit a rival while they are <b>winding up</b> a blow of their own for a <b>counter</b>: a quarter more damage.</li>
@@ -625,6 +626,7 @@ function movesCard() {
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b> sideways or forwards: attacks pass through you.</dd>
       <dt>${k(key.b)} + away</dt><dd><b>Back-step</b>: a quick hop back, still facing the rival.</dd>
       <dt>Roll, ${k(key.p)} / ${k(key.k)}</dt><dd>Late in a roll: a <b>rising uppercut</b>, or a <b>spinning heel kick</b>.</dd>
+      <dt>${k(key.g)}</dt><dd>The moment you are seized: a <b>throw escape</b>.</dd>
       <dt>${k(key.b)}</dt><dd>On the floor: a <b>quick rise</b>.</dd>
       <dt>Getting up, ${k(key.p)}</dt><dd><b>Rising sweep</b>: can't be hit while it starts. Slow if guarded.</dd>`],
     yours: [two ? 'Fighters' : 'Yours', own],

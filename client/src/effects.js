@@ -155,6 +155,17 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet) play('pickup');
         break;
       }
+      case 'escape': {
+        // A throw broken: both thrown apart in a ring of sparks.
+        const p = project(e.x, e.h, e.z);
+        blockSpark(p.x, p.y);
+        blockSpark(p.x, p.y);
+        floatText(p.x, p.y - 40, 'ESCAPE!', '#9fe8ff', 24);
+        addShake(5);
+        if (!quiet) play('parry');
+        if (!quiet && (e.by === me || e.on === me)) buzz(30);
+        break;
+      }
       case 'guardBreak': {
         // A guard smashed open.
         const p = project(e.x, e.h, e.z);

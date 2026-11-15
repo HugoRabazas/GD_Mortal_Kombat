@@ -931,6 +931,25 @@ test('grab with nobody in throw reach is the fighter\'s signature move; up close
   assert.ok(back < -0.9, 'behind the rival');
 });
 
+test('grab pressed the moment you are seized breaks the throw; too late and it lands', () => {
+  const play = (at) => {
+    const s = startFight();
+    closeUp(s);
+    const ev = [];
+    for (let t = 0; t < 70; t++) {
+      step(s, [t === 0 ? INPUT.GRAB : 0, t === at ? INPUT.GRAB : 0]);
+      ev.push(...s.ev.map((e) => e.type));
+    }
+    return { s, ev };
+  };
+  const out = play(12);
+  assert.ok(out.ev.includes('seize') && out.ev.includes('escape') && !out.ev.includes('slam'));
+  assert.equal(out.s.f[1].hp, out.s.f[1].maxHp, 'no damage taken');
+  const late = play(24);
+  assert.ok(late.ev.includes('slam') && !late.ev.includes('escape'));
+  assert.ok(late.s.f[1].hp < late.s.f[1].maxHp);
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);
