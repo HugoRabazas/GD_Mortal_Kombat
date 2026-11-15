@@ -232,6 +232,11 @@ and the heartbeat, the crowd and the weather go quiet.
   their own with its own cut-in scene (an iron shield cracking with light, a
   crescent moon in a rain of light, gold slashes across the screen, a rising
   sun), a signature move, a celebration, a taunt line and a winning quote.
+  Each has poses of their own for the finisher and the signature move
+  (Meru's shoulder charge, hammer blows and two-fisted slam; Gleh's bow drawn
+  in the air and a somersault over the rival; Kichta's cuts on a new line
+  every other tick and a rising slash; Zelrith's spread-eagle climb and a
+  spin across the floor).
   Their portraits are the members' avatars, cut to the face inside each
   avatar's frame (art/fighters, heads by scripts/crop-heads.py). With eight fighters the Arena and the
   Arcade draw rivals in a new random order each time. Balanced across all

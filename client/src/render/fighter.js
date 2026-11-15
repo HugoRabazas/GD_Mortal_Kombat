@@ -45,7 +45,7 @@ const turnOf = (t, ticks) => Math.min(1, t / ticks) * Math.PI * 2;
 // poses: the wind-up builds over the whole startup instead of snapping into
 // place, the first tick of the strike overshoots a little, and the recovery
 // settles back towards the guard rather than holding the extended pose.
-const SHAPED = new Set(['punch', 'punch2', 'punch3', 'hook', 'breaker', 'kick', 'kick2', 'lunge', 'grab', 'launch', 'rollUpper', 'riseKick', 'howl3', 'eclipse3']);
+const SHAPED = new Set(['punch', 'punch2', 'punch3', 'hook', 'breaker', 'kick', 'kick2', 'lunge', 'grab', 'launch', 'rollUpper', 'riseKick', 'howl3', 'eclipse3', 'cuts3', 'shieldRam', 'bladeDash']);
 const GUARD = { hipX: 0, hipY: -60, lean: 0.15, tilt: 0, hfx: 26, hfy: -6, hbx: 14, hby: 6, ffx: 18, ffy: 0, fbx: -22, fby: 0, rot: 0, lift: 0, spin: 0 };
 function attackPose(f) {
   const key = attackKey(f);
@@ -65,26 +65,7 @@ function attackPose(f) {
   return out;
 }
 
-// The newer fighters' finisher stages and signature moves are drawn with the
-// key poses of the moves they move like.
-const POSE_AS = {
-  oath: 'avalanche', oath2: 'howl2', oath3: 'avalanche2',
-  crescent: 'phoenix', crescent2: 'phoenix',
-  cuts: 'howl', cuts2: 'eclipse2', cuts3: 'howl3',
-  sunburst: 'phoenix', sunburst2: 'phoenix2',
-  shieldRam: 'bellyBump', moonVault: 'clawLeap', bladeDash: 'lunge', spinTop: 'rollSpin',
-};
-
 function attackKey(f) {
-  const as = POSE_AS[f.move];
-  if (as) {
-    // Keep the move's own timing, mapped onto the other move's phases.
-    const m0 = MOVES[f.move];
-    const m1 = MOVES[as];
-    const phase = f.t < m0.startup ? 0 : f.t < m0.startup + m0.active ? 1 : 2;
-    const t = phase === 0 ? Math.min(m1.startup - 1, f.t) : phase === 1 ? m1.startup + Math.min(m1.active - 1, f.t - m0.startup) : m1.startup + m1.active + (f.t - m0.startup - m0.active);
-    return attackKey({ ...f, move: as, t: Math.max(0, t) });
-  }
   const m = MOVES[f.move];
   if (!m) return pose({});
   const phase = f.t < m.startup ? 'pre' : f.t < m.startup + m.active ? 'act' : 'rec';
@@ -101,6 +82,56 @@ function attackKey(f) {
       if (phase === 'pre') return pose({ ...CROUCH, lean: 0.3, hfx: 8, hfy: 28, hbx: -10, hby: 14 });
       if (phase === 'act') return pose({ hipX: 10, hipY: -68, lean: 0.08, hfx: 34, hfy: -50, hbx: -16, hby: 12, ffx: 22, fbx: -20, fby: -6 });
       return pose({ lean: 0.1, hfx: 22, hfy: -28 });
+    // --- Meru ---
+    case 'oath': // the charge: shoulder first behind a raised forearm, like a shield
+      if (phase === 'pre') return pose({ ...CROUCH, hipY: -42, lean: 0.45, hfx: 30, hfy: -6, hbx: -14, hby: 10, ffx: 24, fbx: -30 });
+      return pose({ hipX: 8, hipY: -48, lean: 0.7, hfx: 36, hfy: -12, hbx: -26, hby: 8, ffx: 28, ffy: -4, fbx: -44, fby: -8 });
+    case 'oath2': { // hammer blows: each fist raised overhead in turn and brought down
+      const up = f.t % 5 < 2;
+      return pose({ hipX: 8, lean: up ? 0.18 : 0.42, hfx: up ? 16 : 54, hfy: up ? -60 : 10, hbx: up ? 44 : 6, hby: up ? 8 : -58, ffx: 22, fbx: -28 });
+    }
+    case 'oath3': // the slam: up with both fists overhead, down with all the weight
+      if (f.vh > 0 || phase === 'pre') return pose({ hipY: -66, lean: -0.2, hfx: 10, hfy: -64, hbx: -4, hby: -62, ffx: 14, ffy: -28, fbx: -14, fby: -22 });
+      return pose({ hipY: -58, lean: 0.6, hfx: 44, hfy: 24, hbx: 36, hby: 28, ffx: 10, ffy: -24, fbx: -26, fby: -14 });
+    case 'shieldRam': // a ram behind the forearm
+      if (phase === 'pre') return pose({ hipY: -50, lean: 0.3, hfx: 20, hfy: -10, hbx: -12, hby: 8, ffx: 24, fbx: -28 });
+      if (phase === 'act') return pose({ hipX: 14, hipY: -52, lean: 0.55, hfx: 34, hfy: -14, hbx: -20, hby: 10, ffx: 30, fbx: -40, fby: -6 });
+      return pose({ lean: 0.2, hfx: 24, hfy: -6 });
+    // --- Gleh ---
+    case 'crescent': // springing up, the bow arm already rising
+      if (phase === 'pre') return pose({ ...CROUCH, hipY: -36, hfx: 6, hfy: 22, hbx: -8, hby: 20 });
+      return pose({ hipY: -66, lean: -0.1, hfx: 30, hfy: -42, hbx: -12, hby: -28, ffx: 8, ffy: -22, fbx: -10, fby: -6 });
+    case 'crescent2': // hanging in the air: the bow held down at the rival, the string drawn to the ear
+      return pose({ hipY: -64, lean: 0.35, hfx: 52, hfy: 28, hbx: -24, hby: -8, ffx: 10, ffy: -26, fbx: -22, fby: -14 });
+    case 'moonVault': { // a somersault clean over the rival
+      const rot = Math.min(1, f.t / 22) * Math.PI * 2;
+      return pose({ hipY: -52, lean: 0.5, hfx: 18, hfy: 18, hbx: 10, hby: 20, ffx: 16, ffy: -24, fbx: 2, fby: -22, rot, lift: -52 * (1 - Math.cos(rot)) });
+    }
+    // --- Kichta ---
+    case 'cuts': // the dash: low, the blade arm trailing, then thrust through
+      if (phase === 'pre') return pose({ hipY: -44, lean: 0.5, hfx: -20, hfy: 10, hbx: -26, hby: 6, ffx: 24, fbx: -32 });
+      return pose({ hipX: 10, hipY: -48, lean: 0.8, hfx: 60, hfy: -2, hbx: -34, hby: 4, ffx: 26, ffy: -4, fbx: -46, fby: -10 });
+    case 'cuts2': { // a cut on a new line every other tick
+      const [x, y] = [[62, -40], [50, 32], [64, -2], [40, -58]][Math.floor(f.t / 2) % 4];
+      return pose({ hipX: 8, lean: 0.36, tilt: y < 0 ? 0.08 : -0.08, hfx: x, hfy: y, hbx: -22, hby: 8, ffx: 22, fbx: -30 });
+    }
+    case 'cuts3': // the rising slash: from the floor to the sky
+      if (phase === 'pre') return pose({ ...CROUCH, hipY: -34, lean: 0.4, hfx: -10, hfy: 30, hbx: -16, hby: 16 });
+      if (phase === 'act') return pose({ hipX: 10, hipY: -70, lean: -0.15, hfx: 36, hfy: -72, hbx: -22, hby: 6, ffx: 20, ffy: -18, fbx: -22, fby: -8, lift: -20 });
+      return pose({ lean: 0, hfx: 26, hfy: -50, lift: -6 });
+    case 'bladeDash': // a long dashing slash, drawn from the hip
+      if (phase === 'pre') return pose({ hipY: -50, lean: 0.3, hfx: -18, hfy: 6, hbx: -22, hby: 8, ffx: 22, fbx: -28 });
+      if (phase === 'act') return pose({ hipX: 12, hipY: -54, lean: 0.6, hfx: 64, hfy: -18, hbx: -28, hby: 10, ffx: 30, fbx: -44, fby: -6 });
+      return pose({ lean: 0.25, hfx: 40, hfy: -30 });
+    // --- Zelrith ---
+    case 'sunburst': // up, arms and legs flung wide, turning in the light
+      if (phase === 'pre') return pose({ ...CROUCH, hipY: -36, hfx: 4, hfy: 20, hbx: -4, hby: 20 });
+      return pose({ spin: (f.t * 0.4) % (Math.PI * 2), hipY: -66, lean: 0, hfx: 40, hfy: -32, hbx: -40, hby: -32, ffx: 18, ffy: -10, fbx: -18, fby: -10 });
+    case 'sunburst2': // the fall: both fists first
+      return pose({ hipY: -60, lean: 1.1, hfx: 50, hfy: 20, hbx: 46, hby: 26, ffx: -18, ffy: -18, fbx: -34, fby: -22 });
+    case 'spinTop': // spinning across the floor, arms out
+      if (phase === 'rec') return pose({ ...CROUCH, hfx: 20, hfy: 0 });
+      return pose({ spin: (f.t * 0.7) % (Math.PI * 2), hipY: -50, lean: 0.05, hfx: 44, hfy: -4, hbx: -44, hby: -4, ffx: 14, fbx: -14 });
     case 'clawLeap': // Ruko's wolf leap: up with the claws drawn back, then raking down
       if (f.vh > 0) return pose({ hipY: -64, lean: 0.35, hfx: -6, hfy: -30, hbx: -18, hby: -24, ffx: 18, ffy: -30, fbx: -20, fby: -10 });
       return pose({ hipY: -62, lean: 0.6, hfx: 50, hfy: 26, hbx: 30, hby: 30, ffx: 12, ffy: -24, fbx: -24, fby: -12 });
@@ -659,7 +690,7 @@ export function currentPose(f, now) {
   const k = 1 - Math.pow(1 - rate, frames);
   for (const key in target) cur[key] += (target[key] - cur[key]) * k;
   cur.spin = target.spin; // a turn on the spot is drawn as it is: easing would unwind it
-  if (f.state === 'roll' || (f.state === 'jump' && f.air2)) {
+  if (f.state === 'roll' || (f.state === 'jump' && f.air2) || (f.state === 'attack' && f.move === 'moonVault')) {
     cur.rot = target.rot; // a spin must not be smoothed away
     rolled[f.slot] = true;
   } else if (rolled[f.slot]) {
