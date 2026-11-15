@@ -437,6 +437,17 @@ and the heartbeat, the crowd and the weather go quiet.
     0.95 / 97, Zelrith 1.09 / 105. Now: duels 48-53 % for all eight, brawl
     wins 15-23 % each (they were 13-29 %), ladder 100 / 74 / 61 %, boss
     beats Hard 90 %.
+- **Reading an unstoppable finisher**: a finisher that has caught its rival
+  burns brighter from that moment, and the CPU (Normal and up) turns to
+  someone it can stop instead of wasting blows on it. Avalanche's crash
+  circle 120 -> 95 with that in (Jackie led the brawls): duels 48-53 %,
+  brawl wins 15-24 %.
+- **On a phone**: with the on-screen controls lying over the arena's bottom
+  corners (held sideways), a duel's energy bars are drawn under the names at
+  the top instead of under the stick and the buttons, where they could not
+  be seen. Held upright, the Tutorial's lesson panel was cut off by the
+  arena's box and never shown: it now hangs below the arena, with room of
+  its own above the controls.
 - Hits fill the **energy** bar: a special costs 35 of 100, the finisher needs
   it full. Under a quarter of their health a fighter is in their **last
   stand** (LAST STAND on screen with a deep drum, the body pulsing red, the heartbeat, and

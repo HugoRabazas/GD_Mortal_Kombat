@@ -1976,9 +1976,19 @@ kbd {
   color: var(--bone);
 }
 
+/* (The arena's box clips what leaves it; upright the panel hangs below it.) */
+#app.portrait #stage {
+  overflow: visible;
+}
+
+/* Its room, between the arena and the controls (LESSON_ROOM in main.js). */
+#app.portrait.lessoning #touch {
+  margin-top: 86px;
+}
+
 #app.portrait #drill.compact {
   left: 3%;
-  top: calc(100vw * 0.5625 + 6px);
+  top: calc(100% + 6px);
   width: 94%;
   box-sizing: border-box;
 }

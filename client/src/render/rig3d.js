@@ -297,7 +297,10 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
         amount = 0.75;
       } else if ((f.state === 'attack' || f.state === 'airAttack') && GLOWS.has(f.move)) {
         tint = glow;
-        amount = 0.55 + 0.2 * Math.sin(now / 40);
+        // A finisher that has caught its rival burns brighter: from here on
+        // nobody else can stop it (see applyHit in sim.js).
+        const caught = ULT_MOVES.has(f.move) && f.ultOn >= 0;
+        amount = caught ? 0.85 + 0.15 * Math.sin(now / 28) : 0.55 + 0.2 * Math.sin(now / 40);
       } else if (f.hp > 0 && f.hp < f.maxHp * 0.25 && f.state !== 'win' && f.state !== 'lose') {
         // Last stand: a slow red pulse, like a heartbeat (see LAST_STAND in sim.js).
         tint = ember;

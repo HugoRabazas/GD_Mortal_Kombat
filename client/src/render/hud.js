@@ -97,8 +97,10 @@ function portrait(ctx, char, x, y, r, ring) {
   if (head) ctx.drawImage(head, x - r + 3, y - r + 3, (r - 3) * 2, (r - 3) * 2);
 }
 
-// Two fighters: big bars across the top, energy along the bottom.
-function duelPanel(ctx, s, side, label, now, worn) {
+// Two fighters: big bars across the top, energy along the bottom - or, with
+// the on-screen controls lying over the bottom corners (`top`), right under
+// each fighter's name.
+function duelPanel(ctx, s, side, label, now, worn, top) {
   const f = s.f[side];
   const char = getFighter(f.char);
   const dir = side === 0 ? 1 : -1;
@@ -127,13 +129,21 @@ function duelPanel(ctx, s, side, label, now, worn) {
     ctx.strokeStyle = i < s.pts[side] ? '#fff3c0' : 'rgba(255,255,255,0.35)';
     ctx.stroke();
   }
+  const full = f.meter >= RULES.SUPER_COST;
+  const ready = f.meter >= RULES.SPECIAL_COST;
+  const word = full ? 'FINISHER READY' : ready ? 'SPECIAL READY' : 'ENERGY';
+  const ink = full ? '#ffe37a' : ready ? '#ffffff' : 'rgba(255,255,255,0.55)';
+  if (top) {
+    energyBar(ctx, f, worn.glow, edge, y + 52, 210, 11, dir, now);
+    ctx.font = `italic 700 13px ${FONT}`;
+    outlined(ctx, word, edge + dir * 220, y + 58, ink);
+    return;
+  }
   const my = ARENA.H - 30;
   const mEdge = side === 0 ? 24 : W - 24;
   energyBar(ctx, f, worn.glow, mEdge, my, 250, 14, dir, now);
-  const full = f.meter >= RULES.SUPER_COST;
-  const ready = f.meter >= RULES.SPECIAL_COST;
   ctx.font = `italic 700 14px ${FONT}`;
-  outlined(ctx, full ? 'FINISHER READY' : ready ? 'SPECIAL READY' : 'ENERGY', mEdge + dir * 2, my - 11, full ? '#ffe37a' : ready ? '#ffffff' : 'rgba(255,255,255,0.55)');
+  outlined(ctx, word, mEdge + dir * 2, my - 11, ink);
 }
 
 // A brawl: one compact panel per fighter, two either side of the timer.
@@ -210,13 +220,14 @@ export function drawTags(ctx, s, spots, labels) {
   ctx.restore();
 }
 
-// `worn`: the colours each slot really wears (costumes included).
-export function drawHud(ctx, s, labels, now, worn) {
+// `worn`: the colours each slot really wears (costumes included). `top`:
+// keep the bottom corners clear (the on-screen controls lie over them).
+export function drawHud(ctx, s, labels, now, worn, top) {
   const arena = s.f.length > 2;
   const colorsOf = (slot) => worn?.[slot] ?? getFighter(s.f[slot].char).colors;
   ctx.save();
   if (arena) for (const f of s.f) arenaPanel(ctx, s, f.slot, labels[f.slot], now, colorsOf(f.slot));
-  else for (const side of [0, 1]) duelPanel(ctx, s, side, labels[side], now, colorsOf(side));
+  else for (const side of [0, 1]) duelPanel(ctx, s, side, labels[side], now, colorsOf(side), top);
 
   // Timer.
   const secs = Math.ceil(s.timer / TICK_RATE);

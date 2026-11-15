@@ -238,6 +238,7 @@ function saveBest(score) {
 // ---------------------------------------------------------------- layout ---
 
 const isPortrait = () => root.clientHeight > root.clientWidth;
+const LESSON_ROOM = 86; // px kept under an upright arena for the lesson panel (style.css)
 
 function layout() {
   const style = getComputedStyle(root);
@@ -245,8 +246,11 @@ function layout() {
   let availH = root.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
   const portrait = isPortrait();
   root.classList.toggle('portrait', portrait);
-  // In portrait the touch controls sit under the stage and need their own room.
-  if (portrait && !touchEl.hidden) availH -= 236;
+  // In portrait the touch controls sit under the stage and need their own
+  // room - and so does the tutorial's lesson panel, between the two.
+  const lesson = portrait && !touchEl.hidden && !drillEl.hidden;
+  root.classList.toggle('lessoning', lesson);
+  if (portrait && !touchEl.hidden) availH -= 236 + (lesson ? LESSON_ROOM : 0);
   const w = Math.max(160, Math.floor(Math.min(availW, (availH * 16) / 9)));
   const h = Math.floor((w * 9) / 16);
   stageEl.style.width = `${w}px`;
@@ -1124,6 +1128,10 @@ async function keepAwake(on) {
   }
 }
 
+// Do the on-screen controls lie over the arena's bottom corners? (Sideways
+// they do; upright they sit under the arena.) The energy bars move up then.
+const touchOver = () => !touchEl.hidden && !isPortrait();
+
 // Show the on-screen controls during single-player fights and while arranging.
 function refreshTouch() {
   const want = app.screen === 'arrange' || (app.screen === 'fight' && app.touch && app.mode !== 'versus');
@@ -1146,7 +1154,9 @@ function show(screen) {
   // The lesson panel belongs to the tutorial; Training is free practice.
   drillEl.hidden = !(screen === 'fight' && app.mode === 'tutorial');
   if (!drillEl.hidden) drawLesson();
+  const lessoned = root.classList.contains('lessoning');
   refreshTouch();
+  if (isPortrait() && lessoned !== (!touchEl.hidden && !drillEl.hidden)) layout(); // the panel's room came or went
   touchLayout.setEditing(screen === 'arrange');
   setTouchLive(screen !== 'arrange');
   setCapture(screen === 'fight');
@@ -1891,7 +1901,7 @@ function frame(now) {
     app.demoSkip = !app.demoSkip;
     if (app.demoSkip) return;
   }
-  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: practising() }, now);
+  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: practising(), clearCorners: touchOver() }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {

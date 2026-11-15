@@ -336,7 +336,7 @@ export const MOVES = {
   avalanche2: {
     startup: 14, active: 999, recovery: 0, dmg: 20, speed: 6, reach: 74, arc: Math.PI, y0: -170, y1: 40, aim: 600,
     hitstun: 0, blockstun: 18, push: 8, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
-    leap: 13, crash: 120, final: true,
+    leap: 13, crash: 95, final: true,
   },
   // Pixie - Phoenix Dive: soars up inside a pillar of flame, then dives on
   // the rival like a falling star and bursts on the floor.

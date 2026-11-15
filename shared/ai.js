@@ -80,6 +80,10 @@ function toward(dx, dz) {
   return bits;
 }
 
+// A rival whose finisher has landed on someone else cannot be stopped by
+// this fighter's blows (see applyHit): hitting them is a waste.
+const unstoppable = (o, f) => o.state === 'attack' && !!MOVES[o.move]?.ult && o.ultOn >= 0 && o.ultOn !== f.slot;
+
 function pickTarget(ai, s, f) {
   let best = -1;
   let bestScore = Infinity;
@@ -95,6 +99,8 @@ function pickTarget(ai, s, f) {
       if (s.pts[o.slot] === lead && lead > s.pts[f.slot]) score -= 110;
       if (o.hp / o.maxHp === fittest) score -= 70;
       if (o.hp / o.maxHp < 0.25) score -= 60;
+      // (Easy does not know better.)
+      if (ai.cfg.parry > 0 && unstoppable(o, f)) score += 400;
     }
     if (score < bestScore) {
       bestScore = score;
@@ -233,7 +239,7 @@ export function aiInput(ai, s, me) {
     return ai.held | tap;
   }
 
-  if (ai.target < 0 || s.f[ai.target].hp <= 0 || --ai.retarget <= 0) {
+  if (ai.target < 0 || s.f[ai.target].hp <= 0 || --ai.retarget <= 0 || (ai.cfg.parry > 0 && unstoppable(s.f[ai.target], f))) {
     ai.target = pickTarget(ai, s, f);
     ai.retarget = 10;
   }

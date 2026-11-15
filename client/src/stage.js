@@ -539,7 +539,7 @@ export function createStage(glCanvas, hudCanvas) {
         dizzyStars(ctx, s, (f, back) => project(f.x - Math.cos(f.dir) * back, three ? three.headTop(f.slot) * 100 : 150, f.z - Math.sin(f.dir) * back), now);
         finaleOverlay(ctx, s, worn);
         finisherCutIn(ctx, s, worn);
-        drawHud(ctx, s, view.labels, now, worn);
+        drawHud(ctx, s, view.labels, now, worn, view.clearCorners);
         lineUp(ctx, s, view.labels, worn);
         // A reminder of the controls while the first round is being announced.
         // (Never on top of the line-up, which has the screen's lower half to itself.)
