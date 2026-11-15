@@ -416,8 +416,11 @@ the guard three ticks before a kick lands. Without `?debug` nothing changes.
 rules (`tests/sim.test.js`), the roster's costumes (`tests/fighters.test.js`),
 the arenas (`tests/arenas.test.js`: every arena in the picker has a 3D theme
 with three moods, its own music and a look without WebGL - the themes live
-as plain data in `client/src/render/themes.js` so Node can read them) and
-online play (`tests/online.test.js`). The
+as plain data in `client/src/render/themes.js` so Node can read them), the
+CPU's difficulty ladder (`tests/ai.test.js`: in mirror duels Normal must beat
+Easy, Hard beat Normal and the boss level beat Hard - over 160 duels each
+step measured 100 %, 81 % and 67 %) and online play
+(`tests/online.test.js`). The
 online test runs two players in Node on the same-browser bus (Node has
 BroadcastChannel too): they meet in the lobby, make a room, get ready, fight
 in the host's arena, and come back for one more. Node has no WebRTC, so it

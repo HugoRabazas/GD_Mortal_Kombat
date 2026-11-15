@@ -204,7 +204,11 @@ function layout() {
 // --------------------------------------------------------------- screens ---
 
 const head = (id, cls = '') => `<img class="head ${cls}" src="${headUrls.get(id)}" alt="" />`;
-const touchLabel = () => (app.touch ? 'Touch buttons on' : 'Touch buttons off');
+// Toggles show their state after a colon ("Sound: on"), like "Graphics: auto",
+// so the label never reads as an order to switch it.
+// (The menu's footer uses the short form, which fits a phone held sideways.)
+const touchLabel = (short) => `${short ? 'Touch' : 'Touch buttons'}: ${app.touch ? 'on' : 'off'}`;
+const soundLabel = () => `Sound: ${isMuted() ? 'off' : 'on'}`;
 const points = (n) => n.toLocaleString('en-US');
 
 function buildLadder(playerId) {
@@ -237,7 +241,7 @@ function menuScreen() {
       <div class="foot">
         <button type="button" class="link" data-act="settings">Settings</button>
         <button type="button" class="link" data-act="record">Record</button>
-        <button type="button" class="link" data-act="touch">${touchLabel()}</button>
+        <button type="button" class="link" data-act="touch" data-short="1" aria-pressed="${app.touch}">${touchLabel(true)}</button>
         <button type="button" class="link" data-act="arrange">Arrange buttons</button>
         <button type="button" class="link" data-act="fullscreen">Full screen</button>
       </div>
@@ -486,8 +490,8 @@ function settingsScreen() {
       <div class="seg" role="group" aria-label="Graphics">${[['auto', 'Graphics: auto'], ['sharp', 'Sharp'], ['fast', 'Fast']].map(([id, label]) => `<button type="button" class="${app.graphics === id ? 'on' : ''}" data-act="graphics" data-id="${id}" aria-pressed="${app.graphics === id}">${label}</button>`).join('')}</div>
       <p class="note">${{ auto: 'Full detail, lowered by itself if the device struggles.', sharp: 'Full detail always: shadows and full sharpness.', fast: 'For slower phones: no shadows, lower resolution, lighter weather.' }[app.graphics]}</p>
       <div class="row">
-        <button type="button" class="btn small" data-act="mute">${isMuted() ? 'Sound off' : 'Sound on'}</button>
-        <button type="button" class="btn small" data-act="touch">${touchLabel()}</button>
+        <button type="button" class="btn small" data-act="mute" aria-pressed="${!isMuted()}">${soundLabel()}</button>
+        <button type="button" class="btn small" data-act="touch" aria-pressed="${app.touch}">${touchLabel()}</button>
         <button type="button" class="btn small" data-act="arrange">Arrange buttons</button>
       </div>
       <div class="row"><button type="button" class="btn primary" data-act="settingsDone">Done</button></div>
@@ -1370,11 +1374,13 @@ const ACTIONS = {
   resetLayout: () => touchLayout.reset(),
   mute(el) {
     setMuted(!isMuted());
-    el.textContent = isMuted() ? 'Sound off' : 'Sound on';
+    el.textContent = soundLabel();
+    el.setAttribute('aria-pressed', String(!isMuted()));
   },
   touch(el) {
     app.touch = !app.touch;
-    el.textContent = touchLabel();
+    el.textContent = touchLabel(!!el.dataset.short);
+    el.setAttribute('aria-pressed', String(app.touch));
   },
   fullscreen() {
     // Not every viewer allows this (phones, some apps); it is fine if it fails.
