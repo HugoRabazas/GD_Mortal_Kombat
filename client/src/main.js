@@ -56,6 +56,7 @@ root.innerHTML = `
     <button type="button" class="ctl tb tb-k" data-ctl="k" data-bit="32">K</button>
     <button type="button" class="ctl tb tb-p" data-ctl="p" data-bit="16">P</button>
     <button type="button" class="ctl tb tb-jmp" data-ctl="jmp" data-bit="512">JMP</button>
+    <button type="button" class="ctl tb tb-grb" data-ctl="grb" data-bit="1024">GRAB</button>
     <p id="turn">Turn your phone sideways for a bigger view.</p>
   </div>
   <div id="ui"></div>
@@ -183,7 +184,7 @@ const TIPS = [
   (c) => `Tip: hit a rival while they wind up a blow for a <b>counter</b> - a quarter more damage.`,
   (c) => `Tip: press <kbd>${c.b}</kbd> just before a blow lands for a <b>perfect guard</b>; heavy attackers are left reeling.`,
   (c) => `Tip: under a quarter of your health your energy fills faster. A round is never over until it is over.`,
-  (c) => `Tip: <kbd>${c.p}</kbd> + <kbd>${c.k}</kbd> together is a <b>grab</b>, and it goes straight through a guard.`,
+  (c) => `Tip: <kbd>${c.g}</kbd> is a <b>throw</b>: it lifts the rival over your head, and it goes straight through a guard.`,
   (c) => `Tip: <kbd>${c.b}</kbd> and a direction is a <b>dodge roll</b> - blows pass through you for a moment.`,
   (c) => `Tip: knock a rival into the <b>ring of fire</b> as it closes in for extra damage.`,
   (c) => `Tip: gold crystals give energy, green ones health. Walk over one to take it.`,
@@ -436,6 +437,7 @@ function helpScreen() {
             ${row('Punch', `${k('J')} or ${k('F')}`, k('F'), k('J'), pad ? k(pad.p) : 'X / Square', k('P'))}
             ${row('Kick', `${k('K')} or ${k('G')}`, k('G'), k('K'), pad ? k(pad.k) : 'B / Circle', k('K'))}
             ${row('Block', `${k('L')} or ${k('H')}`, k('H'), k('L'), pad ? `${k(pad.b)} or ${k(pad.b2)}` : 'LB / LT', k('BLK'))}
+            ${row('Throw', `${k('M')} or ${k('V')}`, k('V'), k('M'), pad ? k(pad.g) : 'R3 / RS', k('GRAB'))}
             ${row('Special', `${k('I')} or ${k('T')}`, k('T'), k('I'), pad ? k(pad.s) : 'Y / Triangle', k('SP'))}
             ${row('Finisher', `${k('O')} or ${k('Y')}`, k('Y'), k('O'), pad ? `${k(pad.u)} or ${k(pad.u2)}` : 'RB / RT', k('ULT'))}
           </tbody>
@@ -444,7 +446,7 @@ function helpScreen() {
       <ul class="tips">
         <li><b>Walk anywhere</b> on the arena: left, right, into the depth and back. Attacks turn you towards the nearest rival, so you do not need perfect aim.</li>
         <li><b>Punch three times</b> for a combo that ends in a knockdown; each punch must land to continue.</li>
-        <li><b>Punch + Kick together</b> is a grab: short reach, but it goes straight through a guard.</li>
+        <li><b>Grab</b> (its own button, or punch + kick together) seizes a rival up close, lifts them over your head and slams them down behind you. Short reach, but it goes straight through a guard; in a brawl, anyone can break it with a blow.</li>
         <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment.</li>
         <li>Knocked down? Press <b>block</b> on the floor for a <b>quick rise</b>: you are back up in a blink.</li>
         <li>Hit a rival while they are <b>winding up</b> a blow of their own for a <b>counter</b>: a quarter more damage.</li>
@@ -499,23 +501,23 @@ const SPECIAL_NOTES = {
 // The names of the controls on the device the player is using right now.
 // The face and shoulder buttons by controller family (same places, own labels).
 const PAD_NAMES = {
-  xbox: { p: 'X', k: 'B', b: 'LB', s: 'Y', u: 'RB', j: 'A', b2: 'LT', u2: 'RT' },
-  ps: { p: '□', k: '○', b: 'L1', s: '△', u: 'R1', j: '✕', b2: 'L2', u2: 'R2' },
-  nintendo: { p: 'Y', k: 'A', b: 'L', s: 'X', u: 'R', j: 'B', b2: 'ZL', u2: 'ZR' },
+  xbox: { p: 'X', k: 'B', b: 'LB', s: 'Y', u: 'RB', j: 'A', b2: 'LT', u2: 'RT', g: 'RS' },
+  ps: { p: '□', k: '○', b: 'L1', s: '△', u: 'R1', j: '✕', b2: 'L2', u2: 'R2', g: 'R3' },
+  nintendo: { p: 'Y', k: 'A', b: 'L', s: 'X', u: 'R', j: 'B', b2: 'ZL', u2: 'ZR', g: 'R stick' },
 };
 
 function controlNames() {
   const d = lastDevice() ?? (app.touch ? 'touch' : 'keys');
   if (d === 'pad') return { ...PAD_NAMES[padStyle()], move: 'the stick', walk: 'Stick' };
-  if (d === 'touch' && app.touch) return { p: 'P', k: 'K', b: 'BLK', s: 'SP', u: 'ULT', j: 'JMP', move: 'the stick', walk: 'Stick' };
-  return { p: 'J', k: 'K', b: 'L', s: 'I', u: 'O', j: 'Space', move: 'W A S D', walk: 'WASD' };
+  if (d === 'touch' && app.touch) return { p: 'P', k: 'K', b: 'BLK', s: 'SP', u: 'ULT', j: 'JMP', g: 'GRAB', move: 'the stick', walk: 'Stick' };
+  return { p: 'J', k: 'K', b: 'L', s: 'I', u: 'O', j: 'Space', g: 'M', move: 'W A S D', walk: 'WASD' };
 }
 
 function movesCard() {
   const s = app.game?.state;
   if (!s) return '';
   const two = app.mode === 'versus';
-  const key = two && lastDevice() !== 'pad' ? { p: 'F / J', k: 'G / K', b: 'H / L', s: 'T / I', u: 'Y / O', j: 'Space / U' } : controlNames();
+  const key = two && lastDevice() !== 'pad' ? { p: 'F / J', k: 'G / K', b: 'H / L', s: 'T / I', u: 'Y / O', j: 'Space / U', g: 'V / M' } : controlNames();
   const k = (...names) => names.map((n) => `<kbd>${n}</kbd>`).join(' ');
   const slots = two ? [0, 1] : [app.mode === 'online' ? Math.max(0, app.online?.mySlot ?? 0) : 0];
   const own = slots
@@ -531,7 +533,7 @@ function movesCard() {
     <dl class="movelist" aria-label="Moves">
       <dt>${k(key.p, key.p, key.p)}</dt><dd><b>Three-punch combo</b>; each punch must land, the third knocks down.</dd>
       <dt>${k(key.k)}</dt><dd><b>Kick</b>: slower than a punch, heavier, longer reach.</dd>
-      <dt>${k(key.p)} + ${k(key.k)}</dt><dd><b>Grab</b>: short reach, goes straight through a guard.</dd>
+      <dt>${k(key.g)}</dt><dd><b>Throw</b>: seize, lift and slam. Short reach, goes straight through a guard.</dd>
       <dt>${k(key.j)}, ${k(key.p)}</dt><dd><b>Diving attack</b> from the air.</dd>
       <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b>.</dd>
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b>: attacks pass through you.</dd>
@@ -601,7 +603,7 @@ const DRILLS = [
   { id: 'jump', name: 'Jump', how: (k) => k('j') },
   { id: 'combo', name: 'Three-punch combo', how: (k) => `${k('p')} ${k('p')} ${k('p')}, each punch landing` },
   { id: 'kick', name: 'Land a kick', how: (k) => k('k') },
-  { id: 'grab', name: 'Grab', how: (k) => `${k('p')} + ${k('k')} together, up close` },
+  { id: 'grab', name: 'Throw', how: (k) => `${k('g')} up close` },
   { id: 'dive', name: 'Diving attack', how: (k) => `${k('j')}, then ${k('p')} in the air` },
   { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction` },
   { id: 'tech', name: 'Quick rise', how: (k) => `${k('b')} while knocked down (the Fights back partner floors you)` },
@@ -1752,10 +1754,10 @@ function frame(now) {
   const hint = !playing || !touchEl.hidden
     ? ''
     : app.mode === 'versus' && lastDevice() === 'pad'
-      ? (({ p, k, b, s, u, j }) => `Pad 1 and pad 2: stick move · ${j} jump · ${p} punch · ${k} kick · ${p}+${k} grab · ${b} block · ${s} special · ${u} finisher`)(PAD_NAMES[padStyle()])
+      ? (({ p, k, b, s, u, j, g }) => `Pad 1 and pad 2: stick move · ${j} jump · ${p} punch · ${k} kick · ${g} throw · ${b} block · ${s} special · ${u} finisher`)(PAD_NAMES[padStyle()])
       : app.mode === 'versus'
-      ? 'P1: WASD move · Space jump · F G punch kick · H block · T Y special finisher     P2: arrows · U · J K · L · I O'
-      : (({ p, k, b, s, u, j, walk }) => `${walk} move · ${j} jump · ${p} punch (x3 combo) · ${k} kick · ${p}+${k} grab · ${b} block (+move = roll) · ${s} special · ${u} finisher`)(controlNames());
+      ? 'P1: WASD move · Space jump · F G punch kick · V throw · H block · T Y special finisher     P2: arrows · U · J K · M · L · I O'
+      : (({ p, k, b, s, u, j, g, walk }) => `${walk} move · ${j} jump · ${p} punch (x3 combo) · ${k} kick · ${g} throw · ${b} block (+move = roll) · ${s} special · ${u} finisher`)(controlNames());
   const place = playing ? app.fightPlace : app.place;
   setMusicTheme(place);
   // Behind the menus (and the pause and result screens) the arena is drawn

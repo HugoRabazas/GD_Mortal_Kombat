@@ -24,6 +24,14 @@ const WALK = 3.5;
 const AIR_SPEED = 3.7;
 const FRICTION = 0.84;
 const BUFFER_TICKS = 8; // how long a button press is remembered
+// A throw: seize (the rival is lifted in front), swing (carried up and over
+// the thrower's head) and slam (driven into the floor behind). Ticks:
+export const THROW = { lift: 7, slam: 19, end: 28, height: 120, reach: 46 };
+// Punch and kick pressed together still make a grab when one comes a beat
+// after the other (fingers are never exactly together). Kept short: a wider
+// window turned deliberate punch-then-kick into grabs that missed, and it
+// cost the fastest CPU a sixth of its wins. The GRAB button needs no timing.
+const GRAB_WINDOW = 3;
 const DOWN_TICKS = 34; // time spent lying on the floor after a knockdown
 const GETUP_TICKS = 18;
 // Quick rise: block held while lying on the floor gets a fighter up after
@@ -154,6 +162,7 @@ function newFighter(charId, slot, count, mod) {
     deflect: 0, // ticks left of the shove that follows a perfect guard (for show)
     reel: 0, // ticks left staggering after a heavy blow was guarded perfectly
     prev: 0, // buttons held on the previous tick
+    held: -1, // slot of the rival being thrown, or -1
     buf: 0, // remembered attack presses
     bufT: 0,
     taken: 0, // hits taken in the current combo
@@ -296,7 +305,7 @@ function startAttack(s, f, move) {
 }
 
 function rememberPresses(f, inp) {
-  const pressed = inp & ~f.prev & (INPUT.PUNCH | INPUT.KICK | INPUT.SPECIAL | INPUT.SUPER);
+  const pressed = inp & ~f.prev & (INPUT.PUNCH | INPUT.KICK | INPUT.SPECIAL | INPUT.SUPER | INPUT.GRAB);
   if (pressed) {
     f.buf |= pressed;
     f.bufT = BUFFER_TICKS;
@@ -324,7 +333,7 @@ function tryAttack(s, f) {
     emit(s, 'special', { by: f.slot, move: type });
     return true;
   }
-  if (b & INPUT.KICK && b & INPUT.PUNCH) {
+  if (b & INPUT.GRAB || (b & INPUT.KICK && b & INPUT.PUNCH)) {
     startAttack(s, f, 'grab');
     return true;
   }
@@ -436,6 +445,11 @@ function control(s, f, inp) {
       const m = MOVES[f.move];
       const t = f.t;
       const activeEnd = m.startup + m.active;
+      // The other button soon after a punch or a kick turns it into a grab.
+      if (t < GRAB_WINDOW && ((f.move === 'punch' && f.buf & INPUT.KICK) || (f.move === 'kick' && f.buf & INPUT.PUNCH))) {
+        startAttack(s, f, 'grab');
+        break;
+      }
       if (f.move === 'dash' || f.move === 'super') {
         const going = t >= m.startup && t < activeEnd;
         f.vx = going ? Math.cos(f.dir) * m.speed : 0;
@@ -494,9 +508,48 @@ function control(s, f, inp) {
       if (f.t >= GETUP_TICKS) setState(f, 'idle');
       break;
     }
+    case 'throw':
+      carryThrow(s, f);
+      break;
     default:
       break; // airAttack, ko, win, lose: nothing to decide
   }
+}
+
+// A seized rival is carried by the thrower: lifted in front, swung up and
+// over the head, and driven into the floor behind, where the blow lands.
+function carryThrow(s, f) {
+  const def = s.f[f.held];
+  f.vx = f.vz = 0;
+  if (!def || def.state !== 'held') {
+    setState(f, 'idle');
+    f.held = -1;
+    return;
+  }
+  const t = f.t;
+  // Angle round the thrower: 0 = in front, PI = behind.
+  const k = t < THROW.lift ? 0 : Math.min(1, (t - THROW.lift) / (THROW.slam - THROW.lift));
+  const turn = k * Math.PI;
+  const lift = t < THROW.lift ? (t / THROW.lift) * 0.45 : Math.sin(k * Math.PI) * 0.55 + 0.45 * (1 - k);
+  def.x = f.x + Math.cos(f.dir + turn) * THROW.reach * Math.max(0.35, Math.abs(Math.cos(turn)));
+  def.z = f.z + Math.sin(f.dir + turn) * THROW.reach * Math.max(0.35, Math.abs(Math.cos(turn)));
+  def.h = THROW.height * lift;
+  def.vx = def.vz = def.vh = 0;
+  def.dir = f.dir + Math.PI; // facing the thrower all the way round
+  if (t === THROW.slam) {
+    def.h = 0;
+    def.state = 'idle'; // let the blow land on them like any other
+    f.held = -1;
+    if (s.phase === 'fight') {
+      applyHit(s, f, def, MOVES.grab, f.x, f.z, 'grab');
+    } else {
+      def.state = 'down';
+      def.t = 0;
+      def.stun = DOWN_TICKS;
+    }
+    emit(s, 'slam', { by: f.slot, on: def.slot, x: def.x, z: def.z });
+  }
+  if (t >= THROW.end) setState(f, 'idle');
 }
 
 function land(s, f) {
@@ -536,6 +589,7 @@ function land(s, f) {
 }
 
 function physics(s, f) {
+  if (f.state === 'held') return; // carried by the thrower (see carryThrow)
   const wasAir = f.h > 0 || f.vh > 0;
   f.x += f.vx;
   f.z += f.vz;
@@ -575,7 +629,7 @@ function keepInside(s, f) {
   }
 }
 
-const isSolid = (f) => f.state !== 'down' && f.state !== 'ko' && f.state !== 'getup';
+const isSolid = (f) => f.state !== 'down' && f.state !== 'ko' && f.state !== 'getup' && f.state !== 'held' && f.state !== 'throw';
 
 // Fighters cannot stand inside each other. If one of them is backed against
 // the edge of the ring, the other gives way instead.
@@ -610,6 +664,8 @@ function separate(s, a, b) {
 }
 
 function canBeHit(f) {
+  // Both fighters in a throw can be hit by others: grabbing in a crowd is a
+  // risk, and being thrown is no shelter. A hit on either ends the throw.
   return f.inv <= 0 && f.state !== 'down' && f.state !== 'getup' && f.state !== 'ko';
 }
 
@@ -694,6 +750,43 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     if (s.f.length === 2) s.hitstop = 3;
     emit(s, 'block', { by: att.slot, on: def.slot, ...at, dmg: chip });
     return;
+  }
+
+  // A grab that connects seizes the rival: the throw itself (carryThrow)
+  // lands the blow on the slam.
+  if (kind === 'grab' && att.state === 'attack' && def.h <= 0) {
+    att.state = 'throw';
+    att.t = 0;
+    att.move = null;
+    att.held = def.slot;
+    def.state = 'held';
+    def.t = 0;
+    def.move = null;
+    def.buf = 0;
+    def.stun = 0;
+    if (s.f.length === 2) s.hitstop = 4;
+    emit(s, 'seize', { by: att.slot, on: def.slot, x: def.x, z: def.z, h: 90 });
+    return;
+  }
+
+  // A rival struck while being carried is torn loose: the thrower lets go.
+  if (def.state === 'held') {
+    const thrower = s.f.find((o) => o.held === def.slot);
+    if (thrower) {
+      thrower.held = -1;
+      setState(thrower, 'idle');
+    }
+  }
+  // A thrower who is hit lets go: the rival drops to the floor unhurt.
+  if (def.state === 'throw' && def.held >= 0) {
+    const dropped = s.f[def.held];
+    def.held = -1;
+    if (dropped && dropped.state === 'held') {
+      dropped.state = 'down';
+      dropped.t = 0;
+      dropped.stun = DOWN_TICKS;
+      dropped.vh = 0;
+    }
   }
 
   // Caught winding up? (Checked before the hit wipes out their move.)

@@ -499,8 +499,7 @@ test('punch and kick together is a grab that goes through a guard, but not throu
   const s = startFight();
   closeUp(s, 56);
   step(s, [INPUT.PUNCH | INPUT.KICK, INPUT.BLOCK]);
-  run(s, 14, [0, INPUT.BLOCK]);
-  assert.equal(s.f[0].move === 'grab' || s.f[1].state === 'down', true);
+  run(s, 50, [0, INPUT.BLOCK]);
   assert.equal(s.f[1].state, 'down', 'the blocker is thrown');
   assert.ok(s.f[1].maxHp - s.f[1].hp >= MOVES.grab.dmg - 1);
 
@@ -512,6 +511,67 @@ test('punch and kick together is a grab that goes through a guard, but not throu
   assert.equal(far.f[0].state, 'attack', 'and leaves the grabber open');
 });
 
+test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
+  const s = startFight();
+  closeUp(s, 56);
+  step(s, [INPUT.GRAB, INPUT.BLOCK]);
+  let seized = false;
+  let highest = 0;
+  let behind = false;
+  for (let i = 0; i < 60; i++) {
+    step(s, [0, INPUT.BLOCK]);
+    const [a, b] = s.f;
+    if (b.state === 'held') {
+      seized = true;
+      highest = Math.max(highest, b.h);
+      assert.equal(a.state, 'throw');
+    }
+    if (s.ev.some((e) => e.type === 'slam')) behind = b.x - a.x < 0; // fighter 0 faces +x
+  }
+  assert.ok(seized, 'the grab button alone seizes the rival');
+  assert.ok(highest > 80, `the rival is lifted high (${highest.toFixed(0)})`);
+  assert.ok(behind, 'and slammed down behind the thrower');
+  assert.equal(s.f[1].state === 'down' || s.f[1].state === 'getup', true);
+  assert.ok(s.f[1].hp < s.f[1].maxHp, 'the slam hurts');
+  assert.equal(s.f[0].state, 'idle', 'the thrower is free again');
+});
+
+test('punch and kick a beat apart still make a grab, but a punch then a kick does not', () => {
+  const s = startFight();
+  closeUp(s, 56);
+  step(s, [INPUT.PUNCH, 0]);
+  step(s, [INPUT.KICK, 0]);
+  run(s, 12);
+  assert.ok(s.f[0].state === 'throw' || s.f[1].state === 'held', `a throw, not a punch (${s.f[0].state})`);
+  const late = startFight();
+  closeUp(late, 56);
+  step(late, [INPUT.PUNCH, 0]);
+  run(late, 4, [0, 0]);
+  step(late, [INPUT.KICK, 0]);
+  run(late, 12);
+  assert.notEqual(late.f[0].state, 'throw', 'too late: the punch stays a punch');
+});
+
+test('in a brawl the one being thrown is out of reach, but a thrower who is hit drops them', () => {
+  const s = startFight(['ruko', 'shadow', 'jackie', 'pixie'], [], 'arena');
+  closeUp(s, 56);
+  Object.assign(s.f[2], { x: 40, z: 60, dir: -Math.PI / 2 });
+  Object.assign(s.f[3], { x: 0, z: 400 });
+  step(s, [INPUT.GRAB, 0, 0, 0]);
+  run(s, 9, [0, 0, 0, 0]);
+  assert.equal(s.f[1].state, 'held');
+  const hp = [s.f[0].hp, s.f[1].hp];
+  for (let i = 0; i < 4; i++) step(s, [0, 0, 0, 0]);
+  assert.equal(s.f[1].hp, hp[1], 'the one being thrown is not hurt while carried');
+  // Jackie walks up behind the thrower and punches.
+  Object.assign(s.f[2], { x: -50, z: 0, dir: 0 });
+  for (let i = 0; i < 20 && s.f[0].hp === hp[0]; i++) step(s, [0, 0, i % 2 ? 0 : INPUT.PUNCH, 0]);
+  assert.ok(s.f[0].hp < hp[0], 'the thrower can be hit');
+  run(s, 2, [0, 0, 0, 0]);
+  assert.notEqual(s.f[1].state, 'held', 'and lets the rival go');
+  assert.equal(s.f[1].hp, hp[1], 'who drops unhurt');
+});
+
 test('random button mashing never breaks the match (duel and arena)', () => {
   // A deterministic stream of random controller states, held for random spans.
   let seed = 12345;
@@ -519,7 +579,7 @@ test('random button mashing never breaks the match (duel and arena)', () => {
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
     return seed / 4294967296;
   };
-  const STATES = new Set(['idle', 'walk', 'jump', 'airAttack', 'attack', 'block', 'roll', 'hit', 'land', 'down', 'getup', 'ko', 'win', 'lose']);
+  const STATES = new Set(['idle', 'walk', 'jump', 'airAttack', 'attack', 'block', 'roll', 'hit', 'land', 'down', 'getup', 'ko', 'win', 'lose', 'throw', 'held']);
   for (const chars of [['ruko', 'shadow'], ['jackie', 'pixie'], ALL, ['pixie', 'pixie', 'jackie']]) {
     for (let game = 0; game < 6; game++) {
       const s = createMatch(chars, [], undefined, game + 1);

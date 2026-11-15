@@ -149,7 +149,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         cheerFor(e.by, e.heavy ? 0.8 : 0.25);
         floatText(p.x, p.y - 30, String(e.dmg), e.heavy ? '#ffd34d' : '#ffffff', e.heavy ? 28 : 22);
         if (e.combo >= 2) floatText(p.x, p.y - 58, `${e.combo} HITS`, '#ff8a5c', 20);
-        if (e.kind === 'grab') floatText(p.x, p.y - 58, 'GRAB!', '#59c7ff', 24);
+        if (e.kind === 'grab') floatText(p.x, p.y - 58, 'SLAM!', '#ffb050', 26);
         if (e.counter) floatText(p.x, p.y - 86, 'COUNTER', '#ff9a3c', 22);
         addShake((e.kind === 'super' ? 16 : e.heavy ? 8 : 4) + (e.counter ? 3 : 0));
         if (!quiet && e.counter) play('counter');
@@ -192,6 +192,26 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
       case 'super':
         if (!quiet) play('super');
         break;
+      case 'seize': {
+        const p = project(e.x, e.h, e.z);
+        floatText(p.x, p.y - 40, 'THROW!', '#59c7ff', 26);
+        addShake(4);
+        if (!quiet) play('block');
+        break;
+      }
+      case 'slam': {
+        // Driven into the floor: a ring of dust and a jolt through the arena.
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2;
+          const p = project(e.x + Math.cos(a) * 40, 0, e.z + Math.sin(a) * 40);
+          dust(p.x, p.y, 3);
+        }
+        addShake(13);
+        addFlash(0.2);
+        if (!quiet) play('quakeBoom');
+        if (!quiet && (e.on === me || e.by === me)) buzz(e.on === me ? 90 : 25);
+        break;
+      }
       case 'clash': {
         const p = project(e.x, e.h, e.z);
         hitSpark(p.x, p.y, '#ffffff', true);

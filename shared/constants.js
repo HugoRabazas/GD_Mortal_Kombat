@@ -26,8 +26,9 @@ export const INPUT = {
   SPECIAL: 128,
   SUPER: 256,
   JUMP: 512,
+  GRAB: 1024, // its own button, so a throw never needs two buttons at once
 };
-export const INPUT_MASK = 1023;
+export const INPUT_MASK = 2047;
 
 export const RULES = {
   SPECIAL_COST: 35,

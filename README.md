@@ -109,6 +109,7 @@ along in the ranking, under each name.
 | Punch | `J` or `F` | `F` | `J` | X / Square |
 | Kick | `K` or `G` | `G` | `K` | B / Circle |
 | Block | `L` or `H` | `H` | `L` | LB / LT |
+| Throw | `M` or `V` | `V` | `M` | R3 (press the right stick) |
 | Special | `I` or `T` | `T` | `I` | Y / Triangle |
 | Finisher | `O` or `Y` | `Y` | `O` | RB / RT |
 
@@ -152,8 +153,17 @@ and the heartbeat, the crowd and the weather go quiet.
   aim does not have to be exact.
 - **Punch three times** for a combo that ends in a knockdown; each punch has
   to land for the next to come out.
-- **Punch + Kick together** is a grab: short reach, open if it misses, but it
-  goes straight through a guard.
+- **Throw** has its own button (GRAB on a phone, `M` / `V`, the right stick
+  on a pad), so it can be done while moving with one thumb on the stick; punch
+  and kick pressed together (within 3 ticks) still work on a keyboard. It is a
+  real throw: the rival is seized, lifted, swung head-first over the thrower's
+  head and slammed down behind (about half a second), then slides away on the
+  floor. Short reach and open if it misses, but it goes straight through a
+  guard. In a brawl a blow on either fighter breaks it: the thrower lets go
+  and the rival drops unhurt. Measured: duels 45-53 %, brawl firsts 14-24 %
+  (Jackie at the top), the CPU ladder 100 / 77 / 68 %; a wider punch-then-kick
+  window was tried and cut to 3 ticks, because it turned deliberate punch-kick
+  into misses and cost the fastest CPU a sixth of its wins.
 - **Block + a direction** is a dodge roll: attacks pass through you for most
   of it.
 - **Block on the floor** after a knockdown is a **quick rise**: back up after

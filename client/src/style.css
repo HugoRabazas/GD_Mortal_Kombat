@@ -856,6 +856,12 @@ kbd {
   background: rgba(36, 86, 201, 0.7);
 }
 
+/* The throw: its own button, so it never needs two thumbs at once. */
+.tb-grb {
+  background: rgba(181, 120, 30, 0.72);
+  font-size: calc(0.78rem * var(--ts));
+}
+
 /* Special and finisher stay dim until there is enough energy to use them. */
 .tb-sp,
 .tb-ult {

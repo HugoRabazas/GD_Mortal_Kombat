@@ -267,7 +267,7 @@ export function aiInput(ai, s, me) {
   if (style.circle && dist < 220 && rnd(ai) < style.circle) return hold(toward(-dz, dx) | INPUT.BLOCK, 3);
 
   // A rival hiding behind a guard gets grabbed.
-  if (o.state === 'block' && dist < 84 && rnd(ai) < cfg.attack * 0.35) return press(INPUT.PUNCH | INPUT.KICK);
+  if (o.state === 'block' && dist < 84 && rnd(ai) < cfg.attack * 0.35) return press(INPUT.GRAB);
 
   // --- in range ---
   const roll = rnd(ai);

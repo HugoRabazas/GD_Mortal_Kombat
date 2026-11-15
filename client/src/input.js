@@ -10,15 +10,16 @@ const KEYMAPS = {
     LEFT: ['KeyA', 'ArrowLeft'], RIGHT: ['KeyD', 'ArrowRight'], UP: ['KeyW', 'ArrowUp'], DOWN: ['KeyS', 'ArrowDown'],
     JUMP: ['Space', 'KeyU'],
     PUNCH: ['KeyJ', 'KeyF'], KICK: ['KeyK', 'KeyG'], BLOCK: ['KeyL', 'KeyH'], SPECIAL: ['KeyI', 'KeyT'], SUPER: ['KeyO', 'KeyY'],
+    GRAB: ['KeyM', 'KeyV'],
   },
   // Two players sharing a keyboard.
   p1: {
     LEFT: ['KeyA'], RIGHT: ['KeyD'], UP: ['KeyW'], DOWN: ['KeyS'], JUMP: ['Space'],
-    PUNCH: ['KeyF'], KICK: ['KeyG'], BLOCK: ['KeyH'], SPECIAL: ['KeyT'], SUPER: ['KeyY'],
+    PUNCH: ['KeyF'], KICK: ['KeyG'], BLOCK: ['KeyH'], SPECIAL: ['KeyT'], SUPER: ['KeyY'], GRAB: ['KeyV'],
   },
   p2: {
     LEFT: ['ArrowLeft'], RIGHT: ['ArrowRight'], UP: ['ArrowUp'], DOWN: ['ArrowDown'], JUMP: ['KeyU'],
-    PUNCH: ['KeyJ'], KICK: ['KeyK'], BLOCK: ['KeyL'], SPECIAL: ['KeyI'], SUPER: ['KeyO'],
+    PUNCH: ['KeyJ'], KICK: ['KeyK'], BLOCK: ['KeyL'], SPECIAL: ['KeyI'], SUPER: ['KeyO'], GRAB: ['KeyM'],
   },
 };
 const GAME_KEYS = new Set(Object.values(KEYMAPS.solo).flat());
@@ -98,6 +99,7 @@ export function readPad(index) {
   if (on(4) || on(6)) bits |= INPUT.BLOCK;
   if (on(3)) bits |= INPUT.SPECIAL;
   if (on(5) || on(7)) bits |= INPUT.SUPER;
+  if (on(10) || on(11)) bits |= INPUT.GRAB; // a stick pressed in
   if (bits) device = 'pad';
   return bits;
 }

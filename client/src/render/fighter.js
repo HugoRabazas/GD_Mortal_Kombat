@@ -8,7 +8,7 @@
 // snapping. rig3d.js turns the solved pose into a 3D body; drawFighter() below
 // draws the same pose flat, for devices without WebGL.
 
-import { MOVES } from '../../../shared/sim.js';
+import { MOVES, THROW } from '../../../shared/sim.js';
 import { getFighter, lookColors } from '../../../shared/fighters.js';
 import { heads } from '../assets.js';
 
@@ -172,7 +172,12 @@ function entrancePose(f, t) {
   }
 }
 
+// Was this fighter's last fall a throw? (Then they lie the other way round.)
+const thrown = [];
+
 function targetPose(f, now) {
+  if (f.state === 'held') thrown[f.slot] = true;
+  else if (f.state !== 'down' && f.state !== 'ko' && f.state !== 'getup') thrown[f.slot] = false;
   const ritual = announce - ENTRANCE_FROM;
   if (ritual >= 0 && ritual < ENTRANCE_TICKS && f.state === 'idle') return entrancePose(f, ritual);
   const air = f.h > 0.5;
@@ -229,6 +234,30 @@ function targetPose(f, now) {
       // Forearms crossed in front of the chest, low enough to be seen below
       // the big head from the camera.
       return pose({ hipY: -58, lean: -0.05, hfx: 30, hfy: -4, hbx: 26, hby: 6, ffx: 16, fbx: -22 });
+    case 'throw': {
+      // Seize low with both hands, heave the rival up and over the head
+      // (leaning back into it), then drive them down behind: bent double.
+      const t = f.t;
+      if (t < THROW.lift) return pose({ hipY: -50, lean: 0.35, hfx: 40, hfy: 4, hbx: 36, hby: 10, ffx: 22, fbx: -24 });
+      if (t < THROW.slam) {
+        const k = (t - THROW.lift) / (THROW.slam - THROW.lift);
+        return pose({ hipY: -58 + k * 4, lean: 0.2 - k * 0.65, tilt: -0.1 * k, hfx: 30 - k * 46, hfy: -10 - k * 52, hbx: 24 - k * 44, hby: -4 - k * 52, ffx: 20, fbx: -26 });
+      }
+      const k = Math.min(1, (t - THROW.slam) / 4);
+      return pose({ hipY: -48, lean: -0.45 + k * 0.95, hfx: -20 + k * 4, hfy: 20, hbx: -26 + k * 6, hby: 24, ffx: 26, fbx: -30 });
+    }
+    case 'held': {
+      // Lifted and turned head over heels on the way over, arms flailing.
+      const t = f.t;
+      const k = Math.min(1, Math.max(0, (t - THROW.lift) / (THROW.slam - THROW.lift)));
+      const flail = Math.sin(t * 0.9) * 12;
+      // Tipped head-first over the thrower: upright when seized, flat at the
+      // top, head down behind for the slam. The body turns about the feet, so
+      // it is raised by as much as the turn lowers the hips - they stay where
+      // the rules carry them.
+      const rot = t < THROW.lift ? (t / THROW.lift) * 0.25 : 0.25 + k * 2.3;
+      return pose({ hipY: -60, lean: -0.2, hfx: 10 + flail, hfy: -30, hbx: -16 - flail, hby: -26, ffx: 16 - flail * 0.5, ffy: -10, fbx: -12 + flail * 0.5, fby: -16, rot, lift: -60 * (1 - Math.cos(rot)) });
+    }
     case 'hit': {
       if (f.reel > 0) {
         // Thrown off balance by a perfect guard: arms flung wide, swaying on the heels.
@@ -245,13 +274,15 @@ function targetPose(f, now) {
     }
     case 'down':
     case 'ko': {
+      // A thrown fighter went over head-first, so lies the other way round.
+      const way = thrown[f.slot] ? 1 : -1;
       const limp = { lean: 0, hfx: 4, hfy: 26, hbx: -8, hby: 24, ffx: 10, fbx: -8, hipY: -64 };
-      if (air) return pose({ ...limp, rot: -Math.min(1.3, 0.3 + f.t * 0.11), hfy: -6, hby: -12 });
-      return pose({ ...limp, rot: -Math.PI / 2, lift: -15 });
+      if (air) return pose({ ...limp, rot: thrown[f.slot] ? 1.45 : -Math.min(1.3, 0.3 + f.t * 0.11), hfy: -6, hby: -12 });
+      return pose({ ...limp, rot: (way * Math.PI) / 2, lift: -15 });
     }
     case 'getup': {
       const k = Math.min(1, f.t / 16);
-      return pose({ ...CROUCH, rot: (-Math.PI / 2) * (1 - k) * (1 - k), lift: -15 * (1 - k), hipY: -30 - 20 * k });
+      return pose({ ...CROUCH, rot: ((thrown[f.slot] ? 1 : -1) * Math.PI / 2) * (1 - k) * (1 - k), lift: -15 * (1 - k), hipY: -30 - 20 * k });
     }
     case 'win':
       return victoryPose(f);
@@ -292,6 +323,7 @@ export function resetPoses() {
   smooth.length = 0;
   lastAt.length = 0;
   hitFrom.length = 0;
+  thrown.length = 0;
 }
 
 // The pose a fighter should be drawn in right now, eased from the last frame.
