@@ -504,6 +504,21 @@ button:focus-visible {
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
 }
 
+/* The random pick: a face-sized disc with a question mark. */
+.pick.rand .head {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  background: radial-gradient(circle at 40% 35%, var(--plum-hi), var(--night));
+  color: var(--gold);
+  font: 700 1.7rem/1 var(--font-display);
+}
+
+.pick.rand:hover,
+.pick.rand:focus-visible {
+  opacity: 1;
+}
+
 .pick.on {
   opacity: 1;
   box-shadow: 0 0 0 3px var(--gold);

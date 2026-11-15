@@ -18,6 +18,9 @@ signature moves of any existing fighting game.
 | JACKIE | sumo | Mountain Stomp: floors everyone nearby who is not jumping; a shockwave ring on the floor shows how far it reaches | slow, heavy, hard to knock out |
 | PIXIE | slim | Twin Flame Spiral: a spinning leap that hits all around, two flames orbiting and leaving a spiral | quick and fragile |
 
+Can't choose? The **?** after the faces on every select screen (and in an
+online room) picks another fighter at random, in a random costume.
+
 Every fighter has two costumes, picked with the two split discs under the
 portraits on the select screen (and in an online room): Ruko wears Crimson or
 Midnight, Shadow Storm or Thunder, Jackie Violet or Granite, Pixie Flame or

@@ -323,6 +323,7 @@ function slotCard(slot, who) {
         ${FIGHTERS.map(
           (o) => `<button type="button" class="pick ${o.id === f.id ? 'on' : ''}" data-act="pick" data-slot="${slot}" data-id="${o.id}" aria-pressed="${o.id === f.id}" title="${o.name}">${head(o.id)}</button>`,
         ).join('')}
+        <button type="button" class="pick rand" data-act="pickRandom" data-slot="${slot}" title="Random fighter" aria-label="Random fighter"><span class="head" aria-hidden="true">?</span></button>
         ${lookButtons(f.id, app.looks[slot] ?? 0, 'look', slot)}
       </div>
     </div>`;
@@ -915,6 +916,7 @@ function roomScreen() {
           ${statBars(getFighter(room.char))}
           <div class="picker" role="group" aria-label="Your fighter">
             ${FIGHTERS.map((o) => `<button type="button" class="pick ${o.id === room.char ? 'on' : ''}" data-act="onChar" data-id="${o.id}" aria-pressed="${o.id === room.char}" title="${o.name}">${head(o.id)}</button>`).join('')}
+            <button type="button" class="pick rand" data-act="onCharRandom" title="Random fighter" aria-label="Random fighter"><span class="head" aria-hidden="true">?</span></button>
             ${lookButtons(room.char, room.look ?? 0, 'onLook')}
           </div>
         </div>
@@ -1317,6 +1319,10 @@ const ACTIONS = {
     show('lobby');
   },
   onChar: (el) => app.online.setChar(el.dataset.id),
+  onCharRandom() {
+    const others = FIGHTERS.filter((o) => o.id !== app.online.room?.char);
+    app.online.setChar(others[Math.floor(Math.random() * others.length)].id);
+  },
   async invite(el) {
     const link = `${location.origin}${location.pathname}#room-${app.online.room.code}`;
     try {
@@ -1379,6 +1385,21 @@ const ACTIONS = {
   pick(el) {
     app.picks[Number(el.dataset.slot)] = el.dataset.id;
     show('select');
+  },
+  // Let fate choose: another fighter than the one shown, in a random costume.
+  pickRandom(el) {
+    const slot = Number(el.dataset.slot);
+    const others = FIGHTERS.filter((o) => o.id !== app.picks[slot]);
+    const f = others[Math.floor(Math.random() * others.length)];
+    app.picks[slot] = f.id;
+    app.looks[slot] = Math.floor(Math.random() * (f.looks?.length || 1));
+    try {
+      localStorage.setItem('gd-arena-looks', JSON.stringify(app.looks));
+    } catch {
+      // not remembered
+    }
+    show('select');
+    ui.querySelector(`[data-act=pickRandom][data-slot="${slot}"]`)?.focus({ preventScroll: true });
   },
   look(el) {
     app.looks[Number(el.dataset.slot)] = Number(el.dataset.id) || 0;
