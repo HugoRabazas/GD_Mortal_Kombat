@@ -503,6 +503,7 @@ function newFighter(charId, slot, count, mod) {
     holdK: 0, // ticks the kick button has been held
     hitsAt: -1, // the tick of a flurry on which it last struck afresh
     ultOn: -1, // slot of the rival this finisher has landed on, or -1
+    ultAim: -1, // slot of the rival this finisher set out after (aimed ones), or -1
     shrug: 0, // blows from others shrugged off during this finisher
     air2: false, // the air jump is spent
     buf: 0, // remembered attack presses
@@ -615,10 +616,15 @@ function nearestRival(s, f, range) {
 // (A finisher that has landed stays on its victim while they are in range,
 // rather than turning to whoever has come nearest.)
 function markOf(s, f, range) {
-  const o = f.state === 'attack' && MOVES[f.move]?.ult && f.ultOn >= 0 ? s.f[f.ultOn] : null;
+  const o = f.state === 'attack' && MOVES[f.move]?.ult && markedBy(f) >= 0 ? s.f[markedBy(f)] : null;
   if (o && !isOut(o) && Math.hypot(o.x - f.x, o.z - f.z) < range) return o;
   return nearestRival(s, f, range);
 }
+// The rival a finisher is after: the one it caught, or failing that the one
+// it set out after (an aimed finisher: a rush, a leap) - or -1. Only that
+// rival, another finisher or a knockout blow can stop it (see applyHit).
+export const markedBy = (f) => (f.ultOn >= 0 ? f.ultOn : f.ultAim ?? -1);
+
 function aim(s, f, range) {
   if (range <= 0) return;
   const o = markOf(s, f, range);
@@ -710,6 +716,7 @@ function tryAttack(s, f, inp = 0) {
     f.meter = 0;
     const ult = getFighter(f.char).super.move || 'super';
     f.ultOn = -1;
+    f.ultAim = MOVES[ult].aim > 0 ? nearestRival(s, f, MOVES[ult].aim)?.slot ?? -1 : -1;
     f.shrug = 0;
     startAttack(s, f, ult);
     if (MOVES[ult].vanish) f.inv = MOVES[ult].vanish;
@@ -1482,7 +1489,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   // A finisher that has landed is not broken by anyone but its victim (or
   // by another finisher): the others' blows hurt, but the chain goes on, and
   // a throw finds no hold. A blow that would knock out still does.
-  if (def.state === 'attack' && MOVES[def.move]?.ult && def.ultOn >= 0 && def.ultOn !== att.slot && kind !== 'super') {
+  if (def.state === 'attack' && MOVES[def.move]?.ult && markedBy(def) >= 0 && markedBy(def) !== att.slot && kind !== 'super') {
     if (kind === 'grab') return;
     const dmg = Math.max(1, Math.round(m.dmg * power));
     if (dmg < def.hp) {

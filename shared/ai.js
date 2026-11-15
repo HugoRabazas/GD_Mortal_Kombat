@@ -7,7 +7,7 @@
 
 import { INPUT, RULES } from './constants.js';
 import { getFighter } from './fighters.js';
-import { MOVES } from './sim.js';
+import { MOVES, markedBy } from './sim.js';
 
 // `parry` is how often the CPU manages a last-moment guard (a perfect guard,
 // see GUARD in sim.js). A guard raised that late is always perfect, so when
@@ -82,9 +82,9 @@ function toward(dx, dz) {
   return bits;
 }
 
-// A rival whose finisher has landed on someone else cannot be stopped by
-// this fighter's blows (see applyHit): hitting them is a waste.
-const unstoppable = (o, f) => o.state === 'attack' && !!MOVES[o.move]?.ult && o.ultOn >= 0 && o.ultOn !== f.slot;
+// A rival whose finisher is after someone else (caught, or set out after)
+// cannot be stopped by this fighter's blows (see applyHit): a waste.
+const unstoppable = (o, f) => o.state === 'attack' && !!MOVES[o.move]?.ult && markedBy(o) >= 0 && markedBy(o) !== f.slot;
 
 function pickTarget(ai, s, f) {
   let best = -1;

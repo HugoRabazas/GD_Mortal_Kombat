@@ -482,6 +482,16 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **A rush is stopped only by the rival it is after**: an aimed finisher (a
+  rush or a leap: everyone's but Pixie's, Gleh's and Zelrith's, which rise
+  first) sets out after the nearest rival, and from that moment, in a brawl,
+  only that rival, another finisher or a knockout blow can stop it; the
+  others' blows hurt but do not (UNSTOPPABLE), as once it has caught someone.
+  The CPU leaves such a fighter alone. In a brawl the rushers were struck out
+  of their finishers on the way in a third of the time and more (Meru 40 %)
+  where the risers were 12-14 %: now Meru 35 %, Ruko 27 %. Duels do not
+  change (no third party): 48-53 %. Brawl wins 15-21 % on one seed, 15-25 %
+  on the other (Ruko still lowest, 15-16 %). 100 tests.
 - **The hook kick has enders**: punch, kick, punch is a **spinning
   backfist** to the back of the turned rival's head that floors them (7);
   punch, kick, kick is the launcher. The CPU strings them like the others;

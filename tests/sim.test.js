@@ -725,6 +725,28 @@ test('a finisher that has landed is not broken by the others in a brawl, only hu
   assert.ok(stopped, 'struck out of the finisher before it landed');
 });
 
+test('in a brawl a rush finisher is only stopped on its way by the rival it set out after', () => {
+  // Ruko rushes at Shadow; Jackie, close behind, punches into the rush
+  // before it has reached anyone.
+  const s = startFight(['ruko', 'shadow', 'jackie', 'pixie']);
+  Object.assign(s.f[0], { x: -150, z: 0, dir: 0, meter: RULES.SUPER_COST });
+  Object.assign(s.f[1], { x: 90, z: 0, dir: Math.PI });
+  Object.assign(s.f[2], { x: -150, z: 300, dir: 0 });
+  Object.assign(s.f[3], { x: 0, z: 380 });
+  step(s, [INPUT.SUPER, 0, 0, 0]);
+  assert.equal(s.f[0].ultAim, 1, 'it set out after Shadow, the nearest');
+  Object.assign(s.f[2], { x: s.f[0].x - 55, z: s.f[0].z, dir: 0 }); // then Jackie steps in behind
+  const seen = [];
+  for (let i = 0; i < 200; i++) {
+    step(s, [0, 0, i < 12 ? INPUT.PUNCH : 0, 0]);
+    seen.push(...s.ev);
+  }
+  const shrug = seen.find((e) => e.type === 'armour' && e.by === 0 && e.from === 2);
+  assert.ok(shrug, "Jackie's punch is shrugged off");
+  assert.ok(seen.findIndex((e) => e === shrug) < seen.findIndex((e) => e.type === 'hit' && e.by === 0 && e.on === 1), 'before the rush had landed');
+  assert.ok(seen.some((e) => e.type === 'hit' && e.by === 0 && e.on === 1 && e.final), 'and the finisher went all the way');
+});
+
 test('a finisher\'s flurry never knocks out: its last blow does', () => {
   for (const id of ['ruko', 'kichta', 'meru']) {
     const s = finisherAt([id, 'shadow']);
