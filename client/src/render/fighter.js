@@ -24,13 +24,17 @@ function pose(o) {
     hipX: 0, hipY: -62, lean: 0.12, tilt: 0,
     hfx: 26, hfy: -4, hbx: 12, hby: 8,
     ffx: 18, ffy: 0, fbx: -20, fby: 0,
-    rot: 0, lift: 0,
+    rot: 0, lift: 0, spin: 0,
     ...o,
   };
 }
 
 const CROUCH = { hipY: -38, lean: 0.24, hfx: 24, hfy: 4, hbx: 12, hby: 12, ffx: 22, fbx: -24 };
 const AIR = { hipY: -64, lean: 0.1, hfx: 20, hfy: -18, hbx: -16, hby: -10, ffx: 12, ffy: -24, fbx: -12, fby: -12 };
+
+// A whole turn on the spot, over `ticks`: 0 at the start, a full circle at the
+// end (which looks the same as no turn, so the next pose follows on).
+const turnOf = (t, ticks) => Math.min(1, t / ticks) * Math.PI * 2;
 
 function attackPose(f) {
   const m = MOVES[f.move];
@@ -58,6 +62,23 @@ function attackPose(f) {
       if (phase === 'pre') return pose({ hipY: -44, lean: -0.15, ffx: 30, ffy: -10, fbx: -18, hfx: 8, hfy: 10, hbx: -20, hby: 6 });
       if (phase === 'act') return pose({ hipX: -6, hipY: -22, lean: -0.62, ffx: 76, ffy: -2, fbx: 14, fby: -4, hfx: -14, hfy: -18, hbx: -34, hby: 6 });
       return pose({ hipY: -34, lean: -0.3, ffx: 40, ffy: -2, fbx: 6, hfx: -6, hfy: 10, hbx: -24, hby: 10 });
+    }
+    case 'rollUpper': { // springing up out of the roll, the fist driven skywards
+      if (phase === 'pre') return pose({ hipY: -34, lean: 0.48, hfx: 4, hfy: 30, hbx: -8, hby: 18, ffx: 20, fbx: -24 });
+      if (phase === 'act') return pose({ hipX: 6, hipY: -70, lean: -0.04, hfx: 24, hfy: -62, hbx: -18, hby: 8, ffx: 12, ffy: -16, fbx: -22, fby: -4, lift: -14 });
+      return pose({ lean: 0.06, hfx: 22, hfy: -34 });
+    }
+    case 'rollSpin': { // a full turn on the spot, the heel whipping round at head height
+      const spin = turnOf(f.t, m.startup + 2);
+      if (phase === 'pre') return pose({ spin, lean: 0.3, ffx: 4, ffy: -8, fbx: -30, fby: -28, hfx: -18, hfy: 8, hbx: 20, hby: 2 });
+      if (phase === 'act') return pose({ spin, hipY: -60, lean: -0.5, tilt: 0.25, ffx: 86, ffy: -68, fbx: -8, hfx: -14, hfy: -6, hbx: -30, hby: 2 });
+      return pose({ lean: -0.16, ffx: 32, ffy: -20, hfx: 6, hfy: 6 });
+    }
+    case 'riseKick': { // off the floor with a low sweeping turn, a hand on the ground
+      const spin = turnOf(f.t, m.startup + 3);
+      if (phase === 'pre') return pose({ spin, hipY: -26, lean: 0.55, tilt: 0.2, hfx: 18, hfy: 46, hbx: -4, hby: 30, ffx: 16, ffy: -6, fbx: -28, fby: -4 });
+      if (phase === 'act') return pose({ spin, hipY: -28, lean: 0.1, tilt: -0.2, ffx: 84, ffy: -10, fbx: -18, hfx: 14, hfy: 44, hbx: -26, hby: 12 });
+      return pose({ ...CROUCH, ffx: 30 });
     }
     case 'grab': // both hands reach out, then heave
       if (phase === 'pre') return pose({ lean: 0.25, hfx: 30, hfy: -10, hbx: 26, hby: -2 });
@@ -328,12 +349,15 @@ function targetPose(f, now) {
 const smooth = [];
 const lastAt = []; // when each slot's pose was last eased
 const hitFrom = []; // per slot: was the last blow taken from behind?
+const rolled = []; // per slot: was the fighter rolling last frame?
+const TAU = Math.PI * 2;
 
 export function resetPoses() {
   smooth.length = 0;
   lastAt.length = 0;
   hitFrom.length = 0;
   thrown.length = 0;
+  rolled.length = 0;
 }
 
 // The pose a fighter should be drawn in right now, eased from the last frame.
@@ -354,8 +378,17 @@ export function currentPose(f, now) {
   const rate = f.state === 'attack' || f.state === 'hit' || f.state === 'airAttack' ? 0.62 : 0.36;
   const k = 1 - Math.pow(1 - rate, frames);
   for (const key in target) cur[key] += (target[key] - cur[key]) * k;
-  if (f.state === 'roll') cur.rot = target.rot; // a spin must not be smoothed away
-  else if (Math.abs(cur.rot) > Math.PI) cur.rot = 0; // coming out of a roll: do not unwind it
+  cur.spin = target.spin; // a turn on the spot is drawn as it is: easing would unwind it
+  if (f.state === 'roll') {
+    cur.rot = target.rot; // a spin must not be smoothed away
+    rolled[f.slot] = true;
+  } else if (rolled[f.slot]) {
+    // Coming out of a roll: carry on turning the same way to upright (an
+    // attack out of the roll starts with the body upside down), never unwind.
+    rolled[f.slot] = false;
+    const r = ((cur.rot % TAU) + TAU) % TAU;
+    cur.rot = r < 0.6 ? r : r - TAU;
+  }
   return cur;
 }
 
@@ -414,7 +447,7 @@ export function drawFighter(ctx, f, char, now, { sx, sy, facing, lift = 0, scale
   const col = lookColors(char.id, look);
   const wide = char.build === 'sumo' ? 1.45 : char.build === 'slim' ? 0.82 : 1;
   const p = currentPose(f, now);
-  const D = facing;
+  const D = Math.cos(p.spin) < 0 ? -facing : facing; // half way round a turn: seen from behind
 
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
   ctx.beginPath();

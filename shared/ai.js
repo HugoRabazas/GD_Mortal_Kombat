@@ -125,6 +125,17 @@ export function aiInput(ai, s, me) {
     }
   }
   if (f.state !== 'attack') ai.chained = false;
+  // Out of a roll, or getting up, with a rival close: sometimes strike
+  // (decided once, at the tick the move becomes possible).
+  if ((f.state === 'roll' && f.t === 7) || (f.state === 'getup' && f.t === 4)) {
+    const o = ai.target >= 0 ? s.f[ai.target] : null;
+    const near = o && o.hp > 0 && Math.hypot(o.x - f.x, o.z - f.z) < (f.state === 'roll' ? 150 : 115);
+    if (near && rnd(ai) < cfg.attack * (f.state === 'roll' ? 0.45 : 0.4)) {
+      ai.tap = f.state === 'roll' && rnd(ai) < 0.5 ? INPUT.PUNCH : INPUT.KICK;
+      ai.tapT = 2;
+      return ai.tap;
+    }
+  }
   if (ai.wait > 0) {
     ai.wait--;
     return ai.held | tap;

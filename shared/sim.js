@@ -43,6 +43,10 @@ const GETUP_TICKS = 18;
 const TECH_TICKS = 8;
 export const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle of where you face
 const ROLL = { ticks: 15, safe: 11, speed: 8.5, rest: 7 }; // the dodge roll
+// Punch or kick late in a roll comes out of it as an attack (from tick
+// `from`, when the roll has done most of its travelling); a fighter getting
+// up can strike from tick `rise` of the getup.
+const OUT_OF = { from: 7, rise: 4 };
 const SPLAT = { speed: 3.2, dmg: 5 }; // being knocked into the ring of fire
 // A counter hit: a blow that lands while the rival is still winding up an
 // attack of their own (in its startup) does `dmg` times the damage and holds
@@ -94,6 +98,24 @@ export const MOVES = {
   slide: {
     startup: 7, active: 9, recovery: 20, dmg: 6, reach: 66, arc: 0.6, y0: -20, y1: 60, aim: 220,
     hitstun: 0, blockstun: 12, push: 6, gain: 10, knockdown: true, speed: 7.5, go: [7, 16],
+  },
+  // Out of a dodge roll: punch springs up into a rising uppercut that knocks
+  // down, kick whips round into a spinning heel kick with a wide arc. The
+  // roll is what makes them safe to start; they are slow to recover.
+  rollUpper: {
+    startup: 5, active: 4, recovery: 18, dmg: 8, reach: 80, arc: 0.9, y0: 50, y1: 200, aim: 200,
+    hitstun: 0, blockstun: 12, push: 7, gain: 10, knockdown: true, heavy: true, speed: 3, go: [0, 7],
+  },
+  rollSpin: {
+    startup: 6, active: 5, recovery: 16, dmg: 7, reach: 100, arc: 1.4, y0: 30, y1: 150, aim: 220,
+    hitstun: 20, blockstun: 12, push: 13, gain: 10, heavy: true,
+  },
+  // Getting up with punch or kick: a low sweeping kick off the floor. It
+  // cannot be hit while it starts, so it breaks a rival waiting over you,
+  // but it is slow to recover if guarded.
+  riseKick: {
+    startup: 7, active: 4, recovery: 20, dmg: 7, reach: 92, arc: 1.3, y0: -10, y1: 100, aim: 200,
+    hitstun: 16, blockstun: 12, push: 14, gain: 8,
   },
   // Punch and kick together: a grab. Short reach and slow to recover if it
   // misses, but a guard does not stop it - the answer to a rival who only blocks.
@@ -443,6 +465,10 @@ function control(s, f, inp) {
       break;
     }
     case 'roll': {
+      if (f.t >= OUT_OF.from && f.buf & (INPUT.PUNCH | INPUT.KICK)) {
+        startAttack(s, f, f.buf & INPUT.KICK ? 'rollSpin' : 'rollUpper');
+        break;
+      }
       if (f.t >= ROLL.ticks) {
         setState(f, 'land');
         f.stun = ROLL.rest;
@@ -534,6 +560,11 @@ function control(s, f, inp) {
       break;
     }
     case 'getup': {
+      if (f.t >= OUT_OF.rise && f.buf & (INPUT.PUNCH | INPUT.KICK)) {
+        startAttack(s, f, 'riseKick');
+        f.inv = MOVES.riseKick.startup;
+        break;
+      }
       if (f.t >= GETUP_TICKS) setState(f, 'idle');
       break;
     }

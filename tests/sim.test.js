@@ -557,6 +557,44 @@ test('kick on the move is a slide that sweeps a standing rival but passes under 
   assert.equal(air.f[1].hp, air.f[1].maxHp, 'a rival in the air is over the slide');
 });
 
+test('punch late in a roll springs into an uppercut that knocks down; kick, a spinning heel kick', () => {
+  for (const [button, move] of [[INPUT.PUNCH, 'rollUpper'], [INPUT.KICK, 'rollSpin']]) {
+    const s = startFight();
+    closeUp(s, 150);
+    run(s, 6, [INPUT.RIGHT | INPUT.BLOCK, 0]);
+    assert.equal(s.f[0].state, 'roll');
+    step(s, [INPUT.RIGHT | INPUT.BLOCK | button, 0]);
+    run(s, 2);
+    assert.equal(s.f[0].move, move, 'out of the roll');
+    run(s, 12);
+    assert.ok(s.f[1].hp < s.f[1].maxHp, `${move} lands`);
+    if (move === 'rollUpper') assert.equal(s.f[1].state, 'down');
+  }
+  // Too early in the roll the press waits; the roll still carries on first.
+  const early = startFight();
+  closeUp(early, 300);
+  step(early, [INPUT.RIGHT | INPUT.BLOCK, 0]);
+  step(early, [INPUT.RIGHT | INPUT.BLOCK | INPUT.PUNCH, 0]);
+  run(early, 3, [INPUT.RIGHT | INPUT.BLOCK, 0]);
+  assert.equal(early.f[0].state, 'roll', 'no strike in the first ticks of a roll');
+});
+
+test('punch or kick while getting up is a rising sweep that cannot be hit while it starts', () => {
+  const s = startFight();
+  closeUp(s);
+  step(s, [INPUT.GRAB, 0]);
+  for (let t = 0; t < 200 && s.f[1].state !== 'getup'; t++) step(s, idle(s));
+  assert.equal(s.f[1].state, 'getup');
+  s.f[0].x = s.f[1].x - 70; // waiting over the fallen rival
+  s.f[0].z = s.f[1].z;
+  run(s, 4, [0, INPUT.KICK]);
+  assert.equal(s.f[1].move, 'riseKick');
+  assert.ok(s.f[1].inv > 0, 'safe while it winds up');
+  const hp = s.f[0].hp;
+  run(s, 14);
+  assert.ok(s.f[0].hp < hp, 'it catches the rival standing over them');
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);

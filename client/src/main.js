@@ -540,6 +540,8 @@ function movesCard() {
       <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b>.</dd>
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b>: attacks pass through you.</dd>
       <dt>${k(key.b)}</dt><dd>On the floor: a <b>quick rise</b>.</dd>
+      <dt>Roll, ${k(key.p)} / ${k(key.k)}</dt><dd>Late in a roll: a <b>rising uppercut</b> that knocks down, or a <b>spinning heel kick</b> with a wide arc.</dd>
+      <dt>Getting up, ${k(key.p)}</dt><dd><b>Rising sweep</b>: can't be hit while it starts. Slow if guarded.</dd>
       <dt>${k(key.p)}</dt><dd>Into a rival <b>winding up</b> a blow: a <b>counter hit</b>, a quarter more damage.</dd>
       ${own}
     </dl>`;

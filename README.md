@@ -159,6 +159,18 @@ and the heartbeat, the crowd and the weather go quiet.
   a **slide** (feet-first along the floor, 6 damage, sweeps the rival down,
   but low enough to be jumped and slow to recover). A single step still gives
   a plain jab or kick, so close-range play is unchanged.
+- **Out of a dodge roll**: punch or kick from the eighth tick of a roll
+  (once it has done most of its travelling) comes out of it as an attack:
+  punch springs up into a **rising uppercut** that knocks down (8 damage),
+  kick whips round into a **spinning heel kick** with a wide arc (7 damage,
+  a full turn on the spot). Both are slow to recover, so a roll that strikes
+  at nothing is punished.
+- **Getting up**: punch or kick from the fourth tick of the getup is a
+  **rising sweep**, a low turning kick with a hand on the floor (7 damage,
+  pushes the rival away). Nothing can hit it while it starts, so it breaks a
+  rival waiting over you, but it recovers slowly if guarded. Measured: the
+  CPU tries these about once a knockdown or a roll at most, and they shift
+  no fighter's duel rate outside 47-55 %.
 - **Throw** has its own button (GRAB on a phone, `M` / `V`, the right stick
   on a pad), so it can be done while moving with one thumb on the stick; punch
   and kick pressed together (within 3 ticks) still work on a keyboard. It is a

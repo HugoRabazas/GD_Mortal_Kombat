@@ -21,6 +21,8 @@ import { lookColors } from '../../../shared/fighters.js';
 import { heads } from '../assets.js';
 
 const S = 0.01; // world units per arena pixel
+// Moves drawn glowing in the fighter's colour: the specials and the finisher.
+const GLOWS = new Set(['dash', 'bolt', 'rise', 'quake', 'super']);
 const OUTLINE = 0.022; // thickness of the dark cartoon outline
 const BOSS = { primary: '#2a1436', secondary: '#0d0812', accent: '#ffd34d', glow: '#ffb020' };
 
@@ -209,7 +211,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
       while (d > Math.PI) d -= Math.PI * 2;
       while (d < -Math.PI) d += Math.PI * 2;
       yaw += d * 0.35;
-      turn.rotation.y = yaw;
+      turn.rotation.y = yaw - p.spin;
       lean.rotation.z = -p.rot;
       lean.position.y = -p.lift * S;
 
@@ -291,7 +293,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
       if (f.state === 'hit' && f.t < 5) {
         tint = white;
         amount = 0.75;
-      } else if (f.state === 'attack' && !f.move.startsWith('punch') && f.move !== 'kick' && f.move !== 'grab') {
+      } else if (f.state === 'attack' && GLOWS.has(f.move)) {
         tint = glow;
         amount = 0.55 + 0.2 * Math.sin(now / 40);
       } else if (f.hp > 0 && f.hp < f.maxHp * 0.25 && f.state !== 'win' && f.state !== 'lose') {
