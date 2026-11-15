@@ -1033,6 +1033,18 @@ export function create3D(canvas) {
       shot.rise = 0.46 - open * 0.36;
       shot.look = open * 3.2;
       shot.ease = 0.08 + open * 0.1;
+    } else if (s.phase === 'ko' && s.koKind === 'ko' && s.pt < 54 && s.f.some((f) => f.state === 'ko')) {
+      // The knockout in slow motion: the camera swings round the one going
+      // down, close in, before turning to the winner.
+      const down = s.f.filter((f) => f.state === 'ko').sort((a, b) => (b.outAt ?? 0) - (a.outAt ?? 0))[0];
+      const k = s.pt / 54;
+      shot.x = down.x * S;
+      shot.z = down.z * S;
+      shot.y = 0.5 + down.h * S * 0.8;
+      shot.dist = 3.4 + k * 2;
+      shot.yaw = 1.1 - k * 1.6;
+      shot.rise = 0.22 + k * 0.14;
+      shot.ease = 0.18;
     } else if (s.phase === 'ko' && s.winner >= 0) {
       const w = s.f[s.winner];
       const k = Math.min(1, s.pt / 120);

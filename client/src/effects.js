@@ -329,10 +329,17 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet) play('cheer');
         break;
       }
-      case 'ko':
+      case 'ko': {
         cheerFor(e.winner, 1);
         addShake(16);
         addFlash(0.75);
+        // A burst of light where the last one fell.
+        const out = state.f.filter((f) => f.state === 'ko').sort((a, b) => (b.outAt ?? 0) - (a.outAt ?? 0))[0];
+        if (out) {
+          const p = project(out.x, out.h + 90, out.z);
+          hitSpark(p.x, p.y, '#ffffff', true, 'kick', -Math.PI / 2);
+          lightFlash(out.x, out.h + 90, out.z, '#ffffff', true);
+        }
         if (arena) showRoundPoints(state, project);
         if (quiet) break;
         if (arena) showBanner(e.winner < 0 ? 'ROUND SHARED' : `${nameOf(e.winner)} TAKES IT`, e.finisher ? 'FINISHER!' : e.perfect ? 'PERFECT!' : null, '#ff5a36', 2300);
@@ -342,6 +349,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (arena) announce(e.winner < 0 ? 'Round shared' : `${spoken(e.winner)} takes it`);
         else announce(e.winner < 0 ? 'Double K. O.' : e.finisher ? 'Finisher!' : 'K. O.!');
         break;
+      }
       case 'timeup':
         if (arena) showRoundPoints(state, project);
         if (quiet) break;

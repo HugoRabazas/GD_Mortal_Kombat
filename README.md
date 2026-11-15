@@ -482,6 +482,12 @@ the ruins in the sandstorm. Calm rounds are quiet.
 The music holds its breath during a finisher's freeze and the slow motion
 after a knockout, then comes back.
 
+The knockout that ends a round plays in slow motion - a third of the speed
+while the beaten fighter falls, then half, then full (cued by the rules, so
+online guests see the same) - with a burst of light where they fall, and
+the camera swinging round them, close in and low, before it turns to the
+winner.
+
 Music and effects have their own volume sliders (menu and pause screen),
 remembered on the device, next to the sound switch, the touch-button switch
 and the button arranger.

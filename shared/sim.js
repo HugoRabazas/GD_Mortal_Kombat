@@ -1428,8 +1428,9 @@ export function step(s, inputs) {
     return s;
   }
 
-  // Slow motion right after the knockout that ends a round.
-  if (s.phase === 'ko' && s.koKind === 'ko' && s.pt < 60 && s.pt % 2 === 0) return s;
+  // Slow motion right after the knockout that ends a round: a third of the
+  // speed while the beaten fighter falls, then half, then full.
+  if (s.phase === 'ko' && s.koKind === 'ko' && ((s.pt < 30 && s.pt % 3 !== 0) || (s.pt >= 30 && s.pt < 66 && s.pt % 2 === 0))) return s;
 
   // The ring of fire closes in as the clock runs down.
   if (fighting) {
