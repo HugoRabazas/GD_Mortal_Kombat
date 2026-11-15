@@ -553,6 +553,7 @@ function movesCard() {
       <dt>Run + ${k(key.p)}</dt><dd><b>Lunging straight</b>: after a few steps, punch with the stick held to leap in from long range. Chains into the second punch.</dd>
       <dt>Run + ${k(key.k)}</dt><dd><b>Slide</b>: kick while running to slide in feet-first and sweep the rival off their feet. Low: jump it.</dd>
       <dt>${k(key.g)}</dt><dd><b>Throw</b>: seize, lift and slam. Short reach, goes straight through a guard.</dd>
+      <dt>Hold ${k(key.k)}</dt><dd><b>Guard-breaker</b>: charge a kick, let go - it smashes a guard open and leaves the rival reeling. Open to blows while charging.</dd>
       <dt>${k(key.j)}, ${k(key.j)}</dt><dd><b>Double jump</b>: press again in the air, with a somersault.</dd>
       <dt>Air ${k(key.p)} / ${k(key.k)}</dt><dd>A <b>diving punch</b> angled down, or a <b>flying kick</b>.</dd>
       <dt>Air ${k(key.g)}</dt><dd><b>Stomp</b>: plunge feet first and flatten whoever is below. Rooted if it misses.</dd>

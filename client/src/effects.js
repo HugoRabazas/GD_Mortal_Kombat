@@ -117,6 +117,21 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet) play('burn');
         break;
       }
+      case 'guardBreak': {
+        // A guard smashed open.
+        const p = project(e.x, e.h, e.z);
+        blockSpark(p.x, p.y);
+        hitSpark(p.x, p.y, '#ffffff', true);
+        lightFlash(e.x, e.h, e.z, '#ffe08a', true);
+        floatText(p.x, p.y - 40, 'GUARD BREAK!', '#ffe08a', 26);
+        addShake(9);
+        if (!quiet) {
+          play('parry');
+          play('heavy');
+        }
+        if (!quiet && e.on === me) buzz(60);
+        break;
+      }
       case 'blink': {
         // Shadow vanishes in a puff of dark and reappears in another.
         for (const [x, z] of [[e.x0, e.z0], [e.x, e.z]]) {

@@ -342,6 +342,8 @@ export function aiInput(ai, s, me) {
   // A skirmisher likes to roll round to the rival's side before striking.
   if (style.circle && dist < 220 && rnd(ai) < style.circle) return hold(toward(-dz, dx) | INPUT.BLOCK, 3);
 
+  // A rival hiding behind a guard: now and then the charged kick that breaks it.
+  if (o.state === 'block' && dist < 110 && rnd(ai) < cfg.attack * 0.3) return hold(INPUT.KICK, 18);
   // A rival hiding behind a guard gets grabbed.
   if (o.state === 'block' && dist < 84 && rnd(ai) < cfg.attack * 0.35) return press(INPUT.GRAB);
 

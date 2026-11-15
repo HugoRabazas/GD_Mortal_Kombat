@@ -1344,8 +1344,14 @@ export function create3D(canvas) {
         const ch = charges[f.slot];
         if (ch) {
           const charging = f.state === 'attack' && f.move === 'bolt' && f.t < MOVES.bolt.startup;
-          ch.visible = charging;
-          if (charging) {
+          const coiled = f.state === 'attack' && f.move === 'charge'; // the kick being charged
+          ch.visible = charging || coiled;
+          if (coiled) {
+            const sz = 0.3 + Math.min(1, f.t / 30) * 0.7 + Math.sin(now / 25) * 0.06;
+            ch.position.set(f.x * S + Math.cos(f.dir) * 0.15, 0.75, f.z * S + Math.sin(f.dir) * 0.15);
+            ch.material.color.set(glow);
+            ch.scale.set(sz, sz, 1);
+          } else if (charging) {
             const k = f.t / MOVES.bolt.startup;
             const sz = 0.35 + k * 0.9 + Math.sin(now / 30) * 0.08;
             ch.position.set(f.x * S + Math.cos(f.dir) * 0.42, 1.2, f.z * S + Math.sin(f.dir) * 0.42);

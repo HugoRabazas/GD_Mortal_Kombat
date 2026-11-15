@@ -47,12 +47,13 @@ export const LESSONS = [
   },
   {
     id: 'throws',
-    title: 'Throws',
+    title: 'Against a guard',
     partner: 'blocker',
     intro: 'Your partner keeps a guard up.',
     steps: [
       { id: 'guarded', name: 'Punch the guard', how: (k) => `${k('p')}: a guard stops blows from the front`, ev: (e) => e.type === 'block' && e.by === 0 },
       { id: 'grab', name: 'Throw through the guard', how: (k) => `${k('g')} up close: a throw goes straight through a guard`, ev: mine('seize') },
+      { id: 'breaker', name: 'Break the guard', how: (k) => `hold ${k('k')} to charge, let go: the kick smashes the guard open`, ev: mine('guardBreak') },
     ],
   },
   {

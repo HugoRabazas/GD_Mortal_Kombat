@@ -208,6 +208,14 @@ and the heartbeat, the crowd and the weather go quiet.
   as often as it punishes, the knee when closing in); measured with them in:
   duels 47-53 %, brawl firsts 16-20 %, ladder 100 / 81 / 61 %. The Tutorial
   teaches them (Combos: hook kick and air string; On the run: flying knee).
+- **Hold kick** to charge it: after eight ticks the kick coils (the knee
+  drawn up, glowing, open to any blow) and, let go (no sooner than eight
+  ticks, on its own at forty), it becomes the **guard-breaker**, a driving
+  side kick. On an open rival it lands for 12 and knocks down; on a guard it
+  does no damage but **smashes the guard open** (GUARD BREAK!), leaving the
+  rival reeling for half a second. A perfect guard still turns it away. A
+  tapped kick is the kick as ever. The CPU charges it now and then against a
+  guard; taught in the Tutorial (Against a guard). Duels 48-52 % with it.
 - **Kick, kick**: a kick that lands flows into a spinning **roundhouse**
   that steps in after the rival and knocks down. The lunge also opens the
   punch string, so running punch, punch, kick launches too.

@@ -30,6 +30,10 @@ const AIR_JUMP = { from: 4, v: 11.5, buffer: 6 };
 const STOMP = { fall: -17, rest: 14 };
 // A launched rival can be hit this many more times in the air.
 const JUGGLE = 2;
+// Kick held down: after `hold` ticks the kick coils into a charge, which is
+// let go as the guard-breaking kick when the button is released (no sooner
+// than `min` ticks of charging, and on its own at `max`).
+const CHARGE = { hold: 8, min: 8, max: 40, reel: 30 };
 // A finisher's last blow: a longer hold, then this long for the camera.
 const FINALE = { stop: 22, ticks: 48 };
 const FRICTION = 0.84;
@@ -108,6 +112,16 @@ export const MOVES = {
   kick: {
     startup: 8, active: 4, recovery: 13, dmg: 10, reach: 104, arc: 0.75, y0: 30, y1: 140, aim: 210,
     hitstun: 19, blockstun: 12, push: 9, gain: 12, heavy: true, nextK: 'kick2',
+  },
+  // Kick held: coiled (open to any blow while it charges)...
+  charge: {
+    startup: 999, active: 0, recovery: 0, dmg: 0, aim: 210,
+  },
+  // ...and let go: a heavy kick that breaks a guard, leaving the one behind
+  // it reeling and open (`breaks`). A perfect guard still turns it away.
+  breaker: {
+    startup: 5, active: 4, recovery: 22, dmg: 12, reach: 108, arc: 0.8, y0: 30, y1: 150, aim: 210,
+    hitstun: 0, blockstun: 0, push: 12, gain: 12, knockdown: true, heavy: true, breaks: true,
   },
   // Kick, kick: a kick that lands flows into a spinning roundhouse that
   // knocks down, stepping in after the rival the first kick pushed away.
@@ -324,6 +338,7 @@ function newFighter(charId, slot, count, mod) {
     jumpT: 0, // ticks left on a remembered press of jump (for the air jump)
     runJump: false, // the jump was taken out of a run (kick is a flying knee)
     juggle: 0, // hits a launched fighter can still take before landing
+    holdK: 0, // ticks the kick button has been held
     air2: false, // the air jump is spent
     buf: 0, // remembered attack presses
     bufT: 0,
@@ -690,6 +705,16 @@ function control(s, f, inp) {
       const kicky = f.move === 'kick' || f.move === 'slide';
       if (t < GRAB_WINDOW && ((punchy && f.buf & INPUT.KICK) || (kicky && f.buf & INPUT.PUNCH))) {
         startAttack(s, f, 'grab');
+        break;
+      }
+      // A kick still held after its first ticks coils into a charge; the
+      // charge lets go as the guard-breaker on release (or when full).
+      if (f.move === 'kick' && t >= 5 && t < m.startup && f.holdK >= CHARGE.hold) {
+        startAttack(s, f, 'charge');
+        break;
+      }
+      if (f.move === 'charge') {
+        if ((t >= CHARGE.min && !held(INPUT.KICK)) || t >= CHARGE.max) startAttack(s, f, 'breaker');
         break;
       }
       if (m.rush) {
@@ -1060,6 +1085,22 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     emit(s, 'parry', { by: def.slot, on: att.slot, ...at, stagger });
     return;
   }
+  if (blocked && m.breaks) {
+    // The guard is broken: no damage gets through, but the one behind it is
+    // left reeling, arms flung wide, open to the next blow.
+    def.state = 'hit';
+    def.t = 0;
+    def.move = null;
+    def.buf = 0;
+    def.stun = CHARGE.reel;
+    def.reel = CHARGE.reel;
+    def.vx = dx * 6;
+    def.vz = dz * 6;
+    if (s.f.length === 2) s.hitstop = 9;
+    else att.stop = def.stop = 6;
+    emit(s, 'guardBreak', { by: att.slot, on: def.slot, ...at });
+    return;
+  }
   if (blocked) {
     const chip = Math.max(1, Math.round(m.dmg * power * (m.chip ?? 0.15)));
     def.hp = Math.max(1, def.hp - chip); // a blocked hit never knocks out
@@ -1312,6 +1353,7 @@ export function step(s, inputs) {
   for (const f of s.f) {
     const inp = fighting && !isOut(f) ? inputs[f.slot] | 0 : 0;
     if (fighting) rememberPresses(f, inp, s.hitstop > 0 || s.freeze > 0 || f.stop > 0);
+    f.holdK = inp & INPUT.KICK ? (f.holdK || 0) + 1 : 0; // how long kick has been held
     if (fighting && inp & INPUT.JUMP && !(f.prev & INPUT.JUMP)) f.jumpT = AIR_JUMP.buffer;
     else if (f.jumpT > 0) f.jumpT--;
     f.prev = inp;

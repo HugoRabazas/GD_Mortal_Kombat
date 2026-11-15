@@ -765,6 +765,29 @@ test('an air punch that lands flows into an axe kick; a jump out of a run kicks 
   assert.equal(still.f[0].move, 'airKick');
 });
 
+test('kick held charges a kick that breaks a guard; a tapped kick is still the kick', () => {
+  const play = (hold, p2) => {
+    const s = startFight();
+    closeUp(s, 80);
+    const ev = [];
+    for (let t = 0; t < 70; t++) {
+      step(s, [t < hold ? INPUT.KICK : 0, p2]);
+      ev.push(...s.ev);
+    }
+    return { s, ev };
+  };
+  const tap = play(2, INPUT.BLOCK);
+  assert.ok(tap.ev.some((e) => e.type === 'block'), 'a tapped kick is blocked as ever');
+  assert.ok(!tap.ev.some((e) => e.type === 'swing' && e.move === 'charge'));
+  const held = play(25, INPUT.BLOCK);
+  assert.ok(held.ev.some((e) => e.type === 'guardBreak'), 'the guard is broken');
+  const broke = held.ev.findIndex((e) => e.type === 'guardBreak');
+  assert.equal(held.s.f[1].hp, held.s.f[1].maxHp, 'no damage through the guard');
+  assert.ok(broke >= 0);
+  const open = play(25, 0);
+  assert.ok(open.ev.some((e) => e.type === 'hit' && e.kind === 'breaker'), 'on an open rival it simply lands');
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);
