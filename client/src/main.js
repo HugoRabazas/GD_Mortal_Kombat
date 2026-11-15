@@ -1147,6 +1147,9 @@ function readRecord() {
   }
   return { v: 1, fights: 0, wins: 0, streak: 0, bestStreak: 0, bestCombo: 0, perfect: 0, damage: 0, online: 0, by: {} };
 }
+// Round numbers of wins worth a word when they are reached.
+const WIN_MILESTONES = [10, 25, 50, 100, 250, 500, 1000];
+
 function noteRecord() {
   if (app.mode === 'training' || app.mode === 'versus') return;
   const s = app.game.state;
@@ -1156,12 +1159,18 @@ function noteRecord() {
   const won = s.matchWinner === me;
   const st = app.statsFor === app.game ? app.stats?.[me] : null;
   const char = s.f[me].char;
+  // What this fight improved, said on the result screen (see newBestsLine).
+  const was = { streak: r.bestStreak, combo: r.bestCombo, played: r.fights };
   r.fights++;
   if (won) r.wins++;
   r.streak = won ? r.streak + 1 : 0;
   r.bestStreak = Math.max(r.bestStreak, r.streak);
   if (app.mode === 'online') r.online++;
+  app.newBests = [];
+  if (won && WIN_MILESTONES.includes(r.wins)) app.newBests.push(`${r.wins} wins in all`);
+  if (r.bestStreak > was.streak && r.bestStreak >= 2) app.newBests.push(`best streak, ${r.bestStreak} wins in a row`);
   if (st) {
+    if (st.combo > was.combo && st.combo >= 3 && was.played > 0) app.newBests.push(`best combo, ${st.combo} hits`);
     r.bestCombo = Math.max(r.bestCombo, st.combo);
     r.perfect += st.perfect;
     r.damage += st.dmg;
@@ -1671,8 +1680,11 @@ function frame(now) {
     if (s.phase === 'over' && !app.resultShown && s.pt > 150) {
       app.resultShown = true;
       if (app.mode === 'online') countRoomWin(s);
+      app.newBests = [];
       scoreMatch();
       show('result');
+      // A milestone reached or a best broken in this fight (see the Record screen).
+      if (app.newBests.length) toast(`New on your Record: ${app.newBests.join(' · ')}`, 5200);
     }
   } else if (s.phase === 'over' && s.pt > 200) {
     startDemo();

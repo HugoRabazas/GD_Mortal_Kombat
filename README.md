@@ -245,7 +245,10 @@ The Artifact page cannot reach the network, so it has the offline modes only.
 fights on the device: fights and wins, the best run of wins, the best
 combo, perfect guards, damage dealt, online fights, your favourite fighter,
 and fights and win rate with each fighter. Every finished fight counts
-except Training and two players on one device.
+except Training and two players on one device. When a fight adds something
+to it - a best run of wins, a best combo, or a round number of wins (10,
+25, 50, 100...) - the result screen says so in a passing notice: "New on
+your Record: 10 wins in all · best streak, 2 wins in a row".
 
 ## Settings
 
