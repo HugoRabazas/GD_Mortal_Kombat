@@ -65,13 +65,16 @@ controls in use.
 Each round opens with a ritual of the fighter's own while it is announced:
 Ruko rises from a low prowl, Shadow bows and presses a fist into an open
 hand, Jackie claps twice and opens the arms wide, Pixie circles both hands
-as if stirring a flame. Name tags fade once a match is decided, so the
+as if stirring a flame - heard as well as seen: the two claps, the fist
+meeting the palm and the flame each make their sound. Name tags fade once a match is decided, so the
 winner and the result screen are not written over.
 
 When a match ends, every fighter who won celebrates in their own way - Ruko
 raises a fist to the sky, Shadow stands with arms folded, Jackie stamps like a sumo
 wrestler, Pixie hops and waves - turned three-quarters to the camera so it
-reads. The result screen opens with the winner's own line (Ruko: "The moon
+reads. The beaten go down in their own way too: the heavy fighter sits down
+hard with legs out, the slim one drops to a knee, the others stand slumped.
+The result screen opens with the winner's own line (Ruko: "The moon
 saw that one coming. You did not."; Shadow: "Quiet. Quick. Finished.";
 Jackie: "The mountain does not move. You did."; Pixie: "Two flames, one
 winner!") and shows the numbers of the fight: damage really dealt

@@ -2,6 +2,7 @@
 // screens (menu -> fighter select -> fight -> result).
 
 import { FIGHTERS, getFighter, lookColors, dressColors } from '../../shared/fighters.js';
+import { ritualSounds } from './render/fighter.js';
 import { ARENA, INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
 import { loadAssets, headUrls } from './assets.js';
@@ -82,6 +83,7 @@ const app = {
   game: null, // the fight being played, if any
   demo: null, // the CPU-vs-CPU fight that plays behind the menus
   resultShown: false,
+  lastIntroPt: -1, // how far into a round's announcement the last frame was (for the rituals' sounds)
   arrangeFrom: 'menu',
   online: null, // the connection to the alliance lobby, once the player goes online
   // Fights won by each player in the current online room, counted on this
@@ -1594,6 +1596,11 @@ function frame(now) {
   const st = g.state;
   duckMusic(playing && (st.freeze > 0 ? 1 : st.phase === 'ko' && st.koKind === 'ko' && st.pt < 60 ? 0.7 : 0));
   handleEvents(events, g.state, { quiet: !playing, project: stage.project, me: self, colors: worn });
+  // The sounds of each fighter's ritual while a round is announced.
+  if (playing && st.phase === 'intro') {
+    for (const f of st.f) for (const name of ritualSounds(getFighter(f.char).entrance, app.lastIntroPt, st.pt)) play(name);
+  }
+  app.lastIntroPt = st.phase === 'intro' ? st.pt : -1;
 
   const boss = playing && app.mode === 'arcade' ? [false, !!app.arcade.ladder[app.arcade.stage].boss] : null;
   const tags = playing ? labels() : [];

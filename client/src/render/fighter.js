@@ -131,6 +131,15 @@ const mix = (a, b, k) => {
   return out;
 };
 
+// The moments in each ritual that make a sound (ticks into the ritual):
+// Jackie's two claps, Shadow's fist meeting the open hand, Pixie's flame.
+const RITUAL_BEATS = { clap: [[8, 'clap'], [26, 'clap']], bow: [[44, 'palm']], swirl: [[2, 'flame']] };
+
+// The sounds due in a ritual between two moments of the announcement.
+export function ritualSounds(entrance, fromPt, toPt) {
+  return (RITUAL_BEATS[entrance] || []).filter(([t]) => fromPt < ENTRANCE_FROM + t && toPt >= ENTRANCE_FROM + t).map(([, name]) => name);
+}
+
 function entrancePose(f, t) {
   switch (getFighter(f.char).entrance) {
     case 'prowl': {
@@ -217,8 +226,15 @@ function targetPose(f, now) {
     }
     case 'win':
       return victoryPose(f);
-    case 'lose':
+    case 'lose': {
+      // Beaten, each build in its own way: the heavy fighter sits down hard,
+      // legs out, leaning back on the hands; the slim one drops to a knee,
+      // head bowed; everyone else stands slumped, arms hanging.
+      const build = getFighter(f.char).build;
+      if (build === 'sumo') return pose({ hipY: -22, lean: -0.3, ffx: 40, ffy: -6, fbx: 26, fby: -4, hfx: -18, hfy: 30, hbx: -30, hby: 26 });
+      if (build === 'slim') return pose({ hipY: -40, lean: 0.42, tilt: 0.12, ffx: 22, fbx: -24, fby: -2, hfx: 16, hfy: 30, hbx: -6, hby: 34 });
       return pose({ hipY: -54, lean: 0.48, tilt: 0.4, hfx: 6, hfy: 36, hbx: -4, hby: 36 });
+    }
     default: {
       // idle: a gentle breathing bounce, in each build's own stance - the
       // sumo low and wide, breathing slowly; the slim fighter light on the

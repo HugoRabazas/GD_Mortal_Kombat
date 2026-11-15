@@ -235,6 +235,17 @@ const SOUNDS = {
   win: () => {
     [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.22, 0.35, i * 0.13));
   },
+  // The rituals while a round is announced: a big clap, a fist meeting an
+  // open palm, a flame stirred up.
+  clap: () => {
+    burst(0.05, 0.95, 1500, 0.9);
+    burst(0.07, 0.5, 2800, 1.4, 0.004);
+  },
+  palm: () => {
+    burst(0.07, 0.7, 520, 0.8, 0, 'lowpass');
+    tone('sine', 170, 90, 0.09, 0.3);
+  },
+  flame: () => sweep(0.75, 0.4, 260, 1700, 1.1),
   // A match lost at this screen: the fanfare's notes turned downwards, in a
   // minor key, ending on a long note that sags a semitone.
   defeat: () => {
