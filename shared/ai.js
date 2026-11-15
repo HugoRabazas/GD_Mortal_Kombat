@@ -251,6 +251,9 @@ export function aiInput(ai, s, me) {
     if (special === 'quake' && dist < 170 && o.h <= 0) return press(INPUT.SPECIAL);
   }
 
+  // Knocked down: a quick rise (block on the floor) as often as a guard.
+  if (f.state === 'down') return f.h <= 0 && rnd(ai) < blockChance * 0.5 ? hold(INPUT.BLOCK, 4) : hold(0, 4);
+
   if (o.state === 'down' || o.state === 'getup') {
     return dist < 120 ? hold(toward(-dx, -dz), 8) : hold(0, 6); // give them room to stand
   }

@@ -89,6 +89,13 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet) play('pickup');
         break;
       }
+      case 'tech': {
+        // A quick rise off the floor.
+        const p = project(by.x, 0, by.z);
+        dust(p.x, p.y, 8);
+        if (!quiet) play('jump');
+        break;
+      }
       case 'roll': {
         const p = project(by.x, 0, by.z);
         dust(p.x, p.y, 4);

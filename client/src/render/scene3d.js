@@ -1027,7 +1027,10 @@ export function create3D(canvas) {
         const spread = 1 - Math.min(0.5, height * 0.25);
         const big = getFighter(f.char).build === 'sumo' ? 1.5 : 1;
         contacts[i].position.set(f.x * S, 0.02, f.z * S);
-        contacts[i].scale.set(1.0 * spread * big, 1.0 * spread * big, 1);
+        // Without real shadows (Graphics: Fast, or a slow device) the contact
+        // patch grows to stand in for the shadow the body would cast.
+        const stand = key.castShadow ? 1 : 1.45;
+        contacts[i].scale.set(1.0 * spread * big * stand, 1.0 * spread * big * stand, 1);
         contacts[i].material.opacity = 0.7 - Math.min(0.45, height * 0.3);
       }
 

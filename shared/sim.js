@@ -26,6 +26,10 @@ const FRICTION = 0.84;
 const BUFFER_TICKS = 8; // how long a button press is remembered
 const DOWN_TICKS = 34; // time spent lying on the floor after a knockdown
 const GETUP_TICKS = 18;
+// Quick rise: block held while lying on the floor gets a fighter up after
+// TECH_TICKS instead of DOWN_TICKS - once per knockdown, and not in the
+// last few ticks, when there would be nothing to gain.
+const TECH_TICKS = 8;
 const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle of where you face
 const ROLL = { ticks: 15, safe: 11, speed: 8.5, rest: 7 }; // the dodge roll
 const SPLAT = { speed: 3.2, dmg: 5 }; // being knocked into the ring of fire
@@ -456,6 +460,11 @@ function control(s, f, inp) {
       break;
     }
     case 'down': {
+      if (f.h <= 0 && f.vh === 0 && held(INPUT.BLOCK) && !f.teched && f.stun > TECH_TICKS + 4) {
+        f.teched = true;
+        f.stun = TECH_TICKS;
+        emit(s, 'tech', { by: f.slot });
+      }
       if (f.h <= 0 && f.vh === 0 && --f.stun <= 0) {
         f.stun = 0;
         setState(f, 'getup');
@@ -497,6 +506,7 @@ function land(s, f) {
       break;
     case 'down':
       f.stun = DOWN_TICKS;
+      f.teched = false;
       emit(s, 'thud', here);
       break;
     case 'ko':

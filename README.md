@@ -50,7 +50,7 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   (one kick every 100 ticks, about 1.7 s) - the way to learn the timing of
   the perfect guard. That partner always kicks from the outer side, so its
   kicks push you back towards the middle and never into the ring of fire.
-  A checklist of twelve moves sits in the corner and ticks each one off the
+  A checklist of thirteen moves sits in the corner and ticks each one off the
   first time you really do it (a combo has to land, a block has to stop a
   blow), with how to do the next ones; the device remembers it, and the menu
   shows how many you have learned.
@@ -115,6 +115,11 @@ blows give a light rumble too), where the browser allows it.
   goes straight through a guard.
 - **Block + a direction** is a dodge roll: attacks pass through you for most
   of it.
+- **Block on the floor** after a knockdown is a **quick rise**: back up after
+  8 ticks instead of 34, once per knockdown, still with the usual moment of
+  invulnerability as you stand. The CPU uses it as often as it guards.
+  Matches got a little brisker (70 -> 68 s); Jackie, whose stomp lives on
+  knockdowns, went 115 -> 117 health to stay level (duels 47-53 %).
 - A blow that lands while the rival is still **winding up** an attack of
   their own is a **counter hit**: a quarter more damage and a longer impact,
   marked COUNTER. Between CPUs about one hit in five is a counter.

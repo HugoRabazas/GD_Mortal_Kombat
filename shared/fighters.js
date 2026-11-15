@@ -83,7 +83,7 @@ export const FIGHTERS = [
       glow: '#c44dff',
     },
     looks: [{ name: 'Violet' }, { name: 'Granite', colors: { primary: '#4d525c', secondary: '#1c1d22', accent: '#e0a83c', glow: '#ffcc55' } }],
-    stats: { power: 1.08, speed: 0.82, health: 115 },
+    stats: { power: 1.08, speed: 0.82, health: 117 },
     special: { type: 'quake', name: 'Mountain Stomp' },
     super: { name: 'Avalanche Charge' },
   },

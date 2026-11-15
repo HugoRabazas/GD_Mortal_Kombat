@@ -383,6 +383,7 @@ function helpScreen() {
         <li><b>Punch three times</b> for a combo that ends in a knockdown; each punch must land to continue.</li>
         <li><b>Punch + Kick together</b> is a grab: short reach, but it goes straight through a guard.</li>
         <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment.</li>
+        <li>Knocked down? Press <b>block</b> on the floor for a <b>quick rise</b>: you are back up in a blink.</li>
         <li>Hit a rival while they are <b>winding up</b> a blow of their own for a <b>counter</b>: a quarter more damage.</li>
         <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling. Hold the guard and it is an ordinary block.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
@@ -445,6 +446,7 @@ function movesCard() {
       <dt>${k(key.j)}, ${k(key.p)}</dt><dd><b>Diving attack</b> from the air.</dd>
       <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b>.</dd>
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b>: attacks pass through you.</dd>
+      <dt>${k(key.b)}</dt><dd>On the floor: a <b>quick rise</b>.</dd>
       <dt>${k(key.p)}</dt><dd>Into a rival <b>winding up</b> a blow: a <b>counter hit</b>, a quarter more damage.</dd>
       ${own}
     </dl>`;
@@ -512,6 +514,7 @@ const DRILLS = [
   { id: 'grab', name: 'Grab', how: (k) => `${k('p')} + ${k('k')} together, up close` },
   { id: 'dive', name: 'Diving attack', how: (k) => `${k('j')}, then ${k('p')} in the air` },
   { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction` },
+  { id: 'tech', name: 'Quick rise', how: (k) => `${k('b')} while knocked down (the Fights back partner floors you)` },
   { id: 'block', name: 'Block a blow', how: (k) => `${k('b')} as a blow comes (pick a partner who attacks)` },
   { id: 'perfect', name: 'Perfect guard', how: (k) => `${k('b')} just before a blow lands (the Kicks partner helps)` },
   { id: 'counter', name: 'Counter hit', how: (k) => `${k('p')} while the rival winds up a blow (the Kicks partner helps)` },
@@ -551,6 +554,7 @@ function watchDrills(s, events) {
   for (const e of events) {
     if (e.type === 'jump' && e.by === 0) markDrill('jump');
     else if (e.type === 'roll' && e.by === 0) markDrill('roll');
+    else if (e.type === 'tech' && e.by === 0) markDrill('tech');
     else if (e.type === 'special' && e.by === 0) markDrill('special');
     else if (e.type === 'super' && e.by === 0) markDrill('super');
     else if (e.type === 'parry' && e.by === 0) markDrill('perfect');

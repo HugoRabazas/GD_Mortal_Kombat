@@ -168,6 +168,25 @@ test('a fighter under a quarter of their health fills the energy bar half as fas
   assert.ok(!low.events.some((e) => e.type === 'lastStand'), 'only once, when it begins');
 });
 
+test('block held on the floor is a quick rise, once per knockdown', () => {
+  const downTime = (inputs) => {
+    const s = startFight();
+    closeUp(s);
+    s.f[1].hp = 100;
+    step(s, [INPUT.PUNCH | INPUT.KICK, 0]); // a grab knocks down
+    let downAt = -1;
+    for (let t = 0; t < 120; t++) {
+      step(s, [0, inputs]);
+      if (s.f[1].state === 'down' && s.f[1].h <= 0 && downAt < 0) downAt = t;
+      if (downAt >= 0 && s.f[1].state === 'getup') return { ticks: t - downAt, events: s };
+    }
+    return { ticks: Infinity };
+  };
+  const lying = downTime(0);
+  const rising = downTime(INPUT.BLOCK);
+  assert.ok(rising.ticks < lying.ticks - 15, `quick rise ${rising.ticks} against ${lying.ticks} ticks on the floor`);
+});
+
 test('a hit reports the health it really took, never more than was left', () => {
   const s = startFight();
   closeUp(s);
