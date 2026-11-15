@@ -602,6 +602,14 @@ kbd {
   color: var(--bone);
 }
 
+/* Back stays in reach at the foot of the help, however far it is scrolled. */
+.help > .row:last-child {
+  position: sticky;
+  bottom: -22px;
+  padding: 10px 0 2px;
+  background: linear-gradient(rgba(13, 8, 18, 0), rgba(13, 8, 18, 0.95) 40%);
+}
+
 .tips {
   width: 100%;
   margin: 0;
@@ -664,6 +672,9 @@ kbd {
 }
 
 .help {
+  /* One scroll, not two: the padding counts inside the height, so the box
+     never grows past the screen and the page itself never has to scroll. */
+  box-sizing: border-box;
   max-height: 100%;
   overflow-y: auto;
   -webkit-user-select: text;
@@ -1373,6 +1384,11 @@ kbd {
   .rules.aside,
   .note.aside {
     display: none;
+  }
+
+  /* The chat keeps its last few lines (it scrolls for more). */
+  .chat ol {
+    max-height: 4.6em;
   }
 
   /* The pause screen's move list, tightened to fit a phone held sideways. */

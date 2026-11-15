@@ -75,6 +75,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         const f = state.f[e.slot];
         const p = project(f.x, 260, f.z);
         floatText(p.x, p.y, 'LAST STAND', '#ff4a3c', 22);
+        if (!quiet) play('lastStand');
         break;
       }
       case 'pickup': {

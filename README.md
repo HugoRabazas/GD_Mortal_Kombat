@@ -122,7 +122,7 @@ blows give a light rumble too), where the browser allows it.
   rarely on Normal, more often on Hard, and the arcade boss most of all.
 - Hits fill the **energy** bar: a special costs 35 of 100, the finisher needs
   it full. Under a quarter of their health a fighter is in their **last
-  stand** (LAST STAND on screen, the body pulsing red, the heartbeat, and
+  stand** (LAST STAND on screen with a deep drum, the body pulsing red, the heartbeat, and
   the music pushing harder when it is your fighter): the bar fills half as
   fast again. Measured over 600 CPU rounds, rounds won from 30 points of
   health behind went from 11.6 % to 14.8 %.

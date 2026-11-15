@@ -263,6 +263,13 @@ const SOUNDS = {
     burst(0.05, 0.6, 3200, 1.5);
     tone('square', 880, 440, 0.07, 0.12);
   },
+  // A last stand begins: a deep drum and a tone rising into it - the moment
+  // a fighter digs in.
+  lastStand: () => {
+    tone('sine', 70, 40, 0.5, 0.8);
+    burst(0.3, 0.5, 180, 0.6, 0, 'lowpass');
+    tone('sawtooth', 220, 440, 0.6, 0.12, 0.05);
+  },
   // Lub-dub: two low thumps, the second softer.
   heartbeat: () => {
     tone('sine', 64, 40, 0.13, 0.75);
