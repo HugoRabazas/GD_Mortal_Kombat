@@ -406,7 +406,7 @@ function helpScreen() {
         <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment.</li>
         <li>Knocked down? Press <b>block</b> on the floor for a <b>quick rise</b>: you are back up in a blink.</li>
         <li>Hit a rival while they are <b>winding up</b> a blow of their own for a <b>counter</b>: a quarter more damage.</li>
-        <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling. Hold the guard and it is an ordinary block.</li>
+        <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling - stars circle their head while you have the chance to punish. Hold the guard and it is an ordinary block.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
         <li>Under a quarter of your health you are in your <b>last stand</b>: the energy bar fills half as fast again. A round is not over until it is over.</li>
         <li><b>Block</b> only stops what comes from the front. Raising it turns you to face whoever is already swinging, but a guard held too early stays put: get behind a blocking rival, or step out of the way of a projectile.</li>
@@ -801,7 +801,7 @@ function lobbyScreen() {
         <div class="ladder">
           <span class="who">Online now · ${on.lobbyPeers.length}</span>
           <ol class="people">
-            ${on.lobbyPeers.map((p) => `<li>${head(p.char)}<span class="lname">${esc(p.name)}${p.id === on.me.id ? ' (you)' : ''}</span><span class="ltag">${p.playing ? 'fighting' : p.room ? 'in a room' : 'in the lobby'}</span></li>`).join('')}
+            ${on.lobbyPeers.map((p) => `<li>${head(p.char)}<span class="lname">${esc(p.name)}${p.id === on.me.id ? ' (you)' : ''}${p.wins ? ` <span class="wins" title="Fights won, all time">${p.wins} ${p.wins === 1 ? 'win' : 'wins'}</span>` : ''}</span><span class="ltag">${p.playing ? 'fighting' : p.room ? 'in a room' : 'in the lobby'}</span></li>`).join('')}
           </ol>
         </div>
         <div class="ladder">
@@ -1411,6 +1411,7 @@ async function goOnline(name) {
   }
   ui.innerHTML = '<p class="loading">Connecting…</p>';
   const online = createOnline({
+    wins: () => readRecord().wins,
     config: NET,
     name: app.nick,
     version: BUILD,

@@ -74,8 +74,9 @@ raises a fist to the sky, Shadow stands with arms folded, Jackie stamps like a s
 wrestler, Pixie hops and waves - turned three-quarters to the camera so it
 reads. Confetti in the winner's colours then drifts down over the arena for
 about five seconds (fewer pieces, falling slower, for anyone whose device
-asks for reduced motion). Sparks, dust, numbers and confetti move by the
-clock, not by the frame, so they fly at the same speed on a phone that
+asks for reduced motion). Sparks, dust, numbers, confetti, the fighters'
+easing between poses and the arena's lights and embers all move by the
+clock, not by the frame, so they keep the same timing on a phone that
 draws fewer frames a second. The beaten go down in their own way too: the heavy fighter sits down
 hard with legs out, the slim one drops to a knee, the others stand slumped.
 The result screen opens with the winner's own line (Ruko: "The moon
@@ -176,7 +177,8 @@ The website build adds an **Online** mode for the whole alliance:
   open: the faces of the fighters already inside, how full the room is (or
   whether a fight is on), the arena it fights in, and Join - or Watch, when
   it is full or fighting.
-  Rooms with a free place are listed first.
+  Rooms with a free place are listed first. Next to each name in the lobby
+  are the fights that player has won, all time (from their device's Record).
 - A **room** holds up to four fighters (more can watch). Everyone picks a
   fighter and presses Ready; the host starts the fight, optionally filling the
   empty places with CPU fighters. Two fighters play a duel, three or four an

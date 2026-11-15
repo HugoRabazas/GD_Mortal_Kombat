@@ -41,10 +41,13 @@ const compact = (key, value) => (typeof value === 'number' && !Number.isInteger(
 // same one, or the host and its guests would disagree about the rules.
 // `arena` returns the arena this player would host a fight in; the room shows
 // everyone the host's choice.
+// A win count someone sent: a whole number, never negative or absurd.
+const cleanWins = (n) => Math.max(0, Math.min(99999, Math.floor(Number(n) || 0)));
+
 // A costume number someone sent, checked against the fighter's real costumes.
 const cleanLook = (char, look) => (Number.isInteger(look) && look >= 0 && look < lookCount(char) ? look : 0);
 
-export function createOnline({ config, name, char, arena = () => ARENAS[0].id, look = () => 0, version, readInput, onChange, onStart, onEnd }) {
+export function createOnline({ config, name, char, arena = () => ARENAS[0].id, look = () => 0, wins = () => 0, version, readInput, onChange, onStart, onEnd }) {
   const bus = createBus(config);
   const me = { id: newId(), name: cleanName(name) };
   let lobby = null;
@@ -96,12 +99,13 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
 
   // What the lobby sees of each player: name, room, whether they are fighting,
   // and the fighter they have picked (shown as a portrait next to the name).
-  const lobbyState = () => ({ name: me.name, room: room ? room.code : null, playing: !!match, char: room ? room.char : char(), arena: room ? online.arena() : null });
+  // `wins`: fights this player has won on their device, all time (shown in the lobby).
+  const lobbyState = () => ({ name: me.name, room: room ? room.code : null, playing: !!match, char: room ? room.char : char(), arena: room ? online.arena() : null, wins: cleanWins(wins()) });
 
   online.connect = async () => {
     lobby = bus.channel('lobby', me.id, lobbyState());
     lobby.onPeers((list) => {
-      online.lobbyPeers = list.map((p) => ({ id: p.id, name: cleanName(p.name), room: typeof p.room === 'string' ? p.room.slice(0, 8) : null, playing: !!p.playing, char: isFighterId(p.char) ? p.char : FIGHTERS[0].id, arena: isArenaId(p.arena) ? p.arena : null }));
+      online.lobbyPeers = list.map((p) => ({ id: p.id, name: cleanName(p.name), room: typeof p.room === 'string' ? p.room.slice(0, 8) : null, playing: !!p.playing, char: isFighterId(p.char) ? p.char : FIGHTERS[0].id, arena: isArenaId(p.arena) ? p.arena : null, wins: cleanWins(p.wins) }));
       onChange();
     });
     lobby.on('chat', (m) => {

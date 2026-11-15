@@ -14,12 +14,13 @@ const until = async (check, what, ms = 3000) => {
   }
 };
 
-function player(name, char) {
+function player(name, char, wins = 0) {
   const log = { starts: [], ends: [] };
   const online = createOnline({
     config: { local: true },
     name,
     char: () => char,
+    wins: () => wins,
     arena: () => 'frost',
     version: 'test',
     readInput: () => 0,
@@ -31,11 +32,12 @@ function player(name, char) {
 }
 
 test('two players meet, fight, and one press of the host starts the next fight', async () => {
-  const ana = player('Ana', 'jackie');
+  const ana = player('Ana', 'jackie', 12);
   const beto = player('Beto', 'pixie');
   try {
     await ana.online.connect();
     await beto.online.connect();
+    await until(() => beto.online.lobbyPeers.find((p) => p.name === 'Ana')?.wins === 12, "Ana's wins to show in the lobby");
     const code = await ana.online.createRoom();
     await until(() => beto.online.rooms().some((r) => r.code === code), 'the room to show in the lobby');
     const listed = beto.online.rooms().find((r) => r.code === code);

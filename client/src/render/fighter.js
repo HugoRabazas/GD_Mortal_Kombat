@@ -256,9 +256,11 @@ function targetPose(f, now) {
 
 // Each fighter slot keeps its own smoothed pose between frames.
 const smooth = [];
+const lastAt = []; // when each slot's pose was last eased
 
 export function resetPoses() {
   smooth.length = 0;
+  lastAt.length = 0;
 }
 
 // The pose a fighter should be drawn in right now, eased from the last frame.
@@ -268,10 +270,16 @@ export function currentPose(f, now) {
   let cur = smooth[f.slot];
   if (!cur) {
     cur = smooth[f.slot] = { ...target };
+    lastAt[f.slot] = now;
     return cur;
   }
-  // Attacks snap faster so hits look crisp; everything else eases.
-  const k = f.state === 'attack' || f.state === 'hit' || f.state === 'airAttack' ? 0.62 : 0.36;
+  // Attacks snap faster so hits look crisp; everything else eases. The rates
+  // are per 60 fps frame, scaled by the real time since the last frame so a
+  // slower phone sees the same timing (a long stall counts as four frames).
+  const frames = Math.min(4, Math.max(0, (now - (lastAt[f.slot] ?? now)) / (1000 / 60)));
+  lastAt[f.slot] = now;
+  const rate = f.state === 'attack' || f.state === 'hit' || f.state === 'airAttack' ? 0.62 : 0.36;
+  const k = 1 - Math.pow(1 - rate, frames);
   for (const key in target) cur[key] += (target[key] - cur[key]) * k;
   if (f.state === 'roll') cur.rot = target.rot; // a spin must not be smoothed away
   else if (Math.abs(cur.rot) > Math.PI) cur.rot = 0; // coming out of a roll: do not unwind it

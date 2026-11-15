@@ -1047,7 +1047,7 @@ export function create3D(canvas) {
       // Embers.
       for (let i = 0; i < EMBERS; i++) {
         const v = emberVel[i];
-        emberPos[i * 3] += v.x * dt * 0.06 + Math.sin(now / 500 + i) * 0.0015;
+        emberPos[i * 3] += (v.x * 0.06 + Math.sin(now / 500 + i) * 0.00009) * dt;
         emberPos[i * 3 + 1] += v.y * dt * 0.06;
         v.life -= dt / 1000;
         if (v.life <= 0) spawnEmber(i, false);
@@ -1218,7 +1218,7 @@ export function create3D(canvas) {
       }
       for (const c of takeCheers()) if (c.slot < teamCheer.length) teamCheer[c.slot] = Math.min(1, teamCheer[c.slot] + c.k);
       kick *= Math.pow(0.86, dt / 16.7);
-      for (const light of flashes) light.intensity *= 0.78;
+      for (const light of flashes) light.intensity *= Math.pow(0.78, dt / 16.7);
 
       // The crowd: a slow sway, and jumping when excited. Moving a couple of
       // hundred figures every other frame is plenty for a background.
