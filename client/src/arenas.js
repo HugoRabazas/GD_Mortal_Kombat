@@ -5,6 +5,7 @@
 export const ARENAS = [
   { id: 'courtyard', name: 'Ember Courtyard' },
   { id: 'frost', name: 'Frost Summit' },
+  { id: 'dunes', name: 'Dune Ruins' },
 ];
 
 export const isArenaId = (id) => ARENAS.some((a) => a.id === id);

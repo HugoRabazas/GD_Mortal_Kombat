@@ -312,6 +312,23 @@ const MUSIC_THEMES = {
     hat: 9500,
   },
 };
+// Dune Ruins: E, F, E, D minor - the half step from E to F is what gives the
+// tune its desert colour - at 98, with a reedy lead and a soft triangle bass.
+MUSIC_THEMES.dunes = {
+  bpm: 98,
+  finalBpm: 114,
+  bars: [
+    { bass: 82.41, notes: [329.63, 415.3, 493.88] },
+    { bass: 87.31, notes: [349.23, 440, 523.25] },
+    { bass: 82.41, notes: [329.63, 415.3, 493.88] },
+    { bass: 73.42, notes: [293.66, 349.23, 440] },
+  ],
+  bass: 'triangle',
+  bell: false,
+  reed: true,
+  kick: 0.8,
+  hat: 6000,
+};
 let tune = MUSIC_THEMES.courtyard;
 const stepSeconds = () => 60 / (musicMode === 'final' ? tune.finalBpm : tune.bpm) / 4; // a sixteenth note
 const BASS_STEPS = [0, 3, 6, 8, 11, 14];
@@ -363,7 +380,10 @@ function musicTick(i, t) {
   if (LEAD_STEPS.includes(s)) {
     const n = bar.notes[(LEAD_STEPS.indexOf(s) + Math.floor(i / 16)) % bar.notes.length];
     const f = final ? n * (tune.bell ? 2 : 4) : full ? n * 2 : n; // a bell two octaves up would shriek
-    if (tune.bell) {
+    if (tune.reed) {
+      // A reed: a soft sawtooth with a little sway in its pitch.
+      note('sawtooth', f, t, full ? 0.3 : 0.45, full ? 0.07 : 0.06, f * 1.01);
+    } else if (tune.bell) {
       // A bell: the note itself, and a quieter overtone 2.76 times higher that
       // dies away sooner - the clang that tells a bell from a flute.
       note('sine', f, t, full ? 0.5 : 0.9, full ? 0.16 : 0.13);

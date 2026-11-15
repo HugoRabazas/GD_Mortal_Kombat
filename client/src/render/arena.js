@@ -237,10 +237,10 @@ export function drawArena(ctx, now, theme) {
   ctx.restore();
 
   // The frozen arena is the same picture with every colour turned to ice.
-  if (theme === 'frost') {
+  if (theme === 'frost' || theme === 'dunes') {
     ctx.save();
     ctx.globalCompositeOperation = 'hue';
-    ctx.fillStyle = '#2f86d8';
+    ctx.fillStyle = theme === 'frost' ? '#2f86d8' : '#d89a40'; // ice, or sun-baked sandstone
     ctx.fillRect(0, 0, W, H);
     ctx.restore();
   }

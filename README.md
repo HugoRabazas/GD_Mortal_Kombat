@@ -195,14 +195,16 @@ Each arena has its own music, generated note by note in the browser: Ember
 Courtyard plays a warm plucked tune in A minor at 116 beats a minute; Frost
 Summit a colder one in D minor at 104, with a bell melody (a pure tone plus
 the out-of-tune overtone that makes a bell sound like a bell), a hollow bass
-and a high ice chime. Both speed up and fill out for deciding rounds and the
-last seconds of a round.
+and a high ice chime; Dune Ruins a desert tune at 98 that sways between E
+and F - that half step is what gives it its colour - with a reedy lead. All
+three speed up and fill out for deciding rounds and the last seconds of a
+round.
 
 Music and effects have their own volume sliders (menu and pause screen),
 remembered on the device, next to the sound switch, the touch-button switch
 and the button arranger.
 
-## Two arenas, and both live in time
+## Three arenas, and all live in time
 
 Every select screen has a row that picks where the fight is held; the fight
 playing behind the menus moves there at once, so the choice is a preview. The
@@ -216,8 +218,12 @@ the same ring of fire - they differ in paint, light, weather and sound.
   northern lights (the rim light on the fighters wanders between green and
   violet), round two in deep night with light snow, round three in a blizzard
   with gusts of wind.
+- **Dune Ruins**: sandstone ruins in the desert under a big sun, teal
+  banners. Round one at midday, round two in a golden sunset, round three in
+  a sandstorm - an ochre haze that swallows the far wall, grit driven almost
+  sideways, and the wind howling.
 
-The arcade ladder moves to the other arena after every fight. Online, the
+The arcade ladder moves to the next arena after every fight. Online, the
 host picks the arena in the room; everyone else sees the choice there before
 the fight starts, and everyone fights in it.
 

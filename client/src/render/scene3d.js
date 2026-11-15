@@ -82,6 +82,34 @@ const THEMES = {
       { sky: [0.62, 0.68, 0.78], hemi: [0xb8c6dc, 0x1a2232, 0.5], key: [0xf0f4ff, 1.0], moon: [0xa0b0c8, 0.35], fog: [0x2c3848, 0.034], torch: 3.0, rain: 1 }, // blizzard
     ],
   },
+  // Sandstone ruins in the desert: bright day, a golden sunset, then a
+  // sandstorm that hides the sun and drives grit sideways across the floor.
+  dunes: {
+    sky: ['#2f5f9e', '#5b8fca', '#a9cbe4', '#f3d6a0', '#f2b26a'],
+    stars: null, // daytime: no stars, and a sun instead of a moon
+    sun: true,
+    moon: { halo: ['255,236,190', '255,200,120'], disc: ['#fffbea', '#ffd98a'], marks: null },
+    aurora: false,
+    ridges: [['#c08a55', null], ['#94643c', null]],
+    ground: [146, 128, 104],
+    dais: [176, 158, 128],
+    daisSide: 0x8a7050,
+    snow: false,
+    wall: 0xa77d52,
+    trim: 0xc89c68,
+    banner: ['#1f6e6e', 'rgba(255,214,130,0.85)', 'rgba(255,232,170,0.95)'],
+    flame: ['255,250,220', '255,190,80', '255,90,30', '255,60,20'],
+    torch: 0xffa050,
+    ember: 0xffb060,
+    cloaks: [0xc2703a, 0x6b4a2a, 0x2e5e6b, 0x8a2a2a, 0xd9b26f, 0x4a3a2a],
+    weather: 'sand',
+    lightning: false,
+    moods: [
+      { sky: [1, 1, 1], hemi: [0xd8e8ff, 0x7a6e60, 0.66], key: [0xfff8ee, 1.5], moon: [0xffe2b8, 0.45], fog: [0xd9c8aa, 0.008], torch: 0.7, rain: 0 }, // midday
+      { sky: [1, 0.76, 0.58], hemi: [0xffc89a, 0x5a3a2a, 0.5], key: [0xffb070, 1.5], moon: [0xff8a50, 0.85], fog: [0xc98a5a, 0.012], torch: 1.6, rain: 0.12 }, // sunset
+      { sky: [0.72, 0.56, 0.4], hemi: [0xd9b080, 0x4a3220, 0.58], key: [0xffd8a8, 1.0], moon: [0xc9a070, 0.3], fog: [0xc09a68, 0.07], torch: 2.4, rain: 1 }, // sandstorm
+    ],
+  },
 };
 
 export const THEME_IDS = Object.keys(THEMES);
@@ -139,7 +167,7 @@ export function create3D(canvas) {
     [0, 0.4, 0.68, 0.85, 1].forEach((at, i) => sky.addColorStop(at, th.sky[i]));
     g.fillStyle = sky;
     g.fillRect(0, 0, 2048, 1024);
-    for (let i = 0; i < 420; i++) {
+    for (let i = 0; i < (th.stars ? 420 : 0); i++) {
       g.fillStyle = `rgba(${th.stars},${0.2 + rand() * 0.7})`;
       g.beginPath();
       g.arc(rand() * 2048, rand() * 600, rand() * 1.6 + 0.3, 0, Math.PI * 2);
@@ -163,12 +191,12 @@ export function create3D(canvas) {
       g.globalCompositeOperation = 'source-over';
     }
     const mx = 1270;
-    const my = th.aurora ? 560 : 700;
-    const halo = g.createRadialGradient(mx, my, 30, mx, my, 260);
+    const my = th.aurora ? 560 : th.sun ? 520 : 700;
+    const halo = g.createRadialGradient(mx, my, 30, mx, my, th.sun ? 420 : 260);
     halo.addColorStop(0, `rgba(${th.moon.halo[0]},0.6)`);
     halo.addColorStop(1, `rgba(${th.moon.halo[1]},0)`);
     g.fillStyle = halo;
-    g.fillRect(mx - 270, my - 270, 540, 540);
+    g.fillRect(mx - 430, my - 430, 860, 860);
     const moon = g.createRadialGradient(mx - 14, my - 14, 5, mx, my, 74);
     moon.addColorStop(0, th.moon.disc[0]);
     moon.addColorStop(1, th.moon.disc[1]);
@@ -177,7 +205,7 @@ export function create3D(canvas) {
     g.arc(mx, my, 72, 0, Math.PI * 2);
     g.fill();
     g.fillStyle = `rgba(${th.moon.marks},0.22)`;
-    for (const [dx, dy, r] of [[-24, -15, 14], [20, 9, 19], [-7, 31, 9], [30, -29, 7]]) {
+    for (const [dx, dy, r] of th.moon.marks ? [[-24, -15, 14], [20, 9, 19], [-7, 31, 9], [30, -29, 7]] : []) {
       g.beginPath();
       g.arc(mx + dx, my + dy, r, 0, Math.PI * 2);
       g.fill();
@@ -771,7 +799,7 @@ export function create3D(canvas) {
       if (!view.demo) play('thunder');
     }
     // Where it snows instead, the blizzard howls in gusts.
-    if (theme.th.weather === 'snow' && rainNow > 0.5 && now > nextStrike) {
+    if ((theme.th.weather === 'snow' || theme.th.weather === 'sand') && rainNow > 0.5 && now > nextStrike) {
       nextStrike = now + 3000 + Math.random() * 4500;
       if (!view.demo) play('wind');
     }
@@ -801,16 +829,20 @@ export function create3D(canvas) {
       t.flame.scale.set(1.25 + flick * 0.12 + closing * 0.4, 1.75 + flick * 0.28 + closing * 0.7, 1);
     }
 
-    // Snow, where it snows: it falls at walking pace and the wind grows with it.
-    const snowing = theme.th.weather === 'snow';
+    // Snow, where it snows: it falls at walking pace and the wind grows with
+    // it. Sand uses the same grains, smaller and warm, driven almost sideways.
+    const sand = theme.th.weather === 'sand';
+    const snowing = theme.th.weather === 'snow' || sand;
     snowFall.visible = snowing && rainNow > 0.02;
     if (snowFall.visible) {
       snowFallMat.opacity = Math.min(0.95, 0.45 + rainNow * 0.5);
-      const wind = rainNow * rainNow * 5.5;
+      snowFallMat.color.set(sand ? 0xd8b078 : 0xffffff);
+      snowFallMat.size = sand ? 0.16 : 0.2;
+      const wind = rainNow * rainNow * (sand ? 11 : 5.5);
       const count = Math.round(FLAKES * (0.25 + 0.75 * rainNow));
       for (let d = 0; d < count; d++) {
         const r = snowSeed[d];
-        r.y -= r.v * (1 + rainNow) * dt * 0.001;
+        r.y -= r.v * (1 + rainNow) * dt * (sand ? 0.0003 : 0.001);
         r.x += (wind + Math.sin(now / 900 + r.sway) * 0.5) * dt * 0.001;
         if (r.y < 0) r.y += 12;
         if (r.x > 15) r.x -= 30;
