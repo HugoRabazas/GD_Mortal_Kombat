@@ -10,6 +10,9 @@
 //   4. `special.type` picks the special move: 'dash' (lunging strike),
 //      'bolt' (projectile), 'rise' (spinning leap that hits all around) or
 //      'quake' (ground stomp that floors everyone nearby who is not jumping).
+//      `special.style` (optional) draws the special in the fighter's own way:
+//      'charge' (behind a raised forearm), 'bow' (an arrow drawn and loosed),
+//      'blade' (a rising slash) or 'clap' (hands flung wide and clapped).
 //      `build` picks the body: 'standard', 'sumo' (huge) or 'slim'.
 //      `gear` adds accessories: 'scarf' (trails behind when moving) and
 //      'pads' (shoulder guards). `victory` picks how they celebrate a won
@@ -135,7 +138,7 @@ export const FIGHTERS = [
     },
     looks: [{ name: 'Iron' }, { name: 'Rust', colors: { primary: '#7a3b22', secondary: '#1f120c', accent: '#f0c070', glow: '#ff9a4a' } }],
     stats: { power: 1.0, speed: 1.0, health: 108 },
-    special: { type: 'dash', name: 'Iron Charge' },
+    special: { type: 'dash', name: 'Iron Charge', style: 'charge' },
     super: { name: 'Last Oath', move: 'oath' },
     signature: { name: 'Shield Ram', move: 'shieldRam' },
   },
@@ -158,7 +161,7 @@ export const FIGHTERS = [
     },
     looks: [{ name: 'Moon' }, { name: 'Dawn', colors: { primary: '#c25a7a', secondary: '#2a1220', accent: '#ffd38a', glow: '#ffb0c8' } }],
     stats: { power: 1.0, speed: 1.12, health: 106 },
-    special: { type: 'bolt', name: 'Moon Arrow' },
+    special: { type: 'bolt', name: 'Moon Arrow', style: 'bow' },
     super: { name: 'Crescent Rain', move: 'crescent' },
     signature: { name: 'Moon Vault', move: 'moonVault' },
   },
@@ -181,7 +184,7 @@ export const FIGHTERS = [
     },
     looks: [{ name: 'Gold' }, { name: 'Ash', colors: { primary: '#4a4a52', secondary: '#141418', accent: '#e05a4a', glow: '#ff6a5a' } }],
     stats: { power: 0.96, speed: 1.08, health: 96 },
-    special: { type: 'rise', name: 'Rising Edge' },
+    special: { type: 'rise', name: 'Rising Edge', style: 'blade' },
     super: { name: 'Thousand Cuts', move: 'cuts' },
     signature: { name: 'Blade Dash', move: 'bladeDash' },
   },
@@ -204,7 +207,7 @@ export const FIGHTERS = [
     },
     looks: [{ name: 'Sky' }, { name: 'Ember', colors: { primary: '#b0402f', secondary: '#2a100c', accent: '#ffe066', glow: '#ff8a3a' } }],
     stats: { power: 1.04, speed: 1.1, health: 113 },
-    special: { type: 'quake', name: 'Storm Clap' },
+    special: { type: 'quake', name: 'Storm Clap', style: 'clap' },
     super: { name: 'Sunburst', move: 'sunburst' },
     signature: { name: 'Spin Top', move: 'spinTop' },
   },

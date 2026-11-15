@@ -237,6 +237,10 @@ and the heartbeat, the crowd and the weather go quiet.
   in the air and a somersault over the rival; Kichta's cuts on a new line
   every other tick and a rising slash; Zelrith's spread-eagle climb and a
   spin across the floor).
+  Their specials share a kind with an older fighter's but are drawn their
+  own way (`special.style`): Meru charges behind a raised forearm, Gleh
+  draws and looses an arrow, Kichta's leap is a rising slash, Zelrith flings
+  the arms wide and claps.
   Their portraits are the members' avatars, cut to the face inside each
   avatar's frame (art/fighters, heads by scripts/crop-heads.py). With eight fighters the Arena and the
   Arcade draw rivals in a new random order each time. Balanced across all

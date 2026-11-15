@@ -191,6 +191,11 @@ const TIPS = [
   (c) => `Tip: gold crystals give energy, green ones health. Walk over one to take it.`,
   (c) => `Tip: a guard only stops what comes from the front. Get behind a blocking rival.`,
   (c) => `Tip: in a brawl, do not stand between two rivals.`,
+  (c) => `Tip: <kbd>${c.p}</kbd> <kbd>${c.p}</kbd> <kbd>${c.k}</kbd> launches a rival into the air - hold <kbd>${c.j}</kbd> to chase and <b>juggle</b> them.`,
+  (c) => `Tip: hold <kbd>${c.k}</kbd> to charge a <b>guard-breaker</b>; let go and it smashes a guard open.`,
+  (c) => `Tip: <kbd>${c.g}</kbd> with the rival out of reach is your fighter's <b>signature move</b> for crossing the gap.`,
+  (c) => `Tip: <kbd>${c.s}</kbd> in the air is your special's own <b>air version</b>.`,
+  (c) => `Tip: new to a move? The <b>Tutorial</b> has a short lesson for it.`,
   // Only on the website, on a touch screen, when not opened from the home screen.
   () => (NET && app.touch && !installed ? `Tip: add GD Arena to your <b>home screen</b> to play full screen.` : ''),
 ];

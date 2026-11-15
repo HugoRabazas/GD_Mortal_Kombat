@@ -68,6 +68,7 @@ function attackPose(f) {
 function attackKey(f) {
   const m = MOVES[f.move];
   if (!m) return pose({});
+  const style = getFighter(f.char).special.style; // the fighter's own way with their special
   const phase = f.t < m.startup ? 'pre' : f.t < m.startup + m.active ? 'act' : 'rec';
   switch (f.move) {
     case 'punch':
@@ -244,21 +245,40 @@ function attackKey(f) {
     case 'phoenix2': // the dive: stretched out head first, arms ahead like a beak
       return pose({ hipY: -62, lean: 1.0, hfx: 52, hfy: 12, hbx: 48, hby: 18, ffx: -22, ffy: -12, fbx: -36, fby: -18 });
     case 'dash':
+      // Meru's Iron Charge is the shoulder charge behind the forearm.
+      if (style === 'charge') return attackKey({ ...f, move: 'oath', t: phase === 'pre' ? 0 : MOVES.oath.startup });
+    // falls through
     case 'howl':
     case 'super':
       if (phase === 'pre') return pose({ hipY: -44, lean: 0.5, hfx: -8, hfy: 6, hbx: -20, hby: 8, ffx: 24, fbx: -32 });
       if (phase === 'act') return pose({ hipX: 10, hipY: -48, lean: 0.78, hfx: 54, hfy: 4, hbx: -30, hby: 10, ffx: 26, ffy: -4, fbx: -46, fby: -10 });
       return pose({ ...CROUCH, lean: 0.3 });
     case 'bolt':
+      if (style === 'bow') {
+        // Gleh's Moon Arrow: the bow held out, the string drawn back to the ear, loosed.
+        if (phase === 'pre') return pose({ hipY: -58, lean: -0.06, hfx: 50, hfy: -8, hbx: 20 - Math.min(1, f.t / m.startup) * 40, hby: -10, ffx: 24, fbx: -26 });
+        return pose({ lean: 0.1, hipX: 4, hfx: 54, hfy: -8, hbx: -30, hby: -14, ffx: 24, fbx: -28 });
+      }
       // Cupped hands in front while the bolt gathers between them, then both
       // palms thrust out.
       if (phase === 'pre') return pose({ hipY: -56, lean: 0.06, hfx: 18, hfy: 2, hbx: 15, hby: 7, ffx: 22, fbx: -26, tilt: Math.sin(f.t * 1.3) * 0.04 });
       return pose({ lean: 0.3, hipX: 6, hfx: 52, hfy: -4, hbx: 46, hby: 6, fbx: -28 });
     case 'rise':
+      if (style === 'blade') {
+        // Kichta's Rising Edge: a slash drawn up from the floor, turning as it climbs.
+        if (phase === 'pre') return pose({ ...CROUCH, hipY: -34, lean: 0.4, hfx: -10, hfy: 30, hbx: -16, hby: 16 });
+        if (f.vh > -2) return pose({ spin: (f.t * 0.5) % (Math.PI * 2), hipY: -66, lean: -0.1, hfx: 34, hfy: -66, hbx: -22, hby: 6, ffx: 14, ffy: -20, fbx: -14, fby: -6 });
+        return pose({ ...AIR, hfx: 30, hfy: -40 });
+      }
       if (phase === 'pre') return pose({ ...CROUCH });
       if (f.vh > -2) return pose({ hipY: -64, lean: 0.12, hfx: 14, hfy: -52, hbx: -10, hby: 10, ffx: 10, ffy: -22, fbx: -12, fby: -4 });
       return pose({ ...AIR });
     case 'quake':
+      if (style === 'clap') {
+        // Zelrith's Storm Clap: arms flung wide on a little hop, then the hands driven together.
+        if (phase === 'pre') return pose({ hipY: -64 - Math.sin(Math.min(1, f.t / m.startup) * Math.PI) * 8, lean: -0.15, hfx: -6, hfy: -34, hbx: -44, hby: -30, ffx: 16, ffy: -8, fbx: -18, fby: -8 });
+        return pose({ hipY: -46, lean: 0.4, hfx: 44, hfy: 4, hbx: 42, hby: 8, ffx: 28, fbx: -30 });
+      }
       // The sumo stomp: one leg swung high, then driven into the floor.
       if (phase === 'pre') return pose({ hipX: -6, hipY: -52, lean: -0.2, ffx: 30, ffy: -74, fbx: -22, hfx: 20, hfy: 26, hbx: -20, hby: 24 });
       return pose({ hipY: -34, lean: 0.3, ffx: 34, fbx: -34, hfx: 30, hfy: 24, hbx: -6, hby: 26 });
