@@ -449,20 +449,26 @@ function helpScreen() {
       </div>
       <ul class="tips">
         <li><b>Walk anywhere</b> on the arena: left, right, into the depth and back. Attacks turn you towards the nearest rival, so you do not need perfect aim.</li>
-        <li><b>Punch three times</b> for a combo that ends in a knockdown; each punch must land to continue.</li>
+        <li><b>Strings</b>: punch, punch, punch knocks down; punch, punch, kick <b>launches</b> the rival into the air (hold jump to chase and <b>juggle</b> them); punch, kick is a <b>hook kick</b> that spins them round; kick, kick a roundhouse. Each blow must land for the next. A blow that lands can also be <b>cancelled into your special</b>.</li>
+        <li><b>On the run</b> (a few steps, the stick still held): punch is a <b>lunging straight</b>, kick a <b>slide</b> along the floor, and jump then kick a <b>flying knee</b>.</li>
+        <li><b>In the air</b>: jump again for a <b>double jump</b>; punch dives at the rival, kick is a flying kick, grab a <b>stomp</b> straight down; an air punch that lands flows into an axe kick; special is your <b>air special</b>.</li>
+        <li><b>Hold kick</b> to charge a <b>guard-breaker</b>: let go and it smashes a guard open.</li>
         <li><b>Grab</b> (its own button, or punch + kick together) seizes a rival up close, lifts them over your head and slams them down behind you. Short reach, but it goes straight through a guard; in a brawl, anyone can break it with a blow.</li>
-        <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment.</li>
-        <li>Knocked down? Press <b>block</b> on the floor for a <b>quick rise</b>: you are back up in a blink.</li>
+        <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment; punch or kick late in it strikes out of it. Block with the stick straight away from the rival is a quick <b>back-step</b>.</li>
+        <li>Knocked down? Press <b>block</b> on the floor for a <b>quick rise</b>: you are back up in a blink. Punch or kick while getting up for a <b>rising sweep</b>.</li>
+        <li><b>Taunt</b>: block held and grab, standing still. A little energy, but any blow on you is a counter.</li>
         <li>Hit a rival while they are <b>winding up</b> a blow of their own for a <b>counter</b>: a quarter more damage.</li>
         <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling - stars circle their head while you have the chance to punish. Hold the guard and it is an ordinary block.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
         <li>Under a quarter of your health you are in your <b>last stand</b>: the energy bar fills half as fast again. A round is not over until it is over.</li>
         <li><b>Block</b> only stops what comes from the front. Raising it turns you to face whoever is already swinging, but a guard held too early stays put: get behind a blocking rival, or step out of the way of a projectile.</li>
-        <li><b>Jump</b> over a ground stomp; punch or kick in the air for a diving attack.</li>
+        <li><b>Jump</b> over a ground stomp or a slide.</li>
         <li><b>Crystals</b> appear on the floor: gold gives energy, green gives health. Walk over one to take it.</li>
-        <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage.</li>
+        <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage: knocked down into it, they bounce back off it, open to one more blow.</li>
+        <li>Each fighter's <b>finisher</b> is their own: a chain of blows with its own scene, ending in a last blow the camera closes in on.</li>
         <li><b>Arcade</b>: ${STAGES.length} fights in a row, the last against a boss, moving between the arenas as you climb.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
+        <li>The <b>Tutorial</b> teaches every move in short lessons, each against a partner who does what the lesson needs (one even throws you down so you can practise getting up).</li>
         <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks, kicks on a beat or fights back. A checklist ticks off each move the first time you really do it.</li>
         ${NET ? '<li><b>Online</b>: pick a name, then make a room or join one in the lobby; <b>Copy invite link</b> brings friends straight in. The room keeps score of who has won, and a reload brings you back to it.</li>' : ''}
         <li><b>Record</b> at the foot of the menu keeps your lifetime tally on this device: wins, best run, best combo and how you do with each fighter.</li>
@@ -473,7 +479,7 @@ function helpScreen() {
       </ul>
       <h3 class="sub-head">The fighters</h3>
       <ul class="roster">
-        ${FIGHTERS.map((f) => `<li>${head(f.id)}<div><b>${f.name}</b> <span class="title">${f.title}</span><small>${buildWords(f)} · special <b>${f.special.name}</b>: ${SPECIAL_NOTES[f.special.type]} · finisher <b>${f.super.name}</b></small></div></li>`).join('')}
+        ${FIGHTERS.map((f) => `<li>${head(f.id)}<div><b>${f.name}</b> <span class="title">${f.title}</span><small>${buildWords(f)} · special <b>${f.special.name}</b>: ${SPECIAL_NOTES[f.special.type]} · finisher <b>${f.super.name}</b>: ${SUPER_NOTES[f.super.move] || 'the finisher'}</small></div></li>`).join('')}
       </ul>
       <div class="row"><button type="button" class="btn primary" data-act="menu">Back</button></div>
     </section>`;
