@@ -194,7 +194,11 @@ The website build adds an **Online** mode for the whole alliance:
   ("In this room: Ana 2 · Beto 1"). Each screen counts from the results it
   sees, so the score starts from the fights you were there for.
 - The lobby and every room have a **chat**. Messages reach whoever is there at
-  that moment and are not stored anywhere.
+  that moment and are not stored anywhere. A soft two-note chime sounds for
+  a message from someone else, and a rising one when someone joins your
+  room (not during a fight), so neither goes unnoticed on a phone.
+- If the **host** leaves or reloads, the room carries on: the next player in
+  it becomes the host (a fight already under way ends for everyone).
 - **Copy invite link** in a room gives an address ending in `#room-ABCD`;
   whoever opens it only has to type a name to land in that room. While you
   are in a room its code stays in your own address too, so a reload - easy

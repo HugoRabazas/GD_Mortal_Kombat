@@ -47,7 +47,7 @@ const cleanWins = (n) => Math.max(0, Math.min(99999, Math.floor(Number(n) || 0))
 // A costume number someone sent, checked against the fighter's real costumes.
 const cleanLook = (char, look) => (Number.isInteger(look) && look >= 0 && look < lookCount(char) ? look : 0);
 
-export function createOnline({ config, name, char, arena = () => ARENAS[0].id, look = () => 0, wins = () => 0, version, readInput, onChange, onStart, onEnd }) {
+export function createOnline({ config, name, char, arena = () => ARENAS[0].id, look = () => 0, wins = () => 0, version, readInput, onChange, onStart, onEnd, onHeard = () => {} }) {
   const bus = createBus(config);
   const me = { id: newId(), name: cleanName(name) };
   let lobby = null;
@@ -82,6 +82,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     if (!text) return;
     online.chat.push({ name: cleanName(msg.name), text, mine: !!mine });
     if (online.chat.length > 40) online.chat.shift();
+    if (!mine) onHeard(); // someone else spoke
     onChange();
   }
   online.say = (text) => {

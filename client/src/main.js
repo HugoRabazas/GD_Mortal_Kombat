@@ -450,6 +450,8 @@ function helpScreen() {
         <li><b>Arcade</b>: ${STAGES.length} fights in a row, the last against a boss, moving between the arenas as you climb.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
         <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks, kicks on a beat or fights back. A checklist ticks off each move the first time you really do it.</li>
+        ${NET ? '<li><b>Online</b>: pick a name, then make a room or join one in the lobby; <b>Copy invite link</b> brings friends straight in. The room keeps score of who has won, and a reload brings you back to it.</li>' : ''}
+        <li><b>Record</b> at the foot of the menu keeps your lifetime tally on this device: wins, best run, best combo and how you do with each fighter.</li>
         <li>A <b>heartbeat</b> means your fighter is nearly out.</li>
         <li>On a phone, use the stick and the buttons on screen. The stick follows your thumb: touch anywhere free on its side of the screen. <b>Arrange buttons</b> lets you drag them where you like.</li>
         <li>With a <b>gamepad</b> you can also work the menus: stick or D-pad to move, A to choose, B to go back.</li>
@@ -1459,6 +1461,7 @@ async function goOnline(name) {
   ui.innerHTML = '<p class="loading">Connecting…</p>';
   const online = createOnline({
     wins: () => readRecord().wins,
+    onHeard: () => play('chime'),
     config: NET,
     name: app.nick,
     version: BUILD,
@@ -1469,6 +1472,10 @@ async function goOnline(name) {
     // Redraw the lobby or the room whenever someone joins, leaves or changes.
     onChange() {
       if (app.online !== online) return;
+      // Someone new in your room (not during a fight): a rising chime.
+      const here = online.room && !online.game ? online.room.peers.length : 0;
+      if (here > (app.roomCount || 0) && app.roomCount) play('arrive');
+      app.roomCount = here;
       if (app.screen === 'lobby' || (app.screen === 'room' && online.room)) show(app.screen);
     },
     onStart(info) {

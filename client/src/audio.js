@@ -235,6 +235,17 @@ const SOUNDS = {
   win: () => {
     [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.22, 0.35, i * 0.13));
   },
+  // Online: a soft two-note chime for a chat message from someone else, and
+  // a rising one when someone joins your room.
+  chime: () => {
+    tone('sine', 880, 880, 0.12, 0.12);
+    tone('sine', 1320, 1320, 0.18, 0.1, 0.08);
+  },
+  arrive: () => {
+    tone('triangle', 523, 523, 0.1, 0.14);
+    tone('triangle', 784, 784, 0.1, 0.14, 0.09);
+    tone('triangle', 1047, 1047, 0.2, 0.12, 0.18);
+  },
   // The rituals while a round is announced: a big clap, a fist meeting an
   // open palm, a flame stirred up.
   clap: () => {
