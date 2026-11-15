@@ -15,6 +15,8 @@ test('every arena has a 3D theme, music and a flat look, and nothing is left ove
   assert.deepEqual(Object.keys(THEMES).sort(), [...ids].sort(), 'themes match the arena list');
   assert.deepEqual(Object.keys(MUSIC_THEMES).sort(), [...ids].sort(), 'music matches the arena list');
   for (const id of ids) assert.ok(id in FLAT_TINTS, `${id} has a flat look`);
+  // Small screens show the short names, all four in one row.
+  for (const a of ARENAS) assert.ok(a.short && a.short.length <= 10, `${a.id} has a short name`);
 });
 
 test('each theme is complete: sky, three moods, weather the scene knows', () => {
@@ -26,7 +28,7 @@ test('each theme is complete: sky, three moods, weather the scene knows', () => 
       for (const k of ['sky', 'hemi', 'key', 'moon', 'fog']) assert.ok(Array.isArray(m[k]), `${id} mood ${k}`);
       assert.ok(m.rain >= 0 && m.rain <= 1, `${id} weather strength`);
     }
-    assert.ok(['rain', 'snow', 'sand'].includes(th.weather), `${id} weather kind`);
+    assert.ok(['rain', 'snow', 'sand', 'petals'].includes(th.weather), `${id} weather kind`);
     assert.equal(th.ridges.length, 2, `${id} two mountain ranges`);
     assert.ok(th.cloaks.length > 0 && th.flame.length === 4, `${id} crowd and flame`);
   }

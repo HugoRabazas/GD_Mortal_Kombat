@@ -115,7 +115,9 @@ appear on screen; **Arrange buttons** (menu and pause screen) lets you drag
 each one where you like and resize them, saved per orientation on the device.
 The stick also floats: a thumb that lands anywhere free on the stick's half
 of the screen brings the stick under it, and letting go sends it home - so a
-fight never stalls because a thumb missed the circle by a finger.
+fight never stalls because a thumb missed the circle by a finger. Each
+button gives a faint tick under the thumb when pressed, where the phone
+allows it (most Android phones; iPhones do not let web pages vibrate).
 When your fighter is nearly out (under a quarter of their health), a quiet
 heartbeat plays, so the danger reaches you even with your eyes off the bar.
 The match's last moment sounds like its result: a rising fanfare when your
@@ -270,8 +272,9 @@ Courtyard plays a warm plucked tune in A minor at 116 beats a minute; Frost
 Summit a colder one in D minor at 104, with a bell melody (a pure tone plus
 the out-of-tune overtone that makes a bell sound like a bell), a hollow bass
 and a high ice chime; Dune Ruins a desert tune at 98 that sways between E
-and F - that half step is what gives it its colour - with a reedy lead. All
-three speed up and fill out for deciding rounds and the last seconds of a
+and F - that half step is what gives it its colour - with a reedy lead;
+Blossom Terrace the only one in a major key (G, E minor, C, D) at an
+unhurried 92. All four speed up and fill out for deciding rounds and the last seconds of a
 round.
 
 **Graphics** (Settings) is Auto, Sharp or Fast. Auto starts at full detail
@@ -294,11 +297,12 @@ Music and effects have their own volume sliders (menu and pause screen),
 remembered on the device, next to the sound switch, the touch-button switch
 and the button arranger.
 
-## Three arenas, and all live in time
+## Four arenas, and all live in time
 
 Every select screen has a row that picks where the fight is held; the fight
 playing behind the menus moves there at once, so the choice is a preview. The
-device remembers it. The two places share the same floor, the same rules and
+device remembers it (on small screens the picker shows short names:
+Courtyard, Summit, Ruins, Terrace). The places share the same floor, the same rules and
 the same ring of fire - they differ in paint, light, weather and sound.
 
 - **Ember Courtyard**: round one at dusk, round two under a cold night sky,
@@ -312,6 +316,10 @@ the same ring of fire - they differ in paint, light, weather and sound.
   banners. Round one at midday, round two in a golden sunset, round three in
   a sandstorm - an ochre haze that swallows the far wall, grit driven almost
   sideways, and the wind howling.
+- **Blossom Terrace**: a red-lacquered terrace in a blossom garden below
+  misty hills, plum banners. Round one on a clear morning, round two in a
+  golden afternoon, round three in an evening wind that fills the air with
+  pink petals, drifting slowly and swaying, over a soft wind.
 
 The arcade ladder moves to the next arena after every fight. Online, the
 host picks the arena in the room; everyone else sees the choice there before

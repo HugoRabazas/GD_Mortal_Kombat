@@ -193,7 +193,7 @@ function paintBackdrop() {
 
 // Without WebGL every arena is the courtyard picture, its hue turned to the
 // arena's own: ice for the summit, sun-baked sandstone for the ruins.
-export const FLAT_TINTS = { courtyard: null, frost: '#2f86d8', dunes: '#d89a40' };
+export const FLAT_TINTS = { courtyard: null, frost: '#2f86d8', dunes: '#d89a40', blossom: '#d870a8' };
 
 export function drawArena(ctx, now, theme) {
   if (!backdrop) backdrop = paintBackdrop();

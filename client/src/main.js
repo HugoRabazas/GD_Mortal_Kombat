@@ -170,7 +170,7 @@ try {
 
 // The row of buttons that picks the arena.
 function placePicker() {
-  return `<div class="seg places" role="group" aria-label="Arena">${ARENAS.map((a) => `<button type="button" class="${app.place === a.id ? 'on' : ''}" data-act="place" data-id="${a.id}" aria-pressed="${app.place === a.id}">${a.name}</button>`).join('')}</div>`;
+  return `<div class="seg places" role="group" aria-label="Arena">${ARENAS.map((a) => `<button type="button" class="${app.place === a.id ? 'on' : ''}" data-act="place" data-id="${a.id}" aria-pressed="${app.place === a.id}" title="${a.name}"><span class="long">${a.name}</span><span class="short">${a.short}</span></button>`).join('')}</div>`;
 }
 
 // One tip each time the menu is shown, in turn, so the deeper rules surface

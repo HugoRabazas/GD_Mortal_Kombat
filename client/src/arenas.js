@@ -3,9 +3,11 @@
 // The paint itself lives with the 3D scene (render/scene3d.js, THEMES).
 
 export const ARENAS = [
-  { id: 'courtyard', name: 'Ember Courtyard' },
-  { id: 'frost', name: 'Frost Summit' },
-  { id: 'dunes', name: 'Dune Ruins' },
+// `short` is the name on small screens, where four full names do not fit.
+  { id: 'courtyard', name: 'Ember Courtyard', short: 'Courtyard' },
+  { id: 'frost', name: 'Frost Summit', short: 'Summit' },
+  { id: 'dunes', name: 'Dune Ruins', short: 'Ruins' },
+  { id: 'blossom', name: 'Blossom Terrace', short: 'Terrace' },
 ];
 
 export const isArenaId = (id) => ARENAS.some((a) => a.id === id);

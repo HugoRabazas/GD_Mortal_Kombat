@@ -364,6 +364,22 @@ MUSIC_THEMES.dunes = {
   kick: 0.8,
   hat: 6000,
 };
+// Blossom Terrace: the only tune in a major key - G, E minor, C, D - unhurried
+// at 92, a plain triangle lead over a triangle bass, light drums.
+MUSIC_THEMES.blossom = {
+  bpm: 92,
+  finalBpm: 108,
+  bars: [
+    { bass: 49, notes: [392, 493.88, 587.33] },
+    { bass: 41.2, notes: [329.63, 392, 493.88] },
+    { bass: 65.41, notes: [329.63, 392, 523.25] },
+    { bass: 73.42, notes: [293.66, 369.99, 440] },
+  ],
+  bass: 'triangle',
+  bell: false,
+  kick: 0.6,
+  hat: 8000,
+};
 let tune = MUSIC_THEMES.courtyard;
 const stepSeconds = () => 60 / (musicMode === 'final' ? tune.finalBpm : tune.bpm) / 4; // a sixteenth note
 const BASS_STEPS = [0, 3, 6, 8, 11, 14];
@@ -533,6 +549,7 @@ const WEATHER_SOUND = {
   rain: { type: 'highpass', freq: 1500, q: 0.4, sway: 0, gain: 0.08 },
   snow: { type: 'bandpass', freq: 420, q: 1.2, sway: 240, gain: 0.32 },
   sand: { type: 'bandpass', freq: 1100, q: 0.9, sway: 420, gain: 0.2 },
+  petals: { type: 'bandpass', freq: 650, q: 0.8, sway: 300, gain: 0.16 }, // a soft evening wind
 };
 export function setWeather(kind, level) {
   if (!ctx || ctx.state !== 'running') return;

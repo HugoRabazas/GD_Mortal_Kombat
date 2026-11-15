@@ -757,7 +757,7 @@ export function create3D(canvas) {
       if (!view.demo) play('thunder');
     }
     // Where it snows instead, the blizzard howls in gusts.
-    if ((theme.th.weather === 'snow' || theme.th.weather === 'sand') && rainNow > 0.5 && now > nextStrike) {
+    if (theme.th.weather !== 'rain' && rainNow > 0.5 && now > nextStrike) {
       nextStrike = now + 3000 + Math.random() * 4500;
       if (!view.demo) play('wind');
     }
@@ -796,19 +796,22 @@ export function create3D(canvas) {
 
     // Snow, where it snows: it falls at walking pace and the wind grows with
     // it. Sand uses the same grains, smaller and warm, driven almost sideways.
+    // Petals are the same grains again: pink, larger, drifting down slowly and
+    // swaying more on the evening wind.
     const sand = theme.th.weather === 'sand';
-    const snowing = theme.th.weather === 'snow' || sand;
+    const petals = theme.th.weather === 'petals';
+    const snowing = theme.th.weather === 'snow' || sand || petals;
     snowFall.visible = snowing && rainNow > 0.02;
     if (snowFall.visible) {
       snowFallMat.opacity = Math.min(0.95, 0.45 + rainNow * 0.5);
-      snowFallMat.color.set(sand ? 0xd8b078 : 0xffffff);
-      snowFallMat.size = sand ? 0.16 : 0.2;
-      const wind = rainNow * rainNow * (sand ? 11 : 5.5);
+      snowFallMat.color.set(sand ? 0xd8b078 : petals ? 0xff7eac : 0xffffff);
+      snowFallMat.size = sand ? 0.16 : petals ? 0.24 : 0.2;
+      const wind = rainNow * rainNow * (sand ? 11 : petals ? 4 : 5.5);
       const count = Math.round(FLAKES * (0.25 + 0.75 * rainNow) * share);
       for (let d = 0; d < count; d++) {
         const r = snowSeed[d];
-        r.y -= r.v * (1 + rainNow) * dt * (sand ? 0.0003 : 0.001);
-        r.x += (wind + Math.sin(now / 900 + r.sway) * 0.5) * dt * 0.001;
+        r.y -= r.v * (1 + rainNow) * dt * (sand ? 0.0003 : petals ? 0.0006 : 0.001);
+        r.x += (wind + Math.sin(now / 900 + r.sway) * (petals ? 1.2 : 0.5)) * dt * 0.001;
         if (r.y < 0) r.y += 12;
         if (r.x > 15) r.x -= 30;
         const o = d * 3;

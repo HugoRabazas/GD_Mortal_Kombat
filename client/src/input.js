@@ -242,6 +242,12 @@ export function initTouch(root) {
       if (!touchLive) return;
       touchBits |= bit;
       btn.classList.add('on');
+      // A faint tick under the thumb, so a press is felt (where phones allow).
+      try {
+        navigator.vibrate?.(7);
+      } catch {
+        // not available here
+      }
       grab(btn, e.pointerId);
       e.preventDefault();
     });

@@ -940,6 +940,21 @@ kbd {
   white-space: nowrap;
 }
 
+/* The arena picker: full names, or short ones where space is tight. */
+.places .short {
+  display: none;
+}
+
+@media (max-height: 480px), (max-width: 600px) {
+  .places .long {
+    display: none;
+  }
+
+  .places .short {
+    display: inline;
+  }
+}
+
 .ladder .ltag {
   font: 700 0.66rem var(--font-body);
   letter-spacing: 0.12em;

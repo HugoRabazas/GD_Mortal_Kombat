@@ -90,5 +90,34 @@ export const THEMES = {
       { sky: [0.72, 0.56, 0.4], hemi: [0xd9b080, 0x4a3220, 0.58], key: [0xffd8a8, 1.0], moon: [0xc9a070, 0.3], fog: [0xc09a68, 0.07], torch: 2.4, rain: 1 }, // sandstorm
     ],
   },
+  // A lacquered terrace in a blossom garden below misty hills: a clear
+  // morning, a golden afternoon, then an evening wind that fills the air
+  // with petals.
+  blossom: {
+    sky: ['#3f6aa8', '#7c9fd2', '#c4d2ec', '#f4d6e2', '#f2b4c6'],
+    stars: null, // daytime: a sun instead of a moon
+    sun: true,
+    moon: { halo: ['255,232,236', '255,190,210'], disc: ['#fffaf4', '#ffd8e2'], marks: null },
+    aurora: false,
+    ridges: [['#7a8cab', '#e8eef8'], ['#56688a', null]],
+    ground: [118, 100, 108],
+    dais: [166, 142, 148],
+    daisSide: 0x7a5862,
+    snow: false,
+    wall: 0x7c3e40,
+    trim: 0xb48a52,
+    banner: ['#5a2a6e', 'rgba(255,214,232,0.85)', 'rgba(255,236,244,0.95)'],
+    flame: ['255,250,230', '255,200,120', '255,120,80', '255,80,90'],
+    torch: 0xffb27a,
+    ember: 0xffc0d4,
+    cloaks: [0x7a3a5a, 0x3a5a4a, 0x5a4a7a, 0xb07a8a, 0x2a3a5a, 0x8a6a3a],
+    weather: 'petals',
+    lightning: false,
+    moods: [
+      { sky: [1, 1, 1], hemi: [0xe0e8ff, 0x6a5a66, 0.62], key: [0xfff6ee, 1.45], moon: [0xffe6ec, 0.4], fog: [0xd8d0e0, 0.009], torch: 0.7, rain: 0.15 }, // morning
+      { sky: [1, 0.82, 0.7], hemi: [0xffd2b0, 0x5a3a40, 0.52], key: [0xffc08a, 1.45], moon: [0xff9a7a, 0.7], fog: [0xd8a090, 0.012], torch: 1.5, rain: 0.35 }, // golden afternoon
+      { sky: [0.48, 0.38, 0.56], hemi: [0xb48cb8, 0x1a1022, 0.42], key: [0xffc8d8, 0.9], moon: [0xd890b0, 0.4], fog: [0x4a3052, 0.032], torch: 2.8, rain: 1 }, // evening wind
+    ],
+  },
 };
 
