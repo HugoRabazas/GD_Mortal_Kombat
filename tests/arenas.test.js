@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { ARENAS } from '../client/src/arenas.js';
 import { THEMES } from '../client/src/render/themes.js';
-import { MUSIC_THEMES } from '../client/src/audio.js';
+import { MUSIC_THEMES, leadNote } from '../client/src/audio.js';
 import { FLAT_TINTS } from '../client/src/render/arena.js';
 
 const COLOR = /^#[0-9a-f]{6}$/i;
@@ -39,5 +39,19 @@ test('each tune has four bars and sane tempos', () => {
     assert.equal(t.bars.length, 4, id);
     for (const b of t.bars) assert.equal(b.notes.length, 3, id);
     assert.ok(t.bpm >= 80 && t.bpm < t.finalBpm && t.finalBpm <= 150, `${id} tempo`);
+  }
+});
+
+test('each tune answers itself: bars 5-8 differ from 1-4, end on a held note, and the loop is eight bars', () => {
+  for (const [id, t] of Object.entries(MUSIC_THEMES)) {
+    const phrase = (from) => Array.from({ length: 64 }, (_, k) => leadNote(t, from + k)).map((n) => (n ? `${n.freq}${n.held ? 'h' : ''}` : '-')).join(' ');
+    assert.notEqual(phrase(0), phrase(64), `${id}: the answering phrase is not a copy`);
+    assert.equal(phrase(0), phrase(128), `${id}: the loop comes round after eight bars`);
+    const last = Array.from({ length: 16 }, (_, k) => leadNote(t, 112 + k)).filter(Boolean);
+    assert.ok(last.length === 1 && last[0].held, `${id}: the eighth bar is one long note`);
+    for (let i = 0; i < 128; i++) {
+      const n = leadNote(t, i);
+      if (n) assert.ok(t.bars.some((b) => b.notes.includes(n.freq)), `${id}: notes come from the bars' chords`);
+    }
   }
 });

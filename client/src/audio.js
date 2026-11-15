@@ -384,6 +384,10 @@ let tune = MUSIC_THEMES.courtyard;
 const stepSeconds = () => 60 / (musicMode === 'final' ? tune.finalBpm : tune.bpm) / 4; // a sixteenth note
 const BASS_STEPS = [0, 3, 6, 8, 11, 14];
 const LEAD_STEPS = [0, 3, 6, 10, 12, 14];
+// The answering phrase (bars 5 to 8 of every eight): the lead on another
+// rhythm, walking down the chord instead of up, and the last bar closing on
+// one long note - so a tune repeats every eight bars, not every four.
+const LEAD_STEPS_B = [0, 2, 4, 8, 11, 14];
 let musicBus = null;
 let duck = 0; // 0 = full music, 1 = pushed right down (see duckMusic)
 let musicMode = 'off';
@@ -418,6 +422,21 @@ function hiss(t, dur, gain, freq) {
   src.stop(t + dur + 0.02);
 }
 
+// The lead's note at sixteenth `i` of the eight-bar loop: { freq, held } or
+// null for a rest. `held` is the eighth bar's one long closing note.
+export function leadNote(theme, step) {
+  const i = step % 128;
+  const bar = theme.bars[Math.floor(i / 16) % theme.bars.length];
+  const s = i % 16;
+  const answer = Math.floor(i / 64) % 2 === 1;
+  const closing = answer && Math.floor(i / 16) % 4 === 3;
+  const steps = answer ? LEAD_STEPS_B : LEAD_STEPS;
+  if (!steps.includes(s) || (closing && s > 0)) return null;
+  const k = steps.indexOf(s) + Math.floor(i / 16);
+  const notes = bar.notes;
+  return { freq: notes[answer ? notes.length - 1 - (k % notes.length) : k % notes.length], held: closing };
+}
+
 function musicTick(i, t) {
   const bars = tune.bars;
   const bar = bars[Math.floor(i / 16) % bars.length];
@@ -429,19 +448,21 @@ function musicTick(i, t) {
   if (final || (full ? s % 2 === 1 : s % 4 === 2)) hiss(t, 0.04, final && s % 2 === 0 ? 0.07 : 0.12, tune.hat); // hat
   if (final && (s === 14 || s === 15)) hiss(t, 0.08, 0.25, 1800); // a snare roll into the next bar
   if (BASS_STEPS.includes(s) && (full || s % 8 === 0)) note(tune.bass, bar.bass, t, full ? 0.2 : 0.5, tune.bass === 'square' ? 0.2 : 0.32);
-  if (LEAD_STEPS.includes(s)) {
-    const n = bar.notes[(LEAD_STEPS.indexOf(s) + Math.floor(i / 16)) % bar.notes.length];
+  const lead = leadNote(tune, i);
+  if (lead) {
+    const n = lead.freq;
+    const closing = lead.held;
     const f = final ? n * (tune.bell ? 2 : 4) : full ? n * 2 : n; // a bell two octaves up would shriek
     if (tune.reed) {
       // A reed: a soft sawtooth with a little sway in its pitch.
-      note('sawtooth', f, t, full ? 0.3 : 0.45, full ? 0.07 : 0.06, f * 1.01);
+      note('sawtooth', f, t, closing ? 1.1 : full ? 0.3 : 0.45, full ? 0.07 : 0.06, f * 1.01);
     } else if (tune.bell) {
       // A bell: the note itself, and a quieter overtone 2.76 times higher that
       // dies away sooner - the clang that tells a bell from a flute.
-      note('sine', f, t, full ? 0.5 : 0.9, full ? 0.16 : 0.13);
+      note('sine', f, t, closing ? 1.4 : full ? 0.5 : 0.9, full ? 0.16 : 0.13);
       note('sine', f * 2.76, t, 0.25, 0.05);
     } else {
-      note('triangle', f, t, 0.22, full ? 0.16 : 0.12);
+      note('triangle', f, t, closing ? 0.9 : 0.22, full ? 0.16 : 0.12);
     }
   }
   // Ice chime: a high, slow sparkle at the top of every other bar.
@@ -470,7 +491,7 @@ function pumpMusic() {
   if (musicNext < ctx.currentTime) musicNext = ctx.currentTime + 0.05;
   while (musicNext < ctx.currentTime + 0.15) {
     if (!muted) musicTick(musicStep, musicNext);
-    musicStep = (musicStep + 1) % 64;
+    musicStep = (musicStep + 1) % 128;
     musicNext += stepSeconds();
   }
 }

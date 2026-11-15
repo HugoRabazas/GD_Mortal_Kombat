@@ -280,7 +280,9 @@ the out-of-tune overtone that makes a bell sound like a bell), a hollow bass
 and a high ice chime; Dune Ruins a desert tune at 98 that sways between E
 and F - that half step is what gives it its colour - with a reedy lead;
 Blossom Terrace the only one in a major key (G, E minor, C, D) at an
-unhurried 92. All four speed up and fill out for deciding rounds and the last seconds of a
+unhurried 92. Every tune is eight bars long: the second four answer the
+first, with the lead on another rhythm, walking down the chord instead of
+up, and closing on one long note before the loop comes round. All four speed up and fill out for deciding rounds and the last seconds of a
 round.
 
 **Graphics** (Settings) is Auto, Sharp or Fast. Auto starts at full detail
@@ -466,7 +468,8 @@ with three moods, its own music and a look without WebGL - the themes live
 as plain data in `client/src/render/themes.js` so Node can read them), the
 CPU's difficulty ladder (`tests/ai.test.js`: in mirror duels Normal must beat
 Easy, Hard beat Normal and the boss level beat Hard - over 160 duels each
-step measured 100 %, 81 % and 67 %), the website's home-screen manifest
+step measured 100 %, 81 % and 67 %), the tunes' answering phrase (in
+`tests/arenas.test.js`), the website's home-screen manifest
 (`tests/web.test.js`: it opens full screen and sideways, and every icon is
 the size it claims) and online play
 (`tests/online.test.js`). The
