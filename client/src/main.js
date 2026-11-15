@@ -532,6 +532,8 @@ function movesCard() {
   return `
     <dl class="movelist" aria-label="Moves">
       <dt>${k(key.p, key.p, key.p)}</dt><dd><b>Three-punch combo</b>; each punch must land, the third knocks down.</dd>
+      <dt>${k(key.p, key.p, key.k)}</dt><dd><b>Launcher</b>: the string ends in a rising kick that throws the rival up. Then ${k(key.j)} to chase and hit them in the air (a <b>juggle</b>, twice at most).</dd>
+      <dt>${k(key.k, key.k)}</dt><dd><b>Kick string</b>: a kick that lands flows into a spinning roundhouse that knocks down.</dd>
       <dt>${k(key.k)}</dt><dd><b>Kick</b>: slower than a punch, heavier, longer reach.</dd>
       <dt>Run + ${k(key.p)}</dt><dd><b>Lunging straight</b>: after a few steps, punch with the stick held to leap in from long range. Chains into the second punch.</dd>
       <dt>Run + ${k(key.k)}</dt><dd><b>Slide</b>: kick while running to slide in feet-first and sweep the rival off their feet. Low: jump it.</dd>

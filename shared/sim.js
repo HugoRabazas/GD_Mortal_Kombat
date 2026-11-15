@@ -28,6 +28,8 @@ const AIR_JUMP = { from: 4, v: 11.5, buffer: 6 };
 // The stomp (grab - or punch and kick together - in the air): a short hang,
 // then a plunge feet first.
 const STOMP = { fall: -17, rest: 14 };
+// A launched rival can be hit this many more times in the air.
+const JUGGLE = 2;
 const FRICTION = 0.84;
 const BUFFER_TICKS = 8; // how long a button press is remembered
 // A throw: seize (the rival is lifted in front), swing (carried up and over
@@ -81,7 +83,15 @@ export const MOVES = {
   },
   punch2: {
     startup: 4, active: 3, recovery: 10, dmg: 6, reach: 88, arc: 0.85, y0: 70, y1: 150, aim: 190,
-    hitstun: 16, blockstun: 10, push: 4, gain: 9, next: 'punch3',
+    hitstun: 16, blockstun: 10, push: 4, gain: 9, next: 'punch3', nextK: 'launch',
+  },
+  // Punch, punch, kick: the string ends in a rising kick that throws the
+  // rival up into the air (`launch` is their upward speed) instead of down.
+  // A launched rival can be struck JUGGLE more times before they land, and a
+  // launcher that connects can be cancelled straight into a jump to chase.
+  launch: {
+    startup: 6, active: 4, recovery: 14, dmg: 7, reach: 86, arc: 0.9, y0: 30, y1: 170, aim: 190,
+    hitstun: 0, blockstun: 12, push: 3, gain: 10, knockdown: true, heavy: true, launch: 12.5, speed: 4, go: [0, 7],
   },
   punch3: {
     startup: 6, active: 4, recovery: 17, dmg: 9, reach: 92, arc: 0.9, y0: 40, y1: 170, aim: 190,
@@ -89,7 +99,13 @@ export const MOVES = {
   },
   kick: {
     startup: 8, active: 4, recovery: 13, dmg: 10, reach: 104, arc: 0.75, y0: 30, y1: 140, aim: 210,
-    hitstun: 19, blockstun: 12, push: 9, gain: 12, heavy: true,
+    hitstun: 19, blockstun: 12, push: 9, gain: 12, heavy: true, nextK: 'kick2',
+  },
+  // Kick, kick: a kick that lands flows into a spinning roundhouse that
+  // knocks down, stepping in after the rival the first kick pushed away.
+  kick2: {
+    startup: 7, active: 4, recovery: 18, dmg: 8, reach: 108, arc: 1.1, y0: 50, y1: 160, aim: 210,
+    hitstun: 0, blockstun: 13, push: 10, gain: 11, knockdown: true, heavy: true, speed: 6, go: [0, 9],
   },
   // Punch on the move: a lunging straight that carries the body forward
   // (`speed` from tick go[0] to go[1]), reaching further than a jab but
@@ -221,6 +237,7 @@ function newFighter(charId, slot, count, mod) {
     prev: 0, // buttons held on the previous tick
     held: -1, // slot of the rival being thrown, or -1
     jumpT: 0, // ticks left on a remembered press of jump (for the air jump)
+    juggle: 0, // hits a launched fighter can still take before landing
     air2: false, // the air jump is spent
     buf: 0, // remembered attack presses
     bufT: 0,
@@ -571,10 +588,26 @@ function control(s, f, inp) {
         });
         emit(s, 'bolt', { by: f.slot });
       }
-      // A punch that connected can flow straight into the next one.
-      if (m.next && f.hits.length && t >= activeEnd && f.buf & INPUT.PUNCH) {
-        startAttack(s, f, m.next);
-        break;
+      // A blow that connected can flow straight into the next one of its
+      // string: punch for `next`, kick for `nextK`.
+      if (f.hits.length && t >= activeEnd) {
+        const nx = f.buf & INPUT.KICK ? m.nextK : f.buf & INPUT.PUNCH ? m.next : null;
+        if (nx) {
+          startAttack(s, f, nx);
+          break;
+        }
+        // A launcher that landed: jump straight after the rival.
+        if (m.launch && held(INPUT.JUMP)) {
+          setState(f, 'jump');
+          f.move = null;
+          f.vh = JUMP_V;
+          f.vx = Math.cos(f.dir) * AIR_SPEED;
+          f.vz = Math.sin(f.dir) * AIR_SPEED;
+          f.jumpT = 0;
+          f.air2 = false;
+          emit(s, 'jump', { by: f.slot });
+          break;
+        }
       }
       if (t >= activeEnd + m.recovery) {
         f.move = null;
@@ -692,6 +725,7 @@ function land(s, f) {
     case 'down':
       f.stun = DOWN_TICKS;
       f.teched = false;
+      f.juggle = 0;
       emit(s, 'thud', here);
       break;
     case 'ko':
@@ -780,7 +814,9 @@ function separate(s, a, b) {
 function canBeHit(f) {
   // Both fighters in a throw can be hit by others: grabbing in a crowd is a
   // risk, and being thrown is no shelter. A hit on either ends the throw.
-  return f.inv <= 0 && f.state !== 'down' && f.state !== 'getup' && f.state !== 'ko';
+  // A fighter on the way down from a launcher can still be juggled.
+  const juggled = f.state === 'down' && f.h > 0 && f.juggle > 0;
+  return f.inv <= 0 && (f.state !== 'down' || juggled) && f.state !== 'getup' && f.state !== 'ko';
 }
 
 // Is `def` inside the wedge of `att`'s current attack?
@@ -903,6 +939,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     }
   }
 
+  const juggled = def.state === 'down'; // struck in the air after a launcher
   // Caught winding up? (Checked before the hit wipes out their move.)
   const wound = def.state === 'attack' && MOVES[def.move];
   const counter = !!wound && def.t < wound.startup;
@@ -934,9 +971,11 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     def.state = 'down';
     def.t = 0;
     def.stun = DOWN_TICKS;
-    def.vh = big ? 10 : 7.5;
-    def.vx = dx * (big ? 8 : 5);
-    def.vz = dz * (big ? 8 : 5);
+    def.vh = m.launch || (big ? 10 : juggled ? 6.5 : 7.5);
+    const away = m.launch ? 1.2 : big ? 8 : 5; // a launcher keeps them close to chase
+    def.vx = dx * away;
+    def.vz = dz * away;
+    def.juggle = m.launch ? JUGGLE : juggled ? def.juggle - 1 : 0;
   } else {
     def.state = 'hit';
     def.t = 0;
@@ -951,7 +990,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   if (s.f.length === 2) s.hitstop = (big ? 12 : m.heavy ? 7 : 4) + extra;
   else if (big) s.hitstop = 6;
   else att.stop = def.stop = (m.heavy ? 5 : 3) + extra;
-  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken, counter });
+  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken, counter, juggle: juggled });
 }
 
 function resolveHits(s) {

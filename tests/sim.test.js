@@ -644,6 +644,54 @@ test('in the air punch, kick and grab are three different moves; the stomp knock
   assert.ok(miss.f[0].stun >= 10, 'a missed stomp is slow to recover');
 });
 
+test('punch, punch, kick launches; a jump and an air punch juggle the rival before they land', () => {
+  const s = startFight();
+  closeUp(s);
+  const seq = { 0: INPUT.PUNCH, 9: INPUT.PUNCH, 19: INPUT.KICK };
+  let launched = false;
+  let juggled = false;
+  let top = 0;
+  let pressedAir = false;
+  for (let t = 0; t < 100; t++) {
+    const me = s.f[0];
+    const o = s.f[1];
+    let inp = seq[t] || 0;
+    if (me.move === 'launch' && me.hits.length) inp |= INPUT.JUMP;
+    if (me.state === 'jump' && o.h > 0 && Math.abs(me.h - o.h) < 60 && !pressedAir) {
+      inp |= INPUT.PUNCH;
+      pressedAir = true;
+    }
+    step(s, [inp, 0]);
+    launched ||= s.ev.some((e) => e.type === 'hit' && e.kind === 'launch');
+    juggled ||= s.ev.some((e) => e.type === 'hit' && e.juggle);
+    top = Math.max(top, o.h);
+  }
+  assert.ok(launched, 'the launcher lands');
+  assert.ok(top > 80, `the rival is thrown up (${top.toFixed(0)})`);
+  assert.ok(juggled, 'and is hit again in the air');
+  assert.equal(s.f[1].juggle, 0, 'the juggle ends on landing');
+});
+
+test('kick, kick: a kick that lands flows into a roundhouse that knocks down', () => {
+  const s = startFight();
+  closeUp(s, 80);
+  step(s, [INPUT.KICK, 0]);
+  run(s, 11);
+  step(s, [INPUT.KICK, 0]); // pressed while the kick is still out (remembered)
+  for (let i = 0; i < 12 && s.f[0].move !== 'kick2'; i++) step(s, idle(s));
+  assert.equal(s.f[0].move, 'kick2');
+  run(s, 14);
+  assert.ok(s.f[1].state === 'down' || s.f[1].state === 'getup', 'knocked down');
+  // A kick that missed has no follow-up.
+  const miss = startFight();
+  closeUp(miss, 300);
+  step(miss, [INPUT.KICK, 0]);
+  run(miss, 11);
+  step(miss, [INPUT.KICK, 0]);
+  run(miss, 2);
+  assert.notEqual(miss.f[0].move, 'kick2');
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);

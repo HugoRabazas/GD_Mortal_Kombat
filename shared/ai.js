@@ -115,13 +115,23 @@ export function aiInput(ai, s, me) {
     ai.tapT--;
     tap = ai.tap;
   }
-  // Keep a punch string going once the first blow has landed.
-  if (f.state === 'attack' && (f.move === 'punch' || f.move === 'punch2') && f.hits.length && ai.tapT === 0 && !ai.chained) {
-    ai.chained = true;
-    if (rnd(ai) < cfg.attack + 0.15) {
-      ai.tap = INPUT.PUNCH;
+  // Keep a string going once a blow has landed (one decision per blow):
+  // the next punch, the kick that ends it, or - after a launcher - a jump
+  // to chase the rival into the air.
+  const sm = f.state === 'attack' && MOVES[f.move];
+  if (sm && f.hits.length && ai.tapT === 0 && ai.chained !== f.move && (sm.next || sm.nextK || sm.launch)) {
+    ai.chained = f.move;
+    // How reliably it finishes a string is a matter of skill (like punishing).
+    if (sm.launch) {
+      if (rnd(ai) < cfg.punish) {
+        ai.held = INPUT.JUMP;
+        ai.wait = 4;
+        return INPUT.JUMP;
+      }
+    } else if (rnd(ai) < cfg.punish + 0.1) {
+      ai.tap = sm.nextK && (!sm.next || rnd(ai) < 0.35) ? INPUT.KICK : INPUT.PUNCH;
       ai.tapT = 2;
-      return INPUT.PUNCH;
+      return ai.tap;
     }
   }
   if (f.state !== 'attack') ai.chained = false;
@@ -149,6 +159,13 @@ export function aiInput(ai, s, me) {
         ai.wait = 3;
         return ai.held;
       }
+    }
+    // A rival launched into the air: strike them before they land.
+    if (o.state === 'down' && o.h > 0 && o.juggle > 0 && d < 95 && f.t >= 3 && ai.airPlan < 3) {
+      ai.airPlan = 3;
+      ai.tap = rnd(ai) < 0.6 ? INPUT.PUNCH : INPUT.KICK;
+      ai.tapT = 2;
+      return ai.tap;
     }
     if (f.vh < 0 && d < 50 && o.h <= 0 && ai.airPlan < 2) {
       ai.airPlan = 2;

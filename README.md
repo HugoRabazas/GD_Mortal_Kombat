@@ -153,6 +153,19 @@ and the heartbeat, the crowd and the weather go quiet.
   aim does not have to be exact.
 - **Punch three times** for a combo that ends in a knockdown; each punch has
   to land for the next to come out.
+- **Punch, punch, kick** ends the string in a **launcher**: a rising kick
+  that throws the rival up into the air instead of down (12.5 upward speed,
+  kept close). A launcher that lands can be cancelled straight into a jump
+  by holding jump, and the launched rival can be struck **twice more** in
+  the air before landing (a **juggle**; each juggle hit pops them up a
+  little). Punch, punch, kick, jump, air punch works with taps alone.
+- **Kick, kick**: a kick that lands flows into a spinning **roundhouse**
+  that steps in after the rival and knocks down. The lunge also opens the
+  punch string, so running punch, punch, kick launches too.
+- The CPU finishes strings as reliably as it punishes (easy rarely, boss
+  nearly always) and chases its launchers into the air. Measured with all
+  of this: duels 47-53 % after Jackie went 117 -> 112 health and Ruko
+  102 -> 105 (combos favoured the heaviest hitter: Jackie had reached 60 %).
 - **Moving attacks**: after about eight ticks of walking, punching with the
   stick still held gives a **lunging straight** (leaps about 50 units in from
   outside jab range, 7 damage, chains into the second punch) and kicking gives

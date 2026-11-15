@@ -54,6 +54,17 @@ function attackPose(f) {
       if (phase === 'pre') return pose({ ...CROUCH, lean: 0.3, hfx: 8, hfy: 28, hbx: -10, hby: 14 });
       if (phase === 'act') return pose({ hipX: 10, hipY: -68, lean: 0.08, hfx: 34, hfy: -50, hbx: -16, hby: 12, ffx: 22, fbx: -20, fby: -6 });
       return pose({ lean: 0.1, hfx: 22, hfy: -28 });
+    case 'launch': { // the end of punch, punch, kick: a rising kick straight up under the chin
+      if (phase === 'pre') return pose({ ...CROUCH, hipY: -42, lean: 0.34, ffx: 4, ffy: -6, hfx: 10, hfy: 10, hbx: -12, hby: 14 });
+      if (phase === 'act') return pose({ hipX: -4, hipY: -66, lean: -0.42, ffx: 38, ffy: -116, fbx: -14, hfx: -8, hfy: -10, hbx: -28, hby: -4, lift: -8 });
+      return pose({ lean: -0.18, ffx: 26, ffy: -40, hfx: 10, hfy: 0 });
+    }
+    case 'kick2': { // kick, kick: a full turn into a roundhouse at head height
+      const spin = turnOf(f.t, m.startup + 1);
+      if (phase === 'pre') return pose({ spin, lean: 0.24, ffx: 2, ffy: -12, fbx: -26, fby: -20, hfx: -16, hfy: 6, hbx: 18, hby: 2 });
+      if (phase === 'act') return pose({ spin, hipY: -60, lean: -0.52, tilt: 0.3, ffx: 88, ffy: -78, fbx: -6, hfx: -16, hfy: -8, hbx: -30, hby: 0 });
+      return pose({ lean: -0.18, ffx: 34, ffy: -24, hfx: 6, hfy: 6 });
+    }
     case 'lunge': { // a straight thrown on the run: the whole body behind the fist
       if (phase === 'pre') return pose({ hipY: -56, lean: 0.42, hfx: 6, hfy: 4, hbx: -14, hby: 8, ffx: 26, fbx: -30 });
       if (phase === 'act') return pose({ hipX: 14, hipY: -58, lean: 0.62, hfx: 66, hfy: -8, hbx: -22, hby: 12, ffx: 30, fbx: -44, fby: -8 });
