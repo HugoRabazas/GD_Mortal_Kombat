@@ -166,6 +166,17 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet && (e.by === me || e.on === me)) buzz(30);
         break;
       }
+      case 'armour': {
+        // A finisher that has landed shrugs off the others' blows: they hurt,
+        // but they do not stop it.
+        const p = project(e.x, e.h, e.z);
+        blockSpark(p.x, p.y);
+        floatText(p.x, p.y - 30, String(e.dmg), '#c8ccd8', 20);
+        if (e.first) floatText(p.x, p.y - 58, 'UNSTOPPABLE', tint.accent, 20);
+        addShake(3);
+        if (!quiet) play('block');
+        break;
+      }
       case 'guardBreak': {
         // A guard smashed open.
         const p = project(e.x, e.h, e.z);

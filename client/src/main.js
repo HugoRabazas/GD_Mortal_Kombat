@@ -496,7 +496,7 @@ function helpScreen() {
         <li><b>Jump</b> over a ground stomp or a slide.</li>
         <li><b>Crystals</b> appear on the floor: gold gives energy, green gives health. Walk over one to take it.</li>
         <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage: knocked down into it, they bounce back off it, open to one more blow.</li>
-        <li>Each fighter's <b>finisher</b> is their own: a chain of blows with its own scene, ending in a last blow the camera closes in on.</li>
+        <li>Each fighter's <b>finisher</b> is their own: a chain of blows with its own scene, ending in a last blow the camera closes in on. In a brawl, once it has landed the others cannot stop it.</li>
         <li><b>Arcade</b>: ${STAGES.length} fights in a row, the last against a boss, moving between the arenas as you climb.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
         <li>The <b>Tutorial</b> teaches every move in short lessons, each against a partner who does what the lesson needs (one even throws you down so you can practise getting up).</li>
@@ -549,7 +549,7 @@ const SUPER_NOTES = {
   avalanche: 'a charge that leaves the rival reeling, a leap and a belly-first crash that floors everyone near',
   phoenix: 'soars up in a pillar of flame and dives on the rival; best up close',
   oath: 'a charge, three hammer blows and a slam that floors everyone near',
-  crescent: 'leaps high and looses a rain of moonlit arrows down on the rival',
+  crescent: 'leaps high and looses a rain of moonlit arrows, shared among the rivals in range',
   cuts: 'a dash, a storm of cuts too quick to see and a rising slash',
   sunburst: 'climbs in a ball of light, then falls like the sun and bursts',
 };

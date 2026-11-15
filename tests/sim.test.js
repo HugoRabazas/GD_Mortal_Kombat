@@ -545,6 +545,95 @@ test('in a brawl a hit freezes only the two fighters involved', () => {
   assert.equal(s.hitstop, 0, 'the world did not stop');
 });
 
+// A finisher thrown at fighter 1 from up close, the others (if any) far away.
+function finisherAt(chars) {
+  const s = startFight(chars);
+  Object.assign(s.f[0], { x: -60, z: 0, dir: 0, meter: RULES.SUPER_COST });
+  Object.assign(s.f[1], { x: 60, z: 0, dir: Math.PI });
+  for (let k = 2; k < chars.length; k++) Object.assign(s.f[k], { x: k === 2 ? -260 : 260, z: 320, dir: -Math.PI / 2 });
+  step(s, [INPUT.SUPER, ...chars.slice(1).map(() => 0)]);
+  return s;
+}
+
+test('in a brawl a finisher is worth what it is in a duel: its flurry strikes no more often', () => {
+  // (The pause of a blow holds only the two involved in a brawl; a flurry
+  // must not strike again on the tick it is held on.)
+  for (const id of ['ruko', 'shadow', 'kichta', 'pixie', 'zelrith']) {
+    const worth = (chars) => {
+      const s = finisherAt(chars);
+      run(s, 300);
+      return s.f[1].maxHp - s.f[1].hp;
+    };
+    const rivals = ALL.filter((x) => x !== id);
+    const duel = worth([id, rivals[0]]);
+    const brawl = worth([id, rivals[0], rivals[1], rivals[2]]);
+    assert.ok(duel >= 24, `${id} in a duel: ${duel}`);
+    assert.ok(Math.abs(brawl - duel) <= 4, `${id}: ${brawl} in a brawl, ${duel} in a duel`);
+  }
+});
+
+test('a finisher that has landed is not broken by the others in a brawl, only hurt', () => {
+  const s = finisherAt(['ruko', 'shadow', 'jackie', 'pixie']);
+  while (s.f[0].ultOn !== 1) step(s, idle(s));
+  // Jackie, right behind Ruko, punches into the flurry.
+  Object.assign(s.f[2], { x: s.f[0].x - 58, z: s.f[0].z, dir: 0 });
+  const hp = s.f[0].hp;
+  const seen = [];
+  step(s, [0, 0, INPUT.PUNCH, 0]);
+  for (let i = 0; i < 160; i++) {
+    step(s, idle(s));
+    seen.push(...s.ev);
+    if (i < 12) assert.equal(s.f[0].state, 'attack', 'the finisher goes on');
+  }
+  assert.ok(seen.some((e) => e.type === 'armour' && e.by === 0 && e.from === 2 && e.first), 'the blow is shrugged off');
+  assert.ok(s.f[0].hp < hp, 'but it hurts');
+  assert.ok(seen.some((e) => e.type === 'hit' && e.by === 0 && e.on === 1 && e.final), 'and the last blow lands');
+
+  // Before it has landed, a blow still stops it.
+  const t = startFight(['ruko', 'shadow', 'jackie', 'pixie']);
+  Object.assign(t.f[0], { x: -200, z: 0, dir: 0, meter: RULES.SUPER_COST });
+  Object.assign(t.f[1], { x: 300, z: 0, dir: Math.PI });
+  Object.assign(t.f[2], { x: -258, z: 0, dir: 0 });
+  Object.assign(t.f[3], { x: 0, z: 350 });
+  step(t, [INPUT.SUPER, 0, INPUT.PUNCH, 0]);
+  let stopped = false;
+  for (let i = 0; i < 60 && !stopped; i++) {
+    step(t, [0, 0, INPUT.PUNCH, 0]);
+    stopped = t.f[0].state === 'hit';
+  }
+  assert.ok(stopped, 'struck out of the finisher before it landed');
+});
+
+test('a finisher\'s flurry never knocks out: its last blow does', () => {
+  for (const id of ['ruko', 'kichta', 'meru']) {
+    const s = finisherAt([id, 'shadow']);
+    s.f[1].hp = 12; // the flurry alone would be enough
+    let out = null;
+    for (let i = 0; i < 300 && !out; i++) {
+      step(s, idle(s));
+      if (s.ev.some((e) => e.type === 'out')) out = s.ev;
+      else if (s.f[1].state !== 'ko') assert.ok(s.f[1].hp >= 1, `${id}: still standing through the flurry`);
+    }
+    assert.ok(out, `${id}: knocked out in the end`);
+    assert.ok(out.some((e) => e.type === 'hit' && e.final), `${id}: by the last blow`);
+  }
+});
+
+test('Crescent Rain shares its arrows among the rivals of a brawl', () => {
+  const s = startFight(['gleh', 'ruko', 'shadow', 'jackie']);
+  Object.assign(s.f[0], { x: 0, z: 0, dir: 0, meter: RULES.SUPER_COST });
+  Object.assign(s.f[1], { x: 220, z: 0, dir: Math.PI });
+  Object.assign(s.f[2], { x: -200, z: 120, dir: 0 });
+  Object.assign(s.f[3], { x: -40, z: -260, dir: Math.PI / 2 });
+  step(s, [INPUT.SUPER, 0, 0, 0]);
+  run(s, 260);
+  for (const k of [1, 2, 3]) assert.ok(s.f[k].hp < s.f[k].maxHp, `${s.f[k].char} was rained on`);
+  // In a duel all five come down on the one rival.
+  const d = finisherAt(['gleh', 'ruko']);
+  run(d, 260);
+  assert.ok(d.f[1].maxHp - d.f[1].hp >= 20, 'all five arrows on the one rival');
+});
+
 test('punch and kick together is a grab that goes through a guard, but not through the air', () => {
   const s = startFight();
   closeUp(s, 56);

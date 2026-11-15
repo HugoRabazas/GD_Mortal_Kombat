@@ -17,7 +17,13 @@
 //      `gear` adds accessories: 'scarf' (trails behind when moving) and
 //      'pads' (shoulder guards). `victory` picks how they celebrate a won
 //      match: 'howl' (a fist raised to the sky), 'calm' (arms folded),
-//      'stomp' (high stamping steps) or 'cheer' (hopping and waving).
+//      'stomp' (high stamping steps), 'cheer' (hopping and waving),
+//      'salute' (a fist on the chest, then raised), 'volley' (arrows loosed
+//      at the sky), 'sheathe' (a turn, then the blade put away) or 'laugh'.
+//      `entrance` picks the ritual while a round is announced: 'prowl',
+//      'bow', 'clap', 'swirl', 'oath' (up from one knee, a fist on the
+//      chest), 'draw' (an arrow shot at the sky), 'flourish' (two cuts of
+//      the blade hand) or 'twirl' (two turns and a deep bow).
 //      `looks` are the costumes a player can pick: the first is the fighter's
 //      own colours, the second changes some of them (any of primary,
 //      secondary, accent, glow, hair). `quote` is the line shown on the
@@ -47,7 +53,7 @@ export const FIGHTERS = [
       glow: '#ff2b2b',
     },
     looks: [{ name: 'Crimson' }, { name: 'Midnight', colors: { primary: '#28385f', secondary: '#0d111c', accent: '#b9c8ff', glow: '#6f8cff' } }],
-    stats: { power: 1.03, speed: 1.0, health: 105 },
+    stats: { power: 0.97, speed: 1.0, health: 110 },
     special: { type: 'dash', name: 'Crimson Rush' },
     super: { name: 'Red Moon Howl', move: 'howl' },
     signature: { name: 'Wolf Leap', move: 'clawLeap' },
@@ -91,7 +97,7 @@ export const FIGHTERS = [
       glow: '#c44dff',
     },
     looks: [{ name: 'Violet' }, { name: 'Granite', colors: { primary: '#4d525c', secondary: '#1c1d22', accent: '#e0a83c', glow: '#ffcc55' } }],
-    stats: { power: 1.08, speed: 0.82, health: 114 },
+    stats: { power: 1.1, speed: 0.82, health: 114 },
     special: { type: 'quake', name: 'Mountain Stomp' },
     super: { name: 'Avalanche Charge', move: 'avalanche' },
     signature: { name: 'Belly Bump', move: 'bellyBump' },
@@ -114,7 +120,7 @@ export const FIGHTERS = [
       hair: '#ff8a2a',
     },
     looks: [{ name: 'Flame' }, { name: 'Frost', colors: { primary: '#2a7fb8', secondary: '#0f2236', accent: '#9be7ff', glow: '#7fe0ff', hair: '#bdf0ff' } }],
-    stats: { power: 0.95, speed: 1.18, health: 99 },
+    stats: { power: 0.93, speed: 1.18, health: 104 },
     special: { type: 'rise', name: 'Twin Flame Spiral' },
     super: { name: 'Phoenix Dive', move: 'phoenix' },
     signature: { name: 'Cartwheel Kick', move: 'cartwheel' },
@@ -124,8 +130,8 @@ export const FIGHTERS = [
     name: 'MERU',
     title: 'The Iron Oath',
     gear: ['pads'],
-    victory: 'calm',
-    entrance: 'bow',
+    victory: 'salute',
+    entrance: 'oath',
     quote: 'I gave my word. You gave up.',
     head: { x: 170, y: 195, r: 74 }, // the face inside the avatar's frame
     colors: {
@@ -137,7 +143,7 @@ export const FIGHTERS = [
       hair: '#1a1414',
     },
     looks: [{ name: 'Iron' }, { name: 'Rust', colors: { primary: '#7a3b22', secondary: '#1f120c', accent: '#f0c070', glow: '#ff9a4a' } }],
-    stats: { power: 1.0, speed: 1.0, health: 108 },
+    stats: { power: 0.97, speed: 1.0, health: 112 },
     special: { type: 'dash', name: 'Iron Charge', style: 'charge' },
     super: { name: 'Last Oath', move: 'oath' },
     signature: { name: 'Shield Ram', move: 'shieldRam' },
@@ -147,8 +153,8 @@ export const FIGHTERS = [
     name: 'GLEH',
     title: 'The Moon Archer',
     build: 'slim',
-    victory: 'cheer',
-    entrance: 'swirl',
+    victory: 'volley',
+    entrance: 'draw',
     quote: 'The moon never misses. Neither do I.',
     head: { x: 193, y: 128, r: 55 }, // the face inside the avatar's frame
     colors: {
@@ -170,8 +176,8 @@ export const FIGHTERS = [
     name: 'KICHTA',
     title: 'The Rising Blade',
     gear: ['scarf'],
-    victory: 'howl',
-    entrance: 'prowl',
+    victory: 'sheathe',
+    entrance: 'flourish',
     quote: 'One step ahead. Always.',
     head: { x: 138, y: 116, r: 56 }, // the face inside the avatar's frame
     colors: {
@@ -183,7 +189,7 @@ export const FIGHTERS = [
       hair: '#141414',
     },
     looks: [{ name: 'Gold' }, { name: 'Ash', colors: { primary: '#4a4a52', secondary: '#141418', accent: '#e05a4a', glow: '#ff6a5a' } }],
-    stats: { power: 0.96, speed: 1.08, health: 96 },
+    stats: { power: 0.95, speed: 1.08, health: 97 },
     special: { type: 'rise', name: 'Rising Edge', style: 'blade' },
     super: { name: 'Thousand Cuts', move: 'cuts' },
     signature: { name: 'Blade Dash', move: 'bladeDash' },
@@ -193,8 +199,8 @@ export const FIGHTERS = [
     name: 'ZELRITH',
     title: 'The Grinning Storm',
     build: 'slim',
-    victory: 'cheer',
-    entrance: 'clap',
+    victory: 'laugh',
+    entrance: 'twirl',
     quote: 'Ha! Again, again!',
     head: { x: 133, y: 95, r: 58 }, // the face inside the avatar's frame
     colors: {
@@ -206,7 +212,7 @@ export const FIGHTERS = [
       hair: '#ffd84a',
     },
     looks: [{ name: 'Sky' }, { name: 'Ember', colors: { primary: '#b0402f', secondary: '#2a100c', accent: '#ffe066', glow: '#ff8a3a' } }],
-    stats: { power: 1.04, speed: 1.1, health: 113 },
+    stats: { power: 1.09, speed: 1.1, health: 105 },
     special: { type: 'quake', name: 'Storm Clap', style: 'clap' },
     super: { name: 'Sunburst', move: 'sunburst' },
     signature: { name: 'Spin Top', move: 'spinTop' },

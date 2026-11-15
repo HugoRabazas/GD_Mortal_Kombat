@@ -96,12 +96,19 @@ Each round opens with a ritual of the fighter's own while it is announced:
 Ruko rises from a low prowl, Shadow bows and presses a fist into an open
 hand, Jackie claps twice and opens the arms wide, Pixie circles both hands
 as if stirring a flame - heard as well as seen: the two claps, the fist
-meeting the palm and the flame each make their sound. Name tags fade once a match is decided, so the
+meeting the palm and the flame each make their sound. The four newer
+fighters have rituals of their own too: Meru rises from one knee and beats a
+fist on the chest (a thud), Gleh draws a bow at the sky and looses an arrow,
+Kichta makes two cuts of the blade hand and holds it level, Zelrith turns
+twice on the spot and bows with the arms spread. Name tags fade once a match is decided, so the
 winner and the result screen are not written over.
 
 When a match ends, every fighter who won celebrates in their own way - Ruko
 raises a fist to the sky, Shadow stands with arms folded, Jackie stamps like a sumo
-wrestler, Pixie hops and waves - turned three-quarters to the camera so it
+wrestler, Pixie hops and waves, Meru beats a fist on the chest and raises it,
+Gleh looses arrow after arrow at the sky, Kichta turns once with the blade
+out and puts it away, Zelrith bends back laughing and points at the loser -
+turned three-quarters to the camera so it
 reads. Confetti in the winner's colours then drifts down over the arena for
 about five seconds (fewer pieces, falling slower, for anyone whose device
 asks for reduced motion). Sparks, dust, numbers, confetti, the fighters'
@@ -403,6 +410,33 @@ and the heartbeat, the crowd and the weather go quiet.
   its dive always landed), so the climb drifts less, the dive is slower and
   lighter; Ruko 105 -> 108 and Pixie 102 -> 99 health. Duels now 49-52 %,
   brawl firsts 13-22 % - the closest the four have been.
+- **Finishers in a brawl** follow the same script as in a duel:
+  - A bug made them far stronger with four in the ring: the pause of a blow
+    holds only the two fighters involved there, and a flurry held on a tick
+    struck again on that same tick for as long as the rival stayed in reach
+    (up to 20 hits where 6 were meant; finishers made a third of some
+    fighters' damage). A flurry now strikes once per tick of the move: a
+    finisher is worth the same in both modes (a test compares them).
+  - A finisher that has **landed stays on its victim** instead of turning to
+    whoever has come nearest, and **is not broken by the others**: their
+    blows hurt (UNSTOPPABLE the first time) but the chain goes on, and a
+    throw finds no hold. Its victim, another finisher or a knockout blow
+    still stop it; before it lands any blow does.
+  - A finisher's **flurry never knocks out** (in a duel either): the rival is
+    left on 1 health for the last blow, so a finisher that wins the round
+    always ends on its closing shot.
+  - Gleh's **Crescent Rain shares its five arrows** among the rivals in
+    range, nearest first (all five on the one rival of a duel; 5 each).
+  - Balance re-measured over every line-up of four (560 brawls, 70 line-ups)
+    as well as the duels: the fighters who lived off the bug (Pixie, Kichta)
+    fell to 11 % of brawl wins and Jackie rose to 26 %, so: the flurries and
+    last blows of Shadow, Meru and Kichta reach wider (several rivals at
+    once), Avalanche and Sunburst crash on a smaller circle (120 and 115),
+    Last Oath on a wider one (150), and stats moved - Ruko 0.97 power / 110
+    health, Jackie 1.1 power, Pixie 0.93 / 104, Meru 0.97 / 112, Kichta
+    0.95 / 97, Zelrith 1.09 / 105. Now: duels 48-53 % for all eight, brawl
+    wins 15-23 % each (they were 13-29 %), ladder 100 / 74 / 61 %, boss
+    beats Hard 90 %.
 - Hits fill the **energy** bar: a special costs 35 of 100, the finisher needs
   it full. Under a quarter of their health a fighter is in their **last
   stand** (LAST STAND on screen with a deep drum, the body pulsing red, the heartbeat, and
@@ -702,8 +736,9 @@ editor), `audio.js` (every sound and the music are generated in the browser),
    circle cut from the picture (centre `x`, `y` and radius `r` in picture
    pixels); `build` is `standard`, `sumo` or `slim`; `gear` adds a `scarf` or
    shoulder `pads`; `victory` is how they celebrate a won match (`howl`,
-   `calm`, `stomp` or `cheer`); `entrance` is their ritual while a round is
-   announced (`prowl`, `bow`, `clap` or `swirl`); `quote` is their winning line (60 characters
+   `calm`, `stomp`, `cheer`, `salute`, `volley`, `sheathe` or `laugh`);
+   `entrance` is their ritual while a round is announced (`prowl`, `bow`,
+   `clap`, `swirl`, `oath`, `draw`, `flourish` or `twirl`); `quote` is their winning line (60 characters
    at most); `looks` are their costumes (the first is their
    own colours, the second names the colours it changes); `special.type` is `dash`,
    `bolt`, `rise` or `quake`; keep `stats` near 1.0.

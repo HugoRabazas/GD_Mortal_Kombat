@@ -34,7 +34,7 @@ const AIR_MOVES = { airDash: 1, airBolt: 1, bodyPress: 1, airSpiral: 1 };
 // The bolt thrown from the air strikes lighter than the one from the ground.
 const AIR_BOLT_HIT = { dmg: 10, hitstun: 16, blockstun: 10, push: 6, gain: 6, heavy: true, chip: 0.2 };
 // One arrow of Gleh's Crescent Rain (five of them make the finisher).
-const RAIN_HIT = { dmg: 6, hitstun: 20, blockstun: 10, push: 3, gain: 0, heavy: true, chip: 0.3, noScale: true, final: true };
+const RAIN_HIT = { dmg: 5, hitstun: 20, blockstun: 10, push: 3, gain: 0, heavy: true, chip: 0.3, noScale: true, final: true };
 // A launched rival can be hit this many more times in the air.
 const JUGGLE = 2;
 // Kick held down: after `hold` ticks the kick coils into a charge, which is
@@ -317,12 +317,12 @@ export const MOVES = {
     blink: 10, vanish: 14, then: 'eclipse2', thenAt: 0,
   },
   eclipse2: {
-    startup: 3, active: 12, recovery: 4, dmg: 4, reach: 92, arc: 1.1, y0: 30, y1: 170, aim: 160,
+    startup: 3, active: 12, recovery: 4, dmg: 4, reach: 92, arc: 2, y0: 30, y1: 170, aim: 160,
     hitstun: 16, blockstun: 8, push: 0.6, gain: 0, chip: 0.3, ult: true, noScale: true, light: true, every: 4,
     then: 'eclipse3',
   },
   eclipse3: {
-    startup: 6, active: 4, recovery: 22, dmg: 12, reach: 104, arc: 1.3, y0: 30, y1: 170, aim: 160,
+    startup: 6, active: 4, recovery: 22, dmg: 12, reach: 104, arc: 2, y0: 30, y1: 170, aim: 160,
     hitstun: 0, blockstun: 16, push: 14, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
     final: true,
   },
@@ -336,7 +336,7 @@ export const MOVES = {
   avalanche2: {
     startup: 14, active: 999, recovery: 0, dmg: 20, speed: 6, reach: 74, arc: Math.PI, y0: -170, y1: 40, aim: 600,
     hitstun: 0, blockstun: 18, push: 8, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
-    leap: 13, crash: 150, final: true,
+    leap: 13, crash: 120, final: true,
   },
   // Pixie - Phoenix Dive: soars up inside a pillar of flame, then dives on
   // the rival like a falling star and bursts on the floor.
@@ -358,14 +358,14 @@ export const MOVES = {
     then: 'oath2', thenAt: 0,
   },
   oath2: {
-    startup: 4, active: 15, recovery: 4, dmg: 4, reach: 92, arc: 1.1, y0: 30, y1: 180, aim: 160,
+    startup: 4, active: 15, recovery: 4, dmg: 4, reach: 92, arc: 2, y0: 30, y1: 180, aim: 160,
     hitstun: 18, blockstun: 8, push: 0.6, gain: 0, chip: 0.3, ult: true, noScale: true, light: true, every: 5,
     then: 'oath3',
   },
   oath3: {
     startup: 10, active: 999, recovery: 0, dmg: 12, speed: 3, reach: 80, arc: Math.PI, y0: -150, y1: 40, aim: 300,
     hitstun: 0, blockstun: 16, push: 8, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
-    leap: 9, crash: 130, final: true,
+    leap: 9, crash: 150, final: true,
   },
   // Gleh - Crescent Rain: a leap high above the arena, then a rain of
   // moonlit arrows loosed down on the rival (`volley` shots).
@@ -383,12 +383,12 @@ export const MOVES = {
     then: 'cuts2', thenAt: 0,
   },
   cuts2: {
-    startup: 2, active: 18, recovery: 3, dmg: 2, reach: 94, arc: 1.2, y0: 30, y1: 180, aim: 160,
+    startup: 2, active: 18, recovery: 3, dmg: 2, reach: 94, arc: Math.PI, y0: 30, y1: 180, aim: 160,
     hitstun: 14, blockstun: 6, push: 0.4, gain: 0, chip: 0.3, ult: true, noScale: true, light: true, every: 3,
     then: 'cuts3',
   },
   cuts3: {
-    startup: 4, active: 4, recovery: 24, dmg: 12, reach: 96, arc: 1.1, y0: 20, y1: 220, aim: 160,
+    startup: 4, active: 4, recovery: 24, dmg: 12, reach: 96, arc: 2.2, y0: 20, y1: 220, aim: 160,
     hitstun: 0, blockstun: 16, push: 4, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
     launch: 13, final: true,
   },
@@ -402,7 +402,7 @@ export const MOVES = {
   sunburst2: {
     startup: 3, active: 999, recovery: 0, dmg: 16, speed: 8, reach: 90, arc: Math.PI, y0: -170, y1: 60, aim: 900,
     hitstun: 0, blockstun: 18, push: 10, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
-    dive: 14, crash: 150, final: true,
+    dive: 14, crash: 115, final: true,
   },
   // --- the newer fighters' signature moves (grab out of reach) ---
   shieldRam: {
@@ -480,6 +480,9 @@ function newFighter(charId, slot, count, mod) {
     runJump: false, // the jump was taken out of a run (kick is a flying knee)
     juggle: 0, // hits a launched fighter can still take before landing
     holdK: 0, // ticks the kick button has been held
+    hitsAt: -1, // the tick of a flurry on which it last struck afresh
+    ultOn: -1, // slot of the rival this finisher has landed on, or -1
+    shrug: 0, // blows from others shrugged off during this finisher
     air2: false, // the air jump is spent
     buf: 0, // remembered attack presses
     bufT: 0,
@@ -588,9 +591,16 @@ function nearestRival(s, f, range) {
 }
 
 // Turn towards the nearest rival in range, so attacks do not need pixel-perfect aim.
+// (A finisher that has landed stays on its victim while they are in range,
+// rather than turning to whoever has come nearest.)
+function markOf(s, f, range) {
+  const o = f.state === 'attack' && MOVES[f.move]?.ult && f.ultOn >= 0 ? s.f[f.ultOn] : null;
+  if (o && !isOut(o) && Math.hypot(o.x - f.x, o.z - f.z) < range) return o;
+  return nearestRival(s, f, range);
+}
 function aim(s, f, range) {
   if (range <= 0) return;
-  const o = nearestRival(s, f, range);
+  const o = markOf(s, f, range);
   if (o && (o.x !== f.x || o.z !== f.z)) f.dir = angleTo(f.x, f.z, o.x, o.z);
 }
 
@@ -619,14 +629,16 @@ function startAttack(s, f, move) {
   f.move = move;
   f.t = 0;
   f.hits = [];
+  f.hitsAt = -1;
   f.landed = 0;
   f.vx = 0;
   f.vz = 0;
   f.buf = 0;
   aim(s, f, m.aim);
   if (m.leap || m.dive) {
-    // A leap or a dive aimed to come down on the nearest rival.
-    const o = nearestRival(s, f, m.aim);
+    // A leap or a dive aimed to come down on the nearest rival (or on the
+    // one the finisher has already caught).
+    const o = markOf(s, f, m.aim);
     const d = o ? Math.hypot(o.x - f.x, o.z - f.z) : 0;
     const flight = m.leap ? (2 * m.leap) / GRAVITY : Math.max(1, f.h / m.dive);
     const v = Math.min(m.speed, (d * (m.over || 1)) / flight); // `over`: land beyond them
@@ -676,6 +688,8 @@ function tryAttack(s, f, inp = 0) {
   if (b & INPUT.SUPER && f.meter >= RULES.SUPER_COST) {
     f.meter = 0;
     const ult = getFighter(f.char).super.move || 'super';
+    f.ultOn = -1;
+    f.shrug = 0;
     startAttack(s, f, ult);
     if (MOVES[ult].vanish) f.inv = MOVES[ult].vanish;
     s.freeze = TIMING.SUPER_FREEZE;
@@ -949,7 +963,7 @@ function control(s, f, inp) {
         if (t === m.startup) {
           f.vh = m.vh;
           // Drifting towards the rival on the way up (the phoenix's climb).
-          const o = m.drift && nearestRival(s, f, 600);
+          const o = m.drift && markOf(s, f, 600);
           if (o) {
             const v = Math.min(m.drift, Math.max(0, Math.hypot(o.x - f.x, o.z - f.z) - 40) / 12);
             f.dir = angleTo(f.x, f.z, o.x, o.z);
@@ -977,12 +991,20 @@ function control(s, f, inp) {
       // of a leap and dive, or flow into the next stage once a blow lands.
       if (m.blink && t === m.blink) blink(s, f);
       if (m.volley && t === m.startup) {
-        // A rain of shots loosed down at the rival, fanned out a little.
-        const o = nearestRival(s, f, 900);
-        const base = o ? angleTo(f.x, f.z, o.x, o.z) : f.dir;
-        const d = o ? Math.hypot(o.x - f.x, o.z - f.z) : 200;
+        // A rain of shots loosed down at the rivals in range, shared out
+        // among them nearest first (all at the one rival in a duel), and
+        // fanned out a little.
+        const marks = s.f
+          .filter((o) => o !== f && !isOut(o))
+          .map((o) => ({ o, d: Math.hypot(o.x - f.x, o.z - f.z) }))
+          .filter((k) => k.d < 900)
+          .sort((p, q) => p.d - q.d);
         for (let i = 0; i < m.volley; i++) {
-          const a = base + (i - (m.volley - 1) / 2) * 0.08;
+          const mark = marks.length ? marks[i % marks.length] : null;
+          const d = mark ? mark.d : 200;
+          const per = marks.length ? Math.ceil((m.volley - (i % marks.length)) / marks.length) : m.volley; // arrows this rival gets
+          const nth = marks.length ? Math.floor(i / marks.length) : i;
+          const a = (mark ? angleTo(f.x, f.z, mark.o.x, mark.o.z) : f.dir) + (nth - (per - 1) / 2) * 0.08;
           // Each arrow drops just enough to meet the rival at chest height.
           const fall = (f.h + 60 - 90) / Math.max(4, d / (PROJECTILE.speed * 0.9));
           s.proj.push({
@@ -1001,7 +1023,12 @@ function control(s, f, inp) {
         }
         emit(s, 'bolt', { by: f.slot });
       }
-      if (m.every && t > m.startup && (t - m.startup) % m.every === 0) f.hits = [];
+      // (Once per tick of the move: a fighter held still by the pause of a
+      // blow in a brawl keeps the same tick, and must not strike on it again.)
+      if (m.every && t > m.startup && (t - m.startup) % m.every === 0 && f.hitsAt !== t) {
+        f.hits = [];
+        f.hitsAt = t;
+      }
       if (m.apex && t > m.startup && f.vh <= 0) {
         startAttack(s, f, m.apex);
         break;
@@ -1151,6 +1178,7 @@ function airAttack(s, f, move) {
   f.move = move;
   f.t = 0;
   f.hits = [];
+  f.hitsAt = -1;
   f.buf = 0;
   aim(s, f, 200);
   emit(s, 'swing', { by: f.slot, move });
@@ -1411,6 +1439,24 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     return;
   }
 
+  // A finisher that has landed is not broken by anyone but its victim (or
+  // by another finisher): the others' blows hurt, but the chain goes on, and
+  // a throw finds no hold. A blow that would knock out still does.
+  if (def.state === 'attack' && MOVES[def.move]?.ult && def.ultOn >= 0 && def.ultOn !== att.slot && kind !== 'super') {
+    if (kind === 'grab') return;
+    const dmg = Math.max(1, Math.round(m.dmg * power));
+    if (dmg < def.hp) {
+      const wasStanding = lastStand(def);
+      def.hp -= dmg;
+      if (!wasStanding && lastStand(def)) emit(s, 'lastStand', { slot: def.slot });
+      addMeter(att, m.gain);
+      if (att.state === 'attack') att.landed = (att.landed || 0) + 1;
+      att.stop = 3;
+      emit(s, 'armour', { by: def.slot, from: att.slot, ...at, dmg, first: def.shrug++ === 0 });
+      return;
+    }
+  }
+
   // A grab that connects seizes the rival: the throw itself (carryThrow)
   // lands the blow on the slam.
   if (kind === 'grab' && att.state === 'attack' && def.h <= 0) {
@@ -1449,6 +1495,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   }
 
   if (att.state === 'attack') att.landed = (att.landed || 0) + 1; // a blow that got through
+  if (m.ult && att.state === 'attack') att.ultOn = def.slot; // the finisher has its victim
   const juggled = def.state === 'down'; // struck in the air after a launcher
   // Caught winding up? (Checked before the hit wipes out their move.)
   const wound = def.state === 'attack' && MOVES[def.move];
@@ -1461,7 +1508,8 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   const dmg = Math.max(1, Math.round(m.dmg * power * scale * soft * (counter ? COUNTER.dmg : 1)));
   const dealt = Math.min(dmg, def.hp); // a finishing blow cannot take more than is left
   const wasStanding = lastStand(def);
-  def.hp = Math.max(0, def.hp - dmg);
+  // A finisher's flurry never knocks out: that is left to its last blow.
+  def.hp = Math.max(m.ult && m.light ? Math.min(1, def.hp) : 0, def.hp - dmg);
   if (!wasStanding && lastStand(def)) emit(s, 'lastStand', { slot: def.slot });
   addMeter(att, m.gain);
   addMeter(def, m.gain * 0.6 + dmg * 0.4);

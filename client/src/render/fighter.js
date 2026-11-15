@@ -309,6 +309,37 @@ function victoryPose(f) {
       const back = up(40);
       return pose({ hipX: (back - front) * 6, hipY: -46 + (front + back) * 6, lean: 0.18, tilt: (front - back) * 0.18, hfx: 22, hfy: 20, hbx: -2, hby: 22, ffx: 26 + front * 12, ffy: -front * 70, fbx: -26 - back * 12, fby: -back * 70 });
     }
+    case 'salute': {
+      // Feet planted wide: a fist beaten on the chest, then held up to the sky.
+      const k = t % 84;
+      const chest = { hipY: -60, lean: -0.04, hfx: 10, hfy: -2, hbx: -24, hby: 6, ffx: 20, fbx: -22 };
+      const out = { ...chest, hfx: 34, hfy: -8 };
+      const high = { ...chest, hipY: -63, lean: -0.16, hfx: 27, hfy: -58 }; // the fist clears the head
+      if (k < 8) return pose(mix(out, chest, ease(k / 5)));
+      if (k < 16) return pose(mix(chest, out, ease((k - 8) / 5)));
+      if (k < 24) return pose(mix(out, chest, ease((k - 16) / 5)));
+      return pose(mix(chest, high, ease((k - 28) / 12) - ease((k - 74) / 10)));
+    }
+    case 'volley':
+      // An arrow drawn and loosed at the sky, again and again.
+      return pose(bowDraw(t % 76));
+    case 'sheathe': {
+      // One turn on the spot with the blade out, then it is put away: side
+      // on, the hand at the hip, the head a little down. Nothing more to say.
+      const away = { hipY: -62 + Math.sin(t * 0.05), lean: 0.1, tilt: -0.05, hfx: -8, hfy: 14, hbx: -14, hby: 10, ffx: 12, fbx: -18 };
+      if (t < 18) return pose({ spin: turnOf(t, 18), hipY: -58, lean: 0.12, hfx: 46, hfy: -10, hbx: -24, hby: 2, ffx: 16, fbx: -22 });
+      const cut = { hipY: -60, lean: 0.2, hfx: 44, hfy: 18, hbx: -22, hby: 0, ffx: 22, fbx: -22 };
+      return pose(mix(cut, away, ease((t - 24) / 14)));
+    }
+    case 'laugh': {
+      // Bent back and shaking with laughter, hands on the belly; now and then
+      // a finger pointed at the one who lost.
+      const k = t % 110;
+      const shake = Math.sin(t * 0.55) * 1.6;
+      const back = { hipY: -61 + shake, lean: -0.26 + shake * 0.02, hfx: 12, hfy: 12 + shake, hbx: 6, hby: 15 + shake, ffx: 16, fbx: -16 };
+      const point = { hipY: -58 + shake, lean: 0.24, hfx: 46, hfy: -8, hbx: -4, hby: 16, ffx: 20, fbx: -20 };
+      return pose(mix(back, point, ease((k - 62) / 8) - ease((k - 98) / 8)));
+    }
     default: {
       // cheer: little hops, arms up in a V and waving in turn.
       const hop = Math.abs(Math.sin(t * 0.13)) * 9;
@@ -342,15 +373,61 @@ const mix = (a, b, k) => {
 
 // The moments in each ritual that make a sound (ticks into the ritual):
 // Jackie's two claps, Shadow's fist meeting the open hand, Pixie's flame.
-const RITUAL_BEATS = { clap: [[8, 'clap'], [26, 'clap']], bow: [[44, 'palm']], swirl: [[2, 'flame']] };
+// Meru's fist on the chest, Gleh's arrow let go, Kichta's two cuts, the end of
+// Zelrith's spin.
+const RITUAL_BEATS = {
+  clap: [[8, 'clap'], [26, 'clap']], bow: [[44, 'palm']], swirl: [[2, 'flame']],
+  oath: [[43, 'thud']], draw: [[36, 'bolt']], flourish: [[8, 'swing'], [22, 'swing']], twirl: [[2, 'swing'], [15, 'swing'], [31, 'clap']],
+};
 
 // The sounds due in a ritual between two moments of the announcement.
 export function ritualSounds(entrance, fromPt, toPt) {
   return (RITUAL_BEATS[entrance] || []).filter(([t]) => fromPt < ENTRANCE_FROM + t && toPt >= ENTRANCE_FROM + t).map(([, name]) => name);
 }
 
+// Drawing a bow at the sky: the front arm held up, the back hand pulled from
+// it to the cheek, let go at tick 36, then both lowered. (Gleh's ritual and
+// celebration.)
+function bowDraw(t) {
+  const pull = ease((t - 6) / 26);
+  const loose = ease((t - 36) / 3);
+  const aim = { hipY: -62, lean: -0.22, tilt: -0.04, hfx: 30, hfy: -52, hbx: 24 - 30 * pull - 16 * loose, hby: -44 + 22 * pull + 4 * loose, ffx: 16, fbx: -20 };
+  const rest = { hipY: -63, lean: 0, hfx: 22, hfy: 4, hbx: -6, hby: 12, ffx: 12, fbx: -14 };
+  return mix(rest, aim, ease(t / 6) - ease((t - 50) / 14));
+}
+
 function entrancePose(f, t) {
   switch (getFighter(f.char).entrance) {
+    case 'oath': {
+      // On one knee, a fist on the floor; then up, and the fist beaten once
+      // on the chest: the word is given.
+      const knelt = { hipY: -34, lean: 0.34, hfx: 26, hfy: 30, hbx: -2, hby: 8, ffx: 24, fbx: -36 };
+      const up = { hipY: -63, lean: -0.04, hfx: 36, hfy: -8, hbx: -20, hby: 10, ffx: 16, fbx: -18 };
+      const sworn = { ...up, hfx: 10, hfy: -2 };
+      if (t < 40) return pose(mix(knelt, up, ease((t - 24) / 14)));
+      return pose(mix(up, sworn, ease((t - 40) / 4)));
+    }
+    case 'draw':
+      return pose(bowDraw(t));
+    case 'flourish': {
+      // Two cuts of the blade hand - down across, then up - and it is held
+      // level at eye height, the other hand along it.
+      const high = { hipY: -60, lean: 0.05, hfx: -2, hfy: -56, hbx: -18, hby: 6, ffx: 18, fbx: -20 };
+      const low = { hipY: -54, lean: 0.3, hfx: 44, hfy: 22, hbx: -24, hby: 2, ffx: 24, fbx: -22 };
+      const top = { hipY: -62, lean: -0.12, hfx: 34, hfy: -54, hbx: -22, hby: 8, ffx: 20, fbx: -20 };
+      const held = { hipY: -58, lean: 0.14, hfx: 40, hfy: -26, hbx: 18, hby: -24, ffx: 22, fbx: -24 };
+      if (t < 16) return pose(mix(high, low, ease((t - 5) / 6)));
+      if (t < 32) return pose(mix(low, top, ease((t - 19) / 6)));
+      return pose(mix(top, held, ease((t - 32) / 10)));
+    }
+    case 'twirl': {
+      // Two turns on the spot, arms flung out; then a deep bow with the arms
+      // spread, like a player before the curtain.
+      const open = { hipY: -62, lean: 0.02, hfx: 40, hfy: -18, hbx: -40, hby: -18, ffx: 12, fbx: -12 };
+      if (t < 30) return pose({ ...open, spin: ((t / 15) * Math.PI * 2) % (Math.PI * 2), hipY: -64, ffy: -3, fby: -3 });
+      const bowed = { hipY: -58, lean: 0.6, hfx: 34, hfy: 6, hbx: -40, hby: -26, ffx: 22, fbx: -20 };
+      return pose(mix(open, bowed, ease((t - 31) / 8) - ease((t - 52) / 10)));
+    }
     case 'prowl': {
       // Low to the ground, hands near the floor, then rising tall, chin up.
       const low = { hipY: -36, lean: 0.55, hfx: 30, hfy: 30, hbx: 12, hby: 30, ffx: 22, fbx: -30 };
