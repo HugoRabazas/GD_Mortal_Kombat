@@ -234,8 +234,8 @@ and the heartbeat, the crowd and the weather go quiet.
   their own with its own cut-in scene (an iron shield cracking with light, a
   crescent moon in a rain of light, gold slashes across the screen, a rising
   sun), a signature move, a celebration, a taunt line and a winning quote.
-  Their portraits are placeholders (a disc with the initial) until their
-  pictures are added to art/fighters. With eight fighters the Arena and the
+  Their portraits are the members' avatars, cut to the face inside each
+  avatar's frame (art/fighters, heads by scripts/crop-heads.py). With eight fighters the Arena and the
   Arcade draw rivals in a new random order each time. Balanced across all
   eight by CPU duels: 47-55 %.
 - **Signature moves**: grab with no rival within throw reach (100) is the

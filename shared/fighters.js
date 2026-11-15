@@ -124,7 +124,7 @@ export const FIGHTERS = [
     victory: 'calm',
     entrance: 'bow',
     quote: 'I gave my word. You gave up.',
-    head: null, // portrait to come (the game draws a placeholder)
+    head: { x: 170, y: 195, r: 74 }, // the face inside the avatar's frame
     colors: {
       primary: '#3d5a52',
       secondary: '#141c1a',
@@ -134,7 +134,7 @@ export const FIGHTERS = [
       hair: '#1a1414',
     },
     looks: [{ name: 'Iron' }, { name: 'Rust', colors: { primary: '#7a3b22', secondary: '#1f120c', accent: '#f0c070', glow: '#ff9a4a' } }],
-    stats: { power: 1.0, speed: 0.95, health: 104 },
+    stats: { power: 1.0, speed: 1.0, health: 108 },
     special: { type: 'dash', name: 'Iron Charge' },
     super: { name: 'Last Oath', move: 'oath' },
     signature: { name: 'Shield Ram', move: 'shieldRam' },
@@ -147,7 +147,7 @@ export const FIGHTERS = [
     victory: 'cheer',
     entrance: 'swirl',
     quote: 'The moon never misses. Neither do I.',
-    head: null, // portrait to come (the game draws a placeholder)
+    head: { x: 193, y: 128, r: 55 }, // the face inside the avatar's frame
     colors: {
       primary: '#6a4fa8',
       secondary: '#1b1430',
@@ -170,7 +170,7 @@ export const FIGHTERS = [
     victory: 'howl',
     entrance: 'prowl',
     quote: 'One step ahead. Always.',
-    head: null, // portrait to come (the game draws a placeholder)
+    head: { x: 138, y: 116, r: 56 }, // the face inside the avatar's frame
     colors: {
       primary: '#8a6a2a',
       secondary: '#1e1a12',
@@ -193,7 +193,7 @@ export const FIGHTERS = [
     victory: 'cheer',
     entrance: 'clap',
     quote: 'Ha! Again, again!',
-    head: null, // portrait to come (the game draws a placeholder)
+    head: { x: 133, y: 95, r: 58 }, // the face inside the avatar's frame
     colors: {
       primary: '#2f6fb0',
       secondary: '#101a2a',

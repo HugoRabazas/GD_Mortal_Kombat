@@ -1920,3 +1920,25 @@ kbd {
     height: 27px;
   }
 }
+
+/* A small phone held upright (360 x 640 and the like): the slots drop the
+   lines naming the special and the finisher (the help and the pause list
+   have them) so all eight fighters and the options fit without scrolling. */
+@media (max-width: 400px) and (max-height: 700px) {
+  .slot .moves {
+    display: none;
+  }
+}
+
+/* ...and the option strips (difficulty, arena) keep inside its width. */
+@media (max-width: 400px) {
+  .seg {
+    max-width: 100%;
+  }
+
+  .seg button {
+    padding: 7px 8px 5px;
+    font-size: 1rem;
+    letter-spacing: 0.04em;
+  }
+}
