@@ -66,6 +66,10 @@ const BACKSTEP = { ticks: 10, safe: 7, speed: 11.5, rest: 3, away: -0.85 };
 // up can strike from tick `rise` of the getup.
 const OUT_OF = { from: 7, rise: 4 };
 const SPLAT = { speed: 3.2, dmg: 5 }; // being knocked into the ring of fire
+// ...and thrown back off it: a fighter knocked down into the fire bounces up
+// off it (`vh`), open to one more blow in the air before landing; one still
+// on their feet is held in the stun a little longer (`stun`).
+const BOUNCE = { vh: 7.5, stun: 10 };
 // A counter hit: a blow that lands while the rival is still winding up an
 // attack of their own (in its startup) does `dmg` times the damage and holds
 // the impact a few ticks longer. It rewards reading the rival's move.
@@ -994,7 +998,16 @@ function keepInside(s, f) {
     f.vx -= nx * outward * 1.7;
     f.vz -= nz * outward * 1.7;
     f.hp = Math.max(1, f.hp - SPLAT.dmg); // the fire hurts but never finishes a fighter
-    emit(s, 'burn', { slot: f.slot, x: f.x, z: f.z, dmg: SPLAT.dmg });
+    const bounce = f.state === 'down';
+    if (bounce) {
+      // Flung back towards the middle, as hard as they came in.
+      f.vx = -nx * (outward + 2);
+      f.vz = -nz * (outward + 2);
+      f.vh = Math.max(f.vh, BOUNCE.vh);
+      f.h = Math.max(f.h, 1);
+      f.juggle = Math.max(f.juggle || 0, 1);
+    } else f.stun += BOUNCE.stun;
+    emit(s, 'burn', { slot: f.slot, x: f.x, z: f.z, dmg: SPLAT.dmg, bounce });
   }
 }
 

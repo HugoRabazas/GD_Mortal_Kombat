@@ -133,6 +133,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         hitSpark(p.x, p.y, '#ff7a1a', true);
         lightFlash(e.x, 70, e.z, '#ff7a1a', true);
         floatText(p.x, p.y - 34, `BURN ${e.dmg}`, '#ff8a2a', 22);
+        if (e.bounce) floatText(p.x, p.y - 62, 'BOUNCE!', '#ffd34d', 24);
         addShake(7);
         if (!quiet) play('burn');
         break;

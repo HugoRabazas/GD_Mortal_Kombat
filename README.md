@@ -212,6 +212,11 @@ and the heartbeat, the crowd and the weather go quiet.
   as often as it punishes, the knee when closing in); measured with them in:
   duels 47-53 %, brawl firsts 16-20 %, ladder 100 / 81 / 61 %. The Tutorial
   teaches them (Combos: hook kick and air string; On the run: flying knee).
+- **Ring bounce**: a fighter knocked down into the ring of fire (scorched
+  for 5 as before) now bounces back off it towards the middle, popped up
+  into the air and open to **one more blow** before landing (BOUNCE!); one
+  still on their feet is held in the stun 10 ticks longer. Cornering a
+  rival pays. Duels 46-53 %, brawl firsts 14-22 % with it.
 - **Back-step**: block with the stick pointing straight away from the
   nearest rival is a quick hop back instead of a roll - over sooner (10
   ticks and 3 to settle, against the roll's 15 and 7), safe for fewer

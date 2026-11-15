@@ -808,6 +808,31 @@ test('kick held charges a kick that breaks a guard; a tapped kick is still the k
   assert.ok(open.ev.some((e) => e.type === 'hit' && e.kind === 'breaker'), 'on an open rival it simply lands');
 });
 
+test('knocked down into the ring of fire, a rival bounces back off it and can be struck once in the air', () => {
+  const s = startFight();
+  const edge = s.ringR - 60;
+  Object.assign(s.f[0], { x: edge - 140, z: 0, dir: 0 });
+  Object.assign(s.f[1], { x: edge - 80, z: 0, dir: Math.PI });
+  let bounced = -1;
+  let juggled = false;
+  for (let t = 0; t < 100; t++) {
+    const me = s.f[0];
+    const o = s.f[1];
+    let b = t === 0 || t === 9 || t === 18 ? INPUT.PUNCH : 0;
+    if (bounced >= 0 && o.h > 0 && o.juggle > 0) {
+      if (Math.hypot(o.x - me.x, o.z - me.z) > 85) b |= o.x > me.x ? INPUT.RIGHT : INPUT.LEFT;
+      else if (me.state !== 'attack' && t % 2) b |= INPUT.PUNCH;
+    }
+    step(s, [b, 0]);
+    for (const e of s.ev) {
+      if (e.type === 'burn' && e.bounce) bounced = t;
+      if (e.type === 'hit' && e.by === 0 && e.juggle) juggled = true;
+    }
+  }
+  assert.ok(bounced >= 0, 'bounced off the fire');
+  assert.ok(juggled, 'and was struck on the way back');
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);
