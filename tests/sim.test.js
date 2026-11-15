@@ -1,11 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMatch, step, MOVES } from '../shared/sim.js';
+import { createMatch, step, MOVES, AIR_SPECIAL } from '../shared/sim.js';
 import { createAI, aiInput } from '../shared/ai.js';
 import { FIGHTERS } from '../shared/fighters.js';
 import { ARENA, INPUT, RULES, TIMING } from '../shared/constants.js';
 
 const ALL = FIGHTERS.map((f) => f.id);
+const BRAWL = ALL.slice(0, 4); // an arena holds four fighters
 const idle = (s) => s.f.map(() => 0);
 
 function startFight(chars = ['ruko', 'shadow'], mods, mode) {
@@ -357,7 +358,7 @@ test('duel: when time runs out the healthier fighter takes the round', () => {
 });
 
 test('arena: everyone fights at once and points follow the finishing order', () => {
-  const s = startFight(ALL);
+  const s = startFight(BRAWL);
   assert.equal(s.mode, 'arena');
   // Knock them out one at a time: slot 3 first, then 2, then 1.
   for (const victim of [3, 2, 1]) {
@@ -373,7 +374,7 @@ test('arena: everyone fights at once and points follow the finishing order', () 
 });
 
 test('arena: fighters who cannot be separated share a place, and nobody wins a tie', () => {
-  const s = startFight(ALL);
+  const s = startFight(BRAWL);
   s.f[2].hp = 0;
   s.f[2].state = 'ko';
   s.f[2].outAt = s.tick;
@@ -390,7 +391,7 @@ test('arena: fighters who cannot be separated share a place, and nobody wins a t
 });
 
 test('arena: the match is exactly three rounds and ends with a ranking where ties stay ties', () => {
-  const s = startFight(ALL);
+  const s = startFight(BRAWL);
   for (let round = 1; round <= 3; round++) {
     while (s.phase !== 'fight') step(s, idle(s));
     assert.equal(s.round, round);
@@ -429,9 +430,9 @@ test('the simulation is deterministic and CPU matches always finish, duel and ar
     while (s.phase !== 'over' && n++ < 60 * 60 * 12) step(s, ais.map((ai, i) => aiInput(ai, s, i)));
     return s;
   };
-  assert.equal(JSON.stringify(play(ALL, 42)), JSON.stringify(play(ALL, 42)));
+  assert.equal(JSON.stringify(play(BRAWL, 42)), JSON.stringify(play(BRAWL, 42)));
   for (const seed of [1, 2, 3, 4, 5, 6]) {
-    for (const chars of [['ruko', 'shadow'], ['jackie', 'pixie'], ALL]) {
+    for (const chars of [['ruko', 'shadow'], ['jackie', 'pixie'], BRAWL, ALL.slice(4)]) {
       const s = play(chars, seed);
       assert.equal(s.phase, 'over', `${chars.join(' v ')} seed ${seed} finished`);
       assert.equal(s.ranking.length, chars.length);
@@ -526,7 +527,7 @@ test('crystals appear on the floor and give energy or health to whoever walks ov
 });
 
 test('in a brawl a hit freezes only the two fighters involved', () => {
-  const s = startFight(ALL);
+  const s = startFight(BRAWL);
   Object.assign(s.f[0], { x: 0, z: 0 });
   Object.assign(s.f[1], { x: 60, z: 0 });
   Object.assign(s.f[2], { x: -300, z: -300 });
@@ -894,7 +895,7 @@ test('a blow that lands can be cancelled into the special; a stomp that lands bo
 });
 
 test('special in the air is each fighter\'s own air special, and each one lands', () => {
-  const want = { ruko: 'airDash', shadow: 'airBolt', jackie: 'bodyPress', pixie: 'airSpiral' };
+  const want = Object.fromEntries(FIGHTERS.map((f) => [f.id, AIR_SPECIAL[f.special.type]]));
   for (const id of ALL) {
     const s = startFight([id, 'ruko']);
     closeUp(s, 60);
@@ -910,7 +911,7 @@ test('special in the air is each fighter\'s own air special, and each one lands'
 });
 
 test('grab with nobody in throw reach is the fighter\'s signature move; up close it is still a throw', () => {
-  const want = { ruko: 'clawLeap', shadow: 'shadeStep', jackie: 'bellyBump', pixie: 'cartwheel' };
+  const want = Object.fromEntries(FIGHTERS.map((f) => [f.id, f.signature.move]));
   for (const id of ALL) {
     const s = startFight([id, 'ruko']);
     closeUp(s, 160);
@@ -999,7 +1000,7 @@ test('random button mashing never breaks the match (duel and arena)', () => {
     return seed / 4294967296;
   };
   const STATES = new Set(['idle', 'walk', 'jump', 'airAttack', 'attack', 'block', 'roll', 'backstep', 'hit', 'land', 'down', 'getup', 'ko', 'win', 'lose', 'throw', 'held']);
-  for (const chars of [['ruko', 'shadow'], ['jackie', 'pixie'], ALL, ['pixie', 'pixie', 'jackie']]) {
+  for (const chars of [['ruko', 'shadow'], ['jackie', 'pixie'], BRAWL, ALL.slice(4), ['pixie', 'pixie', 'jackie']]) {
     for (let game = 0; game < 6; game++) {
       const s = createMatch(chars, [], undefined, game + 1);
       const held = chars.map(() => 0);

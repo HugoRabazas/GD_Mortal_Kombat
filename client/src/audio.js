@@ -219,6 +219,14 @@ const SOUNDS = {
     burst(0.7, 0.4, 2000, 0.4);
   },
   // Each fighter's finisher has a voice of its own, heard over the freeze.
+  // The newer fighters' finishers borrow voices that suit them.
+  oath: () => SOUNDS.avalanche(),
+  crescent: () => SOUNDS.phoenix(),
+  cuts: () => SOUNDS.eclipse(),
+  sunburst: () => {
+    SOUNDS.phoenix();
+    tone('sine', 880, 1320, 0.8, 0.2, 0.2);
+  },
   howl: () => {
     // Red Moon Howl: a long wolf's howl, rising, wavering and falling away.
     const t = ctx.currentTime;

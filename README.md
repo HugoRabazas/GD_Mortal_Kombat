@@ -17,6 +17,10 @@ signature moves of any existing fighting game.
 | SHADOW | standard | Storm Bolt: a projectile, gathered as a glowing ball between cupped hands, fired with both palms, lightning crackling round it in flight | fast, fights from range |
 | JACKIE | sumo | Mountain Stomp: floors everyone nearby who is not jumping; a shockwave ring on the floor shows how far it reaches, the floor splits in glowing cracks and shards of rock fly up | slow, heavy, hard to knock out |
 | PIXIE | slim | Twin Flame Spiral: a spinning leap that hits all around, two flames orbiting and leaving a spiral, lit by a ring of fire on the floor at take-off | quick and fragile |
+| MERU | standard | Iron Charge: a lunging shoulder charge | heavy and steady; Last Oath: a charge, three hammer blows, a slam that floors everyone near; Shield Ram |
+| GLEH | slim | Moon Arrow: a projectile | quick, fights from range; Crescent Rain: a leap high and a rain of five moonlit arrows; Moon Vault (lands behind the rival) |
+| KICHTA | standard | Rising Edge: a spinning leap that hits all around | quick blade; Thousand Cuts: a dash, a storm of cuts, a rising slash; Blade Dash |
+| ZELRITH | slim | Storm Clap: floors everyone nearby who is not jumping | quick and tough; Sunburst: climbs in a ball of light and falls like the sun; Spin Top |
 
 **How to play** ends with the fighters: each one's face, title, a few words
 on their build drawn from their stats ("the quickest, lighter blows"; "slow
@@ -219,6 +223,16 @@ and the heartbeat, the crowd and the weather go quiet.
   as often as it punishes, the knee when closing in); measured with them in:
   duels 47-53 %, brawl firsts 16-20 %, ladder 100 / 81 / 61 %. The Tutorial
   teaches them (Combos: hook kick and air string; On the run: flying knee).
+- **Four new fighters** (the alliance's Meru, Gleh, Kichta and Zelrith),
+  each with an original design: build, colours and costumes, a special
+  (sharing a kind with an older fighter, under its own name), a finisher of
+  their own with its own cut-in scene (an iron shield cracking with light, a
+  crescent moon in a rain of light, gold slashes across the screen, a rising
+  sun), a signature move, a celebration, a taunt line and a winning quote.
+  Their portraits are placeholders (a disc with the initial) until their
+  pictures are added to art/fighters. With eight fighters the Arena and the
+  Arcade draw rivals in a new random order each time. Balanced across all
+  eight by CPU duels: 47-55 %.
 - **Signature moves**: grab with no rival within throw reach (100) is the
   fighter's own move for crossing the gap - Ruko's **Wolf Leap** (a leap
   that rakes down with the claws, 7), Shadow's **Shade Step** (sinks into

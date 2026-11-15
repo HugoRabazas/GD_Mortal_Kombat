@@ -44,6 +44,7 @@ export async function loadAssets() {
     FIGHTERS.map(async (f) => {
       let canvas;
       try {
+        if (!pictureOf(f.id)) throw new Error('no picture yet'); // a placeholder until it comes
         const img = await loadImage(pictureOf(f.id));
         canvas = document.createElement('canvas');
         canvas.width = canvas.height = HEAD_PX;

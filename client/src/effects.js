@@ -42,7 +42,7 @@ function buzz(ms) {
 // to make the phone buzz when their own fighter takes a hit.
 // `colors` (optional) is what each slot really wears (see dressColors).
 // What each fighter says when taunting.
-const TAUNTS = { ruko: 'Awoo!', shadow: 'Too slow.', jackie: 'Hmph!', pixie: 'Catch me!' };
+const TAUNTS = { ruko: 'Awoo!', shadow: 'Too slow.', jackie: 'Hmph!', pixie: 'Catch me!', meru: 'Is that all?', gleh: 'Over here!', kichta: 'Too easy.', zelrith: 'Hehe! Again!' };
 
 // Which shape a blow's spark takes.
 const KICKS = new Set(['kick', 'kick2', 'hook', 'slide', 'airKick', 'axeKick', 'flyKnee', 'launch', 'riseKick', 'rollSpin', 'breaker', 'stomp', 'quake']);

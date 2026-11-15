@@ -1676,8 +1676,8 @@ kbd {
   }
 
   .slot .picker .head {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
   }
 
   .ladder {
@@ -1906,5 +1906,17 @@ kbd {
 @media (prefers-reduced-motion: reduce) {
   .btn {
     transition: none;
+  }
+}
+
+/* Eight fighters to pick from on a narrow phone: smaller faces, closer. */
+@media (max-width: 520px) {
+  .slot .picker {
+    gap: 3px;
+  }
+
+  .slot .picker .head {
+    width: 27px;
+    height: 27px;
   }
 }

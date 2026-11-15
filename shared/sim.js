@@ -33,6 +33,8 @@ export const AIR_SPECIAL = { dash: 'airDash', bolt: 'airBolt', quake: 'bodyPress
 const AIR_MOVES = { airDash: 1, airBolt: 1, bodyPress: 1, airSpiral: 1 };
 // The bolt thrown from the air strikes lighter than the one from the ground.
 const AIR_BOLT_HIT = { dmg: 10, hitstun: 16, blockstun: 10, push: 6, gain: 6, heavy: true, chip: 0.2 };
+// One arrow of Gleh's Crescent Rain (five of them make the finisher).
+const RAIN_HIT = { dmg: 6, hitstun: 20, blockstun: 10, push: 3, gain: 0, heavy: true, chip: 0.3, noScale: true, final: true };
 // A launched rival can be hit this many more times in the air.
 const JUGGLE = 2;
 // Kick held down: after `hold` ticks the kick coils into a charge, which is
@@ -344,6 +346,77 @@ export const MOVES = {
     hitstun: 0, blockstun: 18, push: 10, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
     dive: 13, crash: 90, final: true,
   },
+  // Meru - Last Oath: a charge, three hammering blows, a slam that shakes
+  // the floor under everyone near.
+  oath: {
+    startup: 8, active: 16, recovery: 24, dmg: 8, speed: 16, reach: 88, arc: 1.2, y0: 0, y1: 170, aim: 420,
+    hitstun: 30, blockstun: 20, push: 1, gain: 0, heavy: true, chip: 0.3, rush: true, ult: true, noScale: true,
+    then: 'oath2', thenAt: 0,
+  },
+  oath2: {
+    startup: 4, active: 15, recovery: 4, dmg: 4, reach: 92, arc: 1.1, y0: 30, y1: 180, aim: 160,
+    hitstun: 18, blockstun: 8, push: 0.6, gain: 0, chip: 0.3, ult: true, noScale: true, light: true, every: 5,
+    then: 'oath3',
+  },
+  oath3: {
+    startup: 10, active: 999, recovery: 0, dmg: 12, speed: 3, reach: 80, arc: Math.PI, y0: -150, y1: 40, aim: 300,
+    hitstun: 0, blockstun: 16, push: 8, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
+    leap: 9, crash: 130, final: true,
+  },
+  // Gleh - Crescent Rain: a leap high above the arena, then a rain of
+  // moonlit arrows loosed down on the rival (`volley` shots).
+  crescent: {
+    startup: 6, active: 30, recovery: 999, dmg: 0, vh: 15, aim: 0, ult: true, apex: 'crescent2',
+  },
+  crescent2: {
+    startup: 4, active: 999, recovery: 0, dmg: 0, aim: 900, ult: true, volley: 5,
+  },
+  // Kichta - Thousand Cuts: a dash, a storm of cuts too quick to see, and a
+  // rising slash that throws the rival up.
+  cuts: {
+    startup: 5, active: 14, recovery: 24, dmg: 6, speed: 21, reach: 86, arc: 1.2, y0: 0, y1: 160, aim: 420,
+    hitstun: 30, blockstun: 20, push: 1, gain: 0, heavy: true, chip: 0.3, rush: true, ult: true, noScale: true,
+    then: 'cuts2', thenAt: 0,
+  },
+  cuts2: {
+    startup: 2, active: 18, recovery: 3, dmg: 2, reach: 94, arc: 1.2, y0: 30, y1: 180, aim: 160,
+    hitstun: 14, blockstun: 6, push: 0.4, gain: 0, chip: 0.3, ult: true, noScale: true, light: true, every: 3,
+    then: 'cuts3',
+  },
+  cuts3: {
+    startup: 4, active: 4, recovery: 24, dmg: 12, reach: 96, arc: 1.1, y0: 20, y1: 220, aim: 160,
+    hitstun: 0, blockstun: 16, push: 4, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
+    launch: 13, final: true,
+  },
+  // Zelrith - Sunburst: up into a ball of light that strikes all round as it
+  // climbs, then down like a falling sun and a burst on the floor.
+  sunburst: {
+    startup: 6, active: 30, recovery: 999, dmg: 4, vh: 14, drift: 4, reach: 100, arc: Math.PI, y0: -20, y1: 230, aim: 0,
+    hitstun: 18, blockstun: 10, push: 0.5, gain: 0, chip: 0.3, ult: true, noScale: true, light: true, every: 7,
+    apex: 'sunburst2',
+  },
+  sunburst2: {
+    startup: 3, active: 999, recovery: 0, dmg: 16, speed: 8, reach: 90, arc: Math.PI, y0: -170, y1: 60, aim: 900,
+    hitstun: 0, blockstun: 18, push: 10, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
+    dive: 14, crash: 150, final: true,
+  },
+  // --- the newer fighters' signature moves (grab out of reach) ---
+  shieldRam: {
+    startup: 8, active: 5, recovery: 16, dmg: 6, reach: 74, arc: 1.0, y0: 20, y1: 160, aim: 320,
+    hitstun: 18, blockstun: 12, push: 16, gain: 9, heavy: true, speed: 7.5, go: [0, 12],
+  },
+  moonVault: {
+    startup: 9, active: 999, recovery: 0, dmg: 6, speed: 11, reach: 76, arc: Math.PI, y0: -90, y1: 130, aim: 320,
+    hitstun: 16, blockstun: 10, push: 5, gain: 9, leap: 8.5, over: 1.7,
+  },
+  bladeDash: {
+    startup: 7, active: 6, recovery: 16, dmg: 7, reach: 90, arc: 0.9, y0: 40, y1: 160, aim: 320,
+    hitstun: 18, blockstun: 11, push: 6, gain: 9, heavy: true, speed: 10, go: [3, 13],
+  },
+  spinTop: {
+    startup: 7, active: 10, recovery: 16, dmg: 6, reach: 82, arc: Math.PI, y0: 20, y1: 160, aim: 320,
+    hitstun: 16, blockstun: 10, push: 8, gain: 9, speed: 6, go: [0, 15],
+  },
 };
 // The finisher's opening stage, by fighter (see `super.move` in the roster).
 export const ULT_MOVES = new Set(Object.keys(MOVES).filter((k) => MOVES[k].ult));
@@ -552,7 +625,7 @@ function startAttack(s, f, move) {
     const o = nearestRival(s, f, m.aim);
     const d = o ? Math.hypot(o.x - f.x, o.z - f.z) : 0;
     const flight = m.leap ? (2 * m.leap) / GRAVITY : Math.max(1, f.h / m.dive);
-    const v = Math.min(m.speed, d / flight);
+    const v = Math.min(m.speed, (d * (m.over || 1)) / flight); // `over`: land beyond them
     f.vx = Math.cos(f.dir) * v;
     f.vz = Math.sin(f.dir) * v;
     f.vh = m.leap || -m.dive;
@@ -899,6 +972,31 @@ function control(s, f, inp) {
       // Finisher stages: vanish and reappear, strike again, rise to the top
       // of a leap and dive, or flow into the next stage once a blow lands.
       if (m.blink && t === m.blink) blink(s, f);
+      if (m.volley && t === m.startup) {
+        // A rain of shots loosed down at the rival, fanned out a little.
+        const o = nearestRival(s, f, 900);
+        const base = o ? angleTo(f.x, f.z, o.x, o.z) : f.dir;
+        const d = o ? Math.hypot(o.x - f.x, o.z - f.z) : 200;
+        for (let i = 0; i < m.volley; i++) {
+          const a = base + (i - (m.volley - 1) / 2) * 0.08;
+          // Each arrow drops just enough to meet the rival at chest height.
+          const fall = (f.h + 60 - 90) / Math.max(4, d / (PROJECTILE.speed * 0.9));
+          s.proj.push({
+            id: ++s.projSeq,
+            owner: f.slot,
+            char: f.char,
+            x: f.x,
+            z: f.z,
+            h: f.h + 60,
+            vh: -Math.min(14, Math.max(0.5, fall)),
+            vx: Math.cos(a) * PROJECTILE.speed * 0.9,
+            vz: Math.sin(a) * PROJECTILE.speed * 0.9,
+            life: PROJECTILE.life,
+            rain: true,
+          });
+        }
+        emit(s, 'bolt', { by: f.slot });
+      }
       if (m.every && t > m.startup && (t - m.startup) % m.every === 0) f.hits = [];
       if (m.apex && t > m.startup && f.vh <= 0) {
         startAttack(s, f, m.apex);
@@ -1436,7 +1534,7 @@ function resolveHits(s) {
       if (Math.hypot(def.x - p.x, def.z - p.z) > PROJECTILE.r + BODY_R) continue;
       if (p.h + PROJECTILE.r < def.h || p.h - PROJECTILE.r > def.h + BODY_H) continue;
       p.dead = true;
-      applyHit(s, s.f[p.owner], def, p.vh ? AIR_BOLT_HIT : MOVES.bolt, p.x - p.vx * 3, p.z - p.vz * 3, 'bolt');
+      applyHit(s, s.f[p.owner], def, p.rain ? RAIN_HIT : p.vh ? AIR_BOLT_HIT : MOVES.bolt, p.x - p.vx * 3, p.z - p.vz * 3, 'bolt');
       break;
     }
   }

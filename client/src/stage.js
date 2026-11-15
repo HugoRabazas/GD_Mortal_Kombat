@@ -48,6 +48,116 @@ function ultBackdrop(ctx, move, k, col) {
       ctx.arc(cx + dx * r, cy + dy * r, cr * r, 0, Math.PI * 2);
       ctx.fill();
     }
+  } else if (move === 'oath') {
+    // Meru's oath: a great iron shield rising, cracks of light spreading.
+    const up = ease(k * 1.4);
+    const cx = W * 0.5;
+    const cy = H * 0.95 - up * H * 0.55;
+    ctx.translate(cx, cy);
+    ctx.scale(0.8 + up * 0.4, 0.8 + up * 0.4);
+    ctx.beginPath();
+    ctx.moveTo(0, -150);
+    ctx.quadraticCurveTo(130, -140, 130, -40);
+    ctx.quadraticCurveTo(120, 90, 0, 160);
+    ctx.quadraticCurveTo(-120, 90, -130, -40);
+    ctx.quadraticCurveTo(-130, -140, 0, -150);
+    const iron = ctx.createLinearGradient(0, -150, 0, 160);
+    iron.addColorStop(0, '#9fb3ad');
+    iron.addColorStop(1, '#2c3a36');
+    ctx.fillStyle = iron;
+    ctx.fill();
+    ctx.lineWidth = 8;
+    ctx.strokeStyle = '#d8b46a';
+    ctx.stroke();
+    ctx.strokeStyle = `rgba(150,255,210,${0.9 * up})`;
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 7; i++) {
+      let a = (i / 7) * Math.PI * 2 + 0.3;
+      let x = 0;
+      let y = 0;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      for (let j = 0; j < 4 * up; j++) {
+        a += Math.sin(i * 5 + j * 3) * 0.5;
+        x += Math.cos(a) * 30;
+        y += Math.sin(a) * 30;
+        ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+  } else if (move === 'crescent') {
+    // Gleh's crescent moon, and a rain of light falling past it.
+    const up = ease(k * 1.4);
+    const cx = W * 0.5;
+    const cy = H * 0.3 + (1 - up) * 140;
+    ctx.globalCompositeOperation = 'lighter';
+    const halo = ctx.createRadialGradient(cx, cy, 20, cx, cy, 260);
+    halo.addColorStop(0, 'rgba(200,170,255,0.55)');
+    halo.addColorStop(1, 'rgba(80,40,160,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#f4ecff';
+    ctx.beginPath();
+    ctx.arc(cx, cy, 110, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(6,3,10,0.92)';
+    ctx.beginPath();
+    ctx.arc(cx + 50, cy - 26, 100, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(220,200,255,0.8)';
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 26; i++) {
+      const x = ((i * 97.7) % W);
+      const y = ((i * 61 + k * 1400) % (H + 80)) - 40;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 10, y - 46);
+      ctx.stroke();
+    }
+  } else if (move === 'cuts') {
+    // Kichta's thousand cuts: slashes of gold flashing across the screen.
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.lineCap = 'round';
+    const n = Math.floor(4 + k * 26);
+    for (let i = 0; i < n; i++) {
+      const a = i * 2.39996;
+      const cx = W / 2 + Math.cos(a * 1.7) * W * 0.35;
+      const cy = H / 2 + Math.sin(a * 1.3) * H * 0.3;
+      const len = 120 + (i % 5) * 40;
+      const fade = Math.max(0.15, 1 - (n - i) / 14);
+      ctx.strokeStyle = `rgba(255,${200 + (i % 3) * 20},90,${fade})`;
+      ctx.lineWidth = 2 + (i % 3) * 2;
+      ctx.beginPath();
+      ctx.moveTo(cx - Math.cos(a) * len, cy - Math.sin(a) * len);
+      ctx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len);
+      ctx.stroke();
+    }
+  } else if (move === 'sunburst') {
+    // Zelrith's sun: a blazing ball rising, rays turning round it.
+    const up = ease(k * 1.4);
+    const cx = W * 0.5;
+    const cy = H * 0.85 - up * H * 0.5;
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.translate(cx, cy);
+    ctx.rotate(k * 1.5);
+    for (let i = 0; i < 16; i++) {
+      ctx.rotate(Math.PI / 8);
+      ctx.fillStyle = `rgba(255,${200 + (i % 2) * 40},80,0.45)`;
+      ctx.beginPath();
+      ctx.moveTo(-14, 0);
+      ctx.lineTo(0, -(260 + (i % 3) * 60) * up);
+      ctx.lineTo(14, 0);
+      ctx.fill();
+    }
+    const sun = ctx.createRadialGradient(0, 0, 10, 0, 0, 120);
+    sun.addColorStop(0, '#fffbe0');
+    sun.addColorStop(0.5, '#ffe066');
+    sun.addColorStop(1, 'rgba(255,140,40,0)');
+    ctx.fillStyle = sun;
+    ctx.beginPath();
+    ctx.arc(0, 0, 120, 0, Math.PI * 2);
+    ctx.fill();
   } else if (move === 'eclipse') {
     ctx.fillStyle = `rgba(4,0,10,${0.4 * ease(k * 2)})`;
     ctx.fillRect(0, 0, W, H);

@@ -65,7 +65,26 @@ function attackPose(f) {
   return out;
 }
 
+// The newer fighters' finisher stages and signature moves are drawn with the
+// key poses of the moves they move like.
+const POSE_AS = {
+  oath: 'avalanche', oath2: 'howl2', oath3: 'avalanche2',
+  crescent: 'phoenix', crescent2: 'phoenix',
+  cuts: 'howl', cuts2: 'eclipse2', cuts3: 'howl3',
+  sunburst: 'phoenix', sunburst2: 'phoenix2',
+  shieldRam: 'bellyBump', moonVault: 'clawLeap', bladeDash: 'lunge', spinTop: 'rollSpin',
+};
+
 function attackKey(f) {
+  const as = POSE_AS[f.move];
+  if (as) {
+    // Keep the move's own timing, mapped onto the other move's phases.
+    const m0 = MOVES[f.move];
+    const m1 = MOVES[as];
+    const phase = f.t < m0.startup ? 0 : f.t < m0.startup + m0.active ? 1 : 2;
+    const t = phase === 0 ? Math.min(m1.startup - 1, f.t) : phase === 1 ? m1.startup + Math.min(m1.active - 1, f.t - m0.startup) : m1.startup + m1.active + (f.t - m0.startup - m0.active);
+    return attackKey({ ...f, move: as, t: Math.max(0, t) });
+  }
   const m = MOVES[f.move];
   if (!m) return pose({});
   const phase = f.t < m.startup ? 'pre' : f.t < m.startup + m.active ? 'act' : 'rec';

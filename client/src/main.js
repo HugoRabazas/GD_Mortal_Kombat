@@ -264,10 +264,11 @@ const points = (n) => n.toLocaleString('en-US');
 function buildLadder(playerId) {
   const others = FIGHTERS.filter((f) => f.id !== playerId);
   const pool = others.length ? others : FIGHTERS;
-  // Every rival once, then a mirror match if there is a stage left to fill.
-  const order = pool.map((f) => f.id).slice(0, STAGES.length - 1);
+  // Rivals in a fresh random order (never the same ladder twice), then a
+  // mirror match if there is a stage left to fill.
+  const order = pool.map((f) => f.id).sort(() => Math.random() - 0.5).slice(0, STAGES.length - 1);
   while (order.length < STAGES.length - 1) order.push(order.length % 2 ? playerId : pool[order.length % pool.length].id);
-  order.push(pool[0].id); // the boss is your first rival again, powered up
+  order.push(order[0]); // the boss is your first rival again, powered up
   return STAGES.map((st, i) => ({ ...st, char: order[i], rivals: st.brawl ? rivalsFor([playerId]) : null }));
 }
 
@@ -367,8 +368,17 @@ function ladderCard() {
 }
 
 // The fighters the CPU will play in a brawl: everyone the humans did not pick.
+// With more fighters than places, the rivals come in a shuffled order, drawn
+// again after every fight (so the card on the select screen shows who you
+// will really meet).
+let rivalOrder = [];
+function shuffleRivals() {
+  rivalOrder = FIGHTERS.map((f) => f.id).sort(() => Math.random() - 0.5);
+}
+shuffleRivals();
+
 function rivalsFor(taken) {
-  const rest = FIGHTERS.filter((f) => !taken.includes(f.id)).map((f) => f.id);
+  const rest = rivalOrder.filter((id) => !taken.includes(id));
   const need = 4 - taken.length;
   while (rest.length < need) rest.push(FIGHTERS[rest.length % FIGHTERS.length].id);
   return rest.slice(0, need);
@@ -452,7 +462,7 @@ function helpScreen() {
         <li><b>Strings</b>: punch, punch, punch knocks down; punch, punch, kick <b>launches</b> the rival into the air (hold jump to chase and <b>juggle</b> them); punch, kick is a <b>hook kick</b> that spins them round; kick, kick a roundhouse. Each blow must land for the next. A blow that lands can also be <b>cancelled into your special</b>.</li>
         <li><b>On the run</b> (a few steps, the stick still held): punch is a <b>lunging straight</b>, kick a <b>slide</b> along the floor, and jump then kick a <b>flying knee</b>.</li>
         <li><b>In the air</b>: jump again for a <b>double jump</b>; punch dives at the rival, kick is a flying kick, grab a <b>stomp</b> straight down; an air punch that lands flows into an axe kick; special is your <b>air special</b>.</li>
-        <li><b>Grab with the rival out of reach</b> is your fighter's <b>signature move</b> for crossing the gap: Ruko's Wolf Leap, Shadow's Shade Step to the rival's back, Jackie's Belly Bump, Pixie's Cartwheel Kick.</li>
+        <li><b>Grab with the rival out of reach</b> is your fighter's <b>signature move</b> for crossing the gap: ${FIGHTERS.map((f) => `${f.name[0] + f.name.slice(1).toLowerCase()}'s ${f.signature.name}`).join(', ')}.</li>
         <li><b>Hold kick</b> to charge a <b>guard-breaker</b>: let go and it smashes a guard open.</li>
         <li><b>Grab</b> (its own button, or punch + kick together) seizes a rival up close, lifts them over your head and slams them down behind you. Short reach, but it goes straight through a guard; in a brawl, anyone can break it with a blow.</li>
         <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment; punch or kick late in it strikes out of it. Block with the stick straight away from the rival is a quick <b>back-step</b>.</li>
@@ -507,6 +517,10 @@ const SIG_NOTES = {
   shadeStep: 'a step through the shadows to the rival\'s back',
   bellyBump: 'a barge, belly first, that shoves the rival far',
   cartwheel: 'a cartwheel in, untouchable as it starts, ending in a kick',
+  shieldRam: 'a shoulder-first ram that shoves the rival back',
+  moonVault: 'a vault over the rival that lands behind them, kicking on the way down',
+  bladeDash: 'a long dashing slash',
+  spinTop: 'a spin across the floor that strikes all round',
 };
 
 const SUPER_NOTES = {
@@ -514,6 +528,10 @@ const SUPER_NOTES = {
   eclipse: 'vanishes, reappears behind the rival, a shadow flurry and a kick that sends them flying',
   avalanche: 'a charge that leaves the rival reeling, a leap and a belly-first crash that floors everyone near',
   phoenix: 'soars up in a pillar of flame and dives on the rival; best up close',
+  oath: 'a charge, three hammer blows and a slam that floors everyone near',
+  crescent: 'leaps high and looses a rain of moonlit arrows down on the rival',
+  cuts: 'a dash, a storm of cuts too quick to see and a rising slash',
+  sunburst: 'climbs in a ball of light, then falls like the sun and bursts',
 };
 
 const SPECIAL_NOTES = {
@@ -1254,6 +1272,7 @@ function startFight() {
     controllers = two;
   }
   app.game = createGame(chars, controllers, mods);
+  shuffleRivals(); // the next fight's rivals
   // The arcade ladder alternates between the arenas, starting from the chosen one.
   const first = ARENAS.findIndex((a) => a.id === app.place);
   app.fightPlace = app.mode === 'arcade' ? ARENAS[(first + app.arcade.stage) % ARENAS.length].id : app.place;
