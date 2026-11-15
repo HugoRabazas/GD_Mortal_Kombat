@@ -74,7 +74,9 @@ raises a fist to the sky, Shadow stands with arms folded, Jackie stamps like a s
 wrestler, Pixie hops and waves - turned three-quarters to the camera so it
 reads. Confetti in the winner's colours then drifts down over the arena for
 about five seconds (fewer pieces, falling slower, for anyone whose device
-asks for reduced motion). The beaten go down in their own way too: the heavy fighter sits down
+asks for reduced motion). Sparks, dust, numbers and confetti move by the
+clock, not by the frame, so they fly at the same speed on a phone that
+draws fewer frames a second. The beaten go down in their own way too: the heavy fighter sits down
 hard with legs out, the slim one drops to a knee, the others stand slumped.
 The result screen opens with the winner's own line (Ruko: "The moon
 saw that one coming. You did not."; Shadow: "Quiet. Quick. Finished.";
@@ -140,7 +142,8 @@ blows give a light rumble too), where the browser allows it.
 - **Block at the last moment** - the button pressed in the last 5 ticks
   (about 80 ms) before a blow lands - is a **perfect guard**: no chip damage,
   extra energy, and a kick or any other heavy blow thrown from the ground
-  leaves its owner reeling long enough to punish. The guard must have been
+  leaves its owner reeling long enough to punish (three stars circle the
+  reeling fighter's head until it is over). The guard must have been
   down for a third of a second first, so hammering the button earns nothing,
   and a guard that is simply held is an ordinary block. The CPU manages it
   rarely on Normal, more often on Hard, and the arcade boss most of all.

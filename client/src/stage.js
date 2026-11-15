@@ -132,11 +132,48 @@ function lineUp(ctx, s, labels, worn) {
   ctx.restore();
 }
 
+// Reeling from a perfect guard (the moment to punish): three small stars
+// circle above the head until the fighter recovers.
+// `headAt(f, back)` is where the head's crown lands on screen with the body
+// leaning `back` arena pixels away from where it faces (a reeling fighter
+// sways back on the heels).
+function dizzyStars(ctx, s, headAt, now) {
+  for (const f of s.f) {
+    if (f.reel <= 0 || f.hp <= 0) continue;
+    const p = headAt(f, 26);
+    const fade = Math.min(1, f.reel / 6);
+    for (let i = 0; i < 3; i++) {
+      const a = now / 140 + (i * Math.PI * 2) / 3;
+      const x = p.x + Math.cos(a) * 24;
+      const y = p.y + 12 + Math.sin(a) * 7; // round the crown of the head
+      const front = Math.sin(a) > 0; // the near side of the circle is brighter
+      ctx.save();
+      ctx.globalAlpha = fade * (front ? 1 : 0.55);
+      ctx.translate(x, y);
+      ctx.rotate(a);
+      ctx.beginPath();
+      for (let k = 0; k < 10; k++) {
+        const r = k % 2 ? 3 : 7.5;
+        const t = (k / 10) * Math.PI * 2 - Math.PI / 2;
+        ctx.lineTo(Math.cos(t) * r, Math.sin(t) * r);
+      }
+      ctx.closePath();
+      ctx.fillStyle = '#ffd34d';
+      ctx.strokeStyle = '#0b070d';
+      ctx.lineWidth = 1.5;
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+}
+
 export function createStage(glCanvas, hudCanvas) {
   const three = create3D(glCanvas);
   if (!three) glCanvas.hidden = true;
   const ctx = hudCanvas.getContext('2d');
   let scale = 1;
+  let lastNow = 0; // when the last frame was drawn, for the effects' time step
 
   const project = three ? three.project : flat;
 
@@ -167,7 +204,8 @@ export function createStage(glCanvas, hudCanvas) {
       const s = view.state;
       const worn = dressColors(s.f.map((f) => f.char), view.looks);
       setAnnounce(s.phase === 'intro' && !view.demo ? s.pt : -1);
-      const shake = updateFx();
+      const shake = updateFx(lastNow ? now - lastNow : undefined);
+      lastNow = now;
       if (calm) {
         shake.x *= 0.25;
         shake.y *= 0.25;
@@ -204,6 +242,7 @@ export function createStage(glCanvas, hudCanvas) {
       if (!view.demo) {
         const spots = s.f.map((f) => project(f.x, f.h + (three ? three.headTop(f.slot) * 100 - f.h : 150), f.z));
         drawTags(ctx, s, spots, view.labels);
+        dizzyStars(ctx, s, (f, back) => project(f.x - Math.cos(f.dir) * back, three ? three.headTop(f.slot) * 100 : 150, f.z - Math.sin(f.dir) * back), now);
         finisherCutIn(ctx, s, worn);
         drawHud(ctx, s, view.labels, now, worn);
         lineUp(ctx, s, view.labels, worn);

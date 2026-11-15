@@ -112,37 +112,43 @@ export function showBanner(text, sub, color, ms = 1400) {
 }
 
 // Called once per frame before drawing; returns the camera shake offset.
-export function updateFx() {
+// Advance the effects by `dt` milliseconds of real time (a 60 fps frame is
+// 16.7), so sparks fly and confetti falls at the same speed on a phone that
+// draws fewer frames. Long stalls (a tab in the background) count as at most
+// four frames.
+export function updateFx(dt = 1000 / 60) {
+  const k = Math.min(4, Math.max(0, dt / (1000 / 60)));
+  const damp = Math.pow(0.9, k);
   for (let i = particles.length - 1; i >= 0; i--) {
     const p = particles[i];
-    p.life -= p.decay;
+    p.life -= p.decay * k;
     if (p.life <= 0) {
       particles.splice(i, 1);
       continue;
     }
     if (p.vx !== undefined) {
-      p.x += p.vx;
-      p.y += p.vy;
+      p.x += p.vx * k;
+      p.y += p.vy * k;
       if (p.kind === 'streak') {
-        p.vx *= 0.9;
-        p.vy = p.vy * 0.9 + 0.25;
+        p.vx *= damp;
+        p.vy = p.vy * damp + 0.25 * k;
       } else if (p.kind === 'confetti') {
-        p.sway += 0.07;
-        p.x += Math.sin(p.sway) * 0.7;
-        p.rot += p.spin;
+        p.sway += 0.07 * k;
+        p.x += Math.sin(p.sway) * 0.7 * k;
+        p.rot += p.spin * k;
       }
     }
   }
   for (let i = texts.length - 1; i >= 0; i--) {
     const t = texts[i];
-    t.life -= 0.022;
-    t.y -= 0.9;
+    t.life -= 0.022 * k;
+    t.y -= 0.9 * k;
     if (t.life <= 0) texts.splice(i, 1);
   }
   const s = shake;
-  shake *= 0.86;
+  shake *= Math.pow(0.86, k);
   if (shake < 0.3) shake = 0;
-  flash *= 0.85;
+  flash *= Math.pow(0.85, k);
   if (flash < 0.02) flash = 0;
   return { x: (Math.random() - 0.5) * s * 2, y: (Math.random() - 0.5) * s * 2 };
 }
