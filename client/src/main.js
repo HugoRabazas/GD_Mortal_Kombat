@@ -1737,6 +1737,14 @@ function frame(now) {
       : (({ p, k, b, s, u, j, walk }) => `${walk} move · ${j} jump · ${p} punch (x3 combo) · ${k} kick · ${p}+${k} grab · ${b} block (+move = roll) · ${s} special · ${u} finisher`)(controlNames());
   const place = playing ? app.fightPlace : app.place;
   setMusicTheme(place);
+  // Behind the menus (and the pause and result screens) the arena is drawn
+  // on every other frame: thirty a second is plenty for a backdrop, and a
+  // phone stays cooler and lasts longer while someone reads. (Everything
+  // still runs on the clock, so nothing slows down.)
+  if (!playing || app.screen !== 'fight') {
+    app.demoSkip = !app.demoSkip;
+    if (app.demoSkip) return;
+  }
   stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: app.mode === 'training' }, now);
 
   const s = g.state;

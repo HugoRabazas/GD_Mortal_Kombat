@@ -80,7 +80,10 @@ about five seconds (fewer pieces, falling slower, for anyone whose device
 asks for reduced motion). Sparks, dust, numbers, confetti, the fighters'
 easing between poses and the arena's lights and embers all move by the
 clock, not by the frame, so they keep the same timing on a phone that
-draws fewer frames a second. Each build walks its own way too: the heavy fighter waddles, wide and low,
+draws fewer frames a second. Behind the menus and the pause and result
+screens the arena is drawn thirty times a second instead of sixty (it still
+runs on the clock), so a phone stays cooler and its battery lasts longer
+while someone reads; a fight is always drawn at full rate. Each build walks its own way too: the heavy fighter waddles, wide and low,
 rocking from side to side; the slim one goes on quick, springy steps.
 A blow knocks a fighter away from where it came from: struck from the
 front the body is thrown back, struck from behind it is thrown forward. The beaten go down in their own way too: the heavy fighter sits down
