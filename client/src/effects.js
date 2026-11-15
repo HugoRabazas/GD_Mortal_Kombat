@@ -39,12 +39,14 @@ function buzz(ms) {
 
 // `me` is the slot of the player at this screen (-1 when there is none), used
 // to make the phone buzz when their own fighter takes a hit.
-export function handleEvents(events, state, { quiet, project, me = -1 }) {
+// `colors` (optional) is what each slot really wears (see dressColors).
+export function handleEvents(events, state, { quiet, project, me = -1, colors = null }) {
   const arena = state.mode === 'arena';
   const nameOf = (slot) => getFighter(state.f[slot].char).name;
   for (const e of events) {
     const by = e.by !== undefined ? state.f[e.by] : null;
     const char = by ? getFighter(by.char) : null;
+    const tint = by ? colors?.[e.by] ?? char.colors : null;
     switch (e.type) {
       case 'round':
         if (quiet) break;
@@ -113,14 +115,14 @@ export function handleEvents(events, state, { quiet, project, me = -1 }) {
           dust(p.x, p.y, 3);
         }
         addShake(12);
-        lightFlash(e.x, 30, e.z, char.colors.glow, true);
+        lightFlash(e.x, 30, e.z, tint.glow, true);
         if (!quiet) play('quakeBoom');
         break;
       }
       case 'hit': {
         const p = project(e.x, e.h, e.z);
-        hitSpark(p.x, p.y, char.colors.glow, e.heavy);
-        lightFlash(e.x, e.h, e.z, char.colors.glow, e.heavy);
+        hitSpark(p.x, p.y, tint.glow, e.heavy);
+        lightFlash(e.x, e.h, e.z, tint.glow, e.heavy);
         floatText(p.x, p.y - 30, String(e.dmg), e.heavy ? '#ffd34d' : '#ffffff', e.heavy ? 28 : 22);
         if (e.combo >= 2) floatText(p.x, p.y - 58, `${e.combo} HITS`, '#ff8a5c', 20);
         if (e.kind === 'grab') floatText(p.x, p.y - 58, 'GRAB!', '#59c7ff', 24);
@@ -156,7 +158,7 @@ export function handleEvents(events, state, { quiet, project, me = -1 }) {
       }
       case 'special': {
         const p = project(by.x, 210, by.z);
-        floatText(p.x, p.y, char.special.name.toUpperCase(), char.colors.accent, 22);
+        floatText(p.x, p.y, char.special.name.toUpperCase(), tint.accent, 22);
         if (!quiet) play({ dash: 'rush', rise: 'flare', quake: 'heave' }[e.move] || 'special');
         break;
       }

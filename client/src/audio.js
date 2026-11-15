@@ -411,6 +411,53 @@ export function setMusic(mode) {
   }
 }
 
+// ------------------------------------------------------------------ crowd ---
+// The stands, heard: a bed of murmur under the fight - noise shaped into the
+// band of many voices, swelling and settling slowly - that roars up when the
+// fight gives them something (see crowdLevel in main.js). 0 is silence.
+let crowd = null;
+export function setCrowd(level) {
+  if (!ctx || ctx.state !== 'running') return;
+  try {
+    if (!crowd) {
+      const src = ctx.createBufferSource();
+      src.buffer = noise;
+      src.loop = true;
+      const low = ctx.createBiquadFilter();
+      low.type = 'bandpass';
+      low.frequency.value = 650;
+      low.Q.value = 0.7;
+      const high = ctx.createBiquadFilter();
+      high.type = 'bandpass';
+      high.frequency.value = 1700;
+      high.Q.value = 1.1;
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      // A slow swell, so it breathes like a room full of people.
+      const lfo = ctx.createOscillator();
+      const depth = ctx.createGain();
+      lfo.frequency.value = 0.23;
+      depth.gain.value = 0.25;
+      const swell = ctx.createGain();
+      swell.gain.value = 1;
+      lfo.connect(depth).connect(swell.gain);
+      src.connect(low).connect(swell);
+      src.connect(high).connect(swell);
+      swell.connect(gain).connect(sfxBus);
+      src.start();
+      lfo.start();
+      crowd = { gain, level: -1 };
+    }
+    const want = Math.max(0, Math.min(1, level));
+    if (Math.abs(want - crowd.level) < 0.02) return;
+    const rising = want > crowd.level; // a roar comes up fast and dies away slowly
+    crowd.level = want;
+    crowd.gain.gain.setTargetAtTime(want * 0.22, ctx.currentTime, rising ? 0.08 : 0.6);
+  } catch {
+    // the crowd stays quiet
+  }
+}
+
 export function play(name) {
   if (!ctx || muted || ctx.state !== 'running') return;
   try {

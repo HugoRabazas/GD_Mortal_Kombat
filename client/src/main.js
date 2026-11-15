@@ -1,7 +1,7 @@
 // The app shell: builds the page, runs the frame loop and moves between the
 // screens (menu -> fighter select -> fight -> result).
 
-import { FIGHTERS, getFighter, lookColors } from '../../shared/fighters.js';
+import { FIGHTERS, getFighter, lookColors, dressColors } from '../../shared/fighters.js';
 import { ARENA, INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
 import { loadAssets, headUrls } from './assets.js';
@@ -10,7 +10,7 @@ import { createGame } from './game.js';
 import { handleEvents } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, setCapture, setTouchLive } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
-import { unlockAudio, play, isMuted, setMuted, setMusic, setMusicTheme, getVolume, setVolume } from './audio.js';
+import { unlockAudio, play, isMuted, setMuted, setMusic, setMusicTheme, setCrowd, getVolume, setVolume } from './audio.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
 
@@ -1363,7 +1363,17 @@ function frame(now) {
       app.nextBeat = now + 900;
     }
   }
-  handleEvents(events, g.state, { quiet: !playing, project: stage.project, me: self });
+  const worn = playing ? dressColors(g.state.f.map((f) => f.char), fightLooks()) : null;
+  // The crowd: a low murmur while a fight is on, roaring at big moments and
+  // settling back down. Silent in the menus and in Training.
+  for (const e of playing ? events : []) {
+    if (e.type === 'hit') app.roar = Math.min(1, (app.roar || 0) + (e.kind === 'super' ? 0.6 : e.heavy ? 0.18 : 0.05));
+    else if (e.type === 'ko' || e.type === 'out' || e.type === 'parry') app.roar = Math.min(1, (app.roar || 0) + (e.type === 'parry' ? 0.25 : 0.7));
+  }
+  app.roar = (app.roar || 0) * 0.985;
+  const crowdOn = playing && app.mode !== 'training' && g.state.phase !== 'over' && !app.game?.paused;
+  setCrowd(crowdOn ? 0.18 + app.roar * 0.82 : 0);
+  handleEvents(events, g.state, { quiet: !playing, project: stage.project, me: self, colors: worn });
 
   const boss = playing && app.mode === 'arcade' ? [false, !!app.arcade.ladder[app.arcade.stage].boss] : null;
   const tags = playing ? labels() : [];

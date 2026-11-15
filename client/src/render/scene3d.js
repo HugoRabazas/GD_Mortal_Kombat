@@ -14,7 +14,7 @@
 // is the origin; the camera looks from +z towards -z.
 
 import { ARENA, TIMING } from '../../../shared/constants.js';
-import { getFighter, dressLineUp } from '../../../shared/fighters.js';
+import { getFighter, dressLineUp, dressColors } from '../../../shared/fighters.js';
 import { MOVES } from '../../../shared/sim.js';
 import { takeFlashes } from './fx.js';
 import { createRig } from './rig3d.js';
@@ -538,8 +538,11 @@ export function create3D(canvas) {
   // Rigs are rebuilt whenever the line-up changes (new fight, new fighters).
   let rigs = [];
   let rigKey = '';
+  let worn = []; // the colours each slot wears this fight (costumes included)
+  const glowOf = (slot) => worn[slot]?.glow ?? '#ffffff';
   const ensureRigs = (view) => {
     const s = view.state;
+    worn = dressColors(s.f.map((f) => f.char), view.looks);
     const looks = dressLineUp(s.f.map((f) => f.char), view.looks);
     const opts = s.f.map((f, i) => ({ look: looks[i], boss: !!view.boss?.[i] }));
     const key = s.f.map((f, i) => `${f.char}:${opts[i].look}:${opts[i].boss}`).join('|');
@@ -1095,7 +1098,7 @@ export function create3D(canvas) {
         const t = trail[nextTrail++ % trail.length];
         t.life = 1;
         t.big = f.move === 'super' ? 1.5 : 1;
-        t.sp.material.color.set(getFighter(f.char).colors.glow);
+        t.sp.material.color.set(glowOf(f.slot));
         t.sp.position.set(f.x * S, 1.0 + f.h * S, f.z * S);
         t.sp.visible = true;
       }
@@ -1110,7 +1113,7 @@ export function create3D(canvas) {
 
       // Special-move flair.
       for (const f of s.f) {
-        const glow = getFighter(f.char).colors.glow;
+        const glow = glowOf(f.slot);
         const pair = twins[f.slot];
         const rising = f.state === 'attack' && f.move === 'rise' && (f.h > 0 || f.t >= MOVES.rise.startup);
         if (pair) {
@@ -1165,7 +1168,7 @@ export function create3D(canvas) {
           o.light.intensity = 0;
           continue;
         }
-        const col = getFighter(p.char).colors.glow;
+        const col = glowOf(p.owner);
         const pulse = 1 + Math.sin(now / 45 + i) * 0.15;
         o.group.position.set(p.x * S, p.h * S, p.z * S);
         o.halo.material.color.set(col);

@@ -16,7 +16,7 @@
 // chested wrestler with a belly and a thick belt) and 'slim' (a lighter frame
 // with a skirt and a ponytail).
 
-import { LEN, ALT, joint, currentPose } from './fighter.js';
+import { LEN, joint, currentPose } from './fighter.js';
 import { lookColors } from '../../../shared/fighters.js';
 import { heads } from '../assets.js';
 
@@ -56,7 +56,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
   const build = BUILDS[char.build] || BUILDS.standard;
   const sumo = char.build === 'sumo';
   const slim = char.build === 'slim';
-  const col = { ...(look >= 0 ? lookColors(char.id, look) : { ...char.colors, ...ALT }), ...(boss ? BOSS : null) };
+  const col = { ...lookColors(char.id, look), ...(boss ? BOSS : null) };
   // Colours are written the way a designer picks them (sRGB); the renderer
   // does its lighting maths in linear light, so convert on the way in.
   const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();

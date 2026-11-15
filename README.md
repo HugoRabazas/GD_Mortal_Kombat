@@ -23,7 +23,10 @@ portraits on the select screen (and in an online room): Ruko wears Crimson or
 Midnight, Shadow Storm or Thunder, Jackie Violet or Granite, Pixie Flame or
 Frost. The device remembers the choice, and online it travels with you. Two
 copies of the same fighter never dress alike: the second takes the other
-costume, and a third copy wears plain alternate colours.
+costume, and a third copy wears plain alternate colours. A costume is worn
+everywhere at once - body, scoreboard, sparks, trails, projectiles and the
+finisher's cut-in all take their colour from one place (`dressColors` in
+`shared/fighters.js`).
 
 ## Modes
 
@@ -209,7 +212,9 @@ the mountains over the wall, and cranes down to the fighters before the call
 to fight - so each change of light and weather is seen as it arrives.
 
 A crowd on the stands sways while it watches and jumps and roars when heavy
-blows and knockouts land. Inside every round, the ring of fire shrinks the
+blows and knockouts land - and it is heard: a low murmur under every fight
+(not in Training) that swells with heavy blows, perfect guards, finishers and
+knockouts, then settles back down. Inside every round, the ring of fire shrinks the
 fighting ground as time runs out.
 
 To add a third arena: add an entry to `THEMES` in

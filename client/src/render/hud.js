@@ -63,14 +63,14 @@ function healthBar(ctx, f, x, y, w, h, dir, now) {
   ctx.stroke();
 }
 
-function energyBar(ctx, f, char, x, y, w, h, dir, now) {
+function energyBar(ctx, f, glow, x, y, w, h, dir, now) {
   const full = f.meter >= RULES.SUPER_COST;
   slantBar(ctx, x, y, w, h, dir);
   ctx.fillStyle = 'rgba(10,6,12,0.85)';
   ctx.fill();
   slantBar(ctx, x, y, w * (f.meter / RULES.METER_MAX), h, dir);
   ctx.globalAlpha = full ? 0.75 + 0.25 * Math.sin(now / 90) : 1;
-  ctx.fillStyle = full ? '#ffffff' : char.colors.glow;
+  ctx.fillStyle = full ? '#ffffff' : glow;
   ctx.fill();
   ctx.globalAlpha = 1;
   slantBar(ctx, x, y, w, h, dir);
@@ -98,14 +98,14 @@ function portrait(ctx, char, x, y, r, ring) {
 }
 
 // Two fighters: big bars across the top, energy along the bottom.
-function duelPanel(ctx, s, side, label, now) {
+function duelPanel(ctx, s, side, label, now, worn) {
   const f = s.f[side];
   const char = getFighter(f.char);
   const dir = side === 0 ? 1 : -1;
   const edge = side === 0 ? 74 : W - 74;
   const y = 26;
   healthBar(ctx, f, edge, y, 340, 22, dir, now);
-  portrait(ctx, char, side === 0 ? 40 : W - 40, 40, 28, char.colors.accent);
+  portrait(ctx, char, side === 0 ? 40 : W - 40, 40, 28, worn.accent);
 
   ctx.textBaseline = 'middle';
   ctx.textAlign = side === 0 ? 'left' : 'right';
@@ -129,7 +129,7 @@ function duelPanel(ctx, s, side, label, now) {
   }
   const my = ARENA.H - 30;
   const mEdge = side === 0 ? 24 : W - 24;
-  energyBar(ctx, f, char, mEdge, my, 250, 14, dir, now);
+  energyBar(ctx, f, worn.glow, mEdge, my, 250, 14, dir, now);
   const full = f.meter >= RULES.SUPER_COST;
   const ready = f.meter >= RULES.SPECIAL_COST;
   ctx.font = `italic 700 14px ${FONT}`;
@@ -137,7 +137,7 @@ function duelPanel(ctx, s, side, label, now) {
 }
 
 // A brawl: one compact panel per fighter, two either side of the timer.
-function arenaPanel(ctx, s, slot, label, now) {
+function arenaPanel(ctx, s, slot, label, now, worn) {
   const f = s.f[slot];
   const char = getFighter(f.char);
   const x = [8, 216, 548, 756][slot];
@@ -150,7 +150,7 @@ function arenaPanel(ctx, s, slot, label, now) {
   ctx.fillRect(x, 10, 4, 56);
   portrait(ctx, char, x + 32, 38, 21, SLOT_COLORS[slot]);
   healthBar(ctx, f, x + 60, 36, 96, 11, 1, now);
-  energyBar(ctx, f, char, x + 60, 51, 96, 7, 1, now);
+  energyBar(ctx, f, worn.glow, x + 60, 51, 96, 7, 1, now);
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
   ctx.font = `italic 700 20px ${FONT}`;
@@ -205,11 +205,13 @@ export function drawTags(ctx, s, spots, labels) {
   ctx.restore();
 }
 
-export function drawHud(ctx, s, labels, now) {
+// `worn`: the colours each slot really wears (costumes included).
+export function drawHud(ctx, s, labels, now, worn) {
   const arena = s.f.length > 2;
+  const colorsOf = (slot) => worn?.[slot] ?? getFighter(s.f[slot].char).colors;
   ctx.save();
-  if (arena) for (const f of s.f) arenaPanel(ctx, s, f.slot, labels[f.slot], now);
-  else for (const side of [0, 1]) duelPanel(ctx, s, side, labels[side], now);
+  if (arena) for (const f of s.f) arenaPanel(ctx, s, f.slot, labels[f.slot], now, colorsOf(f.slot));
+  else for (const side of [0, 1]) duelPanel(ctx, s, side, labels[side], now, colorsOf(side));
 
   // Timer.
   const secs = Math.ceil(s.timer / TICK_RATE);

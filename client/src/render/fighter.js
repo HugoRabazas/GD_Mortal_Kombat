@@ -14,7 +14,7 @@ import { heads } from '../assets.js';
 
 export const LEN = { thigh: 35, shin: 35, upper: 25, fore: 25, torso: 50, neck: 27, head: 32 };
 const OUTLINE = '#0b070d';
-export const ALT = { primary: '#2456c9', secondary: '#101a33', accent: '#7fd4ff', glow: '#59b7ff' };
+export { ALT_COLORS as ALT } from '../../../shared/fighters.js';
 
 // Pose fields. Hands are relative to the shoulder, feet relative to the spot
 // on the ground under the fighter. x points the way the fighter is facing,
@@ -245,7 +245,7 @@ function blob(ctx, x, y, rx, ry, color) {
 // Draws a fighter standing at screen point (sx, sy), facing left (-1) or
 // right (1), `lift` pixels above the floor.
 export function drawFighter(ctx, f, char, now, { sx, sy, facing, lift = 0, scale = 1, look = 0 }) {
-  const col = look >= 0 ? lookColors(char.id, look) : { ...char.colors, ...ALT };
+  const col = lookColors(char.id, look);
   const wide = char.build === 'sumo' ? 1.45 : char.build === 'slim' ? 0.82 : 1;
   const p = currentPose(f, now);
   const D = facing;

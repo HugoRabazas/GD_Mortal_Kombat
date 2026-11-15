@@ -118,9 +118,14 @@ export function isFighterId(id) {
 // How many costumes a fighter has (at least one: their own colours).
 export const lookCount = (id) => getFighter(id).looks?.length || 1;
 
-// The colours of one costume.
+// What a copy of a fighter with no costume left wears (a third copy in a
+// line-up): plain blues over their own colours.
+export const ALT_COLORS = { primary: '#2456c9', secondary: '#101a33', accent: '#7fd4ff', glow: '#59b7ff' };
+
+// The colours of one costume; -1 is the plain alternate.
 export function lookColors(id, look = 0) {
   const f = getFighter(id);
+  if (look < 0) return { ...f.colors, ...ALT_COLORS };
   return { ...f.colors, ...(f.looks?.[look]?.colors || null) };
 }
 
@@ -143,4 +148,12 @@ export function dressLineUp(chars, looks) {
     }
     return -1;
   });
+}
+
+// The colours every fighter in a line-up really wears, by slot. Everything
+// that paints a fighter's colour - body, scoreboard, sparks, trails - reads
+// it from here, so a costume is worn everywhere at once.
+export function dressColors(chars, looks) {
+  const dressed = dressLineUp(chars, looks);
+  return chars.map((id, i) => lookColors(id, dressed[i]));
 }

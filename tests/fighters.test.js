@@ -1,7 +1,7 @@
 // The roster's costumes and who wears what in a line-up.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { FIGHTERS, dressLineUp, lookColors, lookCount } from '../shared/fighters.js';
+import { FIGHTERS, dressColors, dressLineUp, lookColors, lookCount } from '../shared/fighters.js';
 
 test('every fighter has two costumes, and the second really changes the colours', () => {
   for (const f of FIGHTERS) {
@@ -18,4 +18,11 @@ test('two copies of a fighter never dress alike', () => {
   assert.deepEqual(dressLineUp(['ruko', 'ruko', 'ruko', 'pixie']), [0, 1, -1, 0], 'a third copy falls back to plain alternate colours');
   assert.deepEqual(dressLineUp(['jackie'], [7]), [0], 'a costume that does not exist means their own colours');
   assert.deepEqual(dressLineUp(['jackie', 'pixie'], null), [0, 0], 'no choices at all: own colours');
+});
+
+test('every slot gets the colours it really wears, for the scoreboard and the effects too', () => {
+  const [a, b] = dressColors(['ruko', 'ruko'], [1, 1]);
+  assert.equal(a.primary, lookColors('ruko', 1).primary, 'the first copy wears what was picked');
+  assert.equal(b.primary, lookColors('ruko', 0).primary, 'the mirror copy wears the other costume');
+  assert.notEqual(a.glow, b.glow, 'their sparks and trails differ too');
 });

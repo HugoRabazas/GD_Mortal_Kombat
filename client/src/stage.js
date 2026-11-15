@@ -4,7 +4,7 @@
 // has no WebGL the flat canvas draws the whole fight on a painted backdrop.
 
 import { ARENA, TIMING } from '../../shared/constants.js';
-import { getFighter, dressLineUp } from '../../shared/fighters.js';
+import { getFighter, dressLineUp, dressColors } from '../../shared/fighters.js';
 import { heads } from './assets.js';
 import { create3D } from './render/scene3d.js';
 import { drawArena } from './render/arena.js';
@@ -20,11 +20,12 @@ const flat = (x, h, z) => ({ x: W / 2 + x * 0.62, y: 372 + z * 0.24 - h * 0.8, k
 
 // The dramatic pause before a finisher: the screen dims and the attacker's
 // portrait slides across with the move's name.
-function finisherCutIn(ctx, s) {
+function finisherCutIn(ctx, s, worn) {
   if (s.freeze <= 0 || s.freezeBy < 0) return;
   const k = 1 - s.freeze / TIMING.SUPER_FREEZE;
   const f = s.f[s.freezeBy];
   const char = getFighter(f.char);
+  const col = worn[f.slot]; // in the costume being worn
   const side = f.slot % 2 === 0 ? -1 : 1; // which edge the portrait enters from
   const slide = 1 - Math.pow(1 - Math.min(1, k * 2.6), 3);
 
@@ -35,9 +36,9 @@ function finisherCutIn(ctx, s) {
   ctx.rotate(-0.09 * side);
   const band = ctx.createLinearGradient(0, -74, 0, 74);
   band.addColorStop(0, 'rgba(0,0,0,0)');
-  band.addColorStop(0.12, char.colors.glow);
-  band.addColorStop(0.5, char.colors.primary);
-  band.addColorStop(0.88, char.colors.glow);
+  band.addColorStop(0.12, col.glow);
+  band.addColorStop(0.5, col.primary);
+  band.addColorStop(0.88, col.glow);
   band.addColorStop(1, 'rgba(0,0,0,0)');
   ctx.globalAlpha = 0.9 * slide;
   ctx.fillStyle = band;
@@ -51,7 +52,7 @@ function finisherCutIn(ctx, s) {
   ctx.fill();
   ctx.beginPath();
   ctx.arc(px, 0, 90, 0, Math.PI * 2);
-  ctx.fillStyle = char.colors.accent;
+  ctx.fillStyle = col.accent;
   ctx.fill();
   const head = heads.get(char.id);
   if (head) ctx.drawImage(head, px - 84, -84, 168, 168);
@@ -75,7 +76,7 @@ function finisherCutIn(ctx, s) {
 
 // The line-up shown while the first round is announced: every fighter's
 // portrait and name, so everyone knows who is who before the bell.
-function lineUp(ctx, s, labels) {
+function lineUp(ctx, s, labels, worn) {
   if (s.round !== 1 || s.phase !== 'intro' || s.pt > 70) return;
   const fade = Math.min(1, s.pt / 10, (70 - s.pt) / 10);
   const n = s.f.length;
@@ -97,7 +98,7 @@ function lineUp(ctx, s, labels) {
     ctx.fill();
     ctx.beginPath();
     ctx.arc(x, y, r + 1, 0, Math.PI * 2);
-    ctx.fillStyle = char.colors.accent;
+    ctx.fillStyle = worn[f.slot].accent;
     ctx.fill();
     const head = heads.get(char.id);
     if (head) ctx.drawImage(head, x - r + 3, y - r + 3, (r - 3) * 2, (r - 3) * 2);
@@ -158,6 +159,7 @@ export function createStage(glCanvas, hudCanvas) {
     // view = { state, demo, labels, boss, humans, me }
     render(view, now) {
       const s = view.state;
+      const worn = dressColors(s.f.map((f) => f.char), view.looks);
       const shake = updateFx();
       if (calm) {
         shake.x *= 0.25;
@@ -195,9 +197,9 @@ export function createStage(glCanvas, hudCanvas) {
       if (!view.demo) {
         const spots = s.f.map((f) => project(f.x, f.h + (three ? three.headTop(f.slot) * 100 - f.h : 150), f.z));
         drawTags(ctx, s, spots, view.labels);
-        finisherCutIn(ctx, s);
-        drawHud(ctx, s, view.labels, now);
-        lineUp(ctx, s, view.labels);
+        finisherCutIn(ctx, s, worn);
+        drawHud(ctx, s, view.labels, now, worn);
+        lineUp(ctx, s, view.labels, worn);
         // A reminder of the controls while the first round is being announced.
         if (view.hint && (view.hintAlways || (s.round === 1 && s.phase === 'intro' && s.pt > 70))) {
           ctx.save();
