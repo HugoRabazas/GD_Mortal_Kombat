@@ -274,6 +274,20 @@ function buildLadder(playerId) {
 
 // Opened from a phone's home screen, the game is full screen already.
 const installed = !!window.matchMedia?.('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
+// A full-screen switch wherever a player may be (the menu, the lobby, a room,
+// the pause screen): someone who came in through an invite link never sees
+// the menu. Not offered where the browser cannot do it (an iPhone's Safari).
+const canFullscreen = () => !installed && !!(document.fullscreenEnabled || document.documentElement.requestFullscreen);
+const fullscreenButton = (cls = 'btn quiet') => (canFullscreen() ? `<button type="button" class="${cls}" data-act="fullscreen">${document.fullscreenElement ? 'Exit full screen' : 'Full screen'}</button>` : '');
+// On a phone, going into an online fight (Ready / Start) also goes full
+// screen: the tap is the gesture the browser asks for.
+function fullscreenForFight() {
+  if (!app.touch || document.fullscreenElement || !canFullscreen()) return;
+  document.documentElement
+    .requestFullscreen?.()
+    .then(() => screen.orientation?.lock?.('landscape'))
+    .catch(() => {});
+}
 
 function menuScreen() {
   const best = bestScore();
@@ -300,7 +314,7 @@ function menuScreen() {
         <button type="button" class="link" data-act="record">Record</button>
         <button type="button" class="link" data-act="touch" data-short="1" aria-pressed="${app.touch}">${touchLabel(true)}</button>
         <button type="button" class="link" data-act="arrange">Arrange buttons</button>
-        ${installed ? '' : '<button type="button" class="link" data-act="fullscreen">Full screen</button>'}
+        ${fullscreenButton('link')}
       </div>
       <p class="ver">version ${BUILD}</p>
     </section>`;
@@ -629,6 +643,7 @@ function pauseScreen() {
           <button type="button" class="btn primary" data-act="resume">Resume</button>
           ${app.mode === 'online' ? '' : '<button type="button" class="btn" data-act="rematch">Restart fight</button>'}
           <button type="button" class="btn" data-act="settings">Settings</button>
+          ${fullscreenButton('btn')}
           ${app.mode === 'online' ? '<button type="button" class="btn quiet" data-act="onBack">Back to the room</button>' : '<button type="button" class="btn quiet" data-act="menu">Quit to menu</button>'}
         </div>
         ${movesCard()}
@@ -1080,7 +1095,7 @@ function lobbyScreen() {
       </div>
       ${chatBox()}
       ${app.notice ? `<p class="note warn">${esc(app.notice)}</p>` : ''}
-      <div class="row"><button type="button" class="btn quiet" data-act="offline">Leave online</button></div>
+      <div class="row"><button type="button" class="btn quiet" data-act="offline">Leave online</button>${fullscreenButton()}</div>
     </section>`;
 }
 
@@ -1145,6 +1160,7 @@ function roomScreen() {
       <div class="row">
         <button type="button" class="btn quiet" data-act="leaveRoom">Leave room</button>
         <button type="button" class="btn" data-act="invite">Copy invite link</button>
+        ${fullscreenButton()}
         ${
           room.isHost
             ? `<button type="button" class="btn primary" data-act="onStart" ${on.canStart() ? '' : 'disabled'}>Start fight</button>`
@@ -1529,6 +1545,7 @@ const ACTIONS = {
   },
   onReady() {
     const mine = app.online.room.peers.find((p) => p.id === app.online.me.id);
+    if (!mine?.ready) fullscreenForFight();
     app.online.setReady(!mine?.ready);
   },
   onLook(el) {
@@ -1556,7 +1573,10 @@ const ACTIONS = {
     app.online?.setArena(app.place);
     show(app.screen);
   },
-  onStart: () => app.online.start({ fill: app.fill, arena: app.place }),
+  onStart: () => {
+    fullscreenForFight();
+    app.online.start({ fill: app.fill, arena: app.place });
+  },
   onBack() {
     if (app.online?.game) app.online.endMatch();
     else show(app.online?.room ? 'room' : 'lobby');
@@ -1662,16 +1682,22 @@ const ACTIONS = {
     el.textContent = touchLabel(!!el.dataset.short);
     el.setAttribute('aria-pressed', String(app.touch));
   },
-  fullscreen() {
+  fullscreen(el) {
     // Not every viewer allows this (phones, some apps); it is fine if it fails.
     // On a phone, full screen also holds the screen sideways, the way the game
     // is best played (Android allows it; elsewhere the request just fails).
-    const el = document.documentElement;
-    if (document.fullscreenElement) document.exitFullscreen?.();
+    const root = document.documentElement;
+    const done = () => {
+      if (el?.isConnected) el.textContent = document.fullscreenElement ? 'Exit full screen' : 'Full screen';
+    };
+    if (document.fullscreenElement) document.exitFullscreen?.().then(done, done);
     else
-      el
+      root
         .requestFullscreen?.()
-        .then(() => (app.touch ? screen.orientation?.lock?.('landscape') : null))
+        .then(() => {
+          done();
+          return app.touch ? screen.orientation?.lock?.('landscape') : null;
+        })
         .catch(() => {});
   },
 };

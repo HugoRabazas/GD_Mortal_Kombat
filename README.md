@@ -117,7 +117,12 @@ rocking from side to side; the slim one goes on quick, springy steps.
 From the third blow of a combo a big counter stands at the attacker's side
 of the screen - the number swelling with each blow, HITS under it and a word
 for how good it is (NICE from 3, GREAT 5, AWESOME 7, AMAZING 9,
-UNSTOPPABLE 12) - and fades a moment after the combo ends. When a match is won the camera frames the winner to the left of the picture
+UNSTOPPABLE 12) - and fades a moment after the combo ends. **Full screen** is on offer wherever a player may be - the menu, the online
+lobby, a room and the pause screen - since someone who comes in through an
+invite link never sees the menu; on a phone, pressing Ready or Start fight in
+a room also goes full screen (the tap is the gesture the browser needs).
+Browsers that cannot do it (Safari on an iPhone) are not offered the button.
+When a match is won the camera frames the winner to the left of the picture
 in their victory pose, and on a wide screen the result sits to the right so
 the pose is seen beside it. The pause screen lists every move in six tabs - Basics, Strings, On the
 run, Air, Defence and the fighter's own (special, finisher) - each short
