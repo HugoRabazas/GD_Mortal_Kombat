@@ -117,6 +117,27 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet) play('burn');
         break;
       }
+      case 'jump2': {
+        // The air jump: a puff of air kicked off under the feet.
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2;
+          const p = project(e.x + Math.cos(a) * 26, e.h, e.z + Math.sin(a) * 26);
+          dust(p.x, p.y, 2);
+        }
+        if (!quiet) play('jump');
+        break;
+      }
+      case 'stompLand': {
+        // Feet first into the floor: a ring of dust and a jolt.
+        for (let i = 0; i < 10; i++) {
+          const a = (i / 10) * Math.PI * 2;
+          const p = project(e.x + Math.cos(a) * 34, 0, e.z + Math.sin(a) * 34);
+          dust(p.x, p.y, 3);
+        }
+        addShake(8);
+        if (!quiet) play('thud');
+        break;
+      }
       case 'land': {
         const p = project(e.x, 0, e.z);
         dust(p.x, p.y, 5);

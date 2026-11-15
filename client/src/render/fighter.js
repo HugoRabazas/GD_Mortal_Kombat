@@ -34,6 +34,7 @@ const AIR = { hipY: -64, lean: 0.1, hfx: 20, hfy: -18, hbx: -16, hby: -10, ffx: 
 
 // A whole turn on the spot, over `ticks`: 0 at the start, a full circle at the
 // end (which looks the same as no turn, so the next pose follows on).
+const FLIP = 16; // ticks of the somersault that opens an air jump
 const turnOf = (t, ticks) => Math.min(1, t / ticks) * Math.PI * 2;
 
 function attackPose(f) {
@@ -254,9 +255,27 @@ function targetPose(f, now) {
       // Tucked into a ball, turning head over heels.
       return pose({ hipY: -30, lean: 0.9, tilt: 0.5, hfx: 16, hfy: 22, hbx: 10, hby: 22, ffx: 14, ffy: -8, fbx: -6, fby: -8, rot: f.t * 0.42, lift: -6 });
     case 'jump':
+      if (f.air2 && f.t < FLIP) {
+        // The air jump: tucked into a forward somersault, turned about the
+        // hips (the lift keeps them where the rules put the fighter).
+        const rot = (f.t / FLIP) * Math.PI * 2;
+        return pose({ hipY: -48, lean: 0.7, hfx: 18, hfy: 20, hbx: 10, hby: 22, ffx: 18, ffy: -22, fbx: 4, fby: -20, rot, lift: -48 * (1 - Math.cos(rot)) });
+      }
       return f.vh < -3 ? pose({ ...AIR, ffx: 14, ffy: -8, fbx: -10, fby: -2, hfy: -30, hby: -24 }) : pose(AIR);
-    case 'airAttack':
+    case 'airAttack': {
+      const pre = f.t < (MOVES[f.move]?.startup ?? 0);
+      if (f.move === 'airPunch') {
+        // A fist driven down and forward at whoever is below.
+        if (pre) return pose({ hipY: -62, lean: 0.2, hfx: 2, hfy: -14, hbx: -16, hby: 2, ffx: 12, ffy: -24, fbx: -14, fby: -14 });
+        return pose({ hipY: -62, lean: 0.5, hfx: 46, hfy: 30, hbx: -22, hby: -8, ffx: 8, ffy: -28, fbx: -24, fby: -14 });
+      }
+      if (f.move === 'stomp') {
+        // Knees drawn up while hanging, then both feet driven straight down.
+        if (pre) return pose({ hipY: -72, lean: 0.12, ffx: 18, ffy: -42, fbx: -8, fby: -38, hfx: 22, hfy: -30, hbx: -14, hby: -30 });
+        return pose({ hipY: -68, lean: -0.04, ffx: 10, ffy: 0, fbx: -10, fby: 0, hfx: 14, hfy: -48, hbx: -18, hby: -46 });
+      }
       return pose({ hipY: -62, lean: -0.18, ffx: 52, ffy: -16, fbx: -18, fby: -36, hfx: 10, hfy: 0, hbx: -22, hby: -8 });
+    }
     case 'attack':
       return attackPose(f);
     case 'block':
@@ -379,7 +398,7 @@ export function currentPose(f, now) {
   const k = 1 - Math.pow(1 - rate, frames);
   for (const key in target) cur[key] += (target[key] - cur[key]) * k;
   cur.spin = target.spin; // a turn on the spot is drawn as it is: easing would unwind it
-  if (f.state === 'roll') {
+  if (f.state === 'roll' || (f.state === 'jump' && f.air2)) {
     cur.rot = target.rot; // a spin must not be smoothed away
     rolled[f.slot] = true;
   } else if (rolled[f.slot]) {

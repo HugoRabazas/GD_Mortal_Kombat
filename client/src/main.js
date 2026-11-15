@@ -536,7 +536,9 @@ function movesCard() {
       <dt>Run + ${k(key.p)}</dt><dd><b>Lunging straight</b>: after a few steps, punch with the stick held to leap in from long range. Chains into the second punch.</dd>
       <dt>Run + ${k(key.k)}</dt><dd><b>Slide</b>: kick while running to slide in feet-first and sweep the rival off their feet. Low: jump it.</dd>
       <dt>${k(key.g)}</dt><dd><b>Throw</b>: seize, lift and slam. Short reach, goes straight through a guard.</dd>
-      <dt>${k(key.j)}, ${k(key.p)}</dt><dd><b>Diving attack</b> from the air.</dd>
+      <dt>${k(key.j)}, ${k(key.j)}</dt><dd><b>Double jump</b>: press again in the air, with a somersault.</dd>
+      <dt>Air ${k(key.p)} / ${k(key.k)}</dt><dd>A <b>diving punch</b> angled down, or a <b>flying kick</b>.</dd>
+      <dt>Air ${k(key.g)}</dt><dd><b>Stomp</b>: plunge feet first and flatten whoever is below. Rooted if it misses.</dd>
       <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b>.</dd>
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b>: attacks pass through you.</dd>
       <dt>${k(key.b)}</dt><dd>On the floor: a <b>quick rise</b>.</dd>
@@ -660,7 +662,7 @@ function watchDrills(s, events) {
       if (e.kind === 'punch3') markDrill('combo');
       else if (e.kind === 'kick') markDrill('kick');
       else if (e.kind === 'grab') markDrill('grab');
-      else if (e.kind === 'airKick') markDrill('dive');
+      else if (e.kind === 'airKick' || e.kind === 'airPunch' || e.kind === 'stomp') markDrill('dive');
     }
   }
 }

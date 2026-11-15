@@ -595,6 +595,55 @@ test('punch or kick while getting up is a rising sweep that cannot be hit while 
   assert.ok(s.f[0].hp < hp, 'it catches the rival standing over them');
 });
 
+test('a fresh press of jump in the air jumps again, once, and higher overall', () => {
+  const peak = (presses) => {
+    const s = startFight();
+    step(s, [INPUT.JUMP, 0]);
+    let top = 0;
+    for (let i = 0; i < 90; i++) {
+      step(s, [presses.includes(i) ? INPUT.JUMP : 0, 0]);
+      top = Math.max(top, s.f[0].h);
+    }
+    return { top, s };
+  };
+  const one = peak([]);
+  const two = peak([12]);
+  const three = peak([12, 26]);
+  assert.ok(two.top > one.top * 1.4, `the air jump climbs (${one.top.toFixed(0)} -> ${two.top.toFixed(0)})`);
+  assert.equal(three.top, two.top, 'only one air jump per jump');
+  // Holding jump from the take-off is not a second jump.
+  const held = startFight();
+  let top = 0;
+  for (let i = 0; i < 40; i++) {
+    step(held, [INPUT.JUMP, 0]);
+    top = Math.max(top, held.f[0].h);
+  }
+  assert.ok(top < one.top + 1, 'holding the button does not jump twice');
+});
+
+test('in the air punch, kick and grab are three different moves; the stomp knocks down', () => {
+  for (const [button, move] of [[INPUT.PUNCH, 'airPunch'], [INPUT.KICK, 'airKick'], [INPUT.GRAB, 'stomp'], [INPUT.PUNCH | INPUT.KICK, 'stomp']]) {
+    const s = startFight();
+    closeUp(s, 40);
+    step(s, [INPUT.JUMP, 0]);
+    run(s, 12);
+    step(s, [button, 0]);
+    assert.equal(s.f[0].move, move);
+    run(s, 40);
+    assert.ok(s.f[1].hp < s.f[1].maxHp, `${move} lands`);
+    if (move === 'stomp') assert.ok(s.f[1].state === 'down' || s.f[1].state === 'getup', 'stomped flat');
+  }
+  // A stomp that meets nothing roots the stomper for a moment.
+  const miss = startFight();
+  closeUp(miss, 300);
+  step(miss, [INPUT.JUMP, 0]);
+  run(miss, 12);
+  step(miss, [INPUT.GRAB, 0]);
+  for (let i = 0; i < 40 && miss.f[0].state !== 'land'; i++) step(miss, idle(miss));
+  assert.equal(miss.f[0].state, 'land');
+  assert.ok(miss.f[0].stun >= 10, 'a missed stomp is slow to recover');
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);

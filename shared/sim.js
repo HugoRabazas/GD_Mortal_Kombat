@@ -22,6 +22,12 @@ const GRAVITY = 0.75;
 const JUMP_V = 14;
 const WALK = 3.5;
 const AIR_SPEED = 3.7;
+// A second jump in the air: a fresh press of jump, once per jump, after the
+// first few ticks of rising (`from`), a little lower than the first.
+const AIR_JUMP = { from: 4, v: 11.5, buffer: 6 };
+// The stomp (grab - or punch and kick together - in the air): a short hang,
+// then a plunge feet first.
+const STOMP = { fall: -17, rest: 14 };
 const FRICTION = 0.84;
 const BUFFER_TICKS = 8; // how long a button press is remembered
 // A throw: seize (the rival is lifted in front), swing (carried up and over
@@ -123,9 +129,21 @@ export const MOVES = {
     startup: 7, active: 3, recovery: 24, dmg: 10, reach: 62, arc: 0.7, y0: 40, y1: 150, aim: 150,
     hitstun: 0, blockstun: 0, push: 6, gain: 10, knockdown: true, heavy: true, unblockable: true,
   },
+  // In the air each button has its own move: punch is a quick fist angled
+  // down at whoever is below and in front, kick the heavier flying kick, and
+  // grab (or punch and kick together) a stomp straight down that knocks over
+  // whoever it lands on - but leaves the stomper rooted if it misses.
+  airPunch: {
+    startup: 3, active: 999, recovery: 0, dmg: 7, reach: 72, arc: 1.0, y0: -50, y1: 100, aim: 0,
+    hitstun: 16, blockstun: 10, push: 5, gain: 9,
+  },
   airKick: {
     startup: 5, active: 999, recovery: 0, dmg: 9, reach: 80, arc: 1.0, y0: -20, y1: 90, aim: 0,
     hitstun: 18, blockstun: 11, push: 6, gain: 10, heavy: true,
+  },
+  stomp: {
+    startup: 5, active: 999, recovery: 0, dmg: 10, reach: 44, arc: Math.PI, y0: -110, y1: 30, aim: 0,
+    hitstun: 0, blockstun: 14, push: 7, gain: 10, knockdown: true, heavy: true,
   },
   // --- specials (cost RULES.SPECIAL_COST energy) ---
   dash: {
@@ -202,6 +220,8 @@ function newFighter(charId, slot, count, mod) {
     reel: 0, // ticks left staggering after a heavy blow was guarded perfectly
     prev: 0, // buttons held on the previous tick
     held: -1, // slot of the rival being thrown, or -1
+    jumpT: 0, // ticks left on a remembered press of jump (for the air jump)
+    air2: false, // the air jump is spent
     buf: 0, // remembered attack presses
     bufT: 0,
     taken: 0, // hits taken in the current combo
@@ -446,6 +466,8 @@ function control(s, f, inp) {
       if (held(INPUT.JUMP)) {
         setState(f, 'jump');
         f.vh = JUMP_V;
+        f.jumpT = 0; // this press is the take-off, not an air jump
+        f.air2 = false;
         f.vx = dir ? dir.x * AIR_SPEED * speedOf(f) : 0;
         f.vz = dir ? dir.z * AIR_SPEED * speedOf(f) : 0;
         if (dir) f.dir = Math.atan2(dir.z, dir.x);
@@ -477,14 +499,36 @@ function control(s, f, inp) {
       break;
     }
     case 'jump': {
-      if (f.buf & (INPUT.PUNCH | INPUT.KICK)) {
-        f.state = 'airAttack';
-        f.move = 'airKick';
+      const b = f.buf;
+      if (b & (INPUT.PUNCH | INPUT.KICK | INPUT.GRAB)) {
+        airAttack(s, f, b & INPUT.GRAB || (b & INPUT.PUNCH && b & INPUT.KICK) ? 'stomp' : b & INPUT.KICK ? 'airKick' : 'airPunch');
+        break;
+      }
+      if (f.jumpT > 0 && !f.air2 && f.t >= AIR_JUMP.from) {
+        // The air jump: up again, and steered anew by the stick.
+        const dir = stick(inp);
+        f.air2 = true;
+        f.jumpT = 0;
         f.t = 0;
-        f.hits = [];
-        f.buf = 0;
-        aim(s, f, 200);
-        emit(s, 'swing', { by: f.slot, move: 'airKick' });
+        f.vh = AIR_JUMP.v;
+        f.vx = dir ? dir.x * AIR_SPEED * speedOf(f) : f.vx * 0.5;
+        f.vz = dir ? dir.z * AIR_SPEED * speedOf(f) : f.vz * 0.5;
+        if (dir) f.dir = Math.atan2(dir.z, dir.x);
+        emit(s, 'jump2', { by: f.slot, x: f.x, z: f.z, h: f.h });
+      }
+      break;
+    }
+    case 'airAttack': {
+      // The other button a beat after the first makes a stomp, as on the ground.
+      if (f.move !== 'stomp' && f.t < GRAB_WINDOW && f.buf & (f.move === 'airPunch' ? INPUT.KICK : INPUT.PUNCH)) {
+        airAttack(s, f, 'stomp');
+        break;
+      }
+      if (f.move === 'stomp') {
+        if (f.t < MOVES.stomp.startup) {
+          f.vh = GRAVITY; // hang in the air (gravity takes this back off)
+          f.vx = f.vz = 0;
+        } else if (f.t === MOVES.stomp.startup) f.vh = STOMP.fall;
       }
       break;
     }
@@ -612,6 +656,16 @@ function carryThrow(s, f) {
   if (t >= THROW.end) setState(f, 'idle');
 }
 
+function airAttack(s, f, move) {
+  f.state = 'airAttack';
+  f.move = move;
+  f.t = 0;
+  f.hits = [];
+  f.buf = 0;
+  aim(s, f, 200);
+  emit(s, 'swing', { by: f.slot, move });
+}
+
 function land(s, f) {
   f.vh = 0;
   const here = { by: f.slot, x: f.x, z: f.z };
@@ -622,11 +676,11 @@ function land(s, f) {
       emit(s, 'land', here);
       break;
     case 'airAttack':
-      f.move = null;
       setState(f, 'land');
-      f.stun = 4;
+      f.stun = f.move === 'stomp' ? STOMP.rest : 4;
       f.vx = f.vz = 0;
-      emit(s, 'land', here);
+      emit(s, f.move === 'stomp' ? 'stompLand' : 'land', here);
+      f.move = null;
       break;
     case 'attack': // the rising special coming back down
       f.move = null;
@@ -745,7 +799,7 @@ function activeMove(f) {
     if (!m.reach || f.t < m.startup || f.t >= m.startup + m.active) return null;
     return m;
   }
-  if (f.state === 'airAttack') return f.t < MOVES.airKick.startup ? null : MOVES.airKick;
+  if (f.state === 'airAttack') return f.t < MOVES[f.move].startup ? null : MOVES[f.move];
   return null;
 }
 
@@ -1038,6 +1092,8 @@ export function step(s, inputs) {
   for (const f of s.f) {
     const inp = fighting && !isOut(f) ? inputs[f.slot] | 0 : 0;
     if (fighting) rememberPresses(f, inp);
+    if (fighting && inp & INPUT.JUMP && !(f.prev & INPUT.JUMP)) f.jumpT = AIR_JUMP.buffer;
+    else if (f.jumpT > 0) f.jumpT--;
     f.prev = inp;
   }
 

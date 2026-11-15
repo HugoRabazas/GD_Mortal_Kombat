@@ -136,6 +136,29 @@ export function aiInput(ai, s, me) {
       return ai.tap;
     }
   }
+  // In the air: now and then a second jump at the top of the first, and a
+  // stomp on a rival found right underneath (each decided once per jump).
+  if (f.state !== 'jump') ai.airPlan = 0;
+  else if (ai.target >= 0) {
+    const o = s.f[ai.target];
+    const d = Math.hypot(o.x - f.x, o.z - f.z);
+    if (!f.air2 && f.t === 9 && !ai.airPlan) {
+      ai.airPlan = 1;
+      if (d < 260 && rnd(ai) < 0.25) {
+        ai.held = toward(o.x - f.x, o.z - f.z) | INPUT.JUMP;
+        ai.wait = 3;
+        return ai.held;
+      }
+    }
+    if (f.vh < 0 && d < 50 && o.h <= 0 && ai.airPlan < 2) {
+      ai.airPlan = 2;
+      if (rnd(ai) < cfg.attack * 0.7) {
+        ai.tap = INPUT.GRAB;
+        ai.tapT = 2;
+        return INPUT.GRAB;
+      }
+    }
+  }
   if (ai.wait > 0) {
     ai.wait--;
     return ai.held | tap;

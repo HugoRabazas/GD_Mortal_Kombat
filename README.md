@@ -213,7 +213,15 @@ and the heartbeat, the crowd and the weather go quiet.
   with every fighter still winning 15-22 % of arena matches). While a fighter blocks, an arc on the floor shows what the
   guard covers; it flares during the last moments in which a block would be
   a perfect guard, so the timing can be seen as well as felt.
-- **Jump** over a ground stomp; attack in the air for a diving kick.
+- **Jump** over a ground stomp. A fresh press of jump in the air is a
+  **double jump** (once per jump, from the fourth tick, about 1.6 times as
+  high in all, opened by a forward somersault); holding the button is not.
+- **In the air each button is its own move**: punch is a quick **diving
+  punch** angled down (7 damage, starts in 3 ticks), kick the heavier
+  **flying kick** (9 damage), and grab - or punch and kick together - a
+  **stomp**: a short hang, then a plunge feet first that knocks down whoever
+  it lands on (10 damage) but roots the stomper for 14 ticks if it misses.
+  The CPU double-jumps now and then and stomps a rival found right below.
 - **Crystals** appear on the floor: gold gives energy, green gives health.
 - As the clock runs down a **ring of fire** closes in. A fighter knocked into
   it is scorched and bounced back.
