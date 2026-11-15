@@ -65,7 +65,7 @@ export const FIGHTERS = [
       glow: '#8f63ff',
     },
     looks: [{ name: 'Storm' }, { name: 'Thunder', colors: { primary: '#5b3fa6', secondary: '#1a1230', accent: '#f2c14e', glow: '#c9a3ff' } }],
-    stats: { power: 1.0, speed: 1.1, health: 105 },
+    stats: { power: 1.0, speed: 1.1, health: 103 },
     special: { type: 'bolt', name: 'Storm Bolt' },
     super: { name: 'Total Eclipse', move: 'eclipse' },
   },

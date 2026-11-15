@@ -41,6 +41,9 @@ function buzz(ms) {
 // `me` is the slot of the player at this screen (-1 when there is none), used
 // to make the phone buzz when their own fighter takes a hit.
 // `colors` (optional) is what each slot really wears (see dressColors).
+// What each fighter says when taunting.
+const TAUNTS = { ruko: 'Awoo!', shadow: 'Too slow.', jackie: 'Hmph!', pixie: 'Catch me!' };
+
 // Which shape a blow's spark takes.
 const KICKS = new Set(['kick', 'kick2', 'hook', 'slide', 'airKick', 'axeKick', 'flyKnee', 'launch', 'riseKick', 'rollSpin', 'breaker', 'stomp', 'quake']);
 function sparkStyle(e) {
@@ -136,6 +139,13 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (e.bounce) floatText(p.x, p.y - 62, 'BOUNCE!', '#ffd34d', 24);
         addShake(7);
         if (!quiet) play('burn');
+        break;
+      }
+      case 'taunt': {
+        // Each fighter's own line, and the energy it earned.
+        const p = project(by.x, 240, by.z);
+        floatText(p.x, p.y, TAUNTS[by.char] || 'Come on!', tint.accent, 22);
+        if (!quiet) play('pickup');
         break;
       }
       case 'guardBreak': {

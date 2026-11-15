@@ -110,6 +110,7 @@ export const LESSONS = [
     steps: [
       { id: 'special', name: 'Special move', how: (k) => `${k('s')}: costs a third of the energy bar`, ev: mine('special') },
       { id: 'super', name: 'Finisher', how: (k) => `${k('u')} with a full bar`, ev: mine('super') },
+      { id: 'taunt', name: 'Taunt', how: (k) => `hold ${k('b')} and press ${k('g')}, standing still: energy, but any blow is a counter hit`, ev: swing('taunt') },
       { id: 'final', name: 'Land the finisher', how: (k) => `${k('u')} close to the partner, all the way to its last blow`, ev: (e) => e.type === 'hit' && e.by === 0 && e.final },
     ],
   },

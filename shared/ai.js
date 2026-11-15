@@ -329,6 +329,8 @@ export function aiInput(ai, s, me) {
   if (f.state === 'down') return f.h <= 0 && rnd(ai) < blockChance * 0.5 ? hold(INPUT.BLOCK, 4) : hold(0, 4);
 
   if (o.state === 'down' || o.state === 'getup') {
+    // A rival floored and out of reach: now and then a taunt.
+    if (dist > 140 && f.state === 'idle' && f.meter < RULES.SUPER_COST && rnd(ai) < 0.12) return press(INPUT.GRAB, INPUT.BLOCK);
     return dist < 120 ? hold(toward(-dx, -dz), 8) : hold(0, 6); // give them room to stand
   }
 

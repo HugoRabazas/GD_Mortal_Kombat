@@ -34,6 +34,10 @@ const JUGGLE = 2;
 // let go as the guard-breaking kick when the button is released (no sooner
 // than `min` ticks of charging, and on its own at `max`).
 const CHARGE = { hold: 8, min: 8, max: 40, reel: 30 };
+// A taunt (block held, grab pressed, standing still): each fighter's own
+// gesture for `ticks`; energy is gained at tick `at`, and until it ends any
+// blow lands as a counter hit (it is still winding up).
+const TAUNT = { ticks: 40, at: 30, gain: 14 };
 // A finisher's last blow: a longer hold, then this long for the camera.
 const FINALE = { stop: 22, ticks: 48 };
 const FRICTION = 0.84;
@@ -120,6 +124,10 @@ export const MOVES = {
   kick: {
     startup: 8, active: 4, recovery: 13, dmg: 10, reach: 104, arc: 0.75, y0: 30, y1: 140, aim: 210,
     hitstun: 19, blockstun: 12, push: 9, gain: 12, heavy: true, nextK: 'kick2',
+  },
+  // A taunt: no blow at all (see TAUNT).
+  taunt: {
+    startup: 40, active: 0, recovery: 0, dmg: 0, aim: 400,
   },
   // Kick held: coiled (open to any blow while it charges)...
   charge: {
@@ -603,6 +611,11 @@ function control(s, f, inp) {
         break;
       }
       f.taken = 0;
+      // Block held and grab pressed, standing still: a taunt.
+      if (f.buf & INPUT.GRAB && held(INPUT.BLOCK) && !stick(inp)) {
+        startAttack(s, f, 'taunt');
+        break;
+      }
       if (f.buf && tryAttack(s, f, inp)) break;
       const dir = stick(inp);
       if (!held(INPUT.BLOCK)) f.rollOk = true;
@@ -741,6 +754,10 @@ function control(s, f, inp) {
       if (f.move === 'kick' && t >= 5 && t < m.startup && f.holdK >= CHARGE.hold) {
         startAttack(s, f, 'charge');
         break;
+      }
+      if (f.move === 'taunt' && t === TAUNT.at) {
+        addMeter(f, TAUNT.gain);
+        emit(s, 'taunt', { by: f.slot, x: f.x, z: f.z });
       }
       if (f.move === 'charge') {
         if ((t >= CHARGE.min && !held(INPUT.KICK)) || t >= CHARGE.max) startAttack(s, f, 'breaker');

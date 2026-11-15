@@ -203,6 +203,7 @@ const BOTS = {
   rollUpper: () => (s, t) => (t % 50 < 2 ? INPUT.BLOCK | INPUT.UP : s.f[0].state === 'roll' && s.f[0].t >= 7 ? INPUT.PUNCH : 0),
   rollSpin: () => (s, t) => (t % 50 < 2 ? INPUT.BLOCK | INPUT.UP : s.f[0].state === 'roll' && s.f[0].t >= 7 ? INPUT.KICK : 0),
   special: () => (s, t) => (t % 60 === 0 ? INPUT.SPECIAL : 0),
+  taunt: () => (s, t) => INPUT.BLOCK | (t % 30 === 5 ? INPUT.GRAB : 0),
   super: () => (s, t) => (t % 120 === 0 ? INPUT.SUPER : 0),
   final: () => routine(60, 300, (k) => (k === 0 ? INPUT.SUPER : 0)),
 };

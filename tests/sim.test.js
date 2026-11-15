@@ -833,6 +833,30 @@ test('knocked down into the ring of fire, a rival bounces back off it and can be
   assert.ok(juggled, 'and was struck on the way back');
 });
 
+test('block held and grab pressed while standing still is a taunt: energy, and open to counter hits', () => {
+  const s = startFight();
+  closeUp(s, 200);
+  const m0 = s.f[0].meter;
+  step(s, [INPUT.BLOCK, 0]);
+  step(s, [INPUT.BLOCK | INPUT.GRAB, 0]);
+  assert.equal(s.f[0].move, 'taunt');
+  run(s, 45, [INPUT.BLOCK, 0]);
+  assert.ok(s.f[0].meter > m0, 'it earns energy');
+  // Struck while taunting: a counter hit.
+  const c = startFight();
+  closeUp(c, 70);
+  step(c, [INPUT.BLOCK, 0]);
+  step(c, [INPUT.BLOCK | INPUT.GRAB, 0]);
+  run(c, 4);
+  step(c, [0, INPUT.PUNCH]);
+  let counter = false;
+  for (let i = 0; i < 20; i++) {
+    step(c, idle(c));
+    counter ||= c.ev.some((e) => e.type === 'hit' && e.by === 1 && e.counter);
+  }
+  assert.ok(counter);
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);

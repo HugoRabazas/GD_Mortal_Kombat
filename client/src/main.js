@@ -560,6 +560,7 @@ function movesCard() {
       <dt>Air ${k(key.g)}</dt><dd><b>Stomp</b>: plunge feet first and flatten whoever is below. Rooted if it misses.</dd>
       <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b>.</dd>
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b>: attacks pass through you.</dd>
+      <dt>${k(key.b)} + ${k(key.g)}</dt><dd><b>Taunt</b>: standing still - your own gesture, a little energy, but any blow on you is a counter hit.</dd>
       <dt>${k(key.b)} + away</dt><dd><b>Back-step</b>: the stick straight away from the rival - a quick hop back, still facing them.</dd>
       <dt>${k(key.b)}</dt><dd>On the floor: a <b>quick rise</b>.</dd>
       <dt>Roll, ${k(key.p)} / ${k(key.k)}</dt><dd>Late in a roll: a <b>rising uppercut</b> that knocks down, or a <b>spinning heel kick</b> with a wide arc.</dd>

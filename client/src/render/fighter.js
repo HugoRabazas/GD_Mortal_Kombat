@@ -81,6 +81,8 @@ function attackKey(f) {
       if (phase === 'pre') return pose({ ...CROUCH, lean: 0.3, hfx: 8, hfy: 28, hbx: -10, hby: 14 });
       if (phase === 'act') return pose({ hipX: 10, hipY: -68, lean: 0.08, hfx: 34, hfy: -50, hbx: -16, hby: 12, ffx: 22, fbx: -20, fby: -6 });
       return pose({ lean: 0.1, hfx: 22, hfy: -28 });
+    case 'taunt': // each fighter's own gesture: their victory move, in brief
+      return victoryPose(f);
     case 'charge': { // kick held: coiled on the back leg, the knee drawn up, trembling with it
       const shake = Math.sin(f.t * 2.1) * Math.min(1, f.t / 20) * 2;
       return pose({ hipX: -6 + shake, hipY: -56, lean: -0.22, tilt: -0.08, ffx: 14, ffy: -52, fbx: -24, hfx: 22, hfy: -10, hbx: 10, hby: -2 });
