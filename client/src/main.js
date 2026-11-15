@@ -392,6 +392,7 @@ function movesCard() {
       <dt>${k(key.j)}, ${k(key.p)}</dt><dd><b>Diving attack</b> from the air.</dd>
       <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b>.</dd>
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b>: attacks pass through you.</dd>
+      <dt>${k(key.p)}</dt><dd>Into a rival <b>winding up</b> a blow: a <b>counter hit</b>, a quarter more damage.</dd>
       ${own}
     </dl>`;
 }

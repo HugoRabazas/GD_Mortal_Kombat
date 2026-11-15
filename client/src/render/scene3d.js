@@ -15,6 +15,7 @@
 
 import { ARENA, TIMING } from '../../../shared/constants.js';
 import { getFighter } from '../../../shared/fighters.js';
+import { MOVES } from '../../../shared/sim.js';
 import { takeFlashes } from './fx.js';
 import { createRig } from './rig3d.js';
 import { play } from '../audio.js';
@@ -630,6 +631,30 @@ export function create3D(canvas) {
   });
   let nextTrail = 0;
 
+  // ---------- special-move flair ----------
+  // The spinning leap: two flames orbit the fighter as they rise, leaving a
+  // spiral of glows behind them. One pair per fighter slot.
+  const twins = Array.from({ length: 4 }, () =>
+    [0, 1].map(() => {
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
+      sp.visible = false;
+      scene.add(sp);
+      return sp;
+    }),
+  );
+  // The ground stomp: a shockwave ring racing out to the edge of its reach,
+  // so everyone can see how far it floors people.
+  const waveMat = () => new THREE.MeshBasicMaterial({ blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, side: THREE.DoubleSide, fog: false });
+  const waves = Array.from({ length: 4 }, () => {
+    const m = new THREE.Mesh(new THREE.RingGeometry(0.82, 1, 56), waveMat());
+    m.rotation.x = -Math.PI / 2;
+    m.visible = false;
+    scene.add(m);
+    return { m, life: 0, r: 1 };
+  });
+  let nextWave = 0;
+  const stomped = []; // per slot: the current stomp already sent its wave
+
   // ---------- rain ----------
   const DROPS = 900;
   const rainPos = new Float32Array(DROPS * 6);
@@ -1086,6 +1111,53 @@ export function create3D(canvas) {
         t.sp.material.opacity = Math.max(0, t.life) * 0.8;
         const size = (0.9 + t.life * 1.3) * t.big;
         t.sp.scale.set(size, size * 1.5, 1);
+      }
+
+      // Special-move flair.
+      for (const f of s.f) {
+        const glow = getFighter(f.char).colors.glow;
+        const pair = twins[f.slot];
+        const rising = f.state === 'attack' && f.move === 'rise' && (f.h > 0 || f.t >= MOVES.rise.startup);
+        if (pair) {
+          pair.forEach((sp, k) => {
+            sp.visible = rising;
+            if (!rising) return;
+            const a = now / 70 + k * Math.PI;
+            const y = 0.55 + f.h * S + Math.sin(now / 55 + k) * 0.3;
+            sp.position.set(f.x * S + Math.cos(a) * 0.62, y, f.z * S + Math.sin(a) * 0.62);
+            sp.material.color.set(glow);
+            sp.scale.set(0.75, 1.1, 1);
+            // A glow left behind every other frame draws the spiral.
+            if ((nextTrail & 1) === k) {
+              const t = trail[nextTrail % trail.length];
+              t.life = 0.7;
+              t.big = 0.55;
+              t.sp.material.color.set(glow);
+              t.sp.position.copy(sp.position);
+              t.sp.visible = true;
+            }
+          });
+          if (rising) nextTrail++;
+        }
+        const stomping = f.state === 'attack' && f.move === 'quake' && f.t >= MOVES.quake.startup;
+        if (stomping && !stomped[f.slot]) {
+          const w = waves[nextWave++ % waves.length];
+          w.life = 1;
+          w.r = (MOVES.quake.reach + 30) * S;
+          w.m.position.set(f.x * S, 0.03, f.z * S);
+          w.m.material.color.set(glow);
+          w.m.visible = true;
+        }
+        stomped[f.slot] = stomping;
+      }
+      for (const w of waves) {
+        if (w.life <= 0) continue;
+        w.life -= dt / 420;
+        w.m.visible = w.life > 0;
+        const k = 1 - Math.max(0, w.life);
+        const r = w.r * (0.25 + 0.75 * Math.sqrt(k));
+        w.m.scale.set(r, r, r);
+        w.m.material.opacity = Math.max(0, w.life) * 0.9;
       }
 
       // Projectiles: a white-hot core, a coloured halo and a light that

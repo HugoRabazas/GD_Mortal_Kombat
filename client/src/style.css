@@ -1334,6 +1334,23 @@ kbd {
   .note.aside {
     display: none;
   }
+
+  /* The pause screen's move list, tightened to fit a phone held sideways. */
+  .screen.pause h2 {
+    font-size: 1.6rem;
+  }
+
+  .movelist {
+    gap: 1px 10px;
+    padding: 6px 10px;
+    font-size: 0.72rem;
+    line-height: 1.25;
+  }
+
+  .movelist kbd {
+    padding: 0 4px;
+    font-size: 0.66rem;
+  }
 }
 
 /* Wide but not very tall (a laptop, a browser window, a tablet held sideways):
