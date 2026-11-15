@@ -8,7 +8,7 @@ import { FIGHTERS } from '../shared/fighters.js';
 
 // Mirror duels (both fighters the same, so only the level differs), the
 // stronger level on each side in turn. Returns the stronger level's share.
-function share(lo, hi, perFighter = 10) {
+function share(lo, hi, perFighter = 16) {
   let won = 0;
   let played = 0;
   for (const f of FIGHTERS) {

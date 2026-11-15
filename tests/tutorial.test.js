@@ -99,3 +99,129 @@ test('the combo lesson ticks a launcher and a juggle', () => {
   }, 120);
   assert.ok(done.has('launch') && done.has('juggle'), [...done].join());
 });
+
+// ------------------------------------------------- every step, played ---
+// A scripted player for each step, against that lesson's own partner: if a
+// step cannot be done this way, a person cannot be expected to do it either.
+const toward = (s, near) => {
+  const dx = s.f[1].x - s.f[0].x;
+  const dz = s.f[1].z - s.f[0].z;
+  const d = Math.hypot(dx, dz);
+  if (d <= near) return 0;
+  let b = 0;
+  if (dx / d > 0.38) b |= INPUT.RIGHT;
+  if (dx / d < -0.38) b |= INPUT.LEFT;
+  if (dz / d > 0.38) b |= INPUT.DOWN;
+  if (dz / d < -0.38) b |= INPUT.UP;
+  return b;
+};
+const gap = (s) => Math.hypot(s.f[1].x - s.f[0].x, s.f[1].z - s.f[0].z);
+// A routine that repeats every `every` ticks once in place (within `near`).
+const routine = (near, every, at) => {
+  let t0 = -1;
+  return (s, t) => {
+    const me = s.f[0];
+    if (t0 < 0) {
+      const b = toward(s, near);
+      if (b || me.state !== 'idle') return b; // (stop first: a jump out of a walk is a running jump)
+      t0 = t;
+    }
+    const k = (t - t0) % every;
+    if (k === every - 1) t0 = -1; // walk back into place for the next go
+    return at(k, s) || 0;
+  };
+};
+// Run up from a distance, then act (`at(k)` with k ticks since the run began).
+const runUp = (at) => {
+  let t0 = -1;
+  return (s, t) => {
+    if (t0 < 0 || t - t0 > 70) {
+      // Back off to a run-up distance first.
+      if (gap(s) < 200) {
+        const b = toward(s, 0);
+        return ((b & INPUT.RIGHT) ? INPUT.LEFT : 0) | ((b & INPUT.LEFT) ? INPUT.RIGHT : 0) | ((b & INPUT.UP) ? INPUT.DOWN : 0) | ((b & INPUT.DOWN) ? INPUT.UP : 0);
+      }
+      t0 = t;
+    }
+    return at(t - t0, s);
+  };
+};
+const runIn = (near, at) => {
+  let hit = -1;
+  return runUp((k, s) => {
+    if (hit < 0) {
+      if (k >= 9 && gap(s) < near) hit = k;
+      else return toward(s, 0);
+    }
+    return at(k - hit, s);
+  });
+};
+const BOTS = {
+  walk: () => () => INPUT.RIGHT,
+  jump: () => (s, t) => (t % 40 === 0 ? INPUT.JUMP : 0),
+  combo: () => routine(55, 50, (k) => (k === 0 || k === 9 || k === 18 ? INPUT.PUNCH : 0)),
+  kick: () => routine(80, 40, (k) => (k === 0 ? INPUT.KICK : 0)),
+  block: () => () => INPUT.BLOCK,
+  perfect: () => (s) => (s.f[1].state === 'attack' && s.f[1].move === 'kick' && s.f[1].t >= 4 ? INPUT.BLOCK : 0),
+  roll: () => (s, t) => (t % 40 < 2 ? INPUT.BLOCK | INPUT.LEFT : 0),
+  tech: () => (s) => (s.f[0].state === 'down' ? INPUT.BLOCK : 0),
+  riseKick: () => (s) => (s.f[0].state === 'getup' && s.f[0].t >= 5 ? INPUT.PUNCH : 0),
+  guarded: () => routine(60, 30, (k) => (k === 0 ? INPUT.PUNCH : 0)),
+  grab: () => routine(50, 40, (k) => (k === 0 ? INPUT.GRAB : 0)),
+  // Run in, and strike once close enough (`at` ticks after reaching `near`).
+  lunge: () => runIn(150, (k, s) => (k === 0 ? toward(s, 0) | INPUT.PUNCH : 0)),
+  slide: () => runIn(130, (k, s) => (k === 0 ? toward(s, 0) | INPUT.KICK : 0)),
+  flyKnee: () => runIn(210, (k, s) => (k === 0 ? toward(s, 0) | INPUT.JUMP : k === 3 ? INPUT.KICK : 0)),
+  jump2: () => (s, t) => (t % 60 === 0 || t % 60 === 12 ? INPUT.JUMP : 0),
+  airPunch: () => routine(70, 60, (k, s) => (k === 0 ? INPUT.JUMP | toward(s, 0) : k === 10 ? INPUT.PUNCH : 0)),
+  airKick: () => routine(80, 60, (k, s) => (k === 0 ? INPUT.JUMP | toward(s, 0) : k === 8 ? INPUT.KICK : 0)),
+  stomp: () => routine(55, 60, (k) => (k === 0 ? INPUT.JUMP : k === 12 ? INPUT.GRAB : 0)),
+  launch: () => routine(55, 70, (k) => (k === 0 || k === 9 ? INPUT.PUNCH : k === 19 ? INPUT.KICK : 0)),
+  juggle: () => {
+    let air = false;
+    const r = routine(55, 90, (k) => (k === 0 || k === 9 ? INPUT.PUNCH : k === 19 ? INPUT.KICK : 0));
+    return (s, t) => {
+      const me = s.f[0];
+      const o = s.f[1];
+      if (me.move === 'launch' && me.hits.length) {
+        air = false;
+        return INPUT.JUMP;
+      }
+      if (me.state === 'jump' && o.h > 0 && Math.abs(me.h - o.h) < 60 && !air) {
+        air = true;
+        return INPUT.PUNCH;
+      }
+      return me.state === 'jump' || me.state === 'airAttack' ? 0 : r(s, t);
+    };
+  },
+  kick2: () => routine(80, 50, (k) => (k === 0 || k === 11 ? INPUT.KICK : 0)),
+  hook: () => routine(55, 50, (k) => (k === 0 ? INPUT.PUNCH : k === 9 ? INPUT.KICK : 0)),
+  axeKick: () => routine(70, 60, (k, s) => (k === 0 ? INPUT.JUMP | toward(s, 0) : k === 10 ? INPUT.PUNCH : k === 16 ? INPUT.KICK : 0)),
+  counter: () => (s) => (s.f[1].state === 'attack' && s.f[1].move === 'kick' && s.f[1].t <= 2 && gap(s) < 100 ? INPUT.PUNCH : 0),
+  rollUpper: () => (s, t) => (t % 50 < 2 ? INPUT.BLOCK | INPUT.LEFT : s.f[0].state === 'roll' && s.f[0].t >= 7 ? INPUT.PUNCH : 0),
+  rollSpin: () => (s, t) => (t % 50 < 2 ? INPUT.BLOCK | INPUT.LEFT : s.f[0].state === 'roll' && s.f[0].t >= 7 ? INPUT.KICK : 0),
+  special: () => (s, t) => (t % 60 === 0 ? INPUT.SPECIAL : 0),
+  super: () => (s, t) => (t % 120 === 0 ? INPUT.SUPER : 0),
+  final: () => routine(60, 300, (k) => (k === 0 ? INPUT.SUPER : 0)),
+};
+
+for (const lesson of LESSONS) {
+  test(`every step of the "${lesson.title}" lesson can be done against its partner`, () => {
+    for (const st of lesson.steps) {
+      assert.ok(BOTS[st.id], `a scripted player for ${st.id}`);
+      const { s, partner } = lessonFight(lesson.partner);
+      const bot = BOTS[st.id]();
+      const done = new Set();
+      let t = 0;
+      for (; t < 2400 && !done.has(st.id); t++) {
+        // As in the game: no clock, health refills, energy only where the lesson gives it.
+        s.timer = 99 * 60;
+        if (lesson.energy) s.f[0].meter = 100;
+        for (const f of s.f) if (f.hp < f.maxHp * 0.4 && f.state !== 'down') f.hp = f.maxHp;
+        step(s, [bot(s, t), partner(s, 1)]);
+        for (const id of stepsDone(lesson, s, s.ev, done)) done.add(id);
+      }
+      assert.ok(done.has(st.id), `${lesson.id}/${st.id} not done in ${t} ticks`);
+    }
+  });
+}

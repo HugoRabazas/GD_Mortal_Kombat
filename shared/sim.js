@@ -500,12 +500,15 @@ function blink(s, f) {
   emit(s, 'blink', { by: f.slot, x0, z0, x: f.x, z: f.z });
 }
 
-function rememberPresses(f, inp) {
+// A press is remembered for BUFFER_TICKS of the fighter's own time: while
+// the action is held still by a blow's impact, the memory does not run out
+// (a follow-up pressed during the impact still comes out).
+function rememberPresses(f, inp, frozen) {
   const pressed = inp & ~f.prev & (INPUT.PUNCH | INPUT.KICK | INPUT.SPECIAL | INPUT.SUPER | INPUT.GRAB);
   if (pressed) {
     f.buf |= pressed;
     f.bufT = BUFFER_TICKS;
-  } else if (f.bufT > 0 && --f.bufT === 0) {
+  } else if (f.bufT > 0 && !frozen && --f.bufT === 0) {
     f.buf = 0;
   }
 }
@@ -1308,7 +1311,7 @@ export function step(s, inputs) {
 
   for (const f of s.f) {
     const inp = fighting && !isOut(f) ? inputs[f.slot] | 0 : 0;
-    if (fighting) rememberPresses(f, inp);
+    if (fighting) rememberPresses(f, inp, s.hitstop > 0 || s.freeze > 0 || f.stop > 0);
     if (fighting && inp & INPUT.JUMP && !(f.prev & INPUT.JUMP)) f.jumpT = AIR_JUMP.buffer;
     else if (f.jumpT > 0) f.jumpT--;
     f.prev = inp;

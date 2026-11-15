@@ -74,7 +74,14 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   many lessons are done. The lessons and their partners are shared code
   (`shared/tutorial.js`), tested against the real rules: the throwing
   partner floors a player at least three times in 25 seconds, and holding
-  guard on the floor and punching while getting up tick both steps.
+  guard on the floor and punching while getting up tick both steps. Every
+  step of every lesson is played through in the tests by a scripted player
+  against that lesson's own partner, so none of them is impossible. (That
+  play-through found two things: a follow-up pressed during a blow's impact
+  pause was forgotten before the string could use it - a pressed button is
+  now remembered for eight ticks of the fighter's own time, not counting the
+  pause - and walking up to the partner then jumping is a running jump, so
+  the flying-kick step now says to jump from a standstill.)
 
 A duel is first to two round wins.
 
