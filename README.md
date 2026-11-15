@@ -482,6 +482,25 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **The room's roster is tested on its own**: who is here and what each
+  member last chose is now `client/src/net/roster.js`, with no network in it,
+  and `tests/roster.test.js` runs it against a pretend service with the real
+  one's two awkward habits (presence that must not be updated in a row, and
+  presence news that arrives late): a burst of changes that never touches
+  presence again, a latecomer who sees everyone's current choice, a member
+  who counts as here from their first message, goodbyes, a tab that just
+  closes, silence, lost messages made good by the repeat and the 20-second
+  beat, and rubbish on the channel. A goodbye now holds until presence
+  agrees (presence can go on listing a closed tab for most of a minute), and
+  a page says goodbye on its way out: measured on the live service, the host
+  sees a player leave in 0.1 s (button), 0.2 s (tab closed) or 2 s (another
+  page), where a closed tab could take 55 s.
+- **The boss stands clearer of Hard** (it guards perfectly and punishes more
+  often): in mirror duels it wins 63 % (it had slipped to 55 %); the arcade
+  boss beats Hard 93 %. In a brawl the pack goes for whoever has **the most
+  health left**, not the fullest bar, so the big fighters draw it: over 2240
+  brawls Jackie's wins fall from 25.5 % to 21 %, everyone within 14-22 %.
+  98 tests.
 - **Reading an unstoppable finisher**: a finisher that has caught its rival
   burns brighter from that moment, and the CPU (Normal and up) turns to
   someone it can stop instead of wasting blows on it. Avalanche's crash

@@ -18,7 +18,7 @@ const LEVELS = {
   easy: { think: 16, block: 0.25, attack: 0.3, special: 0.02, parry: 0, punish: 0.15 },
   normal: { think: 8, block: 0.6, attack: 0.58, special: 0.07, parry: 0.1, punish: 0.45 },
   hard: { think: 5, block: 0.8, attack: 0.7, special: 0.1, parry: 0.28, punish: 0.75 },
-  boss: { think: 4, block: 0.84, attack: 0.76, special: 0.14, parry: 0.45, punish: 0.9 },
+  boss: { think: 4, block: 0.86, attack: 0.78, special: 0.14, parry: 0.58, punish: 0.95 },
 };
 
 // Ticks a fighter still has to wait before acting again, if it is recovering
@@ -89,7 +89,7 @@ function pickTarget(ai, s, f) {
   let bestScore = Infinity;
   const rivals = s.f.filter((o) => o !== f && o.hp > 0);
   const lead = Math.max(...rivals.map((o) => s.pts[o.slot]));
-  const fittest = Math.max(...rivals.map((o) => o.hp / o.maxHp));
+  const fittest = Math.max(...rivals.map((o) => o.hp)); // the most health left, not the fullest bar: the big ones draw the pack
   for (const o of rivals) {
     // Whoever is close comes first. In a brawl the pack also turns on whoever
     // is ahead on points or still fresh, the way players gang up on a leader,
@@ -97,7 +97,7 @@ function pickTarget(ai, s, f) {
     let score = Math.hypot(o.x - f.x, o.z - f.z) + rnd(ai) * 80;
     if (rivals.length > 1) {
       if (s.pts[o.slot] === lead && lead > s.pts[f.slot]) score -= 110;
-      if (o.hp / o.maxHp === fittest) score -= 70;
+      if (o.hp === fittest) score -= 70;
       if (o.hp / o.maxHp < 0.25) score -= 60;
       // (Easy does not know better.)
       if (ai.cfg.parry > 0 && unstoppable(o, f)) score += 400;
