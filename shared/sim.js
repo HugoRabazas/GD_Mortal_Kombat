@@ -265,6 +265,24 @@ function aim(s, f, range) {
   if (o && (o.x !== f.x || o.z !== f.z)) f.dir = angleTo(f.x, f.z, o.x, o.z);
 }
 
+// Raising a guard turns it towards the rival whose blow is on its way (the
+// nearest one swinging, within reach), and only failing that towards the
+// nearest rival - in a brawl the nearest is often not the one attacking.
+function aimGuard(s, f) {
+  let best = null;
+  let bestD = 260;
+  for (const o of s.f) {
+    if (o === f || isOut(o) || (o.state !== 'attack' && o.state !== 'airAttack')) continue;
+    const d = Math.hypot(o.x - f.x, o.z - f.z);
+    if (d < bestD) {
+      best = o;
+      bestD = d;
+    }
+  }
+  if (best) f.dir = angleTo(f.x, f.z, best.x, best.z);
+  else aim(s, f, 360);
+}
+
 function startAttack(s, f, move) {
   f.state = 'attack';
   f.move = move;
@@ -365,7 +383,7 @@ function control(s, f, inp) {
           break;
         }
         if (f.state !== 'block') {
-          aim(s, f, 360);
+          aimGuard(s, f);
           f.guard = f.open >= GUARD.rest ? GUARD.window : 0;
         }
         setState(f, 'block');

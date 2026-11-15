@@ -137,7 +137,10 @@ blows give a light rumble too), where the browser allows it.
   fast again. Measured over 600 CPU rounds, rounds won from 30 points of
   health behind went from 11.6 % to 14.8 %.
 - **Block** only stops what comes from the front, and a blocked hit can never
-  knock you out. While a fighter blocks, an arc on the floor shows what the
+  knock you out. Raising the guard turns it towards the rival who is already
+  swinging, not just the nearest one, so in a brawl it faces the real threat
+  (blows landing from behind on a guard fell from 21 % to 14 % in CPU brawls,
+  with every fighter still winning 15-22 % of arena matches). While a fighter blocks, an arc on the floor shows what the
   guard covers; it flares during the last moments in which a block would be
   a perfect guard, so the timing can be seen as well as felt.
 - **Jump** over a ground stomp; attack in the air for a diving kick.

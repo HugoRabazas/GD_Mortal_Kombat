@@ -187,6 +187,20 @@ test('block held on the floor is a quick rise, once per knockdown', () => {
   assert.ok(rising.ticks < lying.ticks - 15, `quick rise ${rising.ticks} against ${lying.ticks} ticks on the floor`);
 });
 
+test('a guard raised in a brawl turns to the rival who is swinging, not the nearest one', () => {
+  const s = startFight(['ruko', 'shadow', 'jackie', 'pixie'], [], 'arena');
+  // Fighter 0 in the middle; fighter 1 close by doing nothing; fighter 2
+  // further away, on the other side, already winding up a kick.
+  Object.assign(s.f[0], { x: 0, z: 0, dir: 0 });
+  Object.assign(s.f[1], { x: 60, z: 0, dir: Math.PI });
+  Object.assign(s.f[2], { x: -110, z: 0, dir: 0 });
+  Object.assign(s.f[3], { x: 0, z: 400 });
+  step(s, [0, 0, INPUT.KICK, 0]);
+  step(s, [INPUT.BLOCK, 0, 0, 0]);
+  assert.equal(s.f[0].state, 'block');
+  assert.ok(Math.abs(Math.abs(s.f[0].dir) - Math.PI) < 0.2, `guard faces the kicker (dir ${s.f[0].dir.toFixed(2)})`);
+});
+
 test('a hit reports the health it really took, never more than was left', () => {
   const s = startFight();
   closeUp(s);

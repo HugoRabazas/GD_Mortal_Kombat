@@ -108,12 +108,17 @@ function lineUp(ctx, s, labels, worn) {
     ctx.strokeText(char.name, x, y + r + 20);
     ctx.fillStyle = '#ffffff';
     ctx.fillText(char.name, x, y + r + 20);
+    // The fighter's title.
+    ctx.font = `italic 600 ${n > 2 ? 11 : 13}px Barlow, system-ui, sans-serif`;
+    ctx.lineWidth = 3;
+    ctx.strokeText(char.title, x, y + r + 39, gap - 16);
+    ctx.fillStyle = '#f3d9a8';
+    ctx.fillText(char.title, x, y + r + 39, gap - 16);
     if (labels[f.slot]) {
       ctx.font = '700 11px Barlow, system-ui, sans-serif';
-      ctx.lineWidth = 3;
-      ctx.strokeText(labels[f.slot], x, y + r + 40);
+      ctx.strokeText(labels[f.slot], x, y + r + 56);
       ctx.fillStyle = '#e8b454';
-      ctx.fillText(labels[f.slot], x, y + r + 40);
+      ctx.fillText(labels[f.slot], x, y + r + 56);
     }
   }
   if (n === 2) {
@@ -202,7 +207,9 @@ export function createStage(glCanvas, hudCanvas) {
         drawHud(ctx, s, view.labels, now, worn);
         lineUp(ctx, s, view.labels, worn);
         // A reminder of the controls while the first round is being announced.
-        if (view.hint && (view.hintAlways || (s.round === 1 && s.phase === 'intro' && s.pt > 70))) {
+        // (Never on top of the line-up, which has the screen's lower half to itself.)
+        const lineUpShown = s.round === 1 && s.phase === 'intro' && s.pt <= 70;
+        if (view.hint && !lineUpShown && (view.hintAlways || (s.round === 1 && s.phase === 'intro'))) {
           ctx.save();
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
