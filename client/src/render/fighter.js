@@ -109,7 +109,63 @@ function victoryPose(f) {
   }
 }
 
+// While a round is announced each fighter goes through a short ritual of
+// their own (`entrance` in the roster), then settles into the stance.
+// stage.js says how far into the announcement the round is (-1 when not).
+let announce = -1;
+export function setAnnounce(pt) {
+  announce = pt;
+}
+// It plays in the second half of the announcement, once the camera has come
+// down from the sky (and the first round's line-up card has gone), and ends
+// a few ticks before the fight so the stance is ready in time.
+const ENTRANCE_FROM = 44;
+const ENTRANCE_TICKS = 66;
+const ease = (x) => {
+  const k = Math.min(1, Math.max(0, x));
+  return k * k * (3 - 2 * k);
+};
+const mix = (a, b, k) => {
+  const out = {};
+  for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) out[key] = (a[key] ?? 0) + ((b[key] ?? 0) - (a[key] ?? 0)) * k;
+  return out;
+};
+
+function entrancePose(f, t) {
+  switch (getFighter(f.char).entrance) {
+    case 'prowl': {
+      // Low to the ground, hands near the floor, then rising tall, chin up.
+      const low = { hipY: -36, lean: 0.55, hfx: 30, hfy: 30, hbx: 12, hby: 30, ffx: 22, fbx: -30 };
+      const tall = { hipY: -63, lean: -0.22, hfx: 20, hfy: -12, hbx: -8, hby: 10, ffx: 14, fbx: -18 };
+      return pose(mix(low, tall, ease((t - 30) / 22)));
+    }
+    case 'bow': {
+      // Upright, a slow bow, then a fist pressed into the open hand.
+      const still = { hipY: -63, hfx: 4, hfy: 24, hbx: -4, hby: 24, ffx: 10, fbx: -12 };
+      const bowed = { ...still, hipY: -60, lean: 0.62 };
+      const fist = { hipY: -63, hfx: 22, hfy: -6, hbx: 22, hby: -4, ffx: 12, fbx: -14 };
+      return pose(t < 36 ? mix(still, bowed, ease((t - 6) / 14) - ease((t - 26) / 10)) : mix(still, fist, ease((t - 36) / 10)));
+    }
+    case 'clap': {
+      // A wide, low stance; two big claps in front, then the arms opened wide.
+      const base = { hipY: -48, lean: 0.12, ffx: 30, fbx: -32 };
+      if (t >= 44) return pose({ ...base, hfx: 36, hfy: -20, hbx: -34, hby: -20 });
+      const shut = Math.max(0, Math.cos(((t - 8) / 18) * Math.PI * 2)); // 1 at each clap
+      const k = t < 8 ? 0 : shut;
+      return pose({ ...base, hfx: 40 - 8 * k, hfy: -18, hbx: -24 + 56 * k, hby: -18 }); // at chest height, clear of the belly
+    }
+    default: {
+      // swirl: light on the toes, both hands circling as if stirring a flame.
+      const a = t * 0.2;
+      const b = Math.abs(Math.sin(t * 0.12)) * 3;
+      return pose({ hipY: -63 - b, lean: 0.04, ffy: -b, fby: -b, hfx: 24 + 11 * Math.cos(a), hfy: -14 + 11 * Math.sin(a), hbx: 20 + 11 * Math.cos(a + Math.PI), hby: -14 + 11 * Math.sin(a + Math.PI) });
+    }
+  }
+}
+
 function targetPose(f, now) {
+  const ritual = announce - ENTRANCE_FROM;
+  if (ritual >= 0 && ritual < ENTRANCE_TICKS && f.state === 'idle') return entrancePose(f, ritual);
   const air = f.h > 0.5;
   switch (f.state) {
     case 'walk': {

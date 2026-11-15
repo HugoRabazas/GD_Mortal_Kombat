@@ -33,6 +33,7 @@ export const FIGHTERS = [
     title: 'The Crimson Wolf',
     gear: ['scarf'],
     victory: 'howl',
+    entrance: 'prowl', // the ritual while a round is announced
     quote: 'The moon saw that one coming. You did not.',
     head: { x: 81, y: 68, r: 30 },
     colors: {
@@ -53,6 +54,7 @@ export const FIGHTERS = [
     title: 'The Silent Storm',
     gear: ['pads'],
     victory: 'calm',
+    entrance: 'bow', // the ritual while a round is announced
     quote: 'Quiet. Quick. Finished.',
     head: { x: 88, y: 99, r: 43 },
     colors: {
@@ -73,6 +75,7 @@ export const FIGHTERS = [
     title: 'The Violet Mountain',
     build: 'sumo',
     victory: 'stomp',
+    entrance: 'clap', // the ritual while a round is announced
     quote: 'The mountain does not move. You did.',
     head: { x: 88, y: 42, r: 40 },
     colors: {
@@ -93,6 +96,7 @@ export const FIGHTERS = [
     title: 'The Twin Flame',
     build: 'slim',
     victory: 'cheer',
+    entrance: 'swirl', // the ritual while a round is announced
     quote: 'Two flames, one winner!',
     head: { x: 84, y: 94, r: 46 },
     colors: {

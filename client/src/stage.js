@@ -8,7 +8,7 @@ import { getFighter, dressLineUp, dressColors } from '../../shared/fighters.js';
 import { heads } from './assets.js';
 import { create3D } from './render/scene3d.js';
 import { drawArena } from './render/arena.js';
-import { drawFighter, drawProjectile, resetPoses } from './render/fighter.js';
+import { drawFighter, drawProjectile, resetPoses, setAnnounce } from './render/fighter.js';
 import { updateFx, drawFx, drawOverlays, resetFx } from './render/fx.js';
 import { drawHud, drawTags, resetHud } from './render/hud.js';
 
@@ -166,6 +166,7 @@ export function createStage(glCanvas, hudCanvas) {
     render(view, now) {
       const s = view.state;
       const worn = dressColors(s.f.map((f) => f.char), view.looks);
+      setAnnounce(s.phase === 'intro' && !view.demo ? s.pt : -1);
       const shake = updateFx();
       if (calm) {
         shake.x *= 0.25;

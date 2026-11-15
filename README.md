@@ -62,6 +62,12 @@ wide, breathing slowly; the slim fighter light on the toes, bouncing
 quicker. The main menu shows a different tip each time, written for the
 controls in use.
 
+Each round opens with a ritual of the fighter's own while it is announced:
+Ruko rises from a low prowl, Shadow bows and presses a fist into an open
+hand, Jackie claps twice and opens the arms wide, Pixie circles both hands
+as if stirring a flame. Name tags fade once a match is decided, so the
+winner and the result screen are not written over.
+
 When a match ends, every fighter who won celebrates in their own way - Ruko
 raises a fist to the sky, Shadow stands with arms folded, Jackie stamps like a sumo
 wrestler, Pixie hops and waves - turned three-quarters to the camera so it
@@ -366,7 +372,8 @@ editor), `audio.js` (every sound and the music are generated in the browser),
    circle cut from the picture (centre `x`, `y` and radius `r` in picture
    pixels); `build` is `standard`, `sumo` or `slim`; `gear` adds a `scarf` or
    shoulder `pads`; `victory` is how they celebrate a won match (`howl`,
-   `calm`, `stomp` or `cheer`); `quote` is their winning line (60 characters
+   `calm`, `stomp` or `cheer`); `entrance` is their ritual while a round is
+   announced (`prowl`, `bow`, `clap` or `swirl`); `quote` is their winning line (60 characters
    at most); `looks` are their costumes (the first is their
    own colours, the second names the colours it changes); `special.type` is `dash`,
    `bolt`, `rise` or `quake`; keep `stats` near 1.0.

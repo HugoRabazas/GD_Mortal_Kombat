@@ -32,6 +32,7 @@ test('every fighter is complete: picture circle, special, costumes, a celebratio
     assert.ok(f.head && f.head.r > 0, `${f.id} head`);
     assert.ok(['dash', 'bolt', 'rise', 'quake'].includes(f.special.type), `${f.id} special`);
     assert.ok(['howl', 'calm', 'stomp', 'cheer'].includes(f.victory), `${f.id} celebration`);
+    assert.ok(['prowl', 'bow', 'clap', 'swirl'].includes(f.entrance), `${f.id} entrance`);
     assert.ok(typeof f.quote === 'string' && f.quote.length > 0 && f.quote.length <= 60, `${f.id} quote fits the result screen`);
     for (const k of ['primary', 'secondary', 'accent', 'skin', 'glow']) assert.match(f.colors[k], /^#[0-9a-f]{6}$/i, `${f.id} ${k}`);
   }

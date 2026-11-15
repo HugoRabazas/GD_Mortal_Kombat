@@ -172,7 +172,12 @@ function arenaPanel(ctx, s, slot, label, now, worn) {
 // `spots` holds one projected point per fighter, at the top of the head.
 export function drawTags(ctx, s, spots, labels) {
   const arena = s.f.length > 2;
+  // Once the match is decided the tags fade away: the winner's pose and the
+  // result screen have the stage to themselves.
+  const fade = s.phase === 'over' ? 1 - s.pt / 40 : 1;
+  if (fade <= 0) return;
   ctx.save();
+  ctx.globalAlpha = fade;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   for (const f of s.f) {
