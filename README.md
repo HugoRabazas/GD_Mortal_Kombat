@@ -118,7 +118,9 @@ The website build adds an **Online** mode for the whole alliance:
 - A **room** holds up to four fighters (more can watch). Everyone picks a
   fighter and presses Ready; the host starts the fight, optionally filling the
   empty places with CPU fighters. Two fighters play a duel, three or four an
-  arena brawl.
+  arena brawl. After a fight that finished, everyone who fought stays ready,
+  so one more is a single press for the host; anyone who wants to sit the
+  next one out presses Not ready.
 - The lobby and every room have a **chat**. Messages reach whoever is there at
   that moment and are not stored anywhere.
 - **Copy invite link** in a room gives an address ending in `#room-ABCD`;
@@ -159,6 +161,11 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   player has to be relayed.
 
 ## Settings
+
+Every special move has its own sound, made in the browser like everything
+else: Crimson Rush tears the air open with a rising whoosh, Twin Flame Spiral
+crackles and climbs, Mountain Stomp heaves as the leg goes up and lands with
+a deep boom, Storm Bolt charges and fires. A counter hit adds a dry crack.
 
 Each arena has its own music, generated note by note in the browser: Ember
 Courtyard plays a warm plucked tune in A minor at 116 beats a minute; Frost

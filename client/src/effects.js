@@ -114,7 +114,7 @@ export function handleEvents(events, state, { quiet, project, me = -1 }) {
         }
         addShake(12);
         lightFlash(e.x, 30, e.z, char.colors.glow, true);
-        if (!quiet) play('thud');
+        if (!quiet) play('quakeBoom');
         break;
       }
       case 'hit': {
@@ -157,7 +157,7 @@ export function handleEvents(events, state, { quiet, project, me = -1 }) {
       case 'special': {
         const p = project(by.x, 210, by.z);
         floatText(p.x, p.y, char.special.name.toUpperCase(), char.colors.accent, 22);
-        if (!quiet) play('special');
+        if (!quiet) play({ dash: 'rush', rise: 'flare', quake: 'heave' }[e.move] || 'special');
         break;
       }
       case 'bolt':

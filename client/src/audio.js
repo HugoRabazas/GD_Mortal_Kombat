@@ -113,6 +113,26 @@ function burst(dur, gain, freq, q = 1, delay = 0, type = 'bandpass') {
   src.stop(t + dur + 0.02);
 }
 
+// Noise swept through a band that slides from one pitch to another: whooshes.
+function sweep(dur, gain, from, to, q = 1.2, delay = 0) {
+  const t = ctx.currentTime + delay;
+  const src = ctx.createBufferSource();
+  src.buffer = noise;
+  src.loop = true;
+  const filter = ctx.createBiquadFilter();
+  filter.type = 'bandpass';
+  filter.Q.value = q;
+  filter.frequency.setValueAtTime(from * pitch, t);
+  filter.frequency.exponentialRampToValueAtTime(to * pitch, t + dur);
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.001, t);
+  g.gain.linearRampToValueAtTime(gain, t + dur * 0.3);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+  src.connect(filter).connect(g).connect(sfxBus);
+  src.start(t, Math.random() * 0.5);
+  src.stop(t + dur + 0.05);
+}
+
 // A gust of wind: hiss that swells, whistles a little higher and dies away.
 function gust(dur, gain) {
   const t = ctx.currentTime;
@@ -164,6 +184,30 @@ const SOUNDS = {
   special: () => {
     tone('sawtooth', 220, 880, 0.25, 0.3);
     burst(0.3, 0.35, 3000, 0.5);
+  },
+  // Each special move has its own voice; the projectile keeps 'special' for
+  // its charge and 'bolt' for the shot.
+  rush: () => {
+    // Crimson Rush: air torn open, rising, with a growl under it.
+    sweep(0.38, 1.3, 350, 2600, 1.4);
+    tone('sawtooth', 95, 190, 0.3, 0.32);
+  },
+  flare: () => {
+    // Twin Flame Spiral: crackling flame and a tone that climbs with the leap.
+    for (let i = 0; i < 5; i++) burst(0.04, 0.55, 2500 + Math.random() * 3000, 2, i * 0.06);
+    tone('sine', 300, 1200, 0.45, 0.32);
+    sweep(0.5, 0.6, 800, 3200, 0.8);
+  },
+  heave: () => {
+    // Mountain Stomp, winding up: a low effort as the leg goes up.
+    tone('sine', 90, 60, 0.32, 0.45);
+    sweep(0.3, 0.2, 200, 500, 1);
+  },
+  quakeBoom: () => {
+    // ...and coming down: a deep boom with a long rumble.
+    burst(1.1, 0.95, 120, 0.5, 0, 'lowpass');
+    tone('sine', 58, 26, 0.9, 0.95);
+    tone('square', 70, 35, 0.2, 0.18);
   },
   bolt: () => {
     tone('square', 900, 180, 0.25, 0.22);

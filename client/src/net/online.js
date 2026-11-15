@@ -236,6 +236,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
 
   online.setReady = (ready) => {
     if (!room) return;
+    room.again = false;
     room.ready = !!ready;
     room.ch.track(roomState());
   };
@@ -278,6 +279,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
   };
 
   function beginHost(info) {
+    if (room) room.again = false;
     const remote = info.slots.map(() => 0);
     const controllers = info.slots.map((sl, i) => {
       if (sl.cpu) {
@@ -325,6 +327,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
   }
 
   function beginClient(info) {
+    if (room) room.again = false;
     if (!info || !Array.isArray(info.slots) || info.slots.length < 2 || info.slots.length > MAX_PLAYERS) return;
     const slots = info.slots.map((sl) => ({ id: sl.id || null, cpu: !!sl.cpu, name: cleanName(sl.name), char: isFighterId(sl.char) ? sl.char : FIGHTERS[0].id }));
     const clean = { slots, mode: slots.length > 2 ? 'arena' : 'duel', arena: isArenaId(info.arena) ? info.arena : ARENAS[0].id };
@@ -445,7 +448,11 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
     match = null;
     if (wasHost && room) room.ch.send('end', {});
     if (room) {
-      room.ready = false;
+      // After a fight that finished, everyone who fought stays ready, so one
+      // more is a single press for the host. Anyone who wants to sit the next
+      // one out presses Not ready. If the host left, everyone starts over.
+      if (reason !== 'finished') room.ready = false;
+      room.again = reason === 'finished';
       room.ch.track(roomState());
     }
     lobby?.track(lobbyState());
