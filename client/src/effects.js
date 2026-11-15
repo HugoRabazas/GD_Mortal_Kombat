@@ -41,6 +41,20 @@ function buzz(ms) {
 // `me` is the slot of the player at this screen (-1 when there is none), used
 // to make the phone buzz when their own fighter takes a hit.
 // `colors` (optional) is what each slot really wears (see dressColors).
+// Which shape a blow's spark takes.
+const KICKS = new Set(['kick', 'kick2', 'hook', 'slide', 'airKick', 'axeKick', 'flyKnee', 'launch', 'riseKick', 'rollSpin', 'breaker', 'stomp', 'quake']);
+function sparkStyle(e) {
+  if (e.stage) {
+    if (e.stage === 'howl2') return 'slash';
+    if (e.stage.startsWith('eclipse')) return 'dark';
+    if (e.stage.startsWith('phoenix')) return 'fire';
+    return e.light ? 'punch' : 'kick';
+  }
+  if (e.kind === 'rise') return 'fire';
+  if (e.kind === 'bolt') return 'dark';
+  return KICKS.has(e.kind) ? 'kick' : 'punch';
+}
+
 export function handleEvents(events, state, { quiet, project, me = -1, colors = null }) {
   // Behind the menus (quiet) the fight keeps its sparks and flashes but not
   // its words, which would sit on top of the menu's own text.
@@ -204,7 +218,9 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
       }
       case 'hit': {
         const p = project(e.x, e.h, e.z);
-        hitSpark(p.x, p.y, tint.glow, e.heavy);
+        // The spark takes the shape of what struck, swept the way it went.
+        const from = by ? project(by.x, e.h, by.z) : p;
+        hitSpark(p.x, p.y, tint.glow, e.heavy, sparkStyle(e), Math.atan2(p.y - from.y, p.x - from.x));
         lightFlash(e.x, e.h, e.z, tint.glow, e.heavy);
         cheerFor(e.by, e.heavy ? 0.8 : 0.25);
         floatText(p.x, p.y - 30, String(e.dmg), e.heavy ? '#ffd34d' : '#ffffff', e.heavy ? 28 : 22);

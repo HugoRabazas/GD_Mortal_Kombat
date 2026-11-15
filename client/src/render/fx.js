@@ -56,14 +56,25 @@ export function lightFlash(x, h, z, color, heavy) {
   flashes.push({ x, h, z, color, heavy });
 }
 
-export function hitSpark(x, y, color, heavy) {
-  const n = heavy ? 18 : 10;
+// The spark of a blow, shaped by what struck: `style` is 'punch' (a small
+// star), 'kick' (a crescent swept the way the blow travelled, `angle` on the
+// screen), 'slash' (three claw marks), 'dark' (a purple implosion) or 'fire'
+// (embers thrown up); a heavy blow adds a shock ring.
+export function hitSpark(x, y, color, heavy, style = 'punch', angle = 0) {
+  const n = heavy ? 18 : style === 'punch' ? 8 : 10;
+  const tint = style === 'dark' ? '#b98aff' : style === 'fire' ? '#ffb040' : color;
   for (let i = 0; i < n; i++) {
-    const a = Math.random() * Math.PI * 2;
+    // Kicks throw their sparks onward, along the blow; the rest all round.
+    const a = style === 'kick' ? angle + (Math.random() - 0.5) * 1.6 : Math.random() * Math.PI * 2;
     const v = (heavy ? 5 : 3.5) + Math.random() * (heavy ? 7 : 4);
-    particles.push({ kind: 'streak', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, life: 1, decay: 0.05 + Math.random() * 0.04, color, size: heavy ? 3 : 2 });
+    particles.push({ kind: 'streak', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - (style === 'fire' ? 3 : 1), life: 1, decay: 0.05 + Math.random() * 0.04, color: tint, size: heavy ? 3 : 2 });
   }
-  particles.push({ kind: 'burst', x, y, life: 1, decay: heavy ? 0.09 : 0.13, color: '#ffffff', size: heavy ? 46 : 30 });
+  if (style === 'kick') particles.push({ kind: 'arc', x, y, angle, life: 1, decay: 0.11, color: '#ffffff', size: heavy ? 52 : 40 });
+  else if (style === 'slash') {
+    for (let i = -1; i <= 1; i++) particles.push({ kind: 'slash', x: x + i * 12, y: y + i * 4, life: 1, decay: 0.09, color: '#ffffff', size: 58 });
+  } else if (style === 'dark') particles.push({ kind: 'implode', x, y, life: 1, decay: 0.08, color: '#9a5cff', size: 60 });
+  particles.push({ kind: 'burst', x, y, life: 1, decay: heavy ? 0.09 : 0.13, color: style === 'fire' ? '#ffe2a0' : '#ffffff', size: heavy ? 46 : style === 'punch' ? 24 : 30 });
+  if (heavy) particles.push({ kind: 'ring', x, y, life: 1, decay: 0.07, color: tint, size: 58 });
 }
 
 export function blockSpark(x, y) {
@@ -199,6 +210,32 @@ export function drawFx(ctx) {
       }
       ctx.closePath();
       ctx.fill();
+    } else if (p.kind === 'arc') {
+      // A crescent swept along the blow, opening as it fades.
+      const r = p.size * (1.15 - p.life * 0.4);
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 6 * p.life;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.arc(p.x - Math.cos(p.angle) * r * 0.6, p.y - Math.sin(p.angle) * r * 0.6, r, p.angle - 0.9, p.angle + 0.9);
+      ctx.stroke();
+    } else if (p.kind === 'slash') {
+      // A claw mark drawn across, diagonal.
+      const k = Math.min(1, (1 - p.life) * 3 + 0.2);
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 4 * p.life + 1;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(p.x - p.size * 0.5, p.y - p.size * 0.5);
+      ctx.lineTo(p.x - p.size * 0.5 + p.size * k, p.y - p.size * 0.5 + p.size * k);
+      ctx.stroke();
+    } else if (p.kind === 'implode') {
+      // A ring of shadow closing in on the point of the blow.
+      ctx.strokeStyle = p.color;
+      ctx.lineWidth = 5 * (1 - p.life) + 1;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+      ctx.stroke();
     } else if (p.kind === 'ring') {
       ctx.strokeStyle = p.color;
       ctx.lineWidth = 4 * p.life;
