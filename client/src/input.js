@@ -71,6 +71,9 @@ function pad(index) {
 // Which family the first controller belongs to, from the name the browser
 // reports: 'ps' (PlayStation), 'nintendo' or 'xbox' (also the default). The
 // buttons sit in the same places on all of them; only their labels differ.
+// True while a controller is connected.
+export const hasPad = () => !!pad(0);
+
 export function padStyle() {
   const id = pad(0)?.id || '';
   if (/054c|playstation|dualshock|dualsense|sony/i.test(id)) return 'ps';

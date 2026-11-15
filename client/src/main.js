@@ -9,7 +9,7 @@ import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
 import { createGame } from './game.js';
 import { handleEvents } from './effects.js';
-import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, padStyle, setCapture, setTouchLive, lastDevice } from './input.js';
+import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, padStyle, hasPad, setCapture, setTouchLive, lastDevice } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, getVolume, setVolume } from './audio.js';
 import { THEMES } from './render/themes.js';
@@ -419,7 +419,9 @@ function helpScreen() {
   const cell = (i, v, tag = 'td') => `<${tag}${i === lit ? ' class="now"' : ''}>${v}</${tag}>`;
   const row = (what, ...cols) => `<tr><th scope="row">${what}</th>${cols.map((v, i) => cell(i + 1, v)).join('')}</tr>`;
   const k = (...keys) => keys.map((x) => `<kbd>${x}</kbd>`).join(' ');
-  const heads = ['Single player', '2P · Player 1', '2P · Player 2', 'Gamepad', 'Touch'];
+  // With a controller connected, its own buttons; otherwise the two common names.
+  const pad = hasPad() ? PAD_NAMES[padStyle()] : null;
+  const heads = ['Single player', '2P · Player 1', '2P · Player 2', pad ? { xbox: 'Xbox pad', ps: 'PlayStation pad', nintendo: 'Nintendo pad' }[padStyle()] : 'Gamepad', 'Touch'];
   return `
     <section class="screen help">
       <h2>How to play</h2>
@@ -428,12 +430,12 @@ function helpScreen() {
           <thead><tr><th></th>${heads.map((h, i) => cell(i + 1, h + (i + 1 === lit ? ' · yours' : ''), 'th')).join('')}</tr></thead>
           <tbody>
             ${row('Walk', `${k('W', 'A', 'S', 'D')} or arrows`, k('W', 'A', 'S', 'D'), 'Arrows', 'Stick / D-pad', 'Stick')}
-            ${row('Jump', `${k('Space')} or ${k('U')}`, k('Space'), k('U'), 'A / Cross', k('JMP'))}
-            ${row('Punch', `${k('J')} or ${k('F')}`, k('F'), k('J'), 'X / Square', k('P'))}
-            ${row('Kick', `${k('K')} or ${k('G')}`, k('G'), k('K'), 'B / Circle', k('K'))}
-            ${row('Block', `${k('L')} or ${k('H')}`, k('H'), k('L'), 'LB / LT', k('BLK'))}
-            ${row('Special', `${k('I')} or ${k('T')}`, k('T'), k('I'), 'Y / Triangle', k('SP'))}
-            ${row('Finisher', `${k('O')} or ${k('Y')}`, k('Y'), k('O'), 'RB / RT', k('ULT'))}
+            ${row('Jump', `${k('Space')} or ${k('U')}`, k('Space'), k('U'), pad ? k(pad.j) : 'A / Cross', k('JMP'))}
+            ${row('Punch', `${k('J')} or ${k('F')}`, k('F'), k('J'), pad ? k(pad.p) : 'X / Square', k('P'))}
+            ${row('Kick', `${k('K')} or ${k('G')}`, k('G'), k('K'), pad ? k(pad.k) : 'B / Circle', k('K'))}
+            ${row('Block', `${k('L')} or ${k('H')}`, k('H'), k('L'), pad ? `${k(pad.b)} or ${k(pad.b2)}` : 'LB / LT', k('BLK'))}
+            ${row('Special', `${k('I')} or ${k('T')}`, k('T'), k('I'), pad ? k(pad.s) : 'Y / Triangle', k('SP'))}
+            ${row('Finisher', `${k('O')} or ${k('Y')}`, k('Y'), k('O'), pad ? `${k(pad.u)} or ${k(pad.u2)}` : 'RB / RT', k('ULT'))}
           </tbody>
         </table>
       </div>
@@ -478,9 +480,9 @@ const SPECIAL_NOTES = {
 // The names of the controls on the device the player is using right now.
 // The face and shoulder buttons by controller family (same places, own labels).
 const PAD_NAMES = {
-  xbox: { p: 'X', k: 'B', b: 'LB', s: 'Y', u: 'RB', j: 'A' },
-  ps: { p: '□', k: '○', b: 'L1', s: '△', u: 'R1', j: '✕' },
-  nintendo: { p: 'Y', k: 'A', b: 'L', s: 'X', u: 'R', j: 'B' },
+  xbox: { p: 'X', k: 'B', b: 'LB', s: 'Y', u: 'RB', j: 'A', b2: 'LT', u2: 'RT' },
+  ps: { p: '□', k: '○', b: 'L1', s: '△', u: 'R1', j: '✕', b2: 'L2', u2: 'R2' },
+  nintendo: { p: 'Y', k: 'A', b: 'L', s: 'X', u: 'R', j: 'B', b2: 'ZL', u2: 'ZR' },
 };
 
 function controlNames() {
@@ -1476,9 +1478,15 @@ const ACTIONS = {
   },
   fullscreen() {
     // Not every viewer allows this (phones, some apps); it is fine if it fails.
+    // On a phone, full screen also holds the screen sideways, the way the game
+    // is best played (Android allows it; elsewhere the request just fails).
     const el = document.documentElement;
     if (document.fullscreenElement) document.exitFullscreen?.();
-    else el.requestFullscreen?.().catch(() => {});
+    else
+      el
+        .requestFullscreen?.()
+        .then(() => (app.touch ? screen.orientation?.lock?.('landscape') : null))
+        .catch(() => {});
   },
 };
 

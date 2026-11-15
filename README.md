@@ -131,7 +131,8 @@ Being hit makes a phone buzz and a gamepad with motors rumble (your own heavy
 blows give a light rumble too), where the browser allows it. Hints and the
 moves card name a controller's own buttons: Xbox letters, PlayStation
 symbols (✕ ○ □ △, L1, R1) or Nintendo letters (whose A and B, X and Y sit
-the other way round), read from the name the browser reports. A controller
+the other way round), read from the name the browser reports; with a
+controller connected, the help's controls table names its buttons too. A controller
 that arrives is greeted with a short notice (how to use it in the menus,
 and that Start pauses); one that is unplugged in the middle of a fight
 pauses it, so nobody is beaten while reaching for a cable (an online fight
@@ -250,7 +251,8 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   the web build) open it full screen and sideways, like an app; Chrome
   reports it installable with no errors. On a touch screen the menu's tips
   suggest it, until the game is opened that way, and the menu then drops
-  its Full screen link.
+  its Full screen link. On an Android phone, the menu's Full screen also
+  holds the screen sideways while it lasts.
 - The Supabase project needs no tables. On the free plan Realtime allows 200
   people connected and 100 messages a second, which is plenty while matches
   run over direct links, and about one four-player match at a time if every
