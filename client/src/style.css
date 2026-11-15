@@ -289,6 +289,19 @@ body {
   background: radial-gradient(ellipse at center, rgba(13, 8, 18, 0.86), rgba(13, 8, 18, 0.55) 70%, rgba(13, 8, 18, 0));
 }
 
+/* On a wide screen the result sits to the right, so the winner - framed to
+   the left by the camera - is seen in their victory pose beside it. */
+@media (min-aspect-ratio: 4/3) and (min-width: 760px) {
+  #ui[data-screen='result'] {
+    justify-content: flex-end;
+  }
+
+  .screen.result {
+    margin: auto 0 0 auto;
+    max-width: min(58%, 640px);
+  }
+}
+
 .loading {
   font: 500 1.6rem var(--font-display);
   letter-spacing: 0.12em;

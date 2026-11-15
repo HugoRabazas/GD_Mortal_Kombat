@@ -1054,12 +1054,15 @@ export function create3D(canvas) {
       shot.yaw = 0.3 * k;
       shot.ease = 0.05;
     } else if (s.phase === 'over' && s.matchWinner >= 0) {
+      // The match won: the winner in their victory pose, framed to the left
+      // of the picture (the result sits to the right on wide screens).
       const w = s.f[s.matchWinner];
-      shot.x = w.x * S;
-      shot.z = w.z * S;
+      shot.yaw = Math.sin(now / 1800) * 0.3;
+      // The camera's right, on the floor: aim that far to the winner's right.
+      shot.x = w.x * S + Math.cos(shot.yaw) * 1.5;
+      shot.z = w.z * S - Math.sin(shot.yaw) * 1.5;
       shot.dist = 6.8;
       shot.y = 1.3;
-      shot.yaw = Math.sin(now / 1800) * 0.3;
       shot.ease = 0.04;
     }
     return shot;

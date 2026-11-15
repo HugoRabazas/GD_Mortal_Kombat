@@ -113,7 +113,9 @@ rocking from side to side; the slim one goes on quick, springy steps.
 From the third blow of a combo a big counter stands at the attacker's side
 of the screen - the number swelling with each blow, HITS under it and a word
 for how good it is (NICE from 3, GREAT 5, AWESOME 7, AMAZING 9,
-UNSTOPPABLE 12) - and fades a moment after the combo ends. The pause screen lists every move in six tabs - Basics, Strings, On the
+UNSTOPPABLE 12) - and fades a moment after the combo ends. When a match is won the camera frames the winner to the left of the picture
+in their victory pose, and on a wide screen the result sits to the right so
+the pose is seen beside it. The pause screen lists every move in six tabs - Basics, Strings, On the
 run, Air, Defence and the fighter's own (special, finisher) - each short
 enough to fit a phone held either way, named in the controls being used. The spark of a blow takes the shape of what struck: a punch is a small
 star, a kick a white crescent swept the way the kick travelled with its
