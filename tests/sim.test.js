@@ -575,6 +575,50 @@ test('a punch right after a perfect guard is a riposte; later it is a punch agai
   assert.equal(guardThen(30).move, 'punch', 'the chance passes');
 });
 
+test('kick, punch is a stepping elbow that carries on into either ender; a guard then kick launches', () => {
+  const string = (third) => {
+    const s = startFight();
+    closeUp(s, 80);
+    const kinds = [];
+    const press = [INPUT.KICK, INPUT.PUNCH, third];
+    let n = 0;
+    step(s, [press[n++], 0]);
+    for (let i = 0; i < 90; i++) {
+      const hit = s.ev.find((e) => e.type === 'hit' && e.by === 0);
+      if (hit) kinds.push(hit.kind);
+      step(s, [hit && n < press.length ? press[n++] : 0, 0]);
+    }
+    return { kinds, rival: s.f[1] };
+  };
+  const up = string(INPUT.KICK);
+  assert.deepEqual(up.kinds.slice(0, 3), ['kick', 'elbow', 'launch']);
+  const down = string(INPUT.PUNCH);
+  assert.deepEqual(down.kinds, ['kick', 'elbow', 'punch3']);
+  assert.ok(['down', 'getup'].includes(down.rival.state), 'the third punch floors them');
+
+  // Kick right after a perfect guard is the launcher at once.
+  const s = startFight();
+  closeUp(s, 64);
+  step(s, [0, INPUT.PUNCH]);
+  let parried = false;
+  for (let i = 0; i < 12 && !parried; i++) {
+    step(s, [s.f[1].t >= MOVES.punch.startup - 2 ? INPUT.BLOCK : 0, 0]);
+    parried = s.ev.some((e) => e.type === 'parry' && e.by === 0);
+  }
+  assert.ok(parried);
+  run(s, 3);
+  step(s, [INPUT.KICK, 0]);
+  let move = s.f[0].move;
+  let launched = false;
+  for (let i = 0; i < 30; i++) {
+    step(s, idle(s));
+    move ||= s.f[0].move;
+    launched ||= s.ev.some((e) => e.type === 'hit' && e.by === 0 && e.kind === 'launch');
+  }
+  assert.equal(move, 'launch');
+  assert.ok(launched, 'and it lands');
+});
+
 test('block with a direction while getting up rolls clear of the rise', () => {
   const s = startFight();
   closeUp(s);

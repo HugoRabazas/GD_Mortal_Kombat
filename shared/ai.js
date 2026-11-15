@@ -159,14 +159,14 @@ export function aiInput(ai, s, me) {
       }
     }
   } else ai.heldSeen = false;
-  // A perfect guard just made: answer with the riposte, as often as it
-  // punishes (decided once per guard).
+  // A perfect guard just made: answer with the riposte (or the launcher), as
+  // often as it punishes (decided once per guard).
   if (f.rip > 0 && !ai.ripSeen) {
     ai.ripSeen = true;
     if (rnd(ai) < cfg.punish) {
-      ai.tap = INPUT.PUNCH;
+      ai.tap = rnd(ai) < 0.35 ? INPUT.KICK : INPUT.PUNCH; // the palm strike, or the launcher
       ai.tapT = 2;
-      return INPUT.PUNCH;
+      return ai.tap;
     }
   } else if (f.rip <= 0) ai.ripSeen = false;
   // Getting up with a rival close: now and then roll clear instead.

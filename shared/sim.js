@@ -43,7 +43,7 @@ const JUGGLE = 2;
 const CHARGE = { hold: 8, min: 8, max: 40, reel: 30 };
 // The ordinary blows that can be cancelled into a special once they land.
 const CANCEL_DMG = 0.6;
-const CANCELS = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'hook', 'lunge', 'slide', 'launch', 'riposte']);
+const CANCELS = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'hook', 'lunge', 'slide', 'launch', 'riposte', 'elbow']);
 // Grab with no rival within `near`: the signature move instead of a throw.
 const SIG = { near: 100 };
 // A throw can be broken: grab pressed by the one seized within `window`
@@ -98,7 +98,7 @@ const COUNTER = { dmg: 1.25, stop: 3 };
 // a blow lands. It costs no health, and a heavy blow from a rival standing on
 // the ground leaves that rival reeling for `stagger` ticks. The guard has to
 // be down for `rest` ticks first, so hammering the button does not work.
-const GUARD = { window: 5, rest: 20, stagger: 26, gain: 12, riposte: 16 }; // `riposte`: ticks after a perfect guard in which punch is a riposte
+const GUARD = { window: 5, rest: 20, stagger: 26, gain: 12, riposte: 16 }; // `riposte`: ticks after a perfect guard in which punch is a riposte (and kick the launcher)
 // Crystals that appear on the floor: walk over one to take it.
 const ITEMS = { first: 7, every: [9, 14], life: 12, max: 2, reach: 44, energy: 40, heal: 15 };
 
@@ -139,7 +139,13 @@ export const MOVES = {
   },
   kick: {
     startup: 8, active: 4, recovery: 13, dmg: 10, reach: 104, arc: 0.75, y0: 30, y1: 140, aim: 210,
-    hitstun: 19, blockstun: 12, push: 9, gain: 12, heavy: true, nextK: 'kick2',
+    hitstun: 19, blockstun: 12, push: 9, gain: 12, heavy: true, next: 'elbow', nextK: 'kick2',
+  },
+  // Kick, punch: a step in behind a rising elbow that closes the gap the kick
+  // opened and keeps the rival reeling - then punch floors them, kick launches.
+  elbow: {
+    startup: 5, active: 3, recovery: 12, dmg: 6, reach: 88, arc: 0.9, y0: 60, y1: 160, aim: 220,
+    hitstun: 19, blockstun: 10, push: 3, gain: 9, speed: 8, go: [0, 5], next: 'punch3', nextK: 'launch',
   },
   // --- signature moves: grab with the rival out of throw reach (SIG) ---
   // Ruko leaps across the gap and claws down; Shadow steps through the
@@ -730,7 +736,10 @@ function tryAttack(s, f, inp = 0) {
   // go of it gives the standing move).
   const moving = f.state === 'walk' && f.t >= RUN_TICKS && !!stick(inp);
   if (b & INPUT.KICK) {
-    startAttack(s, f, moving ? 'slide' : 'kick');
+    // Right after a perfect guard, kick is the launcher at once.
+    const rip = f.rip > 0;
+    f.rip = 0;
+    startAttack(s, f, rip ? 'launch' : moving ? 'slide' : 'kick');
     return true;
   }
   if (b & INPUT.PUNCH) {

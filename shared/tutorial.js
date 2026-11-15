@@ -32,7 +32,7 @@ export const LESSONS = [
     steps: [
       { id: 'block', name: 'Block a kick', how: (k) => `hold ${k('b')} as the kick comes`, ev: (e) => e.type === 'block' && e.on === 0 },
       { id: 'perfect', name: 'Perfect guard', how: (k) => `press ${k('b')} just before the kick lands`, ev: mine('parry') },
-      { id: 'riposte', name: 'Riposte', how: (k) => `after a perfect guard, ${k('p')} at once: a palm strike while they are still open`, ev: hit('riposte') },
+      { id: 'riposte', name: 'Riposte', how: (k) => `after a perfect guard, ${k('p')} at once: a palm strike while they are still open (${k('k')}: a launcher)`, ev: hit('riposte') },
       { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction sideways or forwards: the kick passes through you`, ev: mine('roll') },
       { id: 'backstep', name: 'Back-step', how: (k) => `${k('b')} + the stick away from the partner: a quick hop back out of reach`, ev: mine('backstep') },
     ],
@@ -90,6 +90,7 @@ export const LESSONS = [
       { id: 'launch', name: 'Launcher', how: (k) => `${k('p')} ${k('p')} ${k('k')}: the kick throws the partner up`, ev: hit('launch') },
       { id: 'juggle', name: 'Juggle', how: (k) => `after the launcher, hold ${k('j')} to jump after them and ${k('p')} in the air`, ev: (e) => e.type === 'hit' && e.by === 0 && e.juggle },
       { id: 'kick2', name: 'Kick string', how: (k) => `${k('k')} ${k('k')}: a kick that lands flows into a roundhouse`, ev: hit('kick2') },
+      { id: 'elbow', name: 'Kick, elbow', how: (k) => `${k('k')} ${k('p')}: a kick that lands flows into a stepping elbow - then ${k('p')} floors, ${k('k')} launches`, ev: hit('elbow') },
       { id: 'hook', name: 'Hook kick', how: (k) => `${k('p')} ${k('k')}: the kick spins the partner round`, ev: hit('hook') },
       { id: 'axeKick', name: 'Air string', how: (k) => `${k('j')}, ${k('p')} in the air and, once it lands, ${k('k')}: an axe kick`, ev: hit('axeKick') },
     ],

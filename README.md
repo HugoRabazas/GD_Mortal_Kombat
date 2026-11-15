@@ -452,6 +452,36 @@ and the heartbeat, the crowd and the weather go quiet.
   (Gleh 1.05 power / 105 health, Jackie 1.08 / 112, Crescent Rain's arrows
   back to 6): duels 47-54 %, brawl wins 15-24 % (1120 brawls), ladder
   100 / 73 / 58 %, boss beats Hard 88 %. 91 tests.
+- **Kick, punch**: a kick that lands flows into a stepping **elbow** (6)
+  that closes the gap the kick opened and keeps the rival reeling; from it
+  punch floors them (the third punch of the string) and kick launches. Kick,
+  punch, kick, jump, air punch is a juggle off a kick. And **kick right after
+  a perfect guard is the launcher at once**. The CPU uses both; the Tutorial
+  teaches the elbow (Combos) and names the launcher beside the riposte.
+  Measured over larger samples (the elbow cost slow Jackie eight points of
+  duels at first): Jackie back to 1.1 power / 114 health, Ruko 108 health;
+  duels 46-53 %, brawl wins 15-25 %, ladder 100 / 70 / 55 %, boss beats
+  Hard 88 %. 92 tests.
+- **Zelrith is a boy**: the skirt and the ponytail were part of the slim
+  build; they are now `gear` (Pixie and Gleh wear them) and Zelrith fights in
+  trousers with a scarf. The result screen no longer draws the energy bars
+  under its card.
+- **Online rooms no longer lose a player who changes fighter or costume a
+  few times**. Every change was published as a presence update, and the
+  realtime service silently closes the channel of a member who sends more
+  than about five of those in a few seconds (measured: the sixth within ten
+  seconds closes it, with no error; one every seven seconds is fine). From
+  then on nothing that player chose reached the room, their own screen
+  stopped following, and the host no longer listed them. Now presence only
+  says who is here (published once, on joining) and each member's state -
+  fighter, costume, ready, arena - travels as ordinary messages: sent on
+  every change, again when someone new arrives, and every 20 seconds in
+  case one was lost; a member whose messages are heard counts as here at
+  once (presence can lag by seconds), a goodbye is sent on leaving, and
+  your own panel follows your choice without waiting for the echo. Checked
+  against the live service: eight changes, then twelve in six seconds, a
+  latecomer who sees everyone's current choice, leaving (0.1 s) and closing
+  the tab (3 s), and a full match.
 - **Reading an unstoppable finisher**: a finisher that has caught its rival
   burns brighter from that moment, and the CPU (Normal and up) turns to
   someone it can stop instead of wasting blows on it. Avalanche's crash
@@ -760,8 +790,8 @@ editor), `audio.js` (every sound and the music are generated in the browser),
    there, outside the page).
 2. Add an entry to `shared/fighters.js` (copy an existing one): `head` is the
    circle cut from the picture (centre `x`, `y` and radius `r` in picture
-   pixels); `build` is `standard`, `sumo` or `slim`; `gear` adds a `scarf` or
-   shoulder `pads`; `victory` is how they celebrate a won match (`howl`,
+   pixels); `build` is `standard`, `sumo` or `slim`; `gear` adds a `scarf`,
+   shoulder `pads`, a `skirt` or a `ponytail`; `victory` is how they celebrate a won match (`howl`,
    `calm`, `stomp`, `cheer`, `salute`, `volley`, `sheathe` or `laugh`);
    `entrance` is their ritual while a round is announced (`prowl`, `bow`,
    `clap`, `swirl`, `oath`, `draw`, `flourish` or `twirl`); `quote` is their winning line (60 characters

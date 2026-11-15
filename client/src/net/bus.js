@@ -36,22 +36,83 @@ function supabaseBus({ url, key }) {
   return {
     kind: 'internet',
     channel(name, id, state) {
+      // Presence says who is here, and nothing else: it is published once, on
+      // joining. The service drops a member who updates their presence more
+      // than about five times in a few seconds (no error, the channel just
+      // closes), and picking fighters and costumes did exactly that. So each
+      // member's state travels as ordinary messages instead: sent when it
+      // changes, sent again when someone new arrives (who knows only what
+      // the others joined with), and repeated now and then in case one was
+      // lost on the way. Presence itself can lag by seconds, so a member
+      // whose messages are heard counts as here at once (until presence says
+      // they left, they say goodbye, or they fall silent).
       const events = emitter();
-      let list = [];
       let peersFn = () => {};
+      let current = state;
+      const known = new Map([[id, state]]); // the latest state heard from each member
+      let present = []; // who is here, from presence
+      const heard = new Map(); // id -> when last heard, for members presence has not shown (yet)
+      const gone = new Map(); // id -> when they said goodbye (presence may still list them a moment)
+      const SILENCE = 50000;
+      const here = () => {
+        const now = Date.now();
+        for (const [peer, at] of heard) if (now - at > SILENCE) heard.delete(peer);
+        for (const [peer, at] of gone) if (now - at > 10000) gone.delete(peer);
+        return [...new Set([...present, ...heard.keys()])].filter((peer) => !gone.has(peer));
+      };
+      const list = () => here().map((peer) => ({ ...(known.get(peer) || {}), id: peer }));
       const ch = client.channel(name, { config: { broadcast: { self: false }, presence: { key: id } } });
+      const tell = () => ch.send({ type: 'broadcast', event: 'st', payload: { id, s: current } });
+      let again = null;
+      const announce = () => {
+        tell();
+        clearTimeout(again);
+        again = setTimeout(tell, 1500);
+      };
+      const beat = setInterval(() => {
+        tell();
+        const before = heard.size;
+        if (here() && heard.size !== before) peersFn(list()); // someone fell silent
+      }, 20000);
       ch.on('broadcast', { event: 'm' }, ({ payload }) => events.emit(payload.t, payload.d));
+      ch.on('broadcast', { event: 'st' }, ({ payload }) => {
+        if (!payload || typeof payload.id !== 'string' || payload.id === id || !payload.s || typeof payload.s !== 'object') return;
+        const isNew = !present.includes(payload.id) && !heard.has(payload.id);
+        known.set(payload.id, payload.s);
+        gone.delete(payload.id);
+        if (!present.includes(payload.id)) heard.set(payload.id, Date.now());
+        if (isNew) announce(); // they may not have heard of us either
+        peersFn(list());
+      });
+      ch.on('broadcast', { event: 'bye' }, ({ payload }) => {
+        if (!payload || typeof payload.id !== 'string' || payload.id === id) return;
+        heard.delete(payload.id);
+        gone.set(payload.id, Date.now());
+        peersFn(list());
+      });
       ch.on('presence', { event: 'sync' }, () => {
         const all = ch.presenceState();
-        list = Object.entries(all).map(([peer, metas]) => ({ ...metas[metas.length - 1], id: peer }));
-        peersFn(list);
+        const ids = Object.keys(all);
+        const fresh = ids.some((peer) => peer !== id && !present.includes(peer));
+        for (const peer of ids) if (!known.has(peer)) known.set(peer, all[peer][all[peer].length - 1]);
+        for (const peer of present) {
+          if (ids.includes(peer)) continue;
+          known.delete(peer); // presence says they left
+          heard.delete(peer);
+        }
+        for (const peer of ids) heard.delete(peer); // presence has them now
+        known.set(id, current);
+        present = ids;
+        if (fresh) announce();
+        peersFn(list());
       });
       const ready = new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error('timeout')), 12000);
         ch.subscribe(async (status) => {
           if (status === 'SUBSCRIBED') {
             clearTimeout(timer);
-            await ch.track(state);
+            await ch.track(current); // once per joining (again only after a dropped connection)
+            announce();
             resolve();
           } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
             clearTimeout(timer);
@@ -63,13 +124,23 @@ function supabaseBus({ url, key }) {
         ready,
         send: (t, d) => ch.send({ type: 'broadcast', event: 'm', payload: { t, d } }),
         on: events.on,
-        track: (next) => ch.track(next),
-        peers: () => list,
+        track(next) {
+          current = next;
+          known.set(id, next);
+          announce();
+          peersFn(list());
+        },
+        peers: list,
         onPeers(fn) {
           peersFn = fn;
-          fn(list);
+          fn(list());
         },
-        leave: () => client.removeChannel(ch),
+        leave() {
+          clearTimeout(again);
+          clearInterval(beat);
+          ch.send({ type: 'broadcast', event: 'bye', payload: { id } });
+          return client.removeChannel(ch);
+        },
       };
     },
   };

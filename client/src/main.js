@@ -484,7 +484,7 @@ function helpScreen() {
       </div>
       <ul class="tips">
         <li><b>Walk anywhere</b> on the arena: left, right, into the depth and back. Attacks turn you towards the nearest rival, so you do not need perfect aim.</li>
-        <li><b>Strings</b>: punch, punch, punch knocks down; punch, punch, kick <b>launches</b> the rival into the air (hold jump to chase and <b>juggle</b> them); punch, kick is a <b>hook kick</b> that spins them round; kick, kick a roundhouse. Each blow must land for the next. A blow that lands can also be <b>cancelled into your special</b>.</li>
+        <li><b>Strings</b>: punch, punch, punch knocks down; punch, punch, kick <b>launches</b> the rival into the air (hold jump to chase and <b>juggle</b> them); punch, kick is a <b>hook kick</b> that spins them round; kick, kick a roundhouse; kick, punch a stepping <b>elbow</b> that carries on into either ender. Each blow must land for the next. A blow that lands can also be <b>cancelled into your special</b>.</li>
         <li><b>On the run</b> (a few steps, the stick still held): punch is a <b>lunging straight</b>, kick a <b>slide</b> along the floor, and jump then kick a <b>flying knee</b>.</li>
         <li><b>In the air</b>: jump again for a <b>double jump</b>; punch dives at the rival, kick is a flying kick, grab a <b>stomp</b> straight down; an air punch that lands flows into an axe kick; special is your <b>air special</b>.</li>
         <li><b>Grab with the rival out of reach</b> is your fighter's <b>signature move</b> for crossing the gap: ${FIGHTERS.map((f) => `${f.name[0] + f.name.slice(1).toLowerCase()}'s ${f.signature.name}`).join(', ')}.</li>
@@ -495,7 +495,7 @@ function helpScreen() {
         <li>Knocked down? Press <b>block</b> on the floor for a <b>quick rise</b>: you are back up in a blink. Punch or kick while getting up for a <b>rising sweep</b>.</li>
         <li><b>Taunt</b>: block held and grab, standing still. A little energy, but any blow on you is a counter.</li>
         <li>Hit a rival while they are <b>winding up</b> a blow of their own for a <b>counter</b>: a quarter more damage.</li>
-        <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling - stars circle their head while you have the chance to punish. Punch at once after it for a <b>riposte</b>, a palm strike that opens a combo. Hold the guard and it is an ordinary block.</li>
+        <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling - stars circle their head while you have the chance to punish. Punch at once after it for a <b>riposte</b>, a palm strike that opens a combo, or kick for the launcher. Hold the guard and it is an ordinary block.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
         <li>Under a quarter of your health you are in your <b>last stand</b>: the energy bar fills half as fast again. A round is not over until it is over.</li>
         <li><b>Block</b> only stops what comes from the front. Raising it turns you to face whoever is already swinging, but a guard held too early stays put: get behind a blocking rival, or step out of the way of a projectile.</li>
@@ -616,6 +616,7 @@ function movesCard() {
       <dt>${k(key.p, key.p, key.k)}</dt><dd><b>Launcher</b>: the rival goes up. Hold ${k(key.j)} to chase and hit them in the air (a <b>juggle</b>, twice at most).</dd>
       <dt>${k(key.p, key.k)}</dt><dd><b>Hook kick</b>: spins the rival round, back to you.</dd>
       <dt>${k(key.k, key.k)}</dt><dd><b>Kick string</b>: into a spinning roundhouse that knocks down.</dd>
+      <dt>${k(key.k, key.p)}</dt><dd><b>Kick, elbow</b>: steps back in; then ${k(key.p)} floors, ${k(key.k)} launches.</dd>
       <dt>${k(key.p)}, ${k(key.s)}</dt><dd><b>Special cancel</b>: a blow that lands, cut short by the special - it staggers, and hits softer.</dd>`],
     run: ['On the run', `
       <dt>Run + ${k(key.p)}</dt><dd><b>Lunging straight</b>: punch with the stick held after a few steps. Opens the punch string or the hook kick.</dd>
@@ -628,7 +629,7 @@ function movesCard() {
       <dt>Air ${k(key.g)}</dt><dd><b>Stomp</b>: feet first onto whoever is below - they bounce off the floor. Rooted if it misses.</dd>
       <dt>Air ${k(key.s)}</dt><dd><b>Air special</b>: your special's own air version.</dd>`],
     defence: ['Defence', `
-      <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b> - then ${k(key.p)} is a <b>riposte</b>.</dd>
+      <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b> - then ${k(key.p)} is a <b>riposte</b>, ${k(key.k)} a launcher.</dd>
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b> sideways or forwards: attacks pass through you.</dd>
       <dt>${k(key.b)} + away</dt><dd><b>Back-step</b>: a quick hop back, still facing the rival.</dd>
       <dt>Roll, ${k(key.p)} / ${k(key.k)}</dt><dd>Late in a roll: a <b>rising uppercut</b>, or a <b>spinning heel kick</b>.</dd>
@@ -1472,10 +1473,16 @@ const ACTIONS = {
     app.notice = '';
     show('lobby');
   },
-  onChar: (el) => app.online.setChar(el.dataset.id),
+  // (Your own panel follows your choice at once; the list of fighters
+  // follows when the room has heard of it.)
+  onChar(el) {
+    app.online.setChar(el.dataset.id);
+    show('room');
+  },
   onCharRandom() {
     const others = FIGHTERS.filter((o) => o.id !== app.online.room?.char);
     app.online.setChar(others[Math.floor(Math.random() * others.length)].id);
+    show('room');
   },
   async invite(el) {
     const link = `${location.origin}${location.pathname}#room-${app.online.room.code}`;
@@ -1494,6 +1501,7 @@ const ACTIONS = {
     app.online.setReady(!mine?.ready);
   },
   onLook(el) {
+    if ((Number(el.dataset.id) || 0) === (app.online.room?.look ?? 0)) return; // already worn
     app.looks[0] = Number(el.dataset.id) || 0;
     try {
       localStorage.setItem('gd-arena-looks', JSON.stringify(app.looks));

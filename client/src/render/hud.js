@@ -129,6 +129,7 @@ function duelPanel(ctx, s, side, label, now, worn, top) {
     ctx.strokeStyle = i < s.pts[side] ? '#fff3c0' : 'rgba(255,255,255,0.35)';
     ctx.stroke();
   }
+  if (s.phase === 'over') return; // the match is decided: the result card has that corner
   const full = f.meter >= RULES.SUPER_COST;
   const ready = f.meter >= RULES.SPECIAL_COST;
   const word = full ? 'FINISHER READY' : ready ? 'SPECIAL READY' : 'ENERGY';

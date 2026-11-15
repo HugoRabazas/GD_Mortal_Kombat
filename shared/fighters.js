@@ -14,8 +14,8 @@
 //      'charge' (behind a raised forearm), 'bow' (an arrow drawn and loosed),
 //      'blade' (a rising slash) or 'clap' (hands flung wide and clapped).
 //      `build` picks the body: 'standard', 'sumo' (huge) or 'slim'.
-//      `gear` adds accessories: 'scarf' (trails behind when moving) and
-//      'pads' (shoulder guards). `victory` picks how they celebrate a won
+//      `gear` adds accessories: 'scarf' (trails behind when moving), 'pads'
+//      (shoulder guards), 'skirt' and 'ponytail'. `victory` picks how they celebrate a won
 //      match: 'howl' (a fist raised to the sky), 'calm' (arms folded),
 //      'stomp' (high stamping steps), 'cheer' (hopping and waving),
 //      'salute' (a fist on the chest, then raised), 'volley' (arrows loosed
@@ -53,7 +53,7 @@ export const FIGHTERS = [
       glow: '#ff2b2b',
     },
     looks: [{ name: 'Crimson' }, { name: 'Midnight', colors: { primary: '#28385f', secondary: '#0d111c', accent: '#b9c8ff', glow: '#6f8cff' } }],
-    stats: { power: 0.97, speed: 1.0, health: 110 },
+    stats: { power: 0.97, speed: 1.0, health: 108 },
     special: { type: 'dash', name: 'Crimson Rush' },
     super: { name: 'Red Moon Howl', move: 'howl' },
     signature: { name: 'Wolf Leap', move: 'clawLeap' },
@@ -97,7 +97,7 @@ export const FIGHTERS = [
       glow: '#c44dff',
     },
     looks: [{ name: 'Violet' }, { name: 'Granite', colors: { primary: '#4d525c', secondary: '#1c1d22', accent: '#e0a83c', glow: '#ffcc55' } }],
-    stats: { power: 1.08, speed: 0.82, health: 112 },
+    stats: { power: 1.1, speed: 0.82, health: 114 },
     special: { type: 'quake', name: 'Mountain Stomp' },
     super: { name: 'Avalanche Charge', move: 'avalanche' },
     signature: { name: 'Belly Bump', move: 'bellyBump' },
@@ -107,6 +107,7 @@ export const FIGHTERS = [
     name: 'PIXIE',
     title: 'The Twin Flame',
     build: 'slim',
+    gear: ['skirt', 'ponytail'],
     victory: 'cheer',
     entrance: 'swirl', // the ritual while a round is announced
     quote: 'Two flames, one winner!',
@@ -153,6 +154,7 @@ export const FIGHTERS = [
     name: 'GLEH',
     title: 'The Moon Archer',
     build: 'slim',
+    gear: ['skirt', 'ponytail'],
     victory: 'volley',
     entrance: 'draw',
     quote: 'The moon never misses. Neither do I.',
@@ -199,6 +201,7 @@ export const FIGHTERS = [
     name: 'ZELRITH',
     title: 'The Grinning Storm',
     build: 'slim',
+    gear: ['scarf'],
     victory: 'laugh',
     entrance: 'twirl',
     quote: 'Ha! Again, again!',

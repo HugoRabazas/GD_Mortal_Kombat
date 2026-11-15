@@ -13,8 +13,8 @@
 // one arm and leg on each side of the body - to make a full 3D figure.
 //
 // Three builds share the same skeleton: 'standard', 'sumo' (a huge bare-
-// chested wrestler with a belly and a thick belt) and 'slim' (a lighter frame
-// with a skirt and a ponytail).
+// chested wrestler with a belly and a thick belt) and 'slim' (a lighter
+// frame; a skirt and a ponytail come as `gear`, for those who wear them).
 
 import { LEN, joint, currentPose, vanished } from './fighter.js';
 import { MOVES, ULT_MOVES } from '../../../shared/sim.js';
@@ -58,7 +58,6 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
   const g = shared(THREE);
   const build = BUILDS[char.build] || BUILDS.standard;
   const sumo = char.build === 'sumo';
-  const slim = char.build === 'slim';
   const col = { ...lookColors(char.id, look), ...(boss ? BOSS : null) };
   // Colours are written the way a designer picks them (sRGB); the renderer
   // does its lighting maths in linear light, so convert on the way in.
@@ -138,8 +137,11 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
   const neck = seg(0.055 * L, mats.skin, 0.055 * L, g.cyl, true);
   const belly = sumo ? ball(0.31, 0.27, 0.33, mats.skin) : null;
   const apron = sumo ? ball(0.07, 0.17, 0.15, mats.accent) : null; // the front flap of the belt
-  const skirt = slim ? seg(0.27, mats.accent, 0.3, g.cone) : null;
-  const tail = slim ? [ball(0.1, 0.1, 0.1, mats.hair), ball(0.085, 0.085, 0.085, mats.hair), ball(0.065, 0.065, 0.065, mats.hair)] : [];
+  // (A skirt and a ponytail are gear, not part of the slim build: Zelrith is
+  // slim and wears neither.)
+  const worn = char.gear || [];
+  const skirt = worn.includes('skirt') ? seg(0.27, mats.accent, 0.3, g.cone) : null;
+  const tail = worn.includes('ponytail') ? [ball(0.1, 0.1, 0.1, mats.hair), ball(0.085, 0.085, 0.085, mats.hair), ball(0.065, 0.065, 0.065, mats.hair)] : [];
   const knot = sumo ? ball(0.09, 0.07, 0.09, mats.secondary) : null; // topknot
   // The parts whose shadows show: body, limbs and the feet that ground it.
   const casters = [pelvis, torso, chest, belly, left.upper, right.upper, left.fore, right.fore, left.thigh, right.thigh, left.shin, right.shin, left.foot, right.foot];

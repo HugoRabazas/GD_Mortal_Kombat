@@ -45,7 +45,7 @@ const turnOf = (t, ticks) => Math.min(1, t / ticks) * Math.PI * 2;
 // poses: the wind-up builds over the whole startup instead of snapping into
 // place, the first tick of the strike overshoots a little, and the recovery
 // settles back towards the guard rather than holding the extended pose.
-const SHAPED = new Set(['punch', 'punch2', 'punch3', 'hook', 'breaker', 'kick', 'kick2', 'lunge', 'grab', 'launch', 'rollUpper', 'riseKick', 'howl3', 'eclipse3', 'cuts3', 'shieldRam', 'bladeDash', 'riposte']);
+const SHAPED = new Set(['punch', 'punch2', 'punch3', 'hook', 'breaker', 'kick', 'kick2', 'lunge', 'grab', 'launch', 'rollUpper', 'riseKick', 'howl3', 'eclipse3', 'cuts3', 'shieldRam', 'bladeDash', 'riposte', 'elbow']);
 const GUARD = { hipX: 0, hipY: -60, lean: 0.15, tilt: 0, hfx: 26, hfy: -6, hbx: 14, hby: 6, ffx: 18, ffy: 0, fbx: -22, fby: 0, rot: 0, lift: 0, spin: 0 };
 function attackPose(f) {
   const key = attackKey(f);
@@ -161,6 +161,11 @@ function attackKey(f) {
       if (phase === 'pre') return pose({ hipY: -58, lean: -0.3, ffx: 30, ffy: -56, fbx: -26, hfx: 18, hfy: -8, hbx: -4, hby: 4 });
       if (phase === 'act') return pose({ hipX: 12, hipY: -62, lean: -0.62, tilt: 0.12, ffx: 96, ffy: -64, fbx: -12, hfx: -10, hfy: 6, hbx: -30, hby: 8 });
       return pose({ lean: -0.2, ffx: 34, ffy: -18, hfx: 8, hfy: 6 });
+    case 'elbow': { // kick, punch: a step in behind the point of the elbow, the fist tucked by the ear
+      if (phase === 'pre') return pose({ hipY: -58, lean: 0.2, hfx: 14, hfy: -22, hbx: -12, hby: 8, ffx: 22, fbx: -26 });
+      if (phase === 'act') return pose({ hipX: 16, hipY: -57, lean: 0.52, tilt: -0.08, hfx: 30, hfy: -34, hbx: -24, hby: 12, ffx: 36, fbx: -40, fby: -6 });
+      return pose({ lean: 0.26, hfx: 26, hfy: -16, hbx: -6, hby: 8, ffx: 24, fbx: -28 });
+    }
     case 'hook': { // punch, kick: the knee chambered across, then the heel swung round at the head
       if (phase === 'pre') return pose({ hipY: -60, lean: -0.15, tilt: -0.12, ffx: 6, ffy: -54, fbx: -20, hfx: 16, hfy: -6, hbx: -10, hby: 6 });
       if (phase === 'act') return pose({ hipX: 4, hipY: -62, lean: -0.5, tilt: 0.3, ffx: 76, ffy: -92, fbx: -10, hfx: -12, hfy: -2, hbx: -28, hby: 6 });
