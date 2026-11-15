@@ -311,16 +311,23 @@ console as `window.gd` (the match state is `gd.game.state`). The automated
 checks use it to act at an exact moment of a fight - for example, to raise
 the guard three ticks before a kick lands. Without `?debug` nothing changes.
 
-`npm test` first runs a linter (`eslint.config.js`) and then the rules tests.
-The linter is not a style guide: it only catches a name used without being
-imported or declared, and things declared but never used - the kind of
-mistake in browser code that the rules tests cannot see.
+`npm test` first runs a linter (`eslint.config.js`) and then the tests: the
+rules (`tests/sim.test.js`) and online play (`tests/online.test.js`). The
+online test runs two players in Node on the same-browser bus (Node has
+BroadcastChannel too): they meet in the lobby, make a room, get ready, fight
+in the host's arena, and come back for one more. Node has no WebRTC, so it
+also proves that play falls back to the bus when a browser cannot open a
+direct link. The linter is not a style guide: it only catches a name used
+without being imported or declared, and things declared but never used.
 
 ## Limits worth knowing
 
 - The Artifact page is offline only; online play needs the website build.
 - Online, your own fighter answers after a short delay (the trip to the host
   and back) unless you are the host. If the host leaves, the fight ends.
+- A browser with WebRTC switched off (some privacy settings do this) cannot
+  open direct links; it still plays, through the server, a little slower,
+  and the room says so.
 - Fighters share one skeleton and the basic moves; what sets them apart is the
   build, the special, the stats, the colours, the head and the way they
   celebrate.

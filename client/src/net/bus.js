@@ -102,7 +102,7 @@ function localBus() {
       };
       bc.postMessage({ p: 'hello', id, state });
       const bye = () => bc.postMessage({ p: 'bye', id });
-      window.addEventListener('pagehide', bye);
+      globalThis.addEventListener?.('pagehide', bye); // a page closing says goodbye
       return {
         ready: Promise.resolve(),
         send: (t, d) => bc.postMessage({ t, d }),
@@ -119,7 +119,7 @@ function localBus() {
         },
         leave() {
           bye();
-          window.removeEventListener('pagehide', bye);
+          globalThis.removeEventListener?.('pagehide', bye);
           bc.close();
         },
       };

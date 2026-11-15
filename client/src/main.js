@@ -756,7 +756,7 @@ function roomScreen() {
               .join('')}
           </ol>
           ${watching.length ? `<p class="rules">Watching: ${esc(watching.map((p) => p.name).join(', '))}</p>` : ''}
-          <p class="rules">${link === 'direct' ? 'Connected directly.' : link === 'relayed' ? 'Connecting… (relayed for now)' : 'Waiting for others. Share the room name, or start with CPU rivals.'}</p>
+          <p class="rules">${link === 'direct' ? 'Connected directly.' : link === 'relayed' ? (on.canLink ? 'Connecting… (relayed for now)' : 'Connected through the server: this browser does not allow direct links, so moves may arrive a little later.') : 'Waiting for others. Share the room name, or start with CPU rivals.'}</p>
         </div>
         <div class="slot" style="--tint:${getFighter(room.char).colors.primary};--ring:${getFighter(room.char).colors.accent}">
           <span class="who">Your fighter</span>

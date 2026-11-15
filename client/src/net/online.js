@@ -135,14 +135,24 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
     if (relayNow) room.ch.send('relay', { to: peerId, from: me.id, d: text });
   }
 
+  // A direct link to one member, opened on first use. Where the browser has
+  // no WebRTC (switched off for privacy, or not there at all) there is no
+  // link and everything goes through the bus instead: slower, but it works.
+  const canLink = typeof RTCPeerConnection !== 'undefined';
+  online.canLink = canLink;
   function linkTo(peerId, initiator) {
+    if (!canLink) return null;
     let link = room.links.get(peerId);
     if (!link) {
-      link = createLink({
-        initiator,
-        signal: (d) => room.ch.send('sig', { to: peerId, from: me.id, d }),
-        onMessage: (text) => onData(peerId, text),
-      });
+      try {
+        link = createLink({
+          initiator,
+          signal: (d) => room.ch.send('sig', { to: peerId, from: me.id, d }),
+          onMessage: (text) => onData(peerId, text),
+        });
+      } catch {
+        return null; // WebRTC refused to start: stay on the bus
+      }
       room.links.set(peerId, link);
     }
     return link;
@@ -184,7 +194,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
       if (m.to !== me.id || !room) return;
       // Only the host opens links, so a signal is either from the host or for it.
       if (!room.isHost && m.from !== room.hostId) return;
-      linkTo(m.from, false).handle(m.d);
+      linkTo(m.from, false)?.handle(m.d);
     });
     ch.on('relay', (m) => {
       if (m.to === me.id || m.to === '*') onData(m.from, m.d);
