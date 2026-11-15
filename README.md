@@ -482,6 +482,19 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **The hook kick has enders**: punch, kick, punch is a **spinning
+  backfist** to the back of the turned rival's head that floors them (7);
+  punch, kick, kick is the launcher. The CPU strings them like the others;
+  the Tutorial teaches the backfist (Combos), with a scripted player in the
+  tests, and the pause list and the help name both.
+- **Dashers save for the finisher in a brawl**: the CPU spent Ruko's and
+  Meru's energy on dash after dash and reached about two finishers a brawl
+  where everyone else reached three or four. Past 64 energy in a brawl a
+  dasher now holds on for the full bar: 3.6 finishers a brawl. (Their brawl
+  wins hardly moved, 15-16 %: watch.) With the backfist in, Jackie rose to
+  55 % of duels: Jackie 1.07 power, Ruko 0.99 power / 110 health. Duels
+  48-53 %, brawl wins 15-23 %, ladder 99 / 74 / 61 %, boss beats Hard 93 %.
+  99 tests.
 - **The room's roster is tested on its own**: who is here and what each
   member last chose is now `client/src/net/roster.js`, with no network in it,
   and `tests/roster.test.js` runs it against a pretend service with the real

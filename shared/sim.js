@@ -43,7 +43,7 @@ const JUGGLE = 2;
 const CHARGE = { hold: 8, min: 8, max: 40, reel: 30 };
 // The ordinary blows that can be cancelled into a special once they land.
 const CANCEL_DMG = 0.6;
-const CANCELS = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'hook', 'lunge', 'slide', 'launch', 'riposte', 'elbow']);
+const CANCELS = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'hook', 'lunge', 'slide', 'launch', 'riposte', 'elbow', 'backfist']);
 // Grab with no rival within `near`: the signature move instead of a throw.
 const SIG = { near: 100 };
 // A throw can be broken: grab pressed by the one seized within `window`
@@ -119,7 +119,14 @@ export const MOVES = {
   // round (`turn`), leaving their back to you for a moment.
   hook: {
     startup: 6, active: 4, recovery: 15, dmg: 7, reach: 96, arc: 1.2, y0: 60, y1: 170, aim: 190,
-    hitstun: 22, blockstun: 12, push: 3, gain: 10, heavy: true, turn: true,
+    hitstun: 22, blockstun: 12, push: 3, gain: 10, heavy: true, turn: true, next: 'backfist', nextK: 'launch',
+  },
+  // Punch, kick, punch: the hook kick has turned the rival's back to you; a
+  // spinning backfist to the back of the head floors them (or kick for the
+  // launcher instead).
+  backfist: {
+    startup: 6, active: 4, recovery: 18, dmg: 7, reach: 94, arc: 1, y0: 70, y1: 170, aim: 200,
+    hitstun: 0, blockstun: 13, push: 10, gain: 11, knockdown: true, heavy: true,
   },
   punch2: {
     startup: 4, active: 3, recovery: 10, dmg: 6, reach: 88, arc: 0.85, y0: 70, y1: 150, aim: 190,

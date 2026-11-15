@@ -484,7 +484,7 @@ function helpScreen() {
       </div>
       <ul class="tips">
         <li><b>Walk anywhere</b> on the arena: left, right, into the depth and back. Attacks turn you towards the nearest rival, so you do not need perfect aim.</li>
-        <li><b>Strings</b>: punch, punch, punch knocks down; punch, punch, kick <b>launches</b> the rival into the air (hold jump to chase and <b>juggle</b> them); punch, kick is a <b>hook kick</b> that spins them round; kick, kick a roundhouse; kick, punch a stepping <b>elbow</b> that carries on into either ender. Each blow must land for the next. A blow that lands can also be <b>cancelled into your special</b>.</li>
+        <li><b>Strings</b>: punch, punch, punch knocks down; punch, punch, kick <b>launches</b> the rival into the air (hold jump to chase and <b>juggle</b> them); punch, kick is a <b>hook kick</b> that spins them round (then punch for a <b>spinning backfist</b>, kick to launch); kick, kick a roundhouse; kick, punch a stepping <b>elbow</b> that carries on into either ender. Each blow must land for the next. A blow that lands can also be <b>cancelled into your special</b>.</li>
         <li><b>On the run</b> (a few steps, the stick still held): punch is a <b>lunging straight</b>, kick a <b>slide</b> along the floor, and jump then kick a <b>flying knee</b>.</li>
         <li><b>In the air</b>: jump again for a <b>double jump</b>; punch dives at the rival, kick is a flying kick, grab a <b>stomp</b> straight down; an air punch that lands flows into an axe kick; special is your <b>air special</b>.</li>
         <li><b>Grab with the rival out of reach</b> is your fighter's <b>signature move</b> for crossing the gap: ${FIGHTERS.map((f) => `${f.name[0] + f.name.slice(1).toLowerCase()}'s ${f.signature.name}`).join(', ')}.</li>
@@ -614,7 +614,7 @@ function movesCard() {
     strings: ['Strings', `
       <dt>${k(key.p, key.p, key.p)}</dt><dd><b>Three-punch combo</b>; each punch must land, the third knocks down.</dd>
       <dt>${k(key.p, key.p, key.k)}</dt><dd><b>Launcher</b>: the rival goes up. Hold ${k(key.j)} to chase and hit them in the air (a <b>juggle</b>, twice at most).</dd>
-      <dt>${k(key.p, key.k)}</dt><dd><b>Hook kick</b>: spins the rival round, back to you.</dd>
+      <dt>${k(key.p, key.k)}</dt><dd><b>Hook kick</b>: spins the rival round, back to you. Then ${k(key.p)}: a <b>spinning backfist</b> that floors; ${k(key.k)}: the launcher.</dd>
       <dt>${k(key.k, key.k)}</dt><dd><b>Kick string</b>: into a spinning roundhouse that knocks down.</dd>
       <dt>${k(key.k, key.p)}</dt><dd><b>Kick, elbow</b>: steps back in; then ${k(key.p)} floors, ${k(key.k)} launches.</dd>
       <dt>${k(key.p)}, ${k(key.s)}</dt><dd><b>Special cancel</b>: a blow that lands, cut short by the special - it staggers, and hits softer.</dd>`],

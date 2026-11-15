@@ -161,6 +161,12 @@ function attackKey(f) {
       if (phase === 'pre') return pose({ hipY: -58, lean: -0.3, ffx: 30, ffy: -56, fbx: -26, hfx: 18, hfy: -8, hbx: -4, hby: 4 });
       if (phase === 'act') return pose({ hipX: 12, hipY: -62, lean: -0.62, tilt: 0.12, ffx: 96, ffy: -64, fbx: -12, hfx: -10, hfy: 6, hbx: -30, hby: 8 });
       return pose({ lean: -0.2, ffx: 34, ffy: -18, hfx: 8, hfy: 6 });
+    case 'backfist': { // a full turn on the spot, the back of the fist swung round at head height
+      const spin = turnOf(f.t, m.startup + 2);
+      if (phase === 'pre') return pose({ spin, hipY: -60, lean: 0.1, hfx: -18, hfy: -16, hbx: 16, hby: 4, ffx: 18, fbx: -22 });
+      if (phase === 'act') return pose({ spin, hipX: 8, hipY: -60, lean: 0.2, tilt: 0.12, hfx: 72, hfy: -22, hbx: -20, hby: 8, ffx: 28, fbx: -32 });
+      return pose({ lean: 0.18, hfx: 40, hfy: -10, hbx: 4, hby: 6, ffx: 22, fbx: -26 });
+    }
     case 'elbow': { // kick, punch: a step in behind the point of the elbow, the fist tucked by the ear
       if (phase === 'pre') return pose({ hipY: -58, lean: 0.2, hfx: 14, hfy: -22, hbx: -12, hby: 8, ffx: 22, fbx: -26 });
       if (phase === 'act') return pose({ hipX: 16, hipY: -57, lean: 0.52, tilt: -0.08, hfx: 30, hfy: -34, hbx: -24, hby: 12, ffx: 36, fbx: -40, fby: -6 });

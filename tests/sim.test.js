@@ -619,6 +619,27 @@ test('kick, punch is a stepping elbow that carries on into either ender; a guard
   assert.ok(launched, 'and it lands');
 });
 
+test('punch, kick, punch ends the hook kick in a backfist that floors; punch, kick, kick launches', () => {
+  const string = (presses) => {
+    const s = startFight();
+    closeUp(s, 70);
+    const kinds = [];
+    let n = 0;
+    step(s, [presses[n++], 0]);
+    for (let i = 0; i < 100; i++) {
+      const hit = s.ev.find((e) => e.type === 'hit' && e.by === 0);
+      if (hit) kinds.push(hit.kind);
+      step(s, [hit && n < presses.length ? presses[n++] : 0, 0]);
+    }
+    return { kinds, rival: s.f[1] };
+  };
+  const back = string([INPUT.PUNCH, INPUT.KICK, INPUT.PUNCH]);
+  assert.deepEqual(back.kinds, ['punch', 'hook', 'backfist']);
+  assert.ok(['down', 'getup'].includes(back.rival.state), 'the backfist floors them');
+  const up = string([INPUT.PUNCH, INPUT.KICK, INPUT.KICK]);
+  assert.deepEqual(up.kinds.slice(0, 3), ['punch', 'hook', 'launch']);
+});
+
 test('block with a direction while getting up rolls clear of the rise', () => {
   const s = startFight();
   closeUp(s);

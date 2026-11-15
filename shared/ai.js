@@ -42,6 +42,8 @@ const LATE = 4; // a guard raised this many ticks before the blow, or fewer, is 
 //   bolt  - a zoner: backs off to make room, then shoots
 //   quake - a bruiser: guards more, walks you down
 //   rise  - a skirmisher: rolls round your side, in and out
+const SAVE_FROM = 64; // see `saving`
+
 const STYLES = {
   dash: { attack: 0.02, special: 1.15, wary: 0.55 },
   bolt: { special: 1.8, retreat: 0.1 },
@@ -276,6 +278,9 @@ export function aiInput(ai, s, me) {
   const style = STYLES[special] || {};
   const blockChance = cfg.block + (style.block || 0);
   const specialChance = cfg.special * (style.special || 1);
+  // In a brawl a dasher close to a full bar keeps it for the finisher rather
+  // than spend a third of it on one more dash (they ran out of finishers).
+  const saving = s.f.length > 2 && special === 'dash' && f.meter >= SAVE_FROM && f.meter < RULES.SUPER_COST;
 
   const press = (bits, extra = 0) => {
     ai.tap = bits;
@@ -362,7 +367,7 @@ export function aiInput(ai, s, me) {
   const reeling = o.state === 'hit' && o.reel > 0;
   if ((reeling || left >= 10) && o.h <= 0 && rnd(ai) < cfg.punish) {
     if (dist < 90) return press(reeling || left < 14 ? INPUT.PUNCH : INPUT.KICK);
-    if (special === 'dash' && f.meter >= RULES.SPECIAL_COST && dist > 110 && dist < 280) return press(INPUT.SPECIAL);
+    if (special === 'dash' && !saving && f.meter >= RULES.SPECIAL_COST && dist > 110 && dist < 280) return press(INPUT.SPECIAL);
     if (dist < 230) return hold(toward(dx, dz), 4);
   }
 
@@ -383,7 +388,7 @@ export function aiInput(ai, s, me) {
   if (style.retreat && dist > 100 && dist < 190 && o.state !== 'attack' && f.meter >= RULES.SPECIAL_COST && r < s.ringR - 120 && rnd(ai) < style.retreat) return hold(toward(-dx, -dz), 10);
   if (f.meter >= RULES.SPECIAL_COST && rnd(ai) < specialChance) {
     if (special === 'bolt' && dist > 200) return press(INPUT.SPECIAL);
-    if (special === 'dash' && dist > 110 && dist < 280) return press(INPUT.SPECIAL);
+    if (special === 'dash' && !saving && dist > 110 && dist < 280) return press(INPUT.SPECIAL);
     if (special === 'rise' && dist < 85) return press(INPUT.SPECIAL);
     if (special === 'quake' && dist < 170 && o.h <= 0) return press(INPUT.SPECIAL);
   }

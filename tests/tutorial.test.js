@@ -202,6 +202,7 @@ const BOTS = {
   },
   kick2: () => routine(80, 50, (k) => (k === 0 || k === 11 ? INPUT.KICK : 0)),
   elbow: () => routine(80, 50, (k) => (k === 0 ? INPUT.KICK : k === 11 ? INPUT.PUNCH : 0)),
+  backfist: () => routine(55, 60, (k) => (k === 0 ? INPUT.PUNCH : k === 9 ? INPUT.KICK : k === 20 ? INPUT.PUNCH : 0)),
   hook: () => routine(55, 50, (k) => (k === 0 ? INPUT.PUNCH : k === 9 ? INPUT.KICK : 0)),
   axeKick: () => routine(70, 60, (k, s) => (k === 0 ? INPUT.JUMP | toward(s, 0) : k === 10 ? INPUT.PUNCH : k === 16 ? INPUT.KICK : 0)),
   counter: () => (s) => (s.f[1].state === 'attack' && s.f[1].move === 'kick' && s.f[1].t <= 2 && gap(s) < 100 ? INPUT.PUNCH : 0),
