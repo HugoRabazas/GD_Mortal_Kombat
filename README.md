@@ -228,6 +228,16 @@ and the heartbeat, the crowd and the weather go quiet.
   - Pixie, **Phoenix Dive**: soars up inside a pillar of flame (hitting
     whoever is close), then dives on the rival and bursts on the floor - a
     close-range finisher; the CPU waits until it is near to use it.
+  Each one is staged as well: during the freeze before it, behind the name
+  cut-in, Ruko's **red moon** rises, Shadow's **eclipse** darkens the sky
+  in a purple corona, Jackie's **avalanche** of snow and rock pours down a
+  shaking screen, and Pixie's **bird of flame** climbs, wings beating -
+  each with its own synthesized sound (a wavering howl, a hollow drone, a
+  long rumble, a roar of flame). The **last blow** of every finisher holds
+  the world still a moment longer (22 ticks) while the camera swings in
+  tight on the one it lands on, the edges darken and speed lines burst
+  from the centre, with a crack and a deep boom (all cued by the rules, so
+  online guests see the same moment).
   Measured: Pixie's first version won 77 % of duels (its climb homed in and
   its dive always landed), so the climb drifts less, the dive is slower and
   lighter; Ruko 105 -> 108 and Pixie 102 -> 99 health. Duels now 49-52 %,

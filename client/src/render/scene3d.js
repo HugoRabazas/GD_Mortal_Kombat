@@ -904,6 +904,18 @@ export function create3D(canvas) {
       shot.dist = 6;
       shot.yaw = -Math.cos(f.dir) * 0.45;
       shot.ease = 0.16;
+    } else if (s.finale > 0 && s.finaleOn >= 0) {
+      // A finisher's last blow: in tight on the one it lands on, swinging
+      // slowly round them while the world holds still.
+      const d = s.f[s.finaleOn];
+      const k = 1 - s.finale / 48;
+      shot.x = d.x * S;
+      shot.z = d.z * S;
+      shot.y = 0.8 + d.h * S;
+      shot.dist = 4.4 + k * 1.6;
+      shot.yaw = 0.55 - k * 0.5;
+      shot.rise = 0.3;
+      shot.ease = 0.2;
     } else if (s.f.some((f) => f.state === 'attack' && MOVES[f.move]?.ult)) {
       // A finisher playing out: close in on it, framing the attacker and the
       // rival it is after, a little to the side.

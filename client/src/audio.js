@@ -218,6 +218,63 @@ const SOUNDS = {
     tone('sine', 55, 220, 0.6, 0.6);
     burst(0.7, 0.4, 2000, 0.4);
   },
+  // Each fighter's finisher has a voice of its own, heard over the freeze.
+  howl: () => {
+    // Red Moon Howl: a long wolf's howl, rising, wavering and falling away.
+    const t = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const vib = ctx.createOscillator();
+    const depth = ctx.createGain();
+    const g = ctx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(260, t);
+    osc.frequency.linearRampToValueAtTime(520, t + 0.35);
+    osc.frequency.linearRampToValueAtTime(560, t + 0.9);
+    osc.frequency.exponentialRampToValueAtTime(300, t + 1.3);
+    vib.frequency.value = 6;
+    depth.gain.value = 14;
+    vib.connect(depth).connect(osc.frequency);
+    const soft = ctx.createBiquadFilter();
+    soft.type = 'lowpass';
+    soft.frequency.value = 1500;
+    g.gain.setValueAtTime(0.001, t);
+    g.gain.linearRampToValueAtTime(0.32, t + 0.2);
+    g.gain.linearRampToValueAtTime(0.26, t + 0.95);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 1.35);
+    osc.connect(soft).connect(g).connect(sfxBus);
+    osc.start(t);
+    vib.start(t);
+    osc.stop(t + 1.4);
+    vib.stop(t + 1.4);
+    tone('sine', 55, 45, 1.2, 0.5);
+  },
+  eclipse: () => {
+    // Total Eclipse: the air pulled away into a low, hollow drone.
+    sweep(0.9, 0.9, 3200, 180, 1.6);
+    tone('sine', 70, 48, 1.3, 0.7);
+    tone('triangle', 140, 96, 1.2, 0.18, 0.1);
+    tone('sine', 1760, 1700, 0.9, 0.06, 0.35);
+  },
+  avalanche: () => {
+    // Avalanche Charge: a mountain letting go - a long rumble and rocks.
+    burst(1.4, 1, 90, 0.5, 0, 'lowpass');
+    tone('sine', 50, 30, 1.3, 0.8);
+    for (let i = 0; i < 6; i++) burst(0.12, 0.5, 300 + i * 70, 1.2, 0.15 + i * 0.16, 'lowpass');
+  },
+  phoenix: () => {
+    // Phoenix Dive: a roar of flame climbing into a high cry.
+    for (let i = 0; i < 8; i++) burst(0.05, 0.5, 2200 + Math.random() * 3500, 2, i * 0.08);
+    sweep(1.0, 0.9, 500, 4200, 0.9);
+    tone('sawtooth', 600, 1500, 0.6, 0.16, 0.3);
+    tone('sine', 1500, 1900, 0.5, 0.18, 0.55);
+  },
+  finale: () => {
+    // A finisher's last blow: a crack, a deep boom and a long tail.
+    burst(0.12, 1, 2400, 0.7);
+    tone('sine', 110, 28, 1.2, 1);
+    burst(1.2, 0.6, 160, 0.5, 0.05, 'lowpass');
+    tone('square', 60, 30, 0.3, 0.2);
+  },
   ko: () => {
     tone('sine', 120, 30, 0.9, 1);
     burst(0.5, 0.8, 400, 0.5);

@@ -30,6 +30,8 @@ const AIR_JUMP = { from: 4, v: 11.5, buffer: 6 };
 const STOMP = { fall: -17, rest: 14 };
 // A launched rival can be hit this many more times in the air.
 const JUGGLE = 2;
+// A finisher's last blow: a longer hold, then this long for the camera.
+const FINALE = { stop: 22, ticks: 48 };
 const FRICTION = 0.84;
 const BUFFER_TICKS = 8; // how long a button press is remembered
 // A throw: seize (the rival is lifted in front), swing (carried up and over
@@ -204,7 +206,7 @@ export const MOVES = {
   howl3: {
     startup: 5, active: 4, recovery: 24, dmg: 13, reach: 96, arc: 1.1, y0: 20, y1: 220, aim: 160,
     hitstun: 0, blockstun: 16, push: 4, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
-    launch: 14,
+    launch: 14, final: true,
   },
   // Shadow - Total Eclipse: vanishes, reappears behind the rival, a shadow
   // flurry, a turning kick that sends them flying.
@@ -221,6 +223,7 @@ export const MOVES = {
   eclipse3: {
     startup: 6, active: 4, recovery: 22, dmg: 12, reach: 104, arc: 1.3, y0: 30, y1: 170, aim: 160,
     hitstun: 0, blockstun: 16, push: 14, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
+    final: true,
   },
   // Jackie - Avalanche Charge: a charge that leaves the rival reeling, then
   // a leap and a belly-first crash that shakes everyone near off their feet.
@@ -232,7 +235,7 @@ export const MOVES = {
   avalanche2: {
     startup: 14, active: 999, recovery: 0, dmg: 20, speed: 6, reach: 74, arc: Math.PI, y0: -170, y1: 40, aim: 600,
     hitstun: 0, blockstun: 18, push: 8, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
-    leap: 13, crash: 150,
+    leap: 13, crash: 150, final: true,
   },
   // Pixie - Phoenix Dive: soars up inside a pillar of flame, then dives on
   // the rival like a falling star and bursts on the floor.
@@ -244,7 +247,7 @@ export const MOVES = {
   phoenix2: {
     startup: 2, active: 999, recovery: 0, dmg: 15, speed: 8, reach: 80, arc: 1.5, y0: -170, y1: 60, aim: 900,
     hitstun: 0, blockstun: 18, push: 10, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
-    dive: 13, crash: 90,
+    dive: 13, crash: 90, final: true,
   },
 };
 // The finisher's opening stage, by fighter (see `super.move` in the roster).
@@ -334,6 +337,8 @@ export function createMatch(chars, mods = [], mode = chars.length > 2 ? 'arena' 
     pts: chars.map(() => 0), // match points per fighter
     roundPts: chars.map(() => 0), // points handed out by the round that just ended
     hitstop: 0,
+    finale: 0, // ticks left of a finisher's closing shot (the camera's cue)
+    finaleOn: -1,
     freeze: 0,
     freezeBy: -1,
     winner: -1, // winner of the round that just ended (-1 = shared)
@@ -1123,7 +1128,14 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   if (s.f.length === 2) s.hitstop = (big ? 12 : m.heavy ? 7 : 4) + extra;
   else if (big) s.hitstop = 6;
   else att.stop = def.stop = (m.heavy ? 5 : 3) + extra;
-  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken, counter, juggle: juggled, light: !!m.light, stage: m.ult ? att.move : undefined });
+  // A finisher's last blow: the world holds still a moment longer while the
+  // camera closes in on it.
+  if (m.final && !s.finale) {
+    s.hitstop = s.f.length === 2 ? FINALE.stop : FINALE.stop / 2;
+    s.finale = FINALE.ticks;
+    s.finaleOn = def.slot;
+  }
+  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken, counter, juggle: juggled, light: !!m.light, stage: m.ult ? att.move : undefined, final: !!m.final });
 }
 
 function resolveHits(s) {
@@ -1258,6 +1270,7 @@ const canCelebrate = (f) => f.h <= 0 && (f.state === 'idle' || f.state === 'walk
 export function step(s, inputs) {
   s.ev = [];
   s.tick++;
+  if (s.finale > 0) s.finale--;
   const fighting = s.phase === 'fight';
   const rules = MODES[s.mode];
 

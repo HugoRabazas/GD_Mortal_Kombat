@@ -18,6 +18,189 @@ const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 // The flat fallback's view of the arena: a simple slanted look from above.
 const flat = (x, h, z) => ({ x: W / 2 + x * 0.62, y: 372 + z * 0.24 - h * 0.8, k: 1 + z / 2400 });
 
+// Behind each finisher's cut-in, a scene of its own while the world holds
+// still: Ruko's red moon rising, Shadow's eclipse, Jackie's avalanche,
+// Pixie's bird of flame. `k` runs from 0 to 1 over the freeze.
+const ease = (x) => 1 - Math.pow(1 - Math.min(1, Math.max(0, x)), 3);
+function ultBackdrop(ctx, move, k, col) {
+  ctx.save();
+  if (move === 'howl') {
+    const rise = ease(k * 1.5);
+    const cx = W * 0.5;
+    const cy = H * 1.15 - rise * H * 0.72;
+    const r = 170 + rise * 30;
+    const glow = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 2.2);
+    glow.addColorStop(0, 'rgba(255,60,40,0.55)');
+    glow.addColorStop(1, 'rgba(120,0,0,0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+    const moon = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+    moon.addColorStop(0, '#ffd2c0');
+    moon.addColorStop(0.45, '#ff5a3c');
+    moon.addColorStop(1, '#8c0d14');
+    ctx.fillStyle = moon;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(110,8,16,0.35)'; // craters
+    for (const [dx, dy, cr] of [[-0.35, -0.2, 0.18], [0.3, 0.1, 0.12], [0.05, 0.42, 0.1], [-0.1, 0.05, 0.07], [0.42, -0.36, 0.08]]) {
+      ctx.beginPath();
+      ctx.arc(cx + dx * r, cy + dy * r, cr * r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (move === 'eclipse') {
+    ctx.fillStyle = `rgba(4,0,10,${0.4 * ease(k * 2)})`;
+    ctx.fillRect(0, 0, W, H);
+    const cx = W * 0.5;
+    const cy = H * 0.3;
+    const r = 120;
+    const cover = ease(k * 1.4);
+    // The corona flares as the dark disc covers the sun.
+    ctx.globalCompositeOperation = 'lighter';
+    const corona = ctx.createRadialGradient(cx, cy, r * 0.9, cx, cy, r * (1.6 + cover));
+    corona.addColorStop(0, `rgba(190,120,255,${0.9 * cover})`);
+    corona.addColorStop(1, 'rgba(80,0,160,0)');
+    ctx.fillStyle = corona;
+    ctx.fillRect(0, 0, W, H);
+    ctx.strokeStyle = `rgba(220,180,255,${0.5 * cover})`;
+    ctx.lineWidth = 3;
+    for (let i = 0; i < 16; i++) {
+      const a = (i / 16) * Math.PI * 2 + k * 0.8;
+      const len = r * (1.25 + 0.35 * ((i * 7) % 3));
+      ctx.beginPath();
+      ctx.moveTo(cx + Math.cos(a) * r * 1.05, cy + Math.sin(a) * r * 1.05);
+      ctx.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len);
+      ctx.stroke();
+    }
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = '#f4e8ff';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#05010b';
+    ctx.beginPath();
+    ctx.arc(cx + (1 - cover) * r * 2.1, cy - (1 - cover) * r * 0.3, r * 1.01, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (move === 'avalanche') {
+    // Snow and rock pouring down the screen, the whole frame shaking.
+    const shake = Math.sin(k * 90) * 6 * (1 - k * 0.5);
+    ctx.translate(shake, Math.cos(k * 77) * 4);
+    const haze = ctx.createLinearGradient(0, H * 0.4, 0, H);
+    haze.addColorStop(0, 'rgba(230,240,255,0)');
+    haze.addColorStop(1, `rgba(230,240,255,${0.45 * ease(k * 2)})`);
+    ctx.fillStyle = haze;
+    ctx.fillRect(-20, 0, W + 40, H);
+    ctx.strokeStyle = 'rgba(245,250,255,0.75)';
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 70; i++) {
+      const speed = 0.7 + (i % 5) * 0.18;
+      const x = ((i * 137.5) % (W + 300)) - 150 + k * 260 * speed;
+      const y = (((i * 53.7 + k * 1100 * speed) % (H + 120)) - 60);
+      ctx.lineWidth = 1.5 + (i % 3);
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x - 14 * speed, y - 26 * speed);
+      ctx.stroke();
+    }
+    for (let i = 0; i < 12; i++) {
+      const t = (k * 1.3 + i / 12) % 1;
+      const x = -60 + t * (W + 120) * 0.7 + (i % 4) * 90;
+      const y = -40 + t * (H + 80);
+      const r = 10 + (i % 4) * 7;
+      ctx.fillStyle = i % 2 ? '#8d8f99' : '#6b6d78';
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.beginPath();
+      ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  } else if (move === 'phoenix') {
+    // A bird of flame rising, wings beating, embers falling off it.
+    const up = ease(k * 1.3);
+    const cx = W * 0.5;
+    const cy = H * 0.62 - up * H * 0.3;
+    const sc = 0.6 + up * 0.7;
+    const flap = Math.sin(k * 26) * 0.35;
+    ctx.globalCompositeOperation = 'lighter';
+    const halo = ctx.createRadialGradient(cx, cy, 10, cx, cy, 300 * sc);
+    halo.addColorStop(0, 'rgba(255,200,80,0.6)');
+    halo.addColorStop(1, 'rgba(255,60,0,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, W, H);
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(sc, sc);
+    const fire = ctx.createLinearGradient(0, -120, 0, 160);
+    fire.addColorStop(0, '#fff3b0');
+    fire.addColorStop(0.4, '#ffb020');
+    fire.addColorStop(1, 'rgba(255,40,0,0.2)');
+    ctx.fillStyle = fire;
+    for (const side of [-1, 1]) {
+      ctx.save();
+      ctx.scale(side, 1);
+      ctx.rotate(-flap);
+      ctx.beginPath();
+      ctx.moveTo(10, -10);
+      ctx.bezierCurveTo(80, -110, 200, -120, 290, -60);
+      ctx.bezierCurveTo(220, -50, 240, -10, 170, 0);
+      ctx.bezierCurveTo(200, 20, 140, 40, 100, 30);
+      ctx.bezierCurveTo(70, 40, 30, 30, 10, 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.beginPath(); // body, head and a long forked tail
+    ctx.ellipse(0, 10, 26, 60, 0, 0, Math.PI * 2);
+    ctx.moveTo(0, -60);
+    ctx.arc(0, -66, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(-14, 60);
+    ctx.quadraticCurveTo(-60, 150, -30, 200);
+    ctx.quadraticCurveTo(0, 130, 0, 90);
+    ctx.quadraticCurveTo(0, 130, 30, 200);
+    ctx.quadraticCurveTo(60, 150, 14, 60);
+    ctx.fill();
+    ctx.restore();
+    for (let i = 0; i < 40; i++) {
+      const x = cx + (((i * 97.3) % 520) - 260) * sc;
+      const y = cy + 80 + ((i * 41 + k * 600) % 300);
+      ctx.fillStyle = `rgba(255,${150 + (i % 4) * 25},40,${0.8 - ((i * 41 + k * 600) % 300) / 380})`;
+      ctx.beginPath();
+      ctx.arc(x, y, 2 + (i % 3), 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+// A finisher's last blow: the frame darkens at the edges and speed lines
+// burst from the centre while the camera closes in.
+function finaleOverlay(ctx, s, worn) {
+  if (!(s.finale > 0) || s.finaleOn < 0) return;
+  const k = 1 - s.finale / 48;
+  const a = Math.min(1, (1 - k) * 2.2);
+  ctx.save();
+  const v = ctx.createRadialGradient(W / 2, H / 2, H * 0.25, W / 2, H / 2, W * 0.7);
+  v.addColorStop(0, 'rgba(0,0,0,0)');
+  v.addColorStop(1, `rgba(0,0,0,${0.7 * a})`);
+  ctx.fillStyle = v;
+  ctx.fillRect(0, 0, W, H);
+  ctx.strokeStyle = `rgba(255,255,255,${0.35 * a})`;
+  for (let i = 0; i < 36; i++) {
+    const ang = (i / 36) * Math.PI * 2 + i * 0.37;
+    const r0 = W * (0.32 + ((i * 13) % 7) * 0.025) + k * 60;
+    ctx.lineWidth = 1 + (i % 3);
+    ctx.beginPath();
+    ctx.moveTo(W / 2 + Math.cos(ang) * r0, H / 2 + Math.sin(ang) * r0 * 0.6);
+    ctx.lineTo(W / 2 + Math.cos(ang) * W, H / 2 + Math.sin(ang) * W * 0.6);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 // The dramatic pause before a finisher: the screen dims and the attacker's
 // portrait slides across with the move's name.
 function finisherCutIn(ctx, s, worn) {
@@ -32,6 +215,7 @@ function finisherCutIn(ctx, s, worn) {
   ctx.save();
   ctx.fillStyle = `rgba(6,3,10,${0.55 * Math.min(1, k * 5)})`;
   ctx.fillRect(0, 0, W, H);
+  if (!calm) ultBackdrop(ctx, char.super.move, k, col);
   ctx.translate(W / 2, H * 0.47);
   ctx.rotate(-0.09 * side);
   const band = ctx.createLinearGradient(0, -74, 0, 74);
@@ -243,6 +427,7 @@ export function createStage(glCanvas, hudCanvas) {
         const spots = s.f.map((f) => project(f.x, f.h + (three ? three.headTop(f.slot) * 100 - f.h : 150), f.z));
         drawTags(ctx, s, spots, view.labels);
         dizzyStars(ctx, s, (f, back) => project(f.x - Math.cos(f.dir) * back, three ? three.headTop(f.slot) * 100 : 150, f.z - Math.sin(f.dir) * back), now);
+        finaleOverlay(ctx, s, worn);
         finisherCutIn(ctx, s, worn);
         drawHud(ctx, s, view.labels, now, worn);
         lineUp(ctx, s, view.labels, worn);

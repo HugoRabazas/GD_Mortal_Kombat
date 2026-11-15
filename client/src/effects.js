@@ -202,6 +202,13 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         addShake((fin ? 16 : e.heavy ? 8 : e.light ? 5 : 4) + (e.counter ? 3 : 0));
         if (!quiet && e.counter) play('counter');
         if (fin) addFlash(0.6);
+        if (e.final) {
+          // The finisher's last blow.
+          addFlash(0.9);
+          addShake(10);
+          if (!quiet) play('finale');
+          if (!quiet && (e.on === me || e.by === me)) buzz(160);
+        }
         if (!quiet) play(e.heavy ? 'heavy' : 'hit');
         if (!quiet && e.on === me) buzz(fin ? 120 : e.heavy ? 45 : 20);
         else if (!quiet && e.by === me && e.heavy) buzz(12); // your own heavy blows are felt too, lightly
@@ -239,6 +246,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         break;
       case 'super':
         if (!quiet) play('super');
+        if (!quiet && char.super.move) play(char.super.move); // the finisher's own voice
         break;
       case 'seize': {
         const p = project(e.x, e.h, e.z);
