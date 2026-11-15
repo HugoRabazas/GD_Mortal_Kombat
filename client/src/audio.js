@@ -214,6 +214,11 @@ const SOUNDS = {
     tone('sine', 70, 28, 1.4, 0.8, 0.05);
   },
   wind: () => gust(2.6 + Math.random() * 1.4, 0.34),
+  // A counter hit: a dry crack on top of the blow.
+  counter: () => {
+    burst(0.05, 0.6, 3200, 1.5);
+    tone('square', 880, 440, 0.07, 0.12);
+  },
   // Lub-dub: two low thumps, the second softer.
   heartbeat: () => {
     tone('sine', 64, 40, 0.13, 0.75);

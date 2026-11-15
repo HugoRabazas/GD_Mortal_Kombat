@@ -29,6 +29,10 @@ const GETUP_TICKS = 18;
 const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle of where you face
 const ROLL = { ticks: 15, safe: 11, speed: 8.5, rest: 7 }; // the dodge roll
 const SPLAT = { speed: 3.2, dmg: 5 }; // being knocked into the ring of fire
+// A counter hit: a blow that lands while the rival is still winding up an
+// attack of their own (in its startup) does `dmg` times the damage and holds
+// the impact a few ticks longer. It rewards reading the rival's move.
+const COUNTER = { dmg: 1.25, stop: 3 };
 // A perfect guard: the block button pressed in the last `window` ticks before
 // a blow lands. It costs no health, and a heavy blow from a rival standing on
 // the ground leaves that rival reeling for `stagger` ticks. The guard has to
@@ -658,11 +662,14 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     return;
   }
 
+  // Caught winding up? (Checked before the hit wipes out their move.)
+  const wound = def.state === 'attack' && MOVES[def.move];
+  const counter = !!wound && def.t < wound.startup;
   def.taken++;
   def.reel = 0;
   def.scorched = false;
   const scale = Math.max(0.5, 1 - 0.12 * (def.taken - 1)); // long combos hit softer
-  const dmg = Math.max(1, Math.round(m.dmg * power * scale));
+  const dmg = Math.max(1, Math.round(m.dmg * power * scale * (counter ? COUNTER.dmg : 1)));
   const dealt = Math.min(dmg, def.hp); // a finishing blow cannot take more than is left
   def.hp = Math.max(0, def.hp - dmg);
   addMeter(att, m.gain);
@@ -697,10 +704,11 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   // The impact of a hit freezes the action for a beat. In a duel the whole
   // world stops; in a brawl only the two fighters involved do, so the others
   // are not made to stutter (the finisher still stops everyone).
-  if (s.f.length === 2) s.hitstop = big ? 12 : m.heavy ? 7 : 4;
+  const extra = counter ? COUNTER.stop : 0;
+  if (s.f.length === 2) s.hitstop = (big ? 12 : m.heavy ? 7 : 4) + extra;
   else if (big) s.hitstop = 6;
-  else att.stop = def.stop = m.heavy ? 5 : 3;
-  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken });
+  else att.stop = def.stop = (m.heavy ? 5 : 3) + extra;
+  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken, counter });
 }
 
 function resolveHits(s) {

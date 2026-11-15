@@ -123,6 +123,30 @@ test('a guard raised just before the blow is a perfect guard; a held or hammered
   assert.notEqual(mash.f[0].state, 'hit');
 });
 
+test('a blow that lands while the rival winds up is a counter hit: more damage', () => {
+  // Fighter 1 starts a slow kick; fighter 0 punches into its startup.
+  const s = startFight();
+  closeUp(s);
+  step(s, [0, INPUT.KICK]);
+  step(s, [INPUT.PUNCH, 0]);
+  const hits = [];
+  for (let i = 0; i < 20; i++) {
+    step(s, idle(s));
+    hits.push(...s.ev.filter((e) => e.type === 'hit'));
+  }
+  const counter = hits.find((e) => e.by === 0);
+  assert.ok(counter, 'the punch landed');
+  assert.equal(counter.counter, true);
+  assert.ok(!hits.some((e) => e.by === 1), 'the kick was knocked out of its startup');
+
+  // The same punch on a rival standing still is an ordinary hit.
+  const plain = startFight();
+  closeUp(plain);
+  tap(plain, [INPUT.PUNCH, 0]);
+  const normal = plain.f[1].maxHp - plain.f[1].hp;
+  assert.ok(counter.dmg > normal, `counter ${counter.dmg} beats ordinary ${normal}`);
+});
+
 test('a hit reports the health it really took, never more than was left', () => {
   const s = startFight();
   closeUp(s);

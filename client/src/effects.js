@@ -124,7 +124,9 @@ export function handleEvents(events, state, { quiet, project, me = -1 }) {
         floatText(p.x, p.y - 30, String(e.dmg), e.heavy ? '#ffd34d' : '#ffffff', e.heavy ? 28 : 22);
         if (e.combo >= 2) floatText(p.x, p.y - 58, `${e.combo} HITS`, '#ff8a5c', 20);
         if (e.kind === 'grab') floatText(p.x, p.y - 58, 'GRAB!', '#59c7ff', 24);
-        addShake(e.kind === 'super' ? 16 : e.heavy ? 8 : 4);
+        if (e.counter) floatText(p.x, p.y - 86, 'COUNTER', '#ff9a3c', 22);
+        addShake((e.kind === 'super' ? 16 : e.heavy ? 8 : 4) + (e.counter ? 3 : 0));
+        if (!quiet && e.counter) play('counter');
         if (e.kind === 'super') addFlash(0.6);
         if (!quiet) play(e.heavy ? 'heavy' : 'hit');
         if (!quiet && e.on === me) buzz(e.kind === 'super' ? 120 : e.heavy ? 45 : 20);

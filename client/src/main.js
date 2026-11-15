@@ -58,10 +58,12 @@ const spBtn = $('.tb-sp');
 const ultBtn = $('.tb-ult');
 
 // The arcade ladder: who you meet at each stage and how tough they are.
+// Stage three breaks the run of duels: a brawl against every rival at once,
+// where only a clear first place goes through.
 const STAGES = [
   { level: 'easy', mod: null },
   { level: 'normal', mod: null },
-  { level: 'normal', mod: { health: 1.1, power: 1 } },
+  { level: 'easy', mod: null, brawl: true },
   { level: 'hard', mod: { health: 1.15, power: 1.05 } },
   { level: 'boss', mod: { health: 1.3, power: 1.1 }, boss: true },
 ];
@@ -166,7 +168,7 @@ function buildLadder(playerId) {
   const order = pool.map((f) => f.id).slice(0, STAGES.length - 1);
   while (order.length < STAGES.length - 1) order.push(order.length % 2 ? playerId : pool[order.length % pool.length].id);
   order.push(pool[0].id); // the boss is your first rival again, powered up
-  return STAGES.map((st, i) => ({ ...st, char: order[i] }));
+  return STAGES.map((st, i) => ({ ...st, char: order[i], rivals: st.brawl ? rivalsFor([playerId]) : null }));
 }
 
 function menuScreen() {
@@ -236,7 +238,14 @@ function ladderCard() {
       <ol>
         ${ladder
           .map(
-            (st, i) => `<li class="${st.boss ? 'boss' : ''}">
+            (st, i) =>
+              st.brawl
+                ? `<li class="brawl">
+              <span class="num">${i + 1}</span><span class="faces">${st.rivals.map((id) => head(id)).join('')}</span>
+              <span class="lname">Brawl</span>
+              <span class="ltag">All at once</span>
+            </li>`
+                : `<li class="${st.boss ? 'boss' : ''}">
               <span class="num">${i + 1}</span>${head(st.char)}
               <span class="lname">${getFighter(st.char).name}</span>
               <span class="ltag">${tag[st.level]}</span>
@@ -325,6 +334,7 @@ function helpScreen() {
         <li><b>Punch three times</b> for a combo that ends in a knockdown; each punch must land to continue.</li>
         <li><b>Punch + Kick together</b> is a grab: short reach, but it goes straight through a guard.</li>
         <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment.</li>
+        <li>Hit a rival while they are <b>winding up</b> a blow of their own for a <b>counter</b>: a quarter more damage.</li>
         <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling. Hold the guard and it is an ordinary block.</li>
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
         <li><b>Block</b> only stops what comes from the front. Get behind a blocking rival, or step out of the way of a projectile.</li>
@@ -448,6 +458,7 @@ const DRILLS = [
   { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction` },
   { id: 'block', name: 'Block a blow', how: (k) => `${k('b')} as a blow comes (pick a partner who attacks)` },
   { id: 'perfect', name: 'Perfect guard', how: (k) => `${k('b')} just before a blow lands (the Kicks partner helps)` },
+  { id: 'counter', name: 'Counter hit', how: (k) => `${k('p')} while the rival winds up a blow (the Kicks partner helps)` },
   { id: 'special', name: 'Special move', how: (k) => `${k('s')} with a third of the energy bar` },
   { id: 'super', name: 'Finisher', how: (k) => `${k('u')} with a full energy bar` },
 ];
@@ -489,6 +500,7 @@ function watchDrills(s, events) {
     else if (e.type === 'parry' && e.by === 0) markDrill('perfect');
     else if (e.type === 'block' && e.on === 0) markDrill('block');
     else if (e.type === 'hit' && e.by === 0) {
+      if (e.counter) markDrill('counter');
       if (e.kind === 'punch3') markDrill('combo');
       else if (e.kind === 'kick') markDrill('kick');
       else if (e.kind === 'grab') markDrill('grab');
@@ -566,6 +578,29 @@ function statsLine(slot) {
   return st ? `<small>${st.dmg} damage · ${st.hits} hits · combo ${st.combo}${st.perfect ? ` · ${st.perfect} perfect` : ''}</small>` : '';
 }
 
+// The final standings of a brawl, with each fighter's numbers under the name.
+function rankingList() {
+  const s = app.game.state;
+  const who = labels();
+  const medal = ['1st', '2nd', '3rd', '4th'];
+  return `
+    <ol class="ranking">
+      ${s.ranking
+        .map(
+          (r) => `<li class="${r.rank === 1 ? 'top' : ''}">
+            <span class="place">${medal[r.rank - 1]}</span>${head(r.char)}
+            <span class="lname">${getFighter(r.char).name}${statsLine(r.slot)}</span>
+            <span class="ltag">${esc(who[r.slot])}</span>
+            <span class="pts">${r.points} pts</span>
+          </li>`,
+        )
+        .join('')}
+    </ol>`;
+}
+
+// What a finished arcade fight shows: the duel's numbers, or a brawl's standings.
+const outcome = () => (app.game.state.mode === 'arena' ? rankingList() : statsCard());
+
 function resultScreen() {
   const s = app.game.state;
   const won = s.matchWinner === 0;
@@ -576,23 +611,10 @@ function resultScreen() {
           <button type="button" class="btn" data-act="select">Change fighter</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>`;
   if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result">${statsCard()}<div class="row">${again}</div></section>`;
-  if (s.mode === 'arena') {
-    const who = labels();
-    const medal = ['1st', '2nd', '3rd', '4th'];
+  if (s.mode === 'arena' && app.mode !== 'arcade') {
     return `
       <section class="screen result">
-        <ol class="ranking">
-          ${s.ranking
-            .map(
-              (r) => `<li class="${r.rank === 1 ? 'top' : ''}">
-                <span class="place">${medal[r.rank - 1]}</span>${head(r.char)}
-                <span class="lname">${getFighter(r.char).name}${statsLine(r.slot)}</span>
-                <span class="ltag">${esc(who[r.slot])}</span>
-                <span class="pts">${r.points} pts</span>
-              </li>`,
-            )
-            .join('')}
-        </ol>
+        ${rankingList()}
         <div class="row">${again}</div>
       </section>`;
   }
@@ -613,8 +635,8 @@ function resultScreen() {
     return `
       <section class="screen result">
         <p class="headline">Stopped at stage ${a.stage + 1} of ${total}</p>
-        <p class="sub">Score ${points(a.score)}</p>
-        ${statsCard()}
+        <p class="sub">${s.mode === 'arena' ? 'Only a clear first place goes through. ' : ''}Score ${points(a.score)}</p>
+        ${outcome()}
         <div class="row">
           <button type="button" class="btn primary" data-act="retry">Try again</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>
@@ -626,7 +648,7 @@ function resultScreen() {
       <section class="screen result">
         <p class="headline">Arena champion</p>
         <p class="sub">Final score ${points(a.score)}${a.score >= bestScore() ? ' · new best' : ''}</p>
-        ${statsCard()}
+        ${outcome()}
         <div class="row">
           <button type="button" class="btn primary" data-act="arcade">Play again</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>
@@ -637,8 +659,8 @@ function resultScreen() {
   return `
     <section class="screen result">
       <p class="headline">Stage ${a.stage + 1} cleared · +${points(a.gained)}</p>
-      <p class="sub next">Next: ${head(next.char)} <b>${getFighter(next.char).name}</b>${next.boss ? ' · the boss' : ''}</p>
-      ${statsCard()}
+      <p class="sub next">Next: ${next.brawl ? `<b>a brawl</b> against ${next.rivals.map((id) => head(id)).join('')} all at once` : `${head(next.char)} <b>${getFighter(next.char).name}</b>${next.boss ? ' · the boss' : ''}`}</p>
+      ${outcome()}
       <div class="row">
         <button type="button" class="btn primary" data-act="next">Next fight</button>
         <button type="button" class="btn quiet" data-act="menu">Menu</button>
@@ -895,9 +917,14 @@ function startFight() {
   let controllers;
   if (app.mode === 'arcade') {
     const st = app.arcade.ladder[app.arcade.stage];
-    chars = [app.picks[0], st.char];
-    mods = [null, st.mod];
-    controllers = [solo, cpu(st.level)];
+    if (st.brawl) {
+      chars = [app.picks[0], ...st.rivals];
+      controllers = [solo, ...st.rivals.map(() => cpu(st.level))];
+    } else {
+      chars = [app.picks[0], st.char];
+      mods = [null, st.mod];
+      controllers = [solo, cpu(st.level)];
+    }
   } else if (app.mode === 'arena') {
     chars = [app.picks[0], ...rivalsFor([app.picks[0]])];
     controllers = [solo, cpu(app.level), cpu(app.level), cpu(app.level)];
@@ -940,7 +967,8 @@ function scoreMatch() {
   a.gained = 0;
   if (s.matchWinner !== 0) return;
   const me = s.f[0];
-  const flawless = s.pts[1] === 0 ? 500 : 0; // did not drop a round
+  // A duel won without dropping a round, or a brawl won with every round on top.
+  const flawless = s.mode === 'arena' ? (s.pts[0] === (s.f.length - 1) * s.round ? 500 : 0) : s.pts[1] === 0 ? 500 : 0;
   a.gained = 1000 * (a.stage + 1) + Math.round((me.hp / me.maxHp) * 1000) + Math.ceil(s.timer / TICK_RATE) * 10 + flawless;
   a.score += a.gained;
   if (a.stage >= a.ladder.length - 1) saveBest(a.score);
@@ -1210,6 +1238,7 @@ function labels() {
   if (app.mode === 'training') return ['YOU', 'PARTNER'];
   if (app.mode === 'arcade' && app.arcade) {
     const st = app.arcade.ladder[app.arcade.stage];
+    if (st.brawl) return ['YOU', ...st.rivals.map(() => 'CPU')];
     return ['YOU', st.boss ? 'BOSS' : `STAGE ${app.arcade.stage + 1}/${app.arcade.ladder.length}`];
   }
   return ['YOU', 'CPU', 'CPU', 'CPU'].slice(0, n);

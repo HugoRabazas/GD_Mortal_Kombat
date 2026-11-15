@@ -868,6 +868,22 @@ kbd {
   color: var(--ash);
 }
 
+/* The brawl stage of the ladder: every rival's face, overlapping. */
+.ladder li.brawl {
+  grid-template-columns: 1.4em auto minmax(0, 1fr) auto;
+  background: linear-gradient(90deg, rgba(232, 180, 84, 0.28), rgba(51, 32, 61, 0.55));
+}
+
+.ladder li.brawl .faces .head {
+  width: 30px;
+  height: 30px;
+}
+
+.sub .faces,
+.sub .head + .head {
+  display: inline-flex;
+}
+
 .ladder li.boss {
   background: linear-gradient(90deg, rgba(181, 18, 44, 0.75), rgba(51, 32, 61, 0.55));
 }
@@ -1298,6 +1314,15 @@ kbd {
   .ladder .head {
     width: 26px;
     height: 26px;
+  }
+
+  .ladder li.brawl {
+    grid-template-columns: 1.4em auto minmax(0, 1fr) auto;
+  }
+
+  .ladder li.brawl .faces .head {
+    width: 24px;
+    height: 24px;
   }
 
   .ladder .lname,
