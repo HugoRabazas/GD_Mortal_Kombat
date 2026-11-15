@@ -541,35 +541,48 @@ function movesCard() {
         <dt>${k(key.u)}</dt><dd>${who}<b>${f.super.name}</b> - ${SUPER_NOTES[f.super.move] || 'the finisher'}. Needs the whole bar.</dd>`;
     })
     .join('');
-  return `
-    <dl class="movelist" aria-label="Moves">
-      <dt>${k(key.p, key.p, key.p)}</dt><dd><b>Three-punch combo</b>; each punch must land, the third knocks down.</dd>
-      <dt>${k(key.p, key.p, key.k)}</dt><dd><b>Launcher</b>: the string ends in a rising kick that throws the rival up. Then ${k(key.j)} to chase and hit them in the air (a <b>juggle</b>, twice at most).</dd>
-      <dt>${k(key.k, key.k)}</dt><dd><b>Kick string</b>: a kick that lands flows into a spinning roundhouse that knocks down.</dd>
-      <dt>${k(key.p, key.k)}</dt><dd><b>Hook kick</b>: a punch that lands, then a kick swung round that spins the rival, back to you.</dd>
-      <dt>Air ${k(key.p)}, ${k(key.k)}</dt><dd><b>Air string</b>: an air punch that lands, then an axe kick chopped down.</dd>
-      <dt>Run, ${k(key.j)}, ${k(key.k)}</dt><dd><b>Flying knee</b>: jump out of a run and kick - far, fast, knocks down.</dd>
-      <dt>Air ${k(key.s)}</dt><dd><b>Air special</b>: your special's own version in the air - Ruko rushes down, Shadow throws the bolt down, Jackie drops in a body press, Pixie twirls in flame.</dd>
-      <dt>${k(key.p)}, ${k(key.s)}</dt><dd><b>Special cancel</b>: a blow that lands can be cut short by the special, at once - it staggers instead of flooring, and hits softer.</dd>
-      <dt>Ring of fire</dt><dd>Knock a rival down into the flames: they <b>bounce</b> back off them, open to one more blow in the air.</dd>
+  // Many moves: shown a group at a time, chosen with the tabs above the list.
+  const groups = {
+    basics: ['Basics', `
+      <dt>${k(key.p)}</dt><dd><b>Punch</b>: quick. Into a rival <b>winding up</b> a blow it is a <b>counter hit</b>, a quarter more damage.</dd>
       <dt>${k(key.k)}</dt><dd><b>Kick</b>: slower than a punch, heavier, longer reach.</dd>
-      <dt>Run + ${k(key.p)}</dt><dd><b>Lunging straight</b>: after a few steps, punch with the stick held to leap in from long range. Chains into the second punch.</dd>
-      <dt>Run + ${k(key.k)}</dt><dd><b>Slide</b>: kick while running to slide in feet-first and sweep the rival off their feet. Low: jump it.</dd>
       <dt>${k(key.g)}</dt><dd><b>Throw</b>: seize, lift and slam. Short reach, goes straight through a guard.</dd>
-      <dt>Hold ${k(key.k)}</dt><dd><b>Guard-breaker</b>: charge a kick, let go - it smashes a guard open and leaves the rival reeling. Open to blows while charging.</dd>
+      <dt>Hold ${k(key.k)}</dt><dd><b>Guard-breaker</b>: charge a kick, let go - it smashes a guard open. Open to blows while charging.</dd>
+      <dt>${k(key.b)} + ${k(key.g)}</dt><dd><b>Taunt</b>: standing still - a little energy, but any blow on you is a counter hit.</dd>
+      <dt>Ring of fire</dt><dd>Knock a rival down into the flames: they <b>bounce</b> back off them, open to one more blow.</dd>`],
+    strings: ['Strings', `
+      <dt>${k(key.p, key.p, key.p)}</dt><dd><b>Three-punch combo</b>; each punch must land, the third knocks down.</dd>
+      <dt>${k(key.p, key.p, key.k)}</dt><dd><b>Launcher</b>: the rival goes up. Hold ${k(key.j)} to chase and hit them in the air (a <b>juggle</b>, twice at most).</dd>
+      <dt>${k(key.p, key.k)}</dt><dd><b>Hook kick</b>: spins the rival round, back to you.</dd>
+      <dt>${k(key.k, key.k)}</dt><dd><b>Kick string</b>: into a spinning roundhouse that knocks down.</dd>
+      <dt>${k(key.p)}, ${k(key.s)}</dt><dd><b>Special cancel</b>: a blow that lands, cut short by the special - it staggers, and hits softer.</dd>`],
+    run: ['On the run', `
+      <dt>Run + ${k(key.p)}</dt><dd><b>Lunging straight</b>: punch with the stick held after a few steps. Opens the punch string or the hook kick.</dd>
+      <dt>Run + ${k(key.k)}</dt><dd><b>Slide</b>: feet first, sweeps the rival off their feet. Low: jump it.</dd>
+      <dt>Run, ${k(key.j)}, ${k(key.k)}</dt><dd><b>Flying knee</b>: jump out of a run and kick - far, fast, knocks down.</dd>`],
+    air: ['Air', `
       <dt>${k(key.j)}, ${k(key.j)}</dt><dd><b>Double jump</b>: press again in the air, with a somersault.</dd>
       <dt>Air ${k(key.p)} / ${k(key.k)}</dt><dd>A <b>diving punch</b> angled down, or a <b>flying kick</b>.</dd>
-      <dt>Air ${k(key.g)}</dt><dd><b>Stomp</b>: plunge feet first and flatten whoever is below. Rooted if it misses.</dd>
+      <dt>Air ${k(key.p)}, ${k(key.k)}</dt><dd><b>Air string</b>: an air punch that lands, then an axe kick chopped down.</dd>
+      <dt>Air ${k(key.g)}</dt><dd><b>Stomp</b>: feet first onto whoever is below - they bounce off the floor. Rooted if it misses.</dd>
+      <dt>Air ${k(key.s)}</dt><dd><b>Air special</b>: your special's own air version.</dd>`],
+    defence: ['Defence', `
       <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b>.</dd>
-      <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b>: attacks pass through you.</dd>
-      <dt>${k(key.b)} + ${k(key.g)}</dt><dd><b>Taunt</b>: standing still - your own gesture, a little energy, but any blow on you is a counter hit.</dd>
-      <dt>${k(key.b)} + away</dt><dd><b>Back-step</b>: the stick straight away from the rival - a quick hop back, still facing them.</dd>
+      <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b> sideways or forwards: attacks pass through you.</dd>
+      <dt>${k(key.b)} + away</dt><dd><b>Back-step</b>: a quick hop back, still facing the rival.</dd>
+      <dt>Roll, ${k(key.p)} / ${k(key.k)}</dt><dd>Late in a roll: a <b>rising uppercut</b>, or a <b>spinning heel kick</b>.</dd>
       <dt>${k(key.b)}</dt><dd>On the floor: a <b>quick rise</b>.</dd>
-      <dt>Roll, ${k(key.p)} / ${k(key.k)}</dt><dd>Late in a roll: a <b>rising uppercut</b> that knocks down, or a <b>spinning heel kick</b> with a wide arc.</dd>
-      <dt>Getting up, ${k(key.p)}</dt><dd><b>Rising sweep</b>: can't be hit while it starts. Slow if guarded.</dd>
-      <dt>${k(key.p)}</dt><dd>Into a rival <b>winding up</b> a blow: a <b>counter hit</b>, a quarter more damage.</dd>
-      ${own}
-    </dl>`;
+      <dt>Getting up, ${k(key.p)}</dt><dd><b>Rising sweep</b>: can't be hit while it starts. Slow if guarded.</dd>`],
+    yours: [two ? 'Fighters' : 'Yours', own],
+  };
+  const tab = groups[app.moveTab] ? app.moveTab : 'basics';
+  return `
+    <div class="movetabs">
+      <div class="tabs" role="tablist">${Object.entries(groups)
+        .map(([id, [name]]) => `<button type="button" role="tab" class="tab${id === tab ? ' on' : ''}" aria-selected="${id === tab}" data-act="moveTab" data-id="${id}">${name}</button>`)
+        .join('')}</div>
+      <dl class="movelist" aria-label="${groups[tab][0]} moves">${groups[tab][1]}</dl>
+    </div>`;
 }
 
 function pauseScreen() {
@@ -1393,6 +1406,12 @@ const ACTIONS = {
   training() {
     app.mode = 'training';
     show('select');
+  },
+  // The pause screen's move list: show another group of moves.
+  moveTab(el) {
+    app.moveTab = el.dataset.id;
+    show('pause');
+    ui.querySelector(`[data-act=moveTab][data-id=${app.moveTab}]`)?.focus({ preventScroll: true });
   },
   tutorial() {
     app.mode = 'tutorial';

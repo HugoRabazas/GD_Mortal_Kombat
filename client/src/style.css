@@ -817,6 +817,37 @@ kbd {
   width: min(100%, 260px);
 }
 
+/* The pause screen's move list: tabs for the groups of moves above it. */
+.movetabs {
+  display: grid;
+  gap: 6px;
+  width: min(100%, 400px);
+}
+
+.movetabs .tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.movetabs .tab {
+  flex: 1 1 auto;
+  padding: 4px 8px;
+  border: 1px solid rgba(232, 180, 84, 0.35);
+  background: var(--veil);
+  color: var(--ash);
+  font: 600 0.85rem/1 var(--font-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.movetabs .tab.on {
+  border-color: var(--gold);
+  color: var(--bone);
+  background: rgba(232, 180, 84, 0.18);
+}
+
 .movelist {
   display: grid;
   grid-template-columns: auto 1fr;
