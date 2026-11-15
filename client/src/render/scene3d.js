@@ -409,6 +409,7 @@ export function create3D(canvas) {
   const round = (fan) => Math.atan2(fan.x, 6 - fan.z);
   [...fans].sort((p, q) => round(p) - round(q)).forEach((fan, i) => (fan.rank = i));
   let crowdCloaks = ['#555555'];
+  let lastWave = -9; // where the crowd wave is round the stands (0-1), -9 when none
   let crowdTeams = [];
   const teamCheer = [0, 0, 0, 0];
   const dressCrowd = (cloaks = crowdCloaks, teams = crowdTeams) => {
@@ -1002,7 +1003,7 @@ export function create3D(canvas) {
         seen[kind] = (seen[kind] || 0) + 1;
         if (o.castShadow) seen.casters = (seen.casters || 0) + 1;
       });
-      return { calls: r.calls, triangles: r.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, quality, graphics, pixelRatio: renderer.getPixelRatio(), seen, cheer: teamCheer.map((c) => +c.toFixed(2)), supporters: crowdTeams.map((_, t) => fans.filter((f) => f.team === t).length) };
+      return { calls: r.calls, triangles: r.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, quality, graphics, pixelRatio: renderer.getPixelRatio(), seen, cheer: teamCheer.map((c) => +c.toFixed(2)), supporters: crowdTeams.map((_, t) => fans.filter((f) => f.team === t).length), wave: lastWave > -9 ? { at: +lastWave.toFixed(2), standing: fans.filter((f) => Math.abs(f.rank / fans.length - lastWave) < 0.06).length } : null };
     },
 
     // Where a point of the arena (in arena pixels) lands on the flat HUD
@@ -1228,10 +1229,16 @@ export function create3D(canvas) {
       excite *= Math.pow(0.985, dt / 16.7);
       for (let t = 0; t < teamCheer.length; t++) teamCheer[t] *= Math.pow(0.98, dt / 16.7);
       crowdTurn = !crowdTurn && (graphics !== 'fast' || Math.floor(now / 100) % 3 === 0);
+      // While a round is announced a wave runs once round the stands, left to
+      // right: each fan stands up as it reaches them and sits back down.
+      const waveAt = s.phase === 'intro' && !view.demo ? (s.pt / TIMING.INTRO) * 1.3 - 0.15 : -9;
+      lastWave = waveAt;
       for (let i = 0; crowdTurn && i < fans.length; i++) {
         const fan = fans[i];
         const keen = fan.team >= 0 ? Math.min(1.4, excite * 0.7 + teamCheer[fan.team]) : excite;
-        const hop = Math.abs(Math.sin(now / 130 + fan.phase)) * 0.28 * keen * fan.keen;
+        const off = fan.rank / fans.length - waveAt;
+        const wave = waveAt > -9 ? Math.exp(-(off * off) / 0.004) * 0.55 : 0;
+        const hop = Math.abs(Math.sin(now / 130 + fan.phase)) * 0.28 * keen * fan.keen + wave;
         const y = fan.y + Math.sin(now / 700 + fan.phase) * 0.03 + hop;
         fanDummy.position.set(fan.x + Math.sin(now / 900 + fan.phase) * 0.04, y, fan.z);
         fanDummy.updateMatrix();

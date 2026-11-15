@@ -358,7 +358,8 @@ knockouts, then settles back down. Part of the crowd came for one fighter:
 each stretch of the stands, left to right, has supporters wearing the colours
 of one fighter in the line-up, and they are the ones on their feet when that
 fighter lands a heavy blow or wins a round (no extra draws: the crowd is one
-batch either way). Inside every round, the ring of fire shrinks the
+batch either way). While each round is announced, a wave runs once round
+the stands from left to right, about twenty fans on their feet at a time. Inside every round, the ring of fire shrinks the
 fighting ground as time runs out.
 
 To add another arena: add its name to `client/src/arenas.js`, its look to
@@ -486,7 +487,8 @@ as plain data in `client/src/render/themes.js` so Node can read them), the
 CPU's difficulty ladder (`tests/ai.test.js`: in mirror duels Normal must beat
 Easy, Hard beat Normal and the boss level beat Hard - over 160 duels each
 step measured 100 %, 81 % and 67 %), the tunes' answering phrase (in
-`tests/arenas.test.js`), the website's home-screen manifest
+`tests/arenas.test.js`), what the announcer says (`tests/effects.test.js`,
+with a fake speech engine), the website's home-screen manifest
 (`tests/web.test.js`: it opens full screen and sideways, and every icon is
 the size it claims) and online play
 (`tests/online.test.js`). The
