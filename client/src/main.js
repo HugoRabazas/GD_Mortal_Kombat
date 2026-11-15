@@ -335,22 +335,27 @@ function selectScreen() {
 }
 
 function helpScreen() {
-  const row = (what, a, b, c, d) => `<tr><th scope="row">${what}</th><td>${a}</td><td>${b}</td><td>${c}</td><td>${d}</td></tr>`;
+  // The column of the controls in use is lit: keyboard, gamepad or the screen.
+  const d = lastDevice() ?? (app.touch ? 'touch' : 'keys');
+  const lit = d === 'pad' ? 4 : d === 'touch' && app.touch ? 5 : 1;
+  const cell = (i, v, tag = 'td') => `<${tag}${i === lit ? ' class="now"' : ''}>${v}</${tag}>`;
+  const row = (what, ...cols) => `<tr><th scope="row">${what}</th>${cols.map((v, i) => cell(i + 1, v)).join('')}</tr>`;
   const k = (...keys) => keys.map((x) => `<kbd>${x}</kbd>`).join(' ');
+  const heads = ['Single player', '2P · Player 1', '2P · Player 2', 'Gamepad', 'Touch'];
   return `
     <section class="screen help">
       <h2>How to play</h2>
       <div class="scroll">
         <table>
-          <thead><tr><th></th><th>Single player</th><th>2P · Player 1</th><th>2P · Player 2</th><th>Gamepad</th></tr></thead>
+          <thead><tr><th></th>${heads.map((h, i) => cell(i + 1, h + (i + 1 === lit ? ' · yours' : ''), 'th')).join('')}</tr></thead>
           <tbody>
-            ${row('Walk', `${k('W', 'A', 'S', 'D')} or arrows`, k('W', 'A', 'S', 'D'), 'Arrows', 'Stick / D-pad')}
-            ${row('Jump', `${k('Space')} or ${k('U')}`, k('Space'), k('U'), 'A / Cross')}
-            ${row('Punch', `${k('J')} or ${k('F')}`, k('F'), k('J'), 'X / Square')}
-            ${row('Kick', `${k('K')} or ${k('G')}`, k('G'), k('K'), 'B / Circle')}
-            ${row('Block', `${k('L')} or ${k('H')}`, k('H'), k('L'), 'LB / LT')}
-            ${row('Special', `${k('I')} or ${k('T')}`, k('T'), k('I'), 'Y / Triangle')}
-            ${row('Finisher', `${k('O')} or ${k('Y')}`, k('Y'), k('O'), 'RB / RT')}
+            ${row('Walk', `${k('W', 'A', 'S', 'D')} or arrows`, k('W', 'A', 'S', 'D'), 'Arrows', 'Stick / D-pad', 'Stick')}
+            ${row('Jump', `${k('Space')} or ${k('U')}`, k('Space'), k('U'), 'A / Cross', k('JMP'))}
+            ${row('Punch', `${k('J')} or ${k('F')}`, k('F'), k('J'), 'X / Square', k('P'))}
+            ${row('Kick', `${k('K')} or ${k('G')}`, k('G'), k('K'), 'B / Circle', k('K'))}
+            ${row('Block', `${k('L')} or ${k('H')}`, k('H'), k('L'), 'LB / LT', k('BLK'))}
+            ${row('Special', `${k('I')} or ${k('T')}`, k('T'), k('I'), 'Y / Triangle', k('SP'))}
+            ${row('Finisher', `${k('O')} or ${k('Y')}`, k('Y'), k('O'), 'RB / RT', k('ULT'))}
           </tbody>
         </table>
       </div>
@@ -400,7 +405,7 @@ function movesCard() {
   const s = app.game?.state;
   if (!s) return '';
   const two = app.mode === 'versus';
-  const key = two ? { p: 'F / J', k: 'G / K', b: 'H / L', s: 'T / I', u: 'Y / O', j: 'Space / U' } : controlNames();
+  const key = two && lastDevice() !== 'pad' ? { p: 'F / J', k: 'G / K', b: 'H / L', s: 'T / I', u: 'Y / O', j: 'Space / U' } : controlNames();
   const k = (...names) => names.map((n) => `<kbd>${n}</kbd>`).join(' ');
   const slots = two ? [0, 1] : [app.mode === 'online' ? Math.max(0, app.online?.mySlot ?? 0) : 0];
   const own = slots
@@ -753,7 +758,11 @@ function lobbyScreen() {
                 : '<li><span class="lname dim">No rooms open yet</span></li>'
             }
           </ol>
-          <button type="button" class="btn primary" data-act="createRoom">Create a room</button>
+          <div class="row">
+            <button type="button" class="btn primary" data-act="quickMatch">Quick match</button>
+            <button type="button" class="btn" data-act="createRoom">New room</button>
+          </div>
+          <p class="rules">Quick match joins the open room with the most people, or opens one.</p>
         </div>
       </div>
       ${chatBox()}
@@ -867,6 +876,13 @@ function show(screen) {
   if (chat && kept) {
     chat.value = kept.value;
     if (kept.focus) chat.focus({ preventScroll: true });
+  }
+  // On a narrow screen the help table scrolls sideways: bring the column of
+  // the controls in use into view (without moving the page up or down).
+  if (screen === 'help') {
+    const lit = ui.querySelector('.help th.now');
+    const box = ui.querySelector('.help .scroll');
+    if (lit && box) box.scrollLeft = Math.max(0, lit.offsetLeft + lit.offsetWidth - box.clientWidth + 8);
   }
   if (screen !== 'nick' && !(chat && kept?.focus)) ui.querySelector('.primary:not([disabled])')?.focus({ preventScroll: true });
 }
@@ -1058,6 +1074,10 @@ const ACTIONS = {
   },
   async createRoom() {
     await app.online.createRoom();
+    show('room');
+  },
+  async quickMatch() {
+    await app.online.quickMatch();
     show('room');
   },
   async joinRoom(el) {
@@ -1390,7 +1410,9 @@ function frame(now) {
   const net = app.mode === 'online' && playing ? app.online?.status() : '';
   const hint = !playing || !touchEl.hidden
     ? ''
-    : app.mode === 'versus'
+    : app.mode === 'versus' && lastDevice() === 'pad'
+      ? 'Pad 1 and pad 2: stick move · A jump · X punch · B kick · X+B grab · LB block · Y special · RB finisher'
+      : app.mode === 'versus'
       ? 'P1: WASD move · Space jump · F G punch kick · H block · T Y special finisher     P2: arrows · U · J K · L · I O'
       : (({ p, k, b, s, u, j, walk }) => `${walk} move · ${j} jump · ${p} punch (x3 combo) · ${k} kick · ${p}+${k} grab · ${b} block (+move = roll) · ${s} special · ${u} finisher`)(controlNames());
   const place = playing ? app.fightPlace : app.place;

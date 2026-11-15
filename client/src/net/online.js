@@ -218,6 +218,13 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
 
   online.createRoom = () => online.joinRoom(newCode());
 
+  // One press to a fight: the open room with a free place and the most people
+  // in it (the lobby lists them in that order), or a new room if there is none.
+  online.quickMatch = () => {
+    const open = online.rooms().find((r) => !r.playing && r.names.length < MAX_PLAYERS);
+    return open ? online.joinRoom(open.code) : online.createRoom();
+  };
+
   online.leaveRoom = async () => {
     if (!room) return;
     if (match) stopMatch('left', true);

@@ -82,7 +82,10 @@ a gamepad, and the move list, the hint at the start of a fight and the
 Training checklist all name the controls to match (`J` / `P` / `X` for a
 punch). Every gamepad button was checked with a simulated standard pad:
 D-pad and A/B in the menus, the stick to walk, X, B, A, Y, LB/LT and RB/RT
-in a fight, Start to pause. A gamepad also works the menus: stick or D-pad
+in a fight, Start to pause - and two pads at once in 2 Players, each driving
+its own fighter. The help screen's controls table has a column for the
+keyboard, two players, the gamepad and the touch buttons, and lights the one
+you are using. A gamepad also works the menus: stick or D-pad
 moves between buttons, A chooses, B goes back. On a phone or tablet a thumb stick and six buttons
 appear on screen; **Arrange buttons** (menu and pause screen) lets you drag
 each one where you like and resize them, saved per orientation on the device.
@@ -125,7 +128,9 @@ blows give a light rumble too), where the browser allows it.
 
 The website build adds an **Online** mode for the whole alliance:
 
-- You pick a name and enter the **alliance lobby**, which shows who is online,
+- You pick a name and enter the **alliance lobby**. **Quick match** puts you
+  in the open room with the most people (or opens one) in one press; the
+  lobby also shows who is online,
   each with the portrait of the fighter they have picked, and which rooms are
   open: the faces of the fighters already inside, how full the room is (or
   whether a fight is on), and Join - or Watch, when it is full or fighting.

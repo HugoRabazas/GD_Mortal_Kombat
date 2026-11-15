@@ -41,7 +41,8 @@ test('two players meet, fight, and one press of the host starts the next fight',
     const listed = beto.online.rooms().find((r) => r.code === code);
     assert.deepEqual(listed.chars, ['jackie'], 'the lobby shows the fighter inside');
 
-    await beto.online.joinRoom(code);
+    await beto.online.quickMatch(); // the only open room is Ana's
+    assert.equal(beto.online.room.code, code, 'quick match found the open room');
     await until(() => ana.online.players().length === 2, 'Beto to arrive');
     assert.equal(ana.online.canStart(), false, 'not before Beto is ready');
     beto.online.setLook(1); // Frost, Pixie's second costume

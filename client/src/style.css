@@ -551,6 +551,9 @@ button:focus-visible {
 .scroll {
   width: 100%;
   overflow-x: auto;
+  /* A flex child that scrolls may otherwise be squeezed to nothing on a short
+     screen - which hid the controls table on phones held sideways. */
+  flex-shrink: 0;
 }
 
 table {
@@ -590,6 +593,13 @@ kbd {
   color: var(--bone);
   font: 600 0.78rem var(--font-body);
   text-align: center;
+}
+
+/* The help table lights the column of the controls in use. */
+.help th.now,
+.help td.now {
+  background: rgba(232, 180, 84, 0.16);
+  color: var(--bone);
 }
 
 .tips {
