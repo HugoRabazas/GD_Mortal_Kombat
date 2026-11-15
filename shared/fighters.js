@@ -68,7 +68,7 @@ export const FIGHTERS = [
       skin: '#9a93a6',
       glow: '#c44dff',
     },
-    stats: { power: 1.08, speed: 0.82, health: 108 },
+    stats: { power: 1.08, speed: 0.82, health: 115 },
     special: { type: 'quake', name: 'Mountain Stomp' },
     super: { name: 'Avalanche Charge' },
   },

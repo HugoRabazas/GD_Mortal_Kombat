@@ -1006,6 +1006,34 @@ kbd {
   grid-template-columns: 34px minmax(0, 1fr) auto;
 }
 
+/* A room in the lobby: the fighters already in it, overlapping like a hand of
+   cards, then who is there and how full it is. */
+.people li.roomrow {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.faces {
+  display: flex;
+}
+
+.faces .head {
+  width: 30px;
+  height: 30px;
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.faces .head + .head {
+  margin-left: -10px;
+}
+
+.roomrow .lname small {
+  display: block;
+  font: 600 0.66rem var(--font-body);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
 .ltag.ok {
   color: var(--gold);
 }
@@ -1248,6 +1276,16 @@ kbd {
 
   .ladder .lname {
     display: none;
+  }
+
+  /* ...but in the lobby the lists are people, and their names matter: stack
+     the two lists so each has the whole width. */
+  .lobby .versus {
+    flex-direction: column;
+  }
+
+  .people .lname {
+    display: block;
   }
 
   .vs {

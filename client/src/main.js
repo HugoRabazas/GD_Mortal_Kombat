@@ -10,7 +10,7 @@ import { createGame } from './game.js';
 import { handleEvents } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, setCapture, setTouchLive } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
-import { unlockAudio, play, isMuted, setMuted, setMusic, getVolume, setVolume } from './audio.js';
+import { unlockAudio, play, isMuted, setMuted, setMusic, setMusicTheme, getVolume, setVolume } from './audio.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
 
@@ -539,13 +539,13 @@ function lobbyScreen() {
   const on = app.online;
   const rooms = on.rooms();
   return `
-    <section class="screen select">
+    <section class="screen select lobby">
       <h2>Alliance lobby</h2>
       <div class="versus">
         <div class="ladder">
           <span class="who">Online now · ${on.lobbyPeers.length}</span>
           <ol class="people">
-            ${on.lobbyPeers.map((p) => `<li><span class="lname">${esc(p.name)}${p.id === on.me.id ? ' (you)' : ''}</span><span class="ltag">${p.playing ? 'fighting' : p.room ? 'in a room' : 'in the lobby'}</span></li>`).join('')}
+            ${on.lobbyPeers.map((p) => `<li>${head(p.char)}<span class="lname">${esc(p.name)}${p.id === on.me.id ? ' (you)' : ''}</span><span class="ltag">${p.playing ? 'fighting' : p.room ? 'in a room' : 'in the lobby'}</span></li>`).join('')}
           </ol>
         </div>
         <div class="ladder">
@@ -553,7 +553,12 @@ function lobbyScreen() {
           <ol class="people">
             ${
               rooms.length
-                ? rooms.map((r) => `<li><span class="lname">${esc(r.names.slice(0, 3).join(', '))}${r.names.length > 3 ? '…' : ''}</span><button type="button" class="btn small" data-act="joinRoom" data-id="${esc(r.code)}">${r.playing ? 'Watch' : 'Join'} · ${r.names.length}</button></li>`).join('')
+                ? rooms
+                    .map((r) => {
+                      const full = r.names.length >= on.maxPlayers;
+                      return `<li class="roomrow"><span class="faces" aria-hidden="true">${r.chars.slice(0, on.maxPlayers).map((c) => head(c)).join('')}</span><span class="lname">${esc(r.names.slice(0, 3).join(', '))}${r.names.length > 3 ? '…' : ''}<small>${r.playing ? 'fighting now' : full ? 'full' : `${r.names.length} of ${on.maxPlayers}`}</small></span><button type="button" class="btn small" data-act="joinRoom" data-id="${esc(r.code)}">${r.playing || full ? 'Watch' : 'Join'}</button></li>`;
+                    })
+                    .join('')
                 : '<li><span class="lname dim">No rooms open yet</span></li>'
             }
           </ol>
@@ -1130,7 +1135,9 @@ function frame(now) {
     : app.mode === 'versus'
       ? 'P1: WASD move · Space jump · F G punch kick · H block · T Y special finisher     P2: arrows · U · J K · L · I O'
       : 'WASD move · Space jump · J punch (x3 combo) · K kick · J+K grab · L block (+move = roll) · I special · O finisher';
-  stage.render({ state: g.state, theme: playing ? app.fightPlace : app.place, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: app.mode === 'training' }, now);
+  const place = playing ? app.fightPlace : app.place;
+  setMusicTheme(place);
+  stage.render({ state: g.state, theme: place, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: app.mode === 'training' }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {

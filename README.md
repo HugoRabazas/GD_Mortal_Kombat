@@ -87,8 +87,11 @@ blows give a light rumble too), where the browser allows it.
 
 The website build adds an **Online** mode for the whole alliance:
 
-- You pick a name and enter the **alliance lobby**, which shows who is online
-  and which rooms are open.
+- You pick a name and enter the **alliance lobby**, which shows who is online,
+  each with the portrait of the fighter they have picked, and which rooms are
+  open: the faces of the fighters already inside, how full the room is (or
+  whether a fight is on), and Join - or Watch, when it is full or fighting.
+  Rooms with a free place are listed first.
 - A **room** holds up to four fighters (more can watch). Everyone picks a
   fighter and presses Ready; the host starts the fight, optionally filling the
   empty places with CPU fighters. Two fighters play a duel, three or four an
@@ -133,6 +136,13 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   player has to be relayed.
 
 ## Settings
+
+Each arena has its own music, generated note by note in the browser: Ember
+Courtyard plays a warm plucked tune in A minor at 116 beats a minute; Frost
+Summit a colder one in D minor at 104, with a bell melody (a pure tone plus
+the out-of-tune overtone that makes a bell sound like a bell), a hollow bass
+and a high ice chime. Both speed up and fill out for deciding rounds and the
+last seconds of a round.
 
 Music and effects have their own volume sliders (menu and pause screen),
 remembered on the device, next to the sound switch, the touch-button switch
@@ -198,7 +208,11 @@ sound.
   here". The screen layer decides how that looks and sounds.
 
 `shared/ai.js` is the CPU. It reads the same state and answers with buttons,
-exactly like a human, so it cannot cheat. `shared/fighters.js` is the roster.
+exactly like a human, so it cannot cheat. It guards against blows that can
+still land - not against a move already spent - and it punishes openings: a
+rival reeling from a perfect guard, or stuck in the recovery of a move that
+missed. How often it sees an opening grows with the level (about 1, 4, 8 and
+11 punishing hits a match from Easy to Boss). `shared/fighters.js` is the roster.
 
 ### 2. The picture (`client/src/render/`)
 

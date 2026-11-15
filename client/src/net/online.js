@@ -91,12 +91,14 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
 
   // ---------------------------------------------------------------- lobby ---
 
-  const lobbyState = () => ({ name: me.name, room: room ? room.code : null, playing: !!match });
+  // What the lobby sees of each player: name, room, whether they are fighting,
+  // and the fighter they have picked (shown as a portrait next to the name).
+  const lobbyState = () => ({ name: me.name, room: room ? room.code : null, playing: !!match, char: room ? room.char : char() });
 
   online.connect = async () => {
     lobby = bus.channel('lobby', me.id, lobbyState());
     lobby.onPeers((list) => {
-      online.lobbyPeers = list.map((p) => ({ id: p.id, name: cleanName(p.name), room: typeof p.room === 'string' ? p.room.slice(0, 8) : null, playing: !!p.playing }));
+      online.lobbyPeers = list.map((p) => ({ id: p.id, name: cleanName(p.name), room: typeof p.room === 'string' ? p.room.slice(0, 8) : null, playing: !!p.playing, char: isFighterId(p.char) ? p.char : FIGHTERS[0].id }));
       onChange();
     });
     lobby.on('chat', (m) => {
@@ -110,13 +112,16 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
     const map = new Map();
     for (const p of online.lobbyPeers) {
       if (!p.room) continue;
-      if (!map.has(p.room)) map.set(p.room, { code: p.room, names: [], playing: false });
+      if (!map.has(p.room)) map.set(p.room, { code: p.room, names: [], chars: [], playing: false });
       const r = map.get(p.room);
       r.names.push(p.name);
+      r.chars.push(p.char);
       r.playing = r.playing || p.playing;
     }
-    return [...map.values()];
+    // Rooms with a free place first, then the fullest; fights in progress last.
+    return [...map.values()].sort((a, b) => a.playing - b.playing || (a.names.length >= MAX_PLAYERS) - (b.names.length >= MAX_PLAYERS) || b.names.length - a.names.length);
   };
+  online.maxPlayers = MAX_PLAYERS;
 
   // ----------------------------------------------------------------- room ---
 
@@ -216,6 +221,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
     room.char = id;
     room.ready = false;
     room.ch.track(roomState());
+    lobby?.track(lobbyState());
   };
 
   // Tell the room which arena this player has picked (it matters for the host).

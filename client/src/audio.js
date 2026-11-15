@@ -217,19 +217,49 @@ const SOUNDS = {
 };
 
 // ------------------------------------------------------------------ music ---
-// A small step sequencer: four bars (A minor, A minor, F, G) of drums, bass
-// and a plucked melody, generated note by note. 'menu' is a sparse version of
-// the same loop, 'fight' is the full one.
-
-// 'final' is the fight loop pushed harder, for deciding rounds and the last
+// A small step sequencer: four bars of drums, bass and a melody, generated
+// note by note. 'menu' is a sparse version of the loop, 'fight' the full one,
+// and 'final' the fight loop pushed harder, for deciding rounds and the last
 // seconds of any round: faster, busier drums, the melody an octave up.
-const stepSeconds = () => 60 / (musicMode === 'final' ? 130 : 116) / 4; // a sixteenth note
-const BARS = [
-  { bass: 55, notes: [220, 261.63, 329.63] },
-  { bass: 55, notes: [220, 261.63, 329.63] },
-  { bass: 43.65, notes: [174.61, 220, 261.63] },
-  { bass: 49, notes: [196, 246.94, 293.66] },
-];
+//
+// Each arena has its own tune (see setMusicTheme):
+//   courtyard - A minor, A minor, F, G at 116 beats a minute: a plucked
+//               triangle melody over a sawtooth bass, warm and driving.
+//   frost     - D minor, B flat, G minor, A at 104: a bell melody (a pure
+//               tone plus the out-of-tune overtone real bells have) over a
+//               hollow square bass, softer drums and a high ice chime.
+const MUSIC_THEMES = {
+  courtyard: {
+    bpm: 116,
+    finalBpm: 130,
+    bars: [
+      { bass: 55, notes: [220, 261.63, 329.63] },
+      { bass: 55, notes: [220, 261.63, 329.63] },
+      { bass: 43.65, notes: [174.61, 220, 261.63] },
+      { bass: 49, notes: [196, 246.94, 293.66] },
+    ],
+    bass: 'sawtooth',
+    bell: false,
+    kick: 0.9,
+    hat: 7000,
+  },
+  frost: {
+    bpm: 104,
+    finalBpm: 120,
+    bars: [
+      { bass: 73.42, notes: [293.66, 349.23, 440] },
+      { bass: 58.27, notes: [233.08, 293.66, 349.23] },
+      { bass: 49, notes: [196, 233.08, 293.66] },
+      { bass: 55, notes: [220, 277.18, 329.63] },
+    ],
+    bass: 'square',
+    bell: true,
+    kick: 0.65,
+    hat: 9500,
+  },
+};
+let tune = MUSIC_THEMES.courtyard;
+const stepSeconds = () => 60 / (musicMode === 'final' ? tune.finalBpm : tune.bpm) / 4; // a sixteenth note
 const BASS_STEPS = [0, 3, 6, 8, 11, 14];
 const LEAD_STEPS = [0, 3, 6, 10, 12, 14];
 let musicBus = null;
@@ -266,19 +296,36 @@ function hiss(t, dur, gain, freq) {
 }
 
 function musicTick(i, t) {
-  const bar = BARS[Math.floor(i / 16) % BARS.length];
+  const bars = tune.bars;
+  const bar = bars[Math.floor(i / 16) % bars.length];
   const s = i % 16;
   const final = musicMode === 'final';
   const full = final || musicMode === 'fight';
-  if (s % 4 === 0 && (full || s % 8 === 0)) note('sine', 130, t, 0.16, 0.9, 42); // kick
-  if (full && (s === 4 || s === 12)) hiss(t, 0.12, 0.35, 1800); // snare
-  if (final || (full ? s % 2 === 1 : s % 4 === 2)) hiss(t, 0.04, final && s % 2 === 0 ? 0.07 : 0.12, 7000); // hat
+  if (s % 4 === 0 && (full || s % 8 === 0)) note('sine', 130, t, 0.16, tune.kick, 42); // kick
+  if (full && (s === 4 || s === 12)) hiss(t, 0.12, tune.bell ? 0.22 : 0.35, 1800); // snare
+  if (final || (full ? s % 2 === 1 : s % 4 === 2)) hiss(t, 0.04, final && s % 2 === 0 ? 0.07 : 0.12, tune.hat); // hat
   if (final && (s === 14 || s === 15)) hiss(t, 0.08, 0.25, 1800); // a snare roll into the next bar
-  if (BASS_STEPS.includes(s) && (full || s % 8 === 0)) note('sawtooth', bar.bass, t, full ? 0.2 : 0.5, 0.32);
+  if (BASS_STEPS.includes(s) && (full || s % 8 === 0)) note(tune.bass, bar.bass, t, full ? 0.2 : 0.5, tune.bass === 'square' ? 0.2 : 0.32);
   if (LEAD_STEPS.includes(s)) {
     const n = bar.notes[(LEAD_STEPS.indexOf(s) + Math.floor(i / 16)) % bar.notes.length];
-    note('triangle', final ? n * 4 : full ? n * 2 : n, t, 0.22, full ? 0.16 : 0.12);
+    const f = final ? n * (tune.bell ? 2 : 4) : full ? n * 2 : n; // a bell two octaves up would shriek
+    if (tune.bell) {
+      // A bell: the note itself, and a quieter overtone 2.76 times higher that
+      // dies away sooner - the clang that tells a bell from a flute.
+      note('sine', f, t, full ? 0.5 : 0.9, full ? 0.16 : 0.13);
+      note('sine', f * 2.76, t, 0.25, 0.05);
+    } else {
+      note('triangle', f, t, 0.22, full ? 0.16 : 0.12);
+    }
   }
+  // Ice chime: a high, slow sparkle at the top of every other bar.
+  if (tune.bell && s === 0 && Math.floor(i / 16) % 2 === 1) note('sine', bar.notes[2] * 4, t, 1.6, 0.04);
+}
+
+// Pick the tune of an arena ('courtyard' or 'frost'). The loop carries on
+// from the same step, so a change of arena never breaks the beat.
+export function setMusicTheme(id) {
+  tune = MUSIC_THEMES[id] || MUSIC_THEMES.courtyard;
 }
 
 function pumpMusic() {

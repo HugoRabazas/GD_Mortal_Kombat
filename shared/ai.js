@@ -12,12 +12,29 @@ import { MOVES } from './sim.js';
 // `parry` is how often the CPU manages a last-moment guard (a perfect guard,
 // see GUARD in sim.js). A guard raised that late is always perfect, so when
 // the CPU fails this roll it is simply too slow: it rolls away or gets hit.
+// `punish` is how often it sees an opening - a rival reeling from a perfect
+// guard, or stuck in the recovery of a move that missed - and makes them pay.
 const LEVELS = {
-  easy: { think: 16, block: 0.25, attack: 0.3, special: 0.02, parry: 0 },
-  normal: { think: 8, block: 0.6, attack: 0.58, special: 0.07, parry: 0.1 },
-  hard: { think: 5, block: 0.8, attack: 0.7, special: 0.1, parry: 0.28 },
-  boss: { think: 4, block: 0.84, attack: 0.76, special: 0.14, parry: 0.45 },
+  easy: { think: 16, block: 0.25, attack: 0.3, special: 0.02, parry: 0, punish: 0.15 },
+  normal: { think: 8, block: 0.6, attack: 0.58, special: 0.07, parry: 0.1, punish: 0.45 },
+  hard: { think: 5, block: 0.8, attack: 0.7, special: 0.1, parry: 0.28, punish: 0.75 },
+  boss: { think: 4, block: 0.84, attack: 0.76, special: 0.14, parry: 0.45, punish: 0.9 },
 };
+
+// Ticks a fighter still has to wait before acting again, if it is recovering
+// from a move that has stopped hitting; 0 otherwise.
+function recoveryLeft(e) {
+  const m = e.state === 'attack' && MOVES[e.move];
+  if (!m || e.t < m.startup + m.active) return 0;
+  return m.startup + m.active + m.recovery - e.t;
+}
+
+// True while an attack can still land: before and during its active frames.
+function threatening(e) {
+  if (e.state === 'airAttack') return true;
+  const m = e.state === 'attack' && MOVES[e.move];
+  return !!m && e.t < m.startup + m.active;
+}
 const LATE = 4; // a guard raised this many ticks before the blow, or fewer, is a perfect guard
 
 // Each kind of fighter has its own way of fighting, keyed by its special move:
@@ -150,8 +167,7 @@ export function aiInput(ai, s, me) {
     const ex = f.x - e.x;
     const ez = f.z - e.z;
     const ed = Math.hypot(ex, ez);
-    const winding = e.state === 'attack' || e.state === 'airAttack';
-    if (!winding) continue;
+    if (!threatening(e)) continue; // a move already spent is an opening, not a threat
     // A ground stomp cannot be blocked well: jump over it.
     if (e.move === 'quake' && ed < 230 && rnd(ai) < blockChance) return hold(INPUT.JUMP, 4);
     const facingMe = angleDiff(Math.atan2(ez, ex), e.dir) < 0.9;
@@ -203,6 +219,17 @@ export function aiInput(ai, s, me) {
   // --- stay inside the ring of fire ---
   const r = Math.hypot(f.x, f.z);
   if (r > s.ringR - 70 && dist > 120) return hold(toward(-f.x, -f.z), 8);
+
+  // --- punish an opening ---
+  // A rival reeling from a perfect guard, or still recovering from a move,
+  // cannot block: step in and hit them before they can act again.
+  const left = recoveryLeft(o);
+  const reeling = o.state === 'hit' && o.reel > 0;
+  if ((reeling || left >= 10) && o.h <= 0 && rnd(ai) < cfg.punish) {
+    if (dist < 90) return press(reeling || left < 14 ? INPUT.PUNCH : INPUT.KICK);
+    if (special === 'dash' && f.meter >= RULES.SPECIAL_COST && dist > 110 && dist < 280) return press(INPUT.SPECIAL);
+    if (dist < 230) return hold(toward(dx, dz), 4);
+  }
 
   // --- grab a crystal when it is worth it and nobody is on top of us ---
   if (dist > 130) {
