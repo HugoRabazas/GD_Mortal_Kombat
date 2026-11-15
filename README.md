@@ -41,7 +41,9 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   Stage three breaks the run of duels: a brawl against all three rivals at
   once, three rounds, where only a clear first place goes through (a tie at
   the top is not enough). The ladder moves between the arenas as you climb.
-- **Quick Fight**: one duel against the CPU on Easy, Normal or Hard.
+- **Quick Fight**: one duel against the CPU on Auto, Easy, Normal or Hard.
+  Auto (also in Arena) follows you: each win moves the CPU one step up, each
+  loss one step down, and the result screen says when it moves.
 - **2 Players**: a duel on one device, or a brawl with two CPU fighters added.
 - **Training**: a duel with no clock where health and energy refill, against a
   partner who stands still, blocks, fights back, or **kicks on a steady beat**
@@ -394,6 +396,10 @@ without being imported or declared, and things declared but never used.
   celebrate.
 - Each fighter is about twenty separate rounded parts with a cartoon outline,
   which costs the graphics card two or three draws a part. A four-fighter
-  brawl is about 240 draws a frame (it was 300 before the arena's stone was
-  batched and the small parts stopped casting shadows); a slow device first
-  drops the shadows, then the resolution, to keep its frame rate.
+  brawl is about 300 draws a frame: some 240 for the scene and about 57 for
+  the shadow pass (three.js counts draws after the shadow pass, so the
+  first figures quoted here, 240, left the shadows out; the scene's own
+  count went from 300 to 240 when the arena's stone was batched and the
+  small parts stopped casting shadows). Graphics: Fast drops the shadow pass
+  (about 244 draws) and the resolution; Auto does the same by itself when a
+  device struggles.

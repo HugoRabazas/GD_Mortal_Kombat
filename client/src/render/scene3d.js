@@ -50,6 +50,9 @@ export function create3D(canvas) {
     return null; // no WebGL here: the caller falls back to the flat arena
   }
   renderer.outputEncoding = THREE.sRGBEncoding;
+  // Count every draw of a frame, the shadow pass included (three.js resets
+  // its counter after drawing shadows otherwise, which hid them).
+  renderer.info.autoReset = false;
   renderer.setClearColor(0x0b0714);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -1182,6 +1185,7 @@ export function create3D(canvas) {
         fanHeads.instanceMatrix.needsUpdate = true;
       }
 
+      renderer.info.reset();
       renderer.render(scene, camera);
     },
 

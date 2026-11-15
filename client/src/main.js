@@ -74,7 +74,7 @@ const app = {
   vsArena: false, // in 2-player mode: a duel, or a brawl with two CPU fighters added
   dummy: 'still', // training partner: 'still', 'block' or 'fight'
   picks: [FIGHTERS[0].id, FIGHTERS[1 % FIGHTERS.length].id],
-  level: 'normal',
+  level: 'auto', // CPU difficulty: 'auto' follows the player (see stepAutoLevel)
   place: ARENAS[0].id, // the arena the player chose; the fight behind the menus shows it
   fightPlace: ARENAS[0].id, // the arena of the fight being played
   arcade: null, // { ladder, stage, score, retries, gained }
@@ -322,7 +322,7 @@ function rivalsCard(taken) {
 }
 
 function selectScreen() {
-  const levels = [['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']];
+  const levels = [['auto', `Auto · ${LEVEL_NAMES[autoLevel()]}`], ['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']];
   const { mode } = app;
   const names = mode === 'versus' ? ['Player 1', 'Player 2'] : mode === 'training' ? ['You', 'Training partner'] : ['You', 'CPU'];
   const seg = (items, current, act) => `<div class="seg" role="group">${items.map(([id, label]) => `<button type="button" class="${current === id ? 'on' : ''}" data-act="${act}" data-id="${id}" aria-pressed="${current === id}">${label}</button>`).join('')}</div>`;
@@ -680,6 +680,7 @@ function resultScreen() {
       <section class="screen result">
         ${winnerQuote()}
         ${rankingList()}
+        ${app.levelMoved ? `<p class="note">The CPU is now on <b>${LEVEL_NAMES[app.levelMoved]}</b> for your next fight.</p>` : ''}
         <div class="row">${again}</div>
       </section>`;
   }
@@ -688,6 +689,7 @@ function resultScreen() {
       <section class="screen result">
         ${winnerQuote()}
         ${statsCard()}
+        ${app.levelMoved ? `<p class="note">The CPU is now on <b>${LEVEL_NAMES[app.levelMoved]}</b> for your next fight.</p>` : ''}
         <div class="row">
           <button type="button" class="btn primary" data-act="rematch">Rematch</button>
           <button type="button" class="btn" data-act="select">Change fighters</button>
@@ -1007,9 +1009,9 @@ function startFight() {
     }
   } else if (app.mode === 'arena') {
     chars = [app.picks[0], ...rivalsFor([app.picks[0]])];
-    controllers = [solo, cpu(app.level), cpu(app.level), cpu(app.level)];
+    controllers = [solo, cpu(cpuLevel()), cpu(cpuLevel()), cpu(cpuLevel())];
   } else if (app.mode === 'quick') {
-    controllers = [solo, cpu(app.level)];
+    controllers = [solo, cpu(cpuLevel())];
   } else if (app.mode === 'training') {
     const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'beat' ? drummer() : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
     controllers = [solo, partner];
@@ -1040,7 +1042,35 @@ function startArcade() {
 }
 
 // Called once when a match ends, before the result screen is drawn.
+// Auto difficulty: the CPU level follows the player. Each win moves it one
+// step up (to Hard at most), each loss one step down (to Easy at least), so
+// everyone in the alliance settles where fights are close. Remembered.
+const AUTO_STEPS = ['easy', 'normal', 'hard'];
+const LEVEL_NAMES = { easy: 'Easy', normal: 'Normal', hard: 'Hard' };
+function autoLevel() {
+  try {
+    const saved = localStorage.getItem('gd-arena-auto-level');
+    return AUTO_STEPS.includes(saved) ? saved : 'normal';
+  } catch {
+    return 'normal';
+  }
+}
+const cpuLevel = () => (app.level === 'auto' ? autoLevel() : app.level);
+function stepAutoLevel(won) {
+  app.levelMoved = null;
+  if (app.level !== 'auto' || (app.mode !== 'quick' && app.mode !== 'arena')) return;
+  const at = AUTO_STEPS.indexOf(autoLevel());
+  const next = AUTO_STEPS[Math.max(0, Math.min(AUTO_STEPS.length - 1, at + (won ? 1 : -1)))];
+  if (next !== AUTO_STEPS[at]) app.levelMoved = next;
+  try {
+    localStorage.setItem('gd-arena-auto-level', next);
+  } catch {
+    // not remembered
+  }
+}
+
 function scoreMatch() {
+  stepAutoLevel(app.game.state.matchWinner === 0);
   if (app.mode !== 'arcade') return;
   const a = app.arcade;
   const s = app.game.state;
