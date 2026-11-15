@@ -164,7 +164,22 @@ export function aiInput(ai, s, me) {
       return INPUT.KICK;
     }
   }
-  if (f.state !== 'jump' && f.state !== 'airAttack') ai.airPlan = 0;
+  if (f.state !== 'jump' && f.state !== 'airAttack') {
+    ai.airPlan = 0;
+    ai.airSpecial = false;
+  }
+  // In the air with energy and a rival in reach of the air special: now and
+  // then use it (decided once per jump, apart from the other air plans).
+  if (f.state === 'jump' && f.t >= 6 && !ai.airSpecial && f.meter >= RULES.SPECIAL_COST && ai.target >= 0) {
+    const o = s.f[ai.target];
+    const d = Math.hypot(o.x - f.x, o.z - f.z);
+    ai.airSpecial = true;
+    if (d < 170 && o.h <= 0 && rnd(ai) < cfg.punish * 0.4) {
+      ai.tap = INPUT.SPECIAL;
+      ai.tapT = 2;
+      return INPUT.SPECIAL;
+    }
+  }
   else if (f.state === 'jump' && ai.target >= 0 && f.runJump && f.t >= 2 && f.t < 12 && ai.airPlan < 2) {
     // A jump out of a run: the flying knee once the rival is in reach.
     const o = s.f[ai.target];

@@ -442,6 +442,25 @@ function targetPose(f, now) {
         if (pre) return pose({ hipY: -62, lean: 0.2, hfx: 2, hfy: -14, hbx: -16, hby: 2, ffx: 12, ffy: -24, fbx: -14, fby: -14 });
         return pose({ hipY: -62, lean: 0.5, hfx: 46, hfy: 30, hbx: -22, hby: -8, ffx: 8, ffy: -28, fbx: -24, fby: -14 });
       }
+      if (f.move === 'airDash') {
+        // The air rush: stretched out, diving fist first at the rival.
+        if (pre) return pose({ hipY: -62, lean: 0.3, hfx: -8, hfy: -6, hbx: -20, hby: 4, ffx: 10, ffy: -26, fbx: -16, fby: -16 });
+        return pose({ hipX: 10, hipY: -60, lean: 0.95, hfx: 56, hfy: 6, hbx: -28, hby: 8, ffx: -20, ffy: -14, fbx: -40, fby: -20 });
+      }
+      if (f.move === 'airBolt') {
+        // Both palms thrust down and forward.
+        if (pre) return pose({ hipY: -64, lean: -0.1, hfx: 6, hfy: -20, hbx: 2, hby: -14, ffx: 12, ffy: -24, fbx: -12, fby: -14 });
+        return pose({ hipY: -62, lean: 0.4, hfx: 46, hfy: 22, hbx: 42, hby: 28, ffx: 6, ffy: -26, fbx: -20, fby: -14 });
+      }
+      if (f.move === 'bodyPress') {
+        // Arms flung up, then dropping belly first, arms spread.
+        if (pre) return pose({ hipY: -66, lean: -0.15, hfx: 22, hfy: -52, hbx: -22, hby: -50, ffx: 14, ffy: -30, fbx: -14, fby: -26 });
+        return pose({ hipY: -60, lean: 1.25, hfx: 44, hfy: 30, hbx: -8, hby: 34, ffx: -14, ffy: -22, fbx: -32, fby: -12 });
+      }
+      if (f.move === 'airSpiral') {
+        // A twirl in the air, arms out, the flames following them round.
+        return pose({ spin: (f.t * 0.6) % (Math.PI * 2), hipY: -64, lean: 0.05, hfx: 36, hfy: -16, hbx: -36, hby: -16, ffx: 10, ffy: -20, fbx: -10, fby: -12 });
+      }
       if (f.move === 'axeKick') {
         // The leg thrown up over the head, then chopped straight down.
         if (pre) return pose({ hipY: -64, lean: -0.3, ffx: 26, ffy: -126, fbx: -14, fby: -20, hfx: 14, hfy: -20, hbx: -18, hby: -10 });

@@ -893,6 +893,22 @@ test('a blow that lands can be cancelled into the special; a stomp that lands bo
   assert.ok(top > 15, `bounced off the floor (${top.toFixed(0)})`);
 });
 
+test('special in the air is each fighter\'s own air special, and each one lands', () => {
+  const want = { ruko: 'airDash', shadow: 'airBolt', jackie: 'bodyPress', pixie: 'airSpiral' };
+  for (const id of ALL) {
+    const s = startFight([id, 'ruko']);
+    closeUp(s, 60);
+    s.f[0].meter = RULES.SPECIAL_COST;
+    step(s, [INPUT.JUMP, 0]);
+    run(s, 7);
+    step(s, [INPUT.SPECIAL, 0]);
+    assert.equal(s.f[0].move, want[id], id);
+    assert.ok(s.f[0].meter < RULES.SPECIAL_COST, 'it costs energy');
+    run(s, 60);
+    assert.ok(s.f[1].hp < s.f[1].maxHp, `${id}: lands`);
+  }
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);

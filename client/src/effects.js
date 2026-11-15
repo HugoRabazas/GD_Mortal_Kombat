@@ -294,7 +294,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
       case 'special': {
         const p = project(by.x, 210, by.z);
         floatText(p.x, p.y, char.special.name.toUpperCase(), tint.accent, 22);
-        if (!quiet) play({ dash: 'rush', rise: 'flare', quake: 'heave' }[e.move] || 'special');
+        if (!quiet) play({ dash: 'rush', rise: 'flare', quake: 'heave', airDash: 'rush', airSpiral: 'flare', bodyPress: 'heave' }[e.move] || 'special');
         break;
       }
       case 'bolt':

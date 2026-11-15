@@ -215,6 +215,14 @@ and the heartbeat, the crowd and the weather go quiet.
   as often as it punishes, the knee when closing in); measured with them in:
   duels 47-53 %, brawl firsts 16-20 %, ladder 100 / 81 / 61 %. The Tutorial
   teaches them (Combos: hook kick and air string; On the run: flying knee).
+- **Air specials**: special pressed in the air (same cost) is each
+  fighter's own air version: Ruko **rushes** diagonally down at the rival
+  (11), Shadow throws the **bolt angled down** (10, it flies until it meets
+  the floor), Jackie drops in a **body press** whose landing floors everyone
+  close (12), Pixie **twirls** in a spiral of flame that strikes all round
+  (11). Landing after one takes 12 ticks. The CPU uses them as often as it
+  punishes; taught in the Tutorial (Specials). Health: Shadow 101, Jackie
+  114, Pixie 101 (duels 48-52 %, brawl firsts 14-23 %).
 - **More combo routes**: the lunging straight now opens the hook kick too
   (run, punch, kick); a **stomp** that lands bounces its victim off the
   floor, open to one more blow in the air; and a blow that lands can be

@@ -28,6 +28,11 @@ const AIR_JUMP = { from: 4, v: 11.5, buffer: 6 };
 // The stomp (grab - or punch and kick together - in the air): a short hang,
 // then a plunge feet first.
 const STOMP = { fall: -17, rest: 14 };
+// The air special each fighter's own special turns into in the air.
+export const AIR_SPECIAL = { dash: 'airDash', bolt: 'airBolt', quake: 'bodyPress', rise: 'airSpiral' };
+const AIR_MOVES = { airDash: 1, airBolt: 1, bodyPress: 1, airSpiral: 1 };
+// The bolt thrown from the air strikes lighter than the one from the ground.
+const AIR_BOLT_HIT = { dmg: 10, hitstun: 16, blockstun: 10, push: 6, gain: 6, heavy: true, chip: 0.2 };
 // A launched rival can be hit this many more times in the air.
 const JUGGLE = 2;
 // Kick held down: after `hold` ticks the kick coils into a charge, which is
@@ -208,6 +213,25 @@ export const MOVES = {
   flyKnee: {
     startup: 3, active: 999, recovery: 0, dmg: 9, reach: 80, arc: 1.0, y0: -10, y1: 140, aim: 0,
     hitstun: 0, blockstun: 12, push: 8, gain: 10, knockdown: true, heavy: true,
+  },
+  // --- air specials (special pressed in the air, costs the same) ---
+  // Ruko rushes diagonally down at the rival; Shadow throws the bolt angled
+  // down; Jackie drops belly-first and the landing floors those around;
+  // Pixie twirls in a spiral of flame that strikes all round.
+  airDash: {
+    startup: 4, active: 999, recovery: 0, dmg: 11, speed: 11, reach: 84, arc: 1.1, y0: -60, y1: 140, aim: 400,
+    hitstun: 0, blockstun: 14, push: 9, gain: 6, knockdown: true, heavy: true, chip: 0.25, fall: 7,
+  },
+  airBolt: {
+    startup: 7, active: 999, recovery: 0, dmg: 0, aim: 600,
+  },
+  bodyPress: {
+    startup: 7, active: 999, recovery: 0, dmg: 12, reach: 60, arc: Math.PI, y0: -140, y1: 30, aim: 0,
+    hitstun: 0, blockstun: 14, push: 8, gain: 6, knockdown: true, heavy: true, chip: 0.25, fall: 15, crash: 115,
+  },
+  airSpiral: {
+    startup: 3, active: 999, recovery: 0, dmg: 11, reach: 98, arc: Math.PI, y0: -60, y1: 150, aim: 0,
+    hitstun: 0, blockstun: 12, push: 7, gain: 6, knockdown: true, heavy: true, chip: 0.25,
   },
   stomp: {
     startup: 5, active: 999, recovery: 0, dmg: 10, reach: 44, arc: Math.PI, y0: -110, y1: 30, aim: 0,
@@ -704,6 +728,14 @@ function control(s, f, inp) {
     }
     case 'jump': {
       const b = f.buf;
+      if (b & INPUT.SPECIAL && f.meter >= RULES.SPECIAL_COST) {
+        const move = AIR_SPECIAL[getFighter(f.char).special.type];
+        f.meter -= RULES.SPECIAL_COST;
+        airAttack(s, f, move);
+        if (move === 'airSpiral') f.vh = Math.max(f.vh, 4); // a lift into the twirl
+        emit(s, 'special', { by: f.slot, move });
+        break;
+      }
       if (b & (INPUT.PUNCH | INPUT.KICK | INPUT.GRAB)) {
         const kick = f.runJump && !f.air2 && f.t < 16 ? 'flyKnee' : 'airKick';
         airAttack(s, f, b & INPUT.GRAB || (b & INPUT.PUNCH && b & INPUT.KICK) ? 'stomp' : b & INPUT.KICK ? kick : 'airPunch');
@@ -733,6 +765,36 @@ function control(s, f, inp) {
       if (f.move === 'airPunch' && f.hits.length && f.t >= GRAB_WINDOW && f.buf & INPUT.KICK) {
         airAttack(s, f, 'axeKick');
         break;
+      }
+      const am = MOVES[f.move];
+      if (am.fall && f.t === am.startup) {
+        // A dive at the rival (or straight down): the drop of the air specials.
+        f.vh = -am.fall;
+        if (am.speed) {
+          aim(s, f, am.aim);
+          f.vx = Math.cos(f.dir) * am.speed;
+          f.vz = Math.sin(f.dir) * am.speed;
+        } else f.vx = f.vz = 0;
+      } else if (am.fall && f.t < am.startup) {
+        f.vh = GRAVITY; // a beat's hang before the drop
+        f.vx *= 0.5;
+        f.vz *= 0.5;
+      }
+      if (f.move === 'airBolt' && f.t === am.startup) {
+        // The bolt thrown down and forward from the air.
+        s.proj.push({
+          id: ++s.projSeq,
+          owner: f.slot,
+          char: f.char,
+          x: f.x + Math.cos(f.dir) * 40,
+          z: f.z + Math.sin(f.dir) * 40,
+          h: f.h + 70,
+          vh: -3.6,
+          vx: Math.cos(f.dir) * PROJECTILE.speed * 0.85,
+          vz: Math.sin(f.dir) * PROJECTILE.speed * 0.85,
+          life: PROJECTILE.life,
+        });
+        emit(s, 'bolt', { by: f.slot });
       }
       if (f.move === 'stomp') {
         if (f.t < MOVES.stomp.startup) {
@@ -950,13 +1012,26 @@ function land(s, f) {
       f.vx = f.vz = 0;
       emit(s, 'land', here);
       break;
-    case 'airAttack':
+    case 'airAttack': {
+      const m = MOVES[f.move];
+      if (m && m.crash) {
+        // The body press: everyone close by on the floor goes down.
+        for (const o of s.f) {
+          if (o === f || f.hits.includes(o.slot) || !canBeHit(o) || o.h > 20) continue;
+          if (Math.hypot(o.x - f.x, o.z - f.z) > m.crash) continue;
+          f.hits.push(o.slot);
+          applyHit(s, f, o, m, f.x, f.z, f.move);
+        }
+        emit(s, 'quake', { by: f.slot, x: f.x, z: f.z, r: m.crash });
+      }
+      const special = f.move in AIR_MOVES;
       setState(f, 'land');
-      f.stun = f.move === 'stomp' ? STOMP.rest : 4;
+      f.stun = f.move === 'stomp' ? STOMP.rest : special ? 12 : 4;
       f.vx = f.vz = 0;
-      emit(s, f.move === 'stomp' ? 'stompLand' : 'land', here);
+      emit(s, f.move === 'stomp' || f.move === 'bodyPress' ? 'stompLand' : 'land', here);
       f.move = null;
       break;
+    }
     case 'attack': { // a rising special or a finisher's leap coming back down
       const m = MOVES[f.move];
       if (m && m.crash) {
@@ -1097,7 +1172,10 @@ function activeMove(f) {
     if (!m.reach || f.t < m.startup || f.t >= m.startup + m.active) return null;
     return m;
   }
-  if (f.state === 'airAttack') return f.t < MOVES[f.move].startup ? null : MOVES[f.move];
+  if (f.state === 'airAttack') {
+    const m = MOVES[f.move];
+    return !m.reach || f.t < m.startup ? null : m;
+  }
   return null;
 }
 
@@ -1302,6 +1380,14 @@ function resolveHits(s) {
   for (const p of s.proj) {
     p.x += p.vx;
     p.z += p.vz;
+    if (p.vh) {
+      // Thrown from the air: it flies down until it meets the floor.
+      p.h += p.vh;
+      if (p.h <= PROJECTILE.r) {
+        p.dead = true;
+        emit(s, 'clash', { x: p.x, z: p.z, h: 10 });
+      }
+    }
     if (--p.life <= 0 || Math.hypot(p.x, p.z) > s.ringR + 40) p.dead = true;
   }
   for (let i = 0; i < s.proj.length; i++) {
@@ -1321,7 +1407,7 @@ function resolveHits(s) {
       if (Math.hypot(def.x - p.x, def.z - p.z) > PROJECTILE.r + BODY_R) continue;
       if (p.h + PROJECTILE.r < def.h || p.h - PROJECTILE.r > def.h + BODY_H) continue;
       p.dead = true;
-      applyHit(s, s.f[p.owner], def, MOVES.bolt, p.x - p.vx * 3, p.z - p.vz * 3, 'bolt');
+      applyHit(s, s.f[p.owner], def, p.vh ? AIR_BOLT_HIT : MOVES.bolt, p.x - p.vx * 3, p.z - p.vz * 3, 'bolt');
       break;
     }
   }

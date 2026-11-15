@@ -23,7 +23,7 @@ import { heads } from '../assets.js';
 
 const S = 0.01; // world units per arena pixel
 // Moves drawn glowing in the fighter's colour: the specials and the finisher.
-const GLOWS = new Set(['dash', 'bolt', 'rise', 'quake', 'super', ...ULT_MOVES]);
+const GLOWS = new Set(['dash', 'bolt', 'rise', 'quake', 'super', 'airDash', 'airBolt', 'bodyPress', 'airSpiral', ...ULT_MOVES]);
 const OUTLINE = 0.022; // thickness of the dark cartoon outline
 const BOSS = { primary: '#2a1436', secondary: '#0d0812', accent: '#ffd34d', glow: '#ffb020' };
 
@@ -295,7 +295,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
       if (f.state === 'hit' && f.t < 5) {
         tint = white;
         amount = 0.75;
-      } else if (f.state === 'attack' && GLOWS.has(f.move)) {
+      } else if ((f.state === 'attack' || f.state === 'airAttack') && GLOWS.has(f.move)) {
         tint = glow;
         amount = 0.55 + 0.2 * Math.sin(now / 40);
       } else if (f.hp > 0 && f.hp < f.maxHp * 0.25 && f.state !== 'win' && f.state !== 'lose') {
