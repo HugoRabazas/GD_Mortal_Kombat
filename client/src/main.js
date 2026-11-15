@@ -489,6 +489,14 @@ function buildWords(f) {
   return words.length ? words.join(', ') : 'an all-rounder';
 }
 
+// What each fighter's own finisher does (by its first stage, `super.move`).
+const SUPER_NOTES = {
+  howl: 'a rush; if it lands, a flurry of claws and an uppercut to the moon',
+  eclipse: 'vanishes, reappears behind the rival, a shadow flurry and a kick that sends them flying',
+  avalanche: 'a charge that leaves the rival reeling, a leap and a belly-first crash that floors everyone near',
+  phoenix: 'soars up in a pillar of flame and dives on the rival; best up close',
+};
+
 const SPECIAL_NOTES = {
   dash: 'a lunge across the arena that knocks down',
   bolt: 'a projectile that flies where you face',
@@ -526,7 +534,7 @@ function movesCard() {
       const who = two ? `${f.name}: ` : '';
       return `
         <dt>${k(key.s)}</dt><dd>${who}<b>${f.special.name}</b> - ${SPECIAL_NOTES[f.special.type] || 'special move'}. Costs a third of the energy bar.</dd>
-        <dt>${k(key.u)}</dt><dd>${who}<b>${f.super.name}</b> - the finisher. Needs the whole bar.</dd>`;
+        <dt>${k(key.u)}</dt><dd>${who}<b>${f.super.name}</b> - ${SUPER_NOTES[f.super.move] || 'the finisher'}. Needs the whole bar.</dd>`;
     })
     .join('');
   return `

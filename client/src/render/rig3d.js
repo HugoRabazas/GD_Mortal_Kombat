@@ -16,13 +16,14 @@
 // chested wrestler with a belly and a thick belt) and 'slim' (a lighter frame
 // with a skirt and a ponytail).
 
-import { LEN, joint, currentPose } from './fighter.js';
+import { LEN, joint, currentPose, vanished } from './fighter.js';
+import { MOVES, ULT_MOVES } from '../../../shared/sim.js';
 import { lookColors } from '../../../shared/fighters.js';
 import { heads } from '../assets.js';
 
 const S = 0.01; // world units per arena pixel
 // Moves drawn glowing in the fighter's colour: the specials and the finisher.
-const GLOWS = new Set(['dash', 'bolt', 'rise', 'quake', 'super']);
+const GLOWS = new Set(['dash', 'bolt', 'rise', 'quake', 'super', ...ULT_MOVES]);
 const OUTLINE = 0.022; // thickness of the dark cartoon outline
 const BOSS = { primary: '#2a1436', secondary: '#0d0812', accent: '#ffd34d', glow: '#ffb020' };
 
@@ -192,6 +193,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
 
     update(f, now, camera) {
       const p = currentPose(f, now);
+      turn.visible = !vanished(f); // gone between Shadow's vanishing and reappearing
 
       // Stand on the fighter's spot and turn, by the shortest way round, to
       // face where the fighter faces.
@@ -244,7 +246,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
 
       if (scarf) {
         // The scarf hangs at rest and streams out behind when the fighter moves.
-        const rushing = f.state === 'attack' && (f.move === 'dash' || f.move === 'super');
+        const rushing = f.state === 'attack' && !!MOVES[f.move]?.rush;
         const flow = rushing ? 1.5 : f.state === 'walk' || f.state === 'jump' ? 1 : 0.2;
         const wave = Math.sin(now / 140 + f.slot) * 3;
         const mx = sx - 12 - 20 * flow;

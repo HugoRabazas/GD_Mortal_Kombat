@@ -32,6 +32,9 @@ function pose(o) {
 const CROUCH = { hipY: -38, lean: 0.24, hfx: 24, hfy: 4, hbx: 12, hby: 12, ffx: 22, fbx: -24 };
 const AIR = { hipY: -64, lean: 0.1, hfx: 20, hfy: -18, hbx: -16, hby: -10, ffx: 12, ffy: -24, fbx: -12, fby: -12 };
 
+// Shadow's finisher: gone from sight between vanishing and reappearing.
+export const vanished = (f) => f.state === 'attack' && f.move === 'eclipse' && f.t >= 5 && f.t < MOVES.eclipse.blink;
+
 // A whole turn on the spot, over `ticks`: 0 at the start, a full circle at the
 // end (which looks the same as no turn, so the next pose follows on).
 const FLIP = 16; // ticks of the somersault that opens an air jump
@@ -100,7 +103,40 @@ function attackPose(f) {
       if (phase === 'pre') return pose({ lean: -0.1, ffx: 12, ffy: -34, hfx: 12, hfy: 4 });
       if (phase === 'act') return pose({ lean: -0.34, hipX: 8, ffx: 80, ffy: -84, fbx: -6, hfx: 6, hfy: 8, hbx: -18, hby: 4 });
       return pose({ lean: -0.12, ffx: 34, ffy: -26 });
+    case 'howl2': // claws raking left and right, a blow every few ticks
+    case 'eclipse2': { // fists and a knee in turn, too fast to follow
+      const a = Math.floor(f.t / 2) % 2;
+      const knee = f.move === 'eclipse2' && Math.floor(f.t / 2) % 3 === 2;
+      return pose({ lean: 0.36, hipX: 8, hfx: a ? 60 : 12, hfy: a ? -14 : 4, hbx: a ? 2 : 58, hby: a ? 10 : -12, fbx: -28, ffx: knee ? 34 : 20, ffy: knee ? -52 : 0, tilt: a ? 0.08 : -0.08 });
+    }
+    case 'howl3': // the uppercut to the moon: off the floor, the fist past the head
+      if (phase === 'pre') return pose({ ...CROUCH, hipY: -34, lean: 0.4, hfx: 6, hfy: 32, hbx: -12, hby: 16 });
+      if (phase === 'act') return pose({ hipX: 10, hipY: -70, lean: -0.1, hfx: 30, hfy: -70, hbx: -20, hby: 10, ffx: 20, ffy: -18, fbx: -22, fby: -8, lift: -22 });
+      return pose({ lean: 0.04, hfx: 22, hfy: -46, lift: -6 });
+    case 'eclipse': // arms crossed while the body fades, then a palm thrust from behind
+      if (f.t < m.blink) return pose({ hipY: -52, lean: 0.12, hfx: 10, hfy: -12, hbx: 16, hby: -14, ffx: 14, fbx: -16 });
+      if (phase === 'pre') return pose({ hipY: -50, lean: 0.3, hfx: 2, hfy: 4, hbx: -18, hby: 6, ffx: 24, fbx: -30 });
+      if (phase === 'act') return pose({ hipX: 12, hipY: -56, lean: 0.55, hfx: 62, hfy: -6, hbx: -24, hby: 10, ffx: 28, fbx: -42, fby: -6 });
+      return pose({ lean: 0.24, hfx: 36, hfy: 0 });
+    case 'eclipse3': { // a full turn into a kick that sends the rival flying
+      const spin = turnOf(f.t, m.startup + 1);
+      if (phase === 'pre') return pose({ spin, lean: 0.26, ffx: 2, ffy: -12, fbx: -26, fby: -22, hfx: -16, hfy: 6, hbx: 18, hby: 2 });
+      if (phase === 'act') return pose({ spin, hipY: -58, lean: -0.55, tilt: 0.3, ffx: 90, ffy: -60, fbx: -6, hfx: -16, hfy: -8, hbx: -30, hby: 0 });
+      return pose({ lean: -0.2, ffx: 34, ffy: -22, hfx: 6, hfy: 6 });
+    }
+    case 'avalanche': // head down behind a shoulder, arms braced: the sumo charge
+      if (phase === 'pre') return pose({ ...CROUCH, hipY: -40, lean: 0.5, hfx: 26, hfy: 14, hbx: 22, hby: 18, ffx: 26, fbx: -30 });
+      return pose({ hipX: 8, hipY: -46, lean: 0.72, hfx: 40, hfy: 12, hbx: 32, hby: 20, ffx: 30, ffy: -6, fbx: -40, fby: -8 });
+    case 'avalanche2': // arms flung up on the leap, then a belly-first fall, arms spread
+      if (phase === 'pre') return pose({ hipY: -64, lean: -0.12, hfx: 22, hfy: -54, hbx: -22, hby: -52, ffx: 16, ffy: -30, fbx: -14, fby: -26 });
+      return pose({ hipY: -60, lean: 1.25, hfx: 44, hfy: 30, hbx: -8, hby: 34, ffx: -14, ffy: -22, fbx: -32, fby: -12 });
+    case 'phoenix': // spinning up inside the flame, arms raised like wings
+      if (phase === 'pre') return pose({ ...CROUCH, hipY: -36, hfx: 4, hfy: 24, hbx: -6, hby: 24 });
+      return pose({ spin: (f.t * 0.55) % (Math.PI * 2), hipY: -68, lean: -0.05, hfx: 22, hfy: -58, hbx: -18, hby: -56, ffx: 6, ffy: 2, fbx: -6, fby: 4 });
+    case 'phoenix2': // the dive: stretched out head first, arms ahead like a beak
+      return pose({ hipY: -62, lean: 1.0, hfx: 52, hfy: 12, hbx: 48, hby: 18, ffx: -22, ffy: -12, fbx: -36, fby: -18 });
     case 'dash':
+    case 'howl':
     case 'super':
       if (phase === 'pre') return pose({ hipY: -44, lean: 0.5, hfx: -8, hfy: 6, hbx: -20, hby: 8, ffx: 24, fbx: -32 });
       if (phase === 'act') return pose({ hipX: 10, hipY: -48, lean: 0.78, hfx: 54, hfy: 4, hbx: -30, hby: 10, ffx: 26, ffy: -4, fbx: -46, fby: -10 });
@@ -477,6 +513,7 @@ export function drawFighter(ctx, f, char, now, { sx, sy, facing, lift = 0, scale
   const col = lookColors(char.id, look);
   const wide = char.build === 'sumo' ? 1.45 : char.build === 'slim' ? 0.82 : 1;
   const p = currentPose(f, now);
+  if (vanished(f)) return;
   const D = Math.cos(p.spin) < 0 ? -facing : facing; // half way round a turn: seen from behind
 
   ctx.fillStyle = 'rgba(0,0,0,0.4)';

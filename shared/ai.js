@@ -292,7 +292,9 @@ export function aiInput(ai, s, me) {
   }
 
   // --- finisher and special when they are likely to land ---
-  if (f.meter >= RULES.SUPER_COST && dist < 340 && o.h <= 0 && rnd(ai) < cfg.special * 2) return press(INPUT.SUPER);
+  // (The phoenix climbs nearly straight up, so it waits until the rival is close.)
+  const ultRange = getFighter(f.char).super.move === 'phoenix' ? 150 : 340;
+  if (f.meter >= RULES.SUPER_COST && dist < ultRange && o.h <= 0 && rnd(ai) < cfg.special * 2) return press(INPUT.SUPER);
   // A zoner with a shot in hand steps back to make the room to use it.
   if (style.retreat && dist > 100 && dist < 190 && o.state !== 'attack' && f.meter >= RULES.SPECIAL_COST && r < s.ringR - 120 && rnd(ai) < style.retreat) return hold(toward(-dx, -dz), 10);
   if (f.meter >= RULES.SPECIAL_COST && rnd(ai) < specialChance) {

@@ -117,6 +117,30 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet) play('burn');
         break;
       }
+      case 'blink': {
+        // Shadow vanishes in a puff of dark and reappears in another.
+        for (const [x, z] of [[e.x0, e.z0], [e.x, e.z]]) {
+          const p = project(x, 90, z);
+          for (let i = 0; i < 3; i++) dust(p.x, p.y + i * 22, 4);
+          lightFlash(x, 90, z, '#8a5cff', true);
+        }
+        addShake(4);
+        if (!quiet) play('swing');
+        break;
+      }
+      case 'crash': {
+        // A finisher coming down: a wide ring of dust, a flash and a quake.
+        for (let i = 0; i < 18; i++) {
+          const a = (i / 18) * Math.PI * 2;
+          const p = project(e.x + Math.cos(a) * e.r * 0.7, 0, e.z + Math.sin(a) * e.r * 0.7);
+          dust(p.x, p.y, 4);
+        }
+        lightFlash(e.x, 40, e.z, e.move === 'phoenix2' ? '#ff8a2a' : tint.glow, true);
+        addShake(16);
+        addFlash(0.3);
+        if (!quiet) play('quakeBoom');
+        break;
+      }
       case 'jump2': {
         // The air jump: a puff of air kicked off under the feet.
         for (let i = 0; i < 8; i++) {
@@ -174,11 +198,12 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (e.kind === 'launch') floatText(p.x, p.y - 58, 'LAUNCH!', '#ffb050', 26);
         else if (e.juggle) floatText(p.x, p.y - 86, 'JUGGLE!', '#7fe0ff', 24);
         if (e.counter) floatText(p.x, p.y - 86, 'COUNTER', '#ff9a3c', 22);
-        addShake((e.kind === 'super' ? 16 : e.heavy ? 8 : 4) + (e.counter ? 3 : 0));
+        const fin = e.kind === 'super' && !e.light; // a finisher's big blow (not its flurry)
+        addShake((fin ? 16 : e.heavy ? 8 : e.light ? 5 : 4) + (e.counter ? 3 : 0));
         if (!quiet && e.counter) play('counter');
-        if (e.kind === 'super') addFlash(0.6);
+        if (fin) addFlash(0.6);
         if (!quiet) play(e.heavy ? 'heavy' : 'hit');
-        if (!quiet && e.on === me) buzz(e.kind === 'super' ? 120 : e.heavy ? 45 : 20);
+        if (!quiet && e.on === me) buzz(fin ? 120 : e.heavy ? 45 : 20);
         else if (!quiet && e.by === me && e.heavy) buzz(12); // your own heavy blows are felt too, lightly
         break;
       }

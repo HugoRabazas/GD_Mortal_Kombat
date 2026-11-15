@@ -904,6 +904,17 @@ export function create3D(canvas) {
       shot.dist = 6;
       shot.yaw = -Math.cos(f.dir) * 0.45;
       shot.ease = 0.16;
+    } else if (s.f.some((f) => f.state === 'attack' && MOVES[f.move]?.ult)) {
+      // A finisher playing out: close in on it, framing the attacker and the
+      // rival it is after, a little to the side.
+      const f = s.f.find((o) => o.state === 'attack' && MOVES[o.move]?.ult);
+      const o = s.f.filter((x) => x !== f && x.hp > 0).sort((a, b) => Math.hypot(a.x - f.x, a.z - f.z) - Math.hypot(b.x - f.x, b.z - f.z))[0] || f;
+      shot.x = ((f.x + o.x) / 2) * S;
+      shot.z = ((f.z + o.z) / 2) * S;
+      shot.y = 1.1 + f.h * S * 0.6;
+      shot.dist = Math.min(shot.dist, 6.6 + Math.hypot(f.x - o.x, f.z - o.z) * S * 0.6);
+      shot.yaw = -Math.cos(f.dir) * 0.35;
+      shot.ease = 0.12;
     } else if (s.phase === 'intro') {
       // Every round opens low and wide, looking up at the sky over the wall,
       // and cranes down to the fighters before the call to fight.
@@ -1128,10 +1139,11 @@ export function create3D(canvas) {
 
       // Dash trails.
       for (const f of s.f) {
-        if (f.state !== 'attack' || (f.move !== 'dash' && f.move !== 'super') || (!f.vx && !f.vz)) continue;
+        const m = f.state === 'attack' && MOVES[f.move];
+        if (!m || !(m.rush || m.dive || m.leap) || (!f.vx && !f.vz)) continue;
         const t = trail[nextTrail++ % trail.length];
         t.life = 1;
-        t.big = f.move === 'super' ? 1.5 : 1;
+        t.big = m.ult || f.move === 'super' ? 1.5 : 1;
         t.sp.material.color.set(glowOf(f.slot));
         t.sp.position.set(f.x * S, 1.0 + f.h * S, f.z * S);
         t.sp.visible = true;
@@ -1149,7 +1161,8 @@ export function create3D(canvas) {
       for (const f of s.f) {
         const glow = glowOf(f.slot);
         const pair = twins[f.slot];
-        const rising = f.state === 'attack' && f.move === 'rise' && (f.h > 0 || f.t >= MOVES.rise.startup);
+        const pillar = f.state === 'attack' && ((f.move === 'phoenix' && f.t >= MOVES.phoenix.startup) || f.move === 'phoenix2');
+        const rising = pillar || (f.state === 'attack' && f.move === 'rise' && (f.h > 0 || f.t >= MOVES.rise.startup));
         if (pair) {
           pair.forEach((sp, k) => {
             sp.visible = rising;
@@ -1158,7 +1171,8 @@ export function create3D(canvas) {
             const y = 0.55 + f.h * S + Math.sin(now / 55 + k) * 0.3;
             sp.position.set(f.x * S + Math.cos(a) * 0.62, y, f.z * S + Math.sin(a) * 0.62);
             sp.material.color.set(glow);
-            sp.scale.set(0.75, 1.1, 1);
+            if (pillar) sp.scale.set(1.15, 1.7, 1); // the finisher's pillar of flame
+            else sp.scale.set(0.75, 1.1, 1);
             // A glow left behind every other frame draws the spiral.
             if ((nextTrail & 1) === k) {
               const t = trail[nextTrail % trail.length];

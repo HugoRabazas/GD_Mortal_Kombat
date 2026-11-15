@@ -44,9 +44,9 @@ export const FIGHTERS = [
       glow: '#ff2b2b',
     },
     looks: [{ name: 'Crimson' }, { name: 'Midnight', colors: { primary: '#28385f', secondary: '#0d111c', accent: '#b9c8ff', glow: '#6f8cff' } }],
-    stats: { power: 1.03, speed: 1.0, health: 105 },
+    stats: { power: 1.03, speed: 1.0, health: 108 },
     special: { type: 'dash', name: 'Crimson Rush' },
-    super: { name: 'Red Moon Howl' },
+    super: { name: 'Red Moon Howl', move: 'howl' },
   },
   {
     id: 'shadow',
@@ -67,7 +67,7 @@ export const FIGHTERS = [
     looks: [{ name: 'Storm' }, { name: 'Thunder', colors: { primary: '#5b3fa6', secondary: '#1a1230', accent: '#f2c14e', glow: '#c9a3ff' } }],
     stats: { power: 1.0, speed: 1.1, health: 105 },
     special: { type: 'bolt', name: 'Storm Bolt' },
-    super: { name: 'Total Eclipse' },
+    super: { name: 'Total Eclipse', move: 'eclipse' },
   },
   {
     id: 'jackie',
@@ -88,7 +88,7 @@ export const FIGHTERS = [
     looks: [{ name: 'Violet' }, { name: 'Granite', colors: { primary: '#4d525c', secondary: '#1c1d22', accent: '#e0a83c', glow: '#ffcc55' } }],
     stats: { power: 1.08, speed: 0.82, health: 112 },
     special: { type: 'quake', name: 'Mountain Stomp' },
-    super: { name: 'Avalanche Charge' },
+    super: { name: 'Avalanche Charge', move: 'avalanche' },
   },
   {
     id: 'pixie',
@@ -108,9 +108,9 @@ export const FIGHTERS = [
       hair: '#ff8a2a',
     },
     looks: [{ name: 'Flame' }, { name: 'Frost', colors: { primary: '#2a7fb8', secondary: '#0f2236', accent: '#9be7ff', glow: '#7fe0ff', hair: '#bdf0ff' } }],
-    stats: { power: 0.95, speed: 1.18, health: 102 },
+    stats: { power: 0.95, speed: 1.18, health: 99 },
     special: { type: 'rise', name: 'Twin Flame Spiral' },
-    super: { name: 'Phoenix Dive' },
+    super: { name: 'Phoenix Dive', move: 'phoenix' },
   },
 ];
 

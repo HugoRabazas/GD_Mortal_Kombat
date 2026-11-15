@@ -287,8 +287,37 @@ test('the finisher uses the whole bar and freezes the action first', () => {
   step(s, [INPUT.SUPER, 0]);
   assert.equal(s.f[0].meter, 0);
   assert.ok(s.freeze > 0);
-  run(s, 90);
+  run(s, 200);
   assert.ok(s.f[1].maxHp - s.f[1].hp >= 30);
+});
+
+test('each fighter has a finisher of their own: a chain of stages worth about 30 up close', () => {
+  const seen = new Set();
+  for (const id of ALL) {
+    const s = startFight([id, 'shadow']);
+    Object.assign(s.f[0], { x: -60, z: 0, dir: 0, meter: RULES.SUPER_COST });
+    Object.assign(s.f[1], { x: 60, z: 0, dir: Math.PI });
+    step(s, [INPUT.SUPER, 0]);
+    const stages = [];
+    for (let i = 0; i < 260; i++) {
+      step(s, idle(s));
+      if (s.f[0].move && stages.at(-1) !== s.f[0].move) stages.push(s.f[0].move);
+    }
+    const dmg = s.f[1].maxHp - s.f[1].hp;
+    assert.ok(stages.length >= 2, `${id}: ${stages.join(' > ')}`);
+    assert.ok(dmg >= 24 && dmg <= 36, `${id}: ${dmg}`);
+    seen.add(stages[0]);
+  }
+  assert.equal(seen.size, ALL.length, 'all different');
+  // A guard raised in time stops it, even Shadow's strike from behind.
+  for (const id of ALL) {
+    const s = startFight([id, 'shadow']);
+    Object.assign(s.f[0], { x: -100, z: 0, dir: 0, meter: RULES.SUPER_COST });
+    Object.assign(s.f[1], { x: 100, z: 0, dir: Math.PI });
+    step(s, [INPUT.SUPER, INPUT.BLOCK]);
+    run(s, 260, [0, INPUT.BLOCK]);
+    assert.ok(s.f[1].maxHp - s.f[1].hp <= 10, `${id} blocked`);
+  }
 });
 
 test('fighters cannot overlap or leave the ring, and the ring closes in late', () => {

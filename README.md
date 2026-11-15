@@ -213,6 +213,25 @@ and the heartbeat, the crowd and the weather go quiet.
   down for a third of a second first, so hammering the button earns nothing,
   and a guard that is simply held is an ordinary block. The CPU manages it
   rarely on Normal, more often on Hard, and the arcade boss most of all.
+- **Each fighter has a finisher of their own**, a chain of stages in the
+  rules (a stage that lands flows into the next; a guarded one stops it),
+  worth about 30 when it all lands, with its own poses, effects and a
+  camera that closes in while it plays out:
+  - Ruko, **Red Moon Howl**: a rush; then a flurry of claws (four quick
+    hits) and an uppercut that throws the rival up to the moon.
+  - Shadow, **Total Eclipse**: vanishes (cannot be hit, not drawn), reappears
+    behind the rival and strikes, a shadow flurry, a turning kick that sends
+    them flying. A guard already raised turns to meet it.
+  - Jackie, **Avalanche Charge**: a sumo charge that leaves the rival reeling,
+    a leap aimed to come down on them and a belly-first crash that floors
+    everyone close by.
+  - Pixie, **Phoenix Dive**: soars up inside a pillar of flame (hitting
+    whoever is close), then dives on the rival and bursts on the floor - a
+    close-range finisher; the CPU waits until it is near to use it.
+  Measured: Pixie's first version won 77 % of duels (its climb homed in and
+  its dive always landed), so the climb drifts less, the dive is slower and
+  lighter; Ruko 105 -> 108 and Pixie 102 -> 99 health. Duels now 49-52 %,
+  brawl firsts 13-22 % - the closest the four have been.
 - Hits fill the **energy** bar: a special costs 35 of 100, the finisher needs
   it full. Under a quarter of their health a fighter is in their **last
   stand** (LAST STAND on screen with a deep drum, the body pulsing red, the heartbeat, and

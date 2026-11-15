@@ -164,7 +164,7 @@ export const MOVES = {
   // --- specials (cost RULES.SPECIAL_COST energy) ---
   dash: {
     startup: 9, active: 13, recovery: 20, dmg: 14, speed: 13, reach: 82, arc: 1.1, y0: 10, y1: 150, aim: 340,
-    hitstun: 0, blockstun: 16, push: 9, gain: 6, knockdown: true, heavy: true, chip: 0.25,
+    hitstun: 0, blockstun: 16, push: 9, gain: 6, knockdown: true, heavy: true, chip: 0.25, rush: true,
   },
   bolt: {
     startup: 12, active: 1, recovery: 14, dmg: 14, aim: 900,
@@ -181,9 +181,74 @@ export const MOVES = {
   // --- finisher (costs the whole energy bar) ---
   super: {
     startup: 6, active: 16, recovery: 26, dmg: 32, speed: 21, reach: 86, arc: 1.2, y0: 0, y1: 160, aim: 420,
-    hitstun: 0, blockstun: 20, push: 12, gain: 0, knockdown: true, heavy: true, chip: 0.3,
+    hitstun: 0, blockstun: 20, push: 12, gain: 0, knockdown: true, heavy: true, chip: 0.3, rush: true,
+  },
+  // --- each fighter's own finisher: a chain of stages ---
+  // A stage that has landed a blow (not a guarded one) flows into `then` at
+  // tick `thenAt` (or when its hits end); `every` lets a flurry strike the
+  // same rival again every few ticks; `noScale` keeps long-combo damage
+  // scaling off (the finisher is one move); `light` marks the small hits of
+  // a flurry. Each is worth about 32 in all.
+  //
+  // Ruko - Red Moon Howl: a rush, a flurry of claws, an uppercut to the moon.
+  howl: {
+    startup: 6, active: 16, recovery: 24, dmg: 8, speed: 19, reach: 86, arc: 1.2, y0: 0, y1: 160, aim: 420,
+    hitstun: 30, blockstun: 20, push: 1, gain: 0, heavy: true, chip: 0.3, rush: true, ult: true, noScale: true,
+    then: 'howl2', thenAt: 0,
+  },
+  howl2: {
+    startup: 3, active: 16, recovery: 4, dmg: 3, reach: 92, arc: 1.1, y0: 30, y1: 180, aim: 160,
+    hitstun: 16, blockstun: 8, push: 0.6, gain: 0, chip: 0.3, ult: true, noScale: true, light: true, every: 4,
+    then: 'howl3',
+  },
+  howl3: {
+    startup: 5, active: 4, recovery: 24, dmg: 13, reach: 96, arc: 1.1, y0: 20, y1: 220, aim: 160,
+    hitstun: 0, blockstun: 16, push: 4, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
+    launch: 14,
+  },
+  // Shadow - Total Eclipse: vanishes, reappears behind the rival, a shadow
+  // flurry, a turning kick that sends them flying.
+  eclipse: {
+    startup: 14, active: 4, recovery: 22, dmg: 8, reach: 112, arc: 1.5, y0: 20, y1: 170, aim: 900,
+    hitstun: 30, blockstun: 16, push: 1, gain: 0, heavy: true, chip: 0.3, ult: true, noScale: true,
+    blink: 10, vanish: 14, then: 'eclipse2', thenAt: 0,
+  },
+  eclipse2: {
+    startup: 3, active: 12, recovery: 4, dmg: 4, reach: 92, arc: 1.1, y0: 30, y1: 170, aim: 160,
+    hitstun: 16, blockstun: 8, push: 0.6, gain: 0, chip: 0.3, ult: true, noScale: true, light: true, every: 4,
+    then: 'eclipse3',
+  },
+  eclipse3: {
+    startup: 6, active: 4, recovery: 22, dmg: 12, reach: 104, arc: 1.3, y0: 30, y1: 170, aim: 160,
+    hitstun: 0, blockstun: 16, push: 14, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
+  },
+  // Jackie - Avalanche Charge: a charge that leaves the rival reeling, then
+  // a leap and a belly-first crash that shakes everyone near off their feet.
+  avalanche: {
+    startup: 8, active: 22, recovery: 24, dmg: 10, speed: 12, reach: 100, arc: 1.35, y0: 0, y1: 170, aim: 420,
+    hitstun: 50, blockstun: 20, push: 2, gain: 0, heavy: true, chip: 0.3, rush: true, ult: true, noScale: true,
+    then: 'avalanche2', thenAt: 0,
+  },
+  avalanche2: {
+    startup: 14, active: 999, recovery: 0, dmg: 20, speed: 6, reach: 74, arc: Math.PI, y0: -170, y1: 40, aim: 600,
+    hitstun: 0, blockstun: 18, push: 8, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
+    leap: 13, crash: 150,
+  },
+  // Pixie - Phoenix Dive: soars up inside a pillar of flame, then dives on
+  // the rival like a falling star and bursts on the floor.
+  phoenix: {
+    startup: 6, active: 30, recovery: 999, dmg: 3, vh: 15, drift: 3, reach: 90, arc: Math.PI, y0: -10, y1: 230, aim: 0,
+    hitstun: 18, blockstun: 10, push: 0.5, gain: 0, chip: 0.3, ult: true, noScale: true, light: true, every: 6,
+    apex: 'phoenix2',
+  },
+  phoenix2: {
+    startup: 2, active: 999, recovery: 0, dmg: 15, speed: 8, reach: 80, arc: 1.5, y0: -170, y1: 60, aim: 900,
+    hitstun: 0, blockstun: 18, push: 10, gain: 0, knockdown: true, heavy: true, chip: 0.3, ult: true, noScale: true,
+    dive: 13, crash: 90,
   },
 };
+// The finisher's opening stage, by fighter (see `super.move` in the roster).
+export const ULT_MOVES = new Set(Object.keys(MOVES).filter((k) => MOVES[k].ult));
 
 const PROJECTILE = { speed: 9.5, r: 15, h: 100, life: 150 };
 
@@ -369,15 +434,47 @@ function aimGuard(s, f) {
 }
 
 function startAttack(s, f, move) {
+  const m = MOVES[move];
   f.state = 'attack';
   f.move = move;
   f.t = 0;
   f.hits = [];
+  f.landed = 0;
   f.vx = 0;
   f.vz = 0;
   f.buf = 0;
-  aim(s, f, MOVES[move].aim);
+  aim(s, f, m.aim);
+  if (m.leap || m.dive) {
+    // A leap or a dive aimed to come down on the nearest rival.
+    const o = nearestRival(s, f, m.aim);
+    const d = o ? Math.hypot(o.x - f.x, o.z - f.z) : 0;
+    const flight = m.leap ? (2 * m.leap) / GRAVITY : Math.max(1, f.h / m.dive);
+    const v = Math.min(m.speed, d / flight);
+    f.vx = Math.cos(f.dir) * v;
+    f.vz = Math.sin(f.dir) * v;
+    f.vh = m.leap || -m.dive;
+  }
   emit(s, 'swing', { by: f.slot, move });
+}
+
+// Vanish and reappear just behind the nearest rival (or a long step ahead).
+function blink(s, f) {
+  const o = nearestRival(s, f, 900);
+  const x0 = f.x;
+  const z0 = f.z;
+  if (o) {
+    f.x = o.x - Math.cos(o.dir) * 66;
+    f.z = o.z - Math.sin(o.dir) * 66;
+    f.dir = angleTo(f.x, f.z, o.x, o.z);
+    // A guard already raised turns to meet the shadow (so it can be blocked
+    // like any finisher); one caught open is struck from behind.
+    if (o.state === 'block') o.dir = angleTo(o.x, o.z, f.x, f.z);
+  } else {
+    f.x += Math.cos(f.dir) * 200;
+    f.z += Math.sin(f.dir) * 200;
+  }
+  keepInside(s, f);
+  emit(s, 'blink', { by: f.slot, x0, z0, x: f.x, z: f.z });
 }
 
 function rememberPresses(f, inp) {
@@ -395,7 +492,9 @@ function tryAttack(s, f, inp = 0) {
   const b = f.buf;
   if (b & INPUT.SUPER && f.meter >= RULES.SUPER_COST) {
     f.meter = 0;
-    startAttack(s, f, 'super');
+    const ult = getFighter(f.char).super.move || 'super';
+    startAttack(s, f, ult);
+    if (MOVES[ult].vanish) f.inv = MOVES[ult].vanish;
     s.freeze = TIMING.SUPER_FREEZE;
     s.freezeBy = f.slot;
     emit(s, 'super', { by: f.slot });
@@ -560,7 +659,7 @@ function control(s, f, inp) {
         startAttack(s, f, 'grab');
         break;
       }
-      if (f.move === 'dash' || f.move === 'super') {
+      if (m.rush) {
         const going = t >= m.startup && t < activeEnd;
         f.vx = going ? Math.cos(f.dir) * m.speed : 0;
         f.vz = going ? Math.sin(f.dir) * m.speed : 0;
@@ -570,8 +669,18 @@ function control(s, f, inp) {
         const v = going ? m.speed : t >= m.go[1] ? Math.hypot(f.vx, f.vz) * 0.75 : 0;
         f.vx = Math.cos(f.dir) * v;
         f.vz = Math.sin(f.dir) * v;
-      } else if (f.move === 'rise') {
-        if (t === m.startup) f.vh = m.vh;
+      } else if (m.vh) {
+        if (t === m.startup) {
+          f.vh = m.vh;
+          // Drifting towards the rival on the way up (the phoenix's climb).
+          const o = m.drift && nearestRival(s, f, 600);
+          if (o) {
+            const v = Math.min(m.drift, Math.max(0, Math.hypot(o.x - f.x, o.z - f.z) - 40) / 12);
+            f.dir = angleTo(f.x, f.z, o.x, o.z);
+            f.vx = Math.cos(f.dir) * v;
+            f.vz = Math.sin(f.dir) * v;
+          }
+        }
       } else if (f.move === 'quake') {
         if (t === m.startup) emit(s, 'quake', { by: f.slot, x: f.x, z: f.z, r: m.reach + BODY_R });
       } else if (f.move === 'bolt' && t === m.startup) {
@@ -587,6 +696,18 @@ function control(s, f, inp) {
           life: PROJECTILE.life,
         });
         emit(s, 'bolt', { by: f.slot });
+      }
+      // Finisher stages: vanish and reappear, strike again, rise to the top
+      // of a leap and dive, or flow into the next stage once a blow lands.
+      if (m.blink && t === m.blink) blink(s, f);
+      if (m.every && t > m.startup && (t - m.startup) % m.every === 0) f.hits = [];
+      if (m.apex && t > m.startup && f.vh <= 0) {
+        startAttack(s, f, m.apex);
+        break;
+      }
+      if (m.then && f.landed > 0 && t >= (m.thenAt ?? activeEnd)) {
+        startAttack(s, f, m.then);
+        break;
       }
       // A blow that connected can flow straight into the next one of its
       // string: punch for `next`, kick for `nextK`.
@@ -715,13 +836,24 @@ function land(s, f) {
       emit(s, f.move === 'stomp' ? 'stompLand' : 'land', here);
       f.move = null;
       break;
-    case 'attack': // the rising special coming back down
+    case 'attack': { // a rising special or a finisher's leap coming back down
+      const m = MOVES[f.move];
+      if (m && m.crash) {
+        // The crash: everyone close by on the floor is knocked off their feet.
+        for (const o of s.f) {
+          if (o === f || f.hits.includes(o.slot) || !canBeHit(o) || o.h > 20) continue;
+          if (Math.hypot(o.x - f.x, o.z - f.z) > m.crash) continue;
+          f.hits.push(o.slot);
+          applyHit(s, f, o, m, f.x, f.z, 'super');
+        }
+        emit(s, 'crash', { by: f.slot, x: f.x, z: f.z, r: m.crash, move: f.move });
+      } else emit(s, 'land', here);
       f.move = null;
       setState(f, 'land');
       f.stun = 14;
       f.vx = f.vz = 0;
-      emit(s, 'land', here);
       break;
+    }
     case 'down':
       f.stun = DOWN_TICKS;
       f.teched = false;
@@ -939,6 +1071,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     }
   }
 
+  if (att.state === 'attack') att.landed = (att.landed || 0) + 1; // a blow that got through
   const juggled = def.state === 'down'; // struck in the air after a launcher
   // Caught winding up? (Checked before the hit wipes out their move.)
   const wound = def.state === 'attack' && MOVES[def.move];
@@ -946,7 +1079,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   def.taken++;
   def.reel = 0;
   def.scorched = false;
-  const scale = Math.max(0.5, 1 - 0.12 * (def.taken - 1)); // long combos hit softer
+  const scale = m.noScale ? 1 : Math.max(0.5, 1 - 0.12 * (def.taken - 1)); // long combos hit softer
   const dmg = Math.max(1, Math.round(m.dmg * power * scale * (counter ? COUNTER.dmg : 1)));
   const dealt = Math.min(dmg, def.hp); // a finishing blow cannot take more than is left
   const wasStanding = lastStand(def);
@@ -956,7 +1089,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   addMeter(def, m.gain * 0.6 + dmg * 0.4);
   def.move = null;
   def.buf = 0;
-  const big = kind === 'super';
+  const big = kind === 'super' && !m.light;
 
   if (def.hp <= 0) {
     def.state = 'ko';
@@ -990,7 +1123,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   if (s.f.length === 2) s.hitstop = (big ? 12 : m.heavy ? 7 : 4) + extra;
   else if (big) s.hitstop = 6;
   else att.stop = def.stop = (m.heavy ? 5 : 3) + extra;
-  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken, counter, juggle: juggled });
+  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken, counter, juggle: juggled, light: !!m.light, stage: m.ult ? att.move : undefined });
 }
 
 function resolveHits(s) {
@@ -1002,7 +1135,7 @@ function resolveHits(s) {
     if (!m) continue;
     for (const def of s.f) {
       if (def === att || att.hits.includes(def.slot) || !canBeHit(def)) continue;
-      if (inWedge(att, def, m)) pending.push({ att, def, m, x: att.x, z: att.z, kind: att.move });
+      if (inWedge(att, def, m)) pending.push({ att, def, m, x: att.x, z: att.z, kind: m.ult ? 'super' : att.move });
     }
   }
   for (const p of pending) p.att.hits.push(p.def.slot);
