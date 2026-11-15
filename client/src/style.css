@@ -77,6 +77,27 @@ body {
 }
 
 /* The training checklist, top left under the scoreboard. */
+/* A passing notice (a controller arriving or leaving), above everything. */
+#toast {
+  position: absolute;
+  z-index: 20;
+  top: max(10px, env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  margin: 0;
+  padding: 8px 16px;
+  border: 1px solid rgba(232, 180, 84, 0.6);
+  border-radius: 6px;
+  background: rgba(13, 8, 18, 0.92);
+  color: var(--bone);
+  font: 600 0.85rem/1.3 var(--font-body);
+  text-align: center;
+  pointer-events: none;
+}
+
 #drill {
   position: absolute;
   left: 2%;

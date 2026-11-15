@@ -48,6 +48,7 @@ root.innerHTML = `
     <p id="turn">Turn your phone sideways for a bigger view.</p>
   </div>
   <div id="ui"></div>
+  <p id="toast" role="status" hidden></p>
 `;
 
 const $ = (sel) => root.querySelector(sel);
@@ -56,6 +57,29 @@ const ui = $('#ui');
 const touchEl = $('#touch');
 const pauseBtn = $('#pause-btn');
 const drillEl = $('#drill');
+const toastEl = $('#toast');
+
+// A short line at the top of the screen that goes away by itself.
+let toastTimer = 0;
+function toast(text, ms = 3600) {
+  toastEl.textContent = text;
+  toastEl.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (toastEl.hidden = true), ms);
+}
+
+// Controllers: say when one arrives (browsers only report it after a button
+// is pressed), and pause a fight if one is unplugged mid-fight - nobody
+// should be beaten while reaching for a cable. Online fights cannot pause.
+window.addEventListener('gamepadconnected', () => toast('Controller connected. Stick and A in the menus; Start pauses a fight.'));
+window.addEventListener('gamepaddisconnected', () => {
+  if (app.screen === 'fight' && app.game && app.mode !== 'online') {
+    togglePause();
+    toast('Controller disconnected: the fight is paused.');
+  } else {
+    toast('Controller disconnected.');
+  }
+});
 const spBtn = $('.tb-sp');
 const ultBtn = $('.tb-ult');
 
@@ -1547,8 +1571,13 @@ function padMenus() {
   }
 }
 
+let lastFrameAt = 0;
 function frame(now) {
   requestAnimationFrame(frame);
+  // Real time since the last frame, in 60 fps frames (at most four), so the
+  // crowd settles at the same pace on a slower screen.
+  const frames = lastFrameAt ? Math.min(4, (now - lastFrameAt) / (1000 / 60)) : 1;
+  lastFrameAt = now;
   padMenus();
   const playing = app.game;
   const g = playing || app.demo;
@@ -1580,7 +1609,7 @@ function frame(now) {
   }
   // A heartbeat when a player's fighter is nearly out: tension, and a warning
   // that reaches the player even when their eyes are off the health bar.
-  if (playing && g.state.phase === 'fight' && app.mode !== 'training') {
+  if (playing && g.state.phase === 'fight' && app.mode !== 'training' && !g.paused) {
     const players = app.mode === 'versus' ? [0, 1] : self >= 0 ? [self] : [];
     const low = players.some((i) => g.state.f[i] && g.state.f[i].hp > 0 && g.state.f[i].hp < g.state.f[i].maxHp * 0.25);
     if (low && now >= (app.nextBeat || 0)) {
@@ -1595,7 +1624,7 @@ function frame(now) {
     if (e.type === 'hit') app.roar = Math.min(1, (app.roar || 0) + (e.kind === 'super' ? 0.6 : e.heavy ? 0.18 : 0.05));
     else if (e.type === 'ko' || e.type === 'out' || e.type === 'parry') app.roar = Math.min(1, (app.roar || 0) + (e.type === 'parry' ? 0.25 : 0.7));
   }
-  app.roar = (app.roar || 0) * 0.985;
+  app.roar = (app.roar || 0) * Math.pow(0.985, frames);
   const crowdOn = playing && app.mode !== 'training' && g.state.phase !== 'over' && !app.game?.paused;
   setCrowd(crowdOn ? 0.18 + app.roar * 0.82 : 0);
   // The weather, heard: as strong as the round's mood makes it (see THEMES).
@@ -1605,7 +1634,8 @@ function frame(now) {
   // The music holds its breath for a finisher's freeze and the slow motion
   // after a knockout, then comes back.
   const st = g.state;
-  duckMusic(playing && (st.freeze > 0 ? 1 : st.phase === 'ko' && st.koKind === 'ko' && st.pt < 60 ? 0.7 : 0));
+  // Paused, it steps back too, so the pause screen is a breather.
+  duckMusic(playing && (app.screen === 'pause' ? 0.6 : st.freeze > 0 ? 1 : st.phase === 'ko' && st.koKind === 'ko' && st.pt < 60 ? 0.7 : 0));
   handleEvents(events, g.state, { quiet: !playing, project: stage.project, me: self, colors: worn });
   // The sounds of each fighter's ritual while a round is announced.
   if (playing && st.phase === 'intro') {
