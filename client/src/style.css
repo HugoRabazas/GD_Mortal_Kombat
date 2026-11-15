@@ -505,6 +505,52 @@ button:focus-visible {
 }
 
 /* The random pick: a face-sized disc with a question mark. */
+/* The help's roster: each fighter in a line. */
+.help .sub-head {
+  margin: 14px 0 6px;
+  font: 600 1.3rem/1 var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.help .roster {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.help .roster li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+}
+
+.help .roster .head {
+  flex: none;
+  width: 40px;
+  height: 40px;
+}
+
+.help .roster b {
+  color: var(--bone);
+}
+
+.help .roster .title {
+  color: var(--ash);
+  font-size: 0.85rem;
+}
+
+.help .roster small {
+  display: block;
+  color: var(--ash);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
 .pick.rand .head {
   display: grid;
   place-items: center;

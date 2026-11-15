@@ -465,11 +465,28 @@ function helpScreen() {
         <li>With a <b>gamepad</b> you can also work the menus: stick or D-pad to move, A / Cross to choose, B / Circle to go back. Hints in a fight name your controller's own buttons (Xbox, PlayStation or Nintendo labels).</li>
         <li>Press <kbd>P</kbd>, <kbd>Esc</kbd> or Start to pause.</li>
       </ul>
+      <h3 class="sub-head">The fighters</h3>
+      <ul class="roster">
+        ${FIGHTERS.map((f) => `<li>${head(f.id)}<div><b>${f.name}</b> <span class="title">${f.title}</span><small>${buildWords(f)} · special <b>${f.special.name}</b>: ${SPECIAL_NOTES[f.special.type]} · finisher <b>${f.super.name}</b></small></div></li>`).join('')}
+      </ul>
       <div class="row"><button type="button" class="btn primary" data-act="menu">Back</button></div>
     </section>`;
 }
 
 // What each kind of special move does, in a few words.
+// A fighter's build in a few plain words, from their stats.
+function buildWords(f) {
+  const { power, speed, health } = f.stats;
+  const words = [];
+  if (speed >= 1.15) words.push('the quickest');
+  else if (speed >= 1.08) words.push('quick');
+  else if (speed < 0.9) words.push('slow on the feet');
+  if (power >= 1.06) words.push('hits hard');
+  else if (power < 0.97) words.push('lighter blows');
+  if (health >= 112) words.push('hard to knock out');
+  return words.length ? words.join(', ') : 'an all-rounder';
+}
+
 const SPECIAL_NOTES = {
   dash: 'a lunge across the arena that knocks down',
   bolt: 'a projectile that flies where you face',

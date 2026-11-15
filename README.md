@@ -18,6 +18,10 @@ signature moves of any existing fighting game.
 | JACKIE | sumo | Mountain Stomp: floors everyone nearby who is not jumping; a shockwave ring on the floor shows how far it reaches | slow, heavy, hard to knock out |
 | PIXIE | slim | Twin Flame Spiral: a spinning leap that hits all around, two flames orbiting and leaving a spiral | quick and fragile |
 
+**How to play** ends with the fighters: each one's face, title, a few words
+on their build drawn from their stats ("the quickest, lighter blows"; "slow
+on the feet, hits hard, hard to knock out"), and what their special does.
+
 Can't choose? The **?** after the faces on every select screen (and in an
 online room) picks another fighter at random, in a random costume.
 
