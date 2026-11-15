@@ -51,6 +51,11 @@ export function setTouchLive(on) {
   touchBits = 0;
 }
 
+// Which kind of control the player touched last: 'keys', 'touch' or 'pad'
+// (null until they touch anything). The screens name the controls to match.
+let device = null;
+export const lastDevice = () => device;
+
 // Game controllers. Standard layout: stick or d-pad to move, A/Cross jump,
 // X/Square punch, B/Circle kick, LB or LT block, Y/Triangle special, RB or RT
 // finisher.
@@ -80,6 +85,7 @@ export function readPad(index) {
   if (on(4) || on(6)) bits |= INPUT.BLOCK;
   if (on(3)) bits |= INPUT.SPECIAL;
   if (on(5) || on(7)) bits |= INPUT.SUPER;
+  if (bits) device = 'pad';
   return bits;
 }
 
@@ -101,6 +107,7 @@ export function padMenu() {
     ok = ok || on(0);
     back = back || on(1);
   }
+  if (dir || ok || back) device = 'pad';
   const out = { dir: dir !== menuWas.dir ? dir : 0, ok: ok && !menuWas.ok, back: back && !menuWas.back };
   Object.assign(menuWas, { dir, ok, back });
   return out;
@@ -126,6 +133,7 @@ export function setCapture(on) {
 
 export function initKeyboard(onPauseKey) {
   window.addEventListener('keydown', (e) => {
+    if (GAME_KEYS.has(e.code) || e.code === 'Escape' || e.code === 'KeyP') device = 'keys';
     if (e.code === 'Escape' || e.code === 'KeyP') {
       if (!e.repeat) onPauseKey();
       return;
@@ -208,6 +216,9 @@ export function initTouch(root) {
   });
   zone?.addEventListener('pointerup', releaseStick);
   zone?.addEventListener('pointercancel', releaseStick);
+  root.addEventListener('pointerdown', () => {
+    device = 'touch';
+  });
   stick.addEventListener('pointerdown', (e) => {
     if (!touchLive) return;
     stickId = e.pointerId;

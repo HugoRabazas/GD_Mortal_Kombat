@@ -76,8 +76,13 @@ along in the ranking, under each name.
 | Finisher | `O` or `Y` | `Y` | `O` | RB / RT |
 
 `P`, `Esc` or Start pauses, and the pause screen shows the **move list** of
-the fighter you are playing, written with the keys or on-screen buttons you
-are actually using. A gamepad also works the menus: stick or D-pad
+the fighter you are playing, written with the controls you are actually
+using: the game notices whether you last touched the keyboard, the screen or
+a gamepad, and the move list, the hint at the start of a fight and the
+Training checklist all name the controls to match (`J` / `P` / `X` for a
+punch). Every gamepad button was checked with a simulated standard pad:
+D-pad and A/B in the menus, the stick to walk, X, B, A, Y, LB/LT and RB/RT
+in a fight, Start to pause. A gamepad also works the menus: stick or D-pad
 moves between buttons, A chooses, B goes back. On a phone or tablet a thumb stick and six buttons
 appear on screen; **Arrange buttons** (menu and pause screen) lets you drag
 each one where you like and resize them, saved per orientation on the device.

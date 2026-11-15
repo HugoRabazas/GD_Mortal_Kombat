@@ -8,7 +8,7 @@ import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
 import { createGame } from './game.js';
 import { handleEvents } from './effects.js';
-import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, setCapture, setTouchLive } from './input.js';
+import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, setCapture, setTouchLive, lastDevice } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, setMusic, setMusicTheme, setCrowd, getVolume, setVolume } from './audio.js';
 import { createOnline } from './net/online.js';
@@ -388,16 +388,19 @@ const SPECIAL_NOTES = {
 
 // The move list on the pause screen: every move of the fighter being played,
 // with the keys (or on-screen buttons) this player is actually using.
+// The names of the controls on the device the player is using right now.
+function controlNames() {
+  const d = lastDevice() ?? (app.touch ? 'touch' : 'keys');
+  if (d === 'pad') return { p: 'X', k: 'B', b: 'LB', s: 'Y', u: 'RB', j: 'A', move: 'the stick', walk: 'Stick' };
+  if (d === 'touch' && app.touch) return { p: 'P', k: 'K', b: 'BLK', s: 'SP', u: 'ULT', j: 'JMP', move: 'the stick', walk: 'Stick' };
+  return { p: 'J', k: 'K', b: 'L', s: 'I', u: 'O', j: 'Space', move: 'W A S D', walk: 'WASD' };
+}
+
 function movesCard() {
   const s = app.game?.state;
   if (!s) return '';
   const two = app.mode === 'versus';
-  const touch = app.touch && !two;
-  const key = touch
-    ? { p: 'P', k: 'K', b: 'BLK', s: 'SP', u: 'ULT', j: 'JMP' }
-    : two
-      ? { p: 'F / J', k: 'G / K', b: 'H / L', s: 'T / I', u: 'Y / O', j: 'Space / U' }
-      : { p: 'J', k: 'K', b: 'L', s: 'I', u: 'O', j: 'Space' };
+  const key = two ? { p: 'F / J', k: 'G / K', b: 'H / L', s: 'T / I', u: 'Y / O', j: 'Space / U' } : controlNames();
   const k = (...names) => names.map((n) => `<kbd>${n}</kbd>`).join(' ');
   const slots = two ? [0, 1] : [app.mode === 'online' ? Math.max(0, app.online?.mySlot ?? 0) : 0];
   const own = slots
@@ -475,7 +478,7 @@ function arrangeScreen() {
 // first time the player really does it (a combo has to land, a block has to
 // stop a blow), and the device remembers the progress.
 const DRILLS = [
-  { id: 'walk', name: 'Walk', how: (k) => (app.touch ? 'drag the stick' : `${k('W')} ${k('A')} ${k('S')} ${k('D')}`) },
+  { id: 'walk', name: 'Walk', how: () => (controlNames().walk === 'WASD' ? '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>' : 'move the stick') },
   { id: 'jump', name: 'Jump', how: (k) => k('j') },
   { id: 'combo', name: 'Three-punch combo', how: (k) => `${k('p')} ${k('p')} ${k('p')}, each punch landing` },
   { id: 'kick', name: 'Land a kick', how: (k) => k('k') },
@@ -538,7 +541,7 @@ function watchDrills(s, events) {
 // The checklist panel: progress, and the next few moves with how to do them.
 function drawDrills(justDone) {
   const done = drillsDone();
-  const names = app.touch ? { p: 'P', k: 'K', b: 'BLK', s: 'SP', u: 'ULT', j: 'JMP' } : { p: 'J', k: 'K', b: 'L', s: 'I', u: 'O', j: 'Space' };
+  const names = controlNames();
   const k = (id) => `<kbd>${names[id] ?? id}</kbd>`;
   const left = DRILLS.filter((d) => !done.has(d.id));
   const just = DRILLS.find((d) => d.id === justDone);
@@ -1353,6 +1356,11 @@ function frame(now) {
   const events = g.drain();
   if (playing) tallyFight(g, events);
   if (playing && app.mode === 'training') watchDrills(g.state, events);
+  // A change of controller renames the controls in the checklist at once.
+  if (playing && app.mode === 'training' && !drillEl.hidden && lastDevice() !== app.drillDevice) {
+    app.drillDevice = lastDevice();
+    drawDrills();
+  }
   // A heartbeat when a player's fighter is nearly out: tension, and a warning
   // that reaches the player even when their eyes are off the health bar.
   if (playing && g.state.phase === 'fight' && app.mode !== 'training') {
@@ -1384,7 +1392,7 @@ function frame(now) {
     ? ''
     : app.mode === 'versus'
       ? 'P1: WASD move · Space jump · F G punch kick · H block · T Y special finisher     P2: arrows · U · J K · L · I O'
-      : 'WASD move · Space jump · J punch (x3 combo) · K kick · J+K grab · L block (+move = roll) · I special · O finisher';
+      : (({ p, k, b, s, u, j, walk }) => `${walk} move · ${j} jump · ${p} punch (x3 combo) · ${k} kick · ${p}+${k} grab · ${b} block (+move = roll) · ${s} special · ${u} finisher`)(controlNames());
   const place = playing ? app.fightPlace : app.place;
   setMusicTheme(place);
   stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: app.mode === 'training' }, now);
