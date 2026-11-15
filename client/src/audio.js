@@ -496,6 +496,53 @@ export function setCrowd(level) {
   }
 }
 
+// ---------------------------------------------------------------- weather ---
+// What the weather sounds like, under the fight: rain hissing on stone in the
+// courtyard's storm, wind round the summit, sand driven over the ruins. One
+// looping noise, shaped per kind, as loud as the weather is strong (0 to 1).
+let weather = null;
+const WEATHER_SOUND = {
+  rain: { type: 'highpass', freq: 1500, q: 0.4, sway: 0, gain: 0.08 },
+  snow: { type: 'bandpass', freq: 420, q: 1.2, sway: 240, gain: 0.32 },
+  sand: { type: 'bandpass', freq: 1100, q: 0.9, sway: 420, gain: 0.2 },
+};
+export function setWeather(kind, level) {
+  if (!ctx || ctx.state !== 'running') return;
+  try {
+    if (!weather) {
+      const src = ctx.createBufferSource();
+      src.buffer = noise;
+      src.loop = true;
+      const filter = ctx.createBiquadFilter();
+      const gain = ctx.createGain();
+      gain.gain.value = 0;
+      // A slow wobble of the filter: gusts.
+      const lfo = ctx.createOscillator();
+      const depth = ctx.createGain();
+      lfo.frequency.value = 0.17;
+      lfo.connect(depth).connect(filter.frequency);
+      src.connect(filter).connect(gain).connect(sfxBus);
+      src.start();
+      lfo.start();
+      weather = { filter, gain, depth, kind: null, level: -1 };
+    }
+    const w = WEATHER_SOUND[kind];
+    if (w && kind !== weather.kind) {
+      weather.kind = kind;
+      weather.filter.type = w.type;
+      weather.filter.frequency.value = w.freq;
+      weather.filter.Q.value = w.q;
+      weather.depth.gain.value = w.sway;
+    }
+    const want = w ? Math.max(0, Math.min(1, level)) * w.gain : 0;
+    if (Math.abs(want - weather.level) < 0.004) return;
+    weather.level = want;
+    weather.gain.gain.setTargetAtTime(want, ctx.currentTime, 1.2);
+  } catch {
+    // the weather stays silent
+  }
+}
+
 export function play(name) {
   if (!ctx || muted || ctx.state !== 'running') return;
   try {

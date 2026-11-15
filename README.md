@@ -226,10 +226,16 @@ round.
 
 **Graphics** (Settings) is Auto, Sharp or Fast. Auto starts at full detail
 and lowers it by itself if the device struggles; Sharp keeps full detail
-always; Fast is for slower phones - no shadows, lower resolution, a third of
-the rain, snow or sand, and a calmer crowd. In software rendering, the
+always; Fast is for slower phones - no shadows, no cartoon outlines, lower
+resolution, a third of the rain, snow or sand, and a calmer crowd (about 153
+draws a frame against about 300). In software rendering, the
 closest thing here to a weak phone graphics chip, Fast drew a frame 3.6
 times quicker (234 ms against 847 ms).
+
+The weather can be heard under every fight, as strong as the round makes
+it: rain hissing on stone in the courtyard's storm, wind round the summit
+(a little from the first round, a howl in the blizzard), sand driven over
+the ruins in the sandstorm. Calm rounds are quiet.
 
 The music holds its breath during a finisher's freeze and the slow motion
 after a knockout, then comes back.

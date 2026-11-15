@@ -1022,6 +1022,7 @@ export function create3D(canvas) {
         const f = s.f[i];
         contacts[i].visible = !!f;
         if (!f) continue;
+        rigs[i].setOutline(quality < 2);
         rigs[i].update(f, now, camera);
         const height = f.h * S;
         const spread = 1 - Math.min(0.5, height * 0.25);

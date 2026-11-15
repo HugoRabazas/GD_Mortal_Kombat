@@ -310,6 +310,11 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
       headMat.emissiveIntensity = f.state === 'ko' ? 0.15 : 0.5;
     },
 
+    // The cartoon outline costs one draw per body part; Graphics: Fast drops it.
+    setOutline(on) {
+      hull.visible = on;
+    },
+
     dispose() {
       scene.remove(turn);
       for (const m of bodyMats) m.dispose();

@@ -10,7 +10,8 @@ import { createGame } from './game.js';
 import { handleEvents } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, setCapture, setTouchLive, lastDevice } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
-import { unlockAudio, play, isMuted, setMuted, setMusic, setMusicTheme, setCrowd, duckMusic, getVolume, setVolume } from './audio.js';
+import { unlockAudio, play, isMuted, setMuted, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, getVolume, setVolume } from './audio.js';
+import { THEMES } from './render/themes.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
 
@@ -1556,6 +1557,10 @@ function frame(now) {
   app.roar = (app.roar || 0) * 0.985;
   const crowdOn = playing && app.mode !== 'training' && g.state.phase !== 'over' && !app.game?.paused;
   setCrowd(crowdOn ? 0.18 + app.roar * 0.82 : 0);
+  // The weather, heard: as strong as the round's mood makes it (see THEMES).
+  const sky = THEMES[app.fightPlace] || THEMES.courtyard;
+  const mood = sky.moods[Math.min(2, Math.max(0, g.state.round - 1))];
+  setWeather(sky.weather, crowdOn ? mood.rain : 0);
   // The music holds its breath for a finisher's freeze and the slow motion
   // after a knockout, then comes back.
   const st = g.state;
