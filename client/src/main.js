@@ -1367,7 +1367,10 @@ function frame(now) {
     // The music pushes harder when the ring is closing or the round decides the match.
     const st = g.state;
     const deciding = st.mode === 'arena' ? st.round === MODES.arena.maxRounds : st.pts[0] === 1 && st.pts[1] === 1;
-    const want = st.phase === 'fight' && app.mode !== 'training' && (st.ringR < ARENA.R - 1 || deciding) ? 'final' : 'fight';
+    // ...and when a player's own fighter is down to a last stand.
+    const ownSlots = app.mode === 'versus' ? [0, 1] : app.mode === 'online' ? [app.online?.mySlot ?? -1] : [0];
+    const atTheEdge = ownSlots.some((i) => st.f[i] && st.f[i].hp > 0 && st.f[i].hp < st.f[i].maxHp * 0.25);
+    const want = st.phase === 'fight' && app.mode !== 'training' && (st.ringR < ARENA.R - 1 || deciding || atTheEdge) ? 'final' : 'fight';
     if (want !== app.music) {
       app.music = want;
       setMusic(want);

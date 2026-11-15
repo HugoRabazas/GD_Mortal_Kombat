@@ -72,6 +72,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
   const hull = new THREE.MeshBasicMaterial({ color: 0x0b070d, side: THREE.BackSide });
   const glow = lin(col.glow);
   const white = new THREE.Color(0xffffff);
+  const ember = lin(0xff3a1e); // the red pulse of a last stand
   const black = new THREE.Color(0x000000);
 
   // turn: where the fighter stands and which way it faces.
@@ -293,6 +294,10 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
       } else if (f.state === 'attack' && !f.move.startsWith('punch') && f.move !== 'kick' && f.move !== 'grab') {
         tint = glow;
         amount = 0.55 + 0.2 * Math.sin(now / 40);
+      } else if (f.hp > 0 && f.hp < f.maxHp * 0.25 && f.state !== 'win' && f.state !== 'lose') {
+        // Last stand: a slow red pulse, like a heartbeat (see LAST_STAND in sim.js).
+        tint = ember;
+        amount = 0.1 + 0.16 * Math.max(0, Math.sin(now / 160)) ** 4;
       } else if (boss) {
         tint = glow;
         amount = 0.12 + 0.06 * Math.sin(now / 300);

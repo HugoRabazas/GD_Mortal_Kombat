@@ -46,7 +46,7 @@ const STYLES = {
   dash: { attack: 0.02, special: 1.15, wary: 0.55 },
   bolt: { special: 1.8, retreat: 0.1 },
   quake: { block: 0.08 },
-  rise: { attack: 0.04, circle: 0.07 },
+  rise: { attack: 0.04, circle: 0.07, wary: 0.5 },
 };
 
 export function createAI(level = 'normal', seed = 1) {
