@@ -8,7 +8,7 @@
 import { ARENA } from '../../shared/constants.js';
 import { getFighter } from '../../shared/fighters.js';
 import { play, announce } from './audio.js';
-import { hitSpark, blockSpark, dust, floatText as showText, showBanner, addShake, addFlash, lightFlash, cheerFor, confetti } from './render/fx.js';
+import { hitSpark, blockSpark, dust, comboCount, floatText as showText, showBanner, addShake, addFlash, lightFlash, cheerFor, confetti } from './render/fx.js';
 
 // At the end of a brawl round, show over each fighter the points it earned.
 function showRoundPoints(state, project) {
@@ -241,7 +241,10 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         lightFlash(e.x, e.h, e.z, tint.glow, e.heavy);
         cheerFor(e.by, e.heavy ? 0.8 : 0.25);
         floatText(p.x, p.y - 30, String(e.dmg), e.heavy ? '#ffd34d' : '#ffffff', e.heavy ? 28 : 22);
-        if (e.combo >= 2) floatText(p.x, p.y - 58, `${e.combo} HITS`, '#ff8a5c', 20);
+        // Two blows in a row: a small tag by the blow; three or more: the big
+        // counter at the attacker's side of the screen.
+        if (e.combo === 2) floatText(p.x, p.y - 58, '2 HITS', '#ff8a5c', 20);
+        else if (e.combo >= 3) comboCount(by && by.x < state.f[e.on].x ? -1 : 1, e.combo, tint.glow);
         if (e.kind === 'grab') floatText(p.x, p.y - 58, 'SLAM!', '#ffb050', 26);
         if (e.kind === 'dash' || e.kind === 'bolt' || e.kind === 'rise' || e.kind === 'quake') {
           // A special landing: a second burst of sparks and a stronger light.

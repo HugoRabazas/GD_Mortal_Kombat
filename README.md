@@ -110,7 +110,10 @@ screens the arena is drawn thirty times a second instead of sixty (it still
 runs on the clock), so a phone stays cooler and its battery lasts longer
 while someone reads; a fight is always drawn at full rate. Each build walks its own way too: the heavy fighter waddles, wide and low,
 rocking from side to side; the slim one goes on quick, springy steps.
-The spark of a blow takes the shape of what struck: a punch is a small
+From the third blow of a combo a big counter stands at the attacker's side
+of the screen - the number swelling with each blow, HITS under it and a word
+for how good it is (NICE from 3, GREAT 5, AWESOME 7, AMAZING 9,
+UNSTOPPABLE 12) - and fades a moment after the combo ends. The spark of a blow takes the shape of what struck: a punch is a small
 star, a kick a white crescent swept the way the kick travelled with its
 sparks thrown onward, a heavy blow adds a shock ring, Ruko's finisher flurry
 leaves three claw marks, Shadow's blows implode in purple and Pixie's flames

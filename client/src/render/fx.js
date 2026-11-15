@@ -1,10 +1,14 @@
 // Visual effects that live only on the screen: hit sparks, dust, floating
 // damage numbers, big announcer banners and camera shake. The simulation
 // reports *what happened* as events; this file decides how it looks.
+import { ARENA } from '../../../shared/constants.js';
 
 const particles = [];
 const texts = [];
 let banner = null;
+// The combo counter: a big count of the blows in the current combo at the
+// attacker's side of the screen, with a word for how good it is.
+let combo = null; // { side, n, color, born, at }
 let shake = 0;
 let flash = 0;
 
@@ -23,11 +27,12 @@ export function resetFx() {
   banner = null;
   shake = 0;
   flash = 0;
+  combo = null;
 }
 
 // True while there is anything to draw, so idle frames can skip the work.
 export function fxActive() {
-  return particles.length > 0 || texts.length > 0;
+  return particles.length > 0 || texts.length > 0 || !!combo;
 }
 
 export function addShake(amount) {
@@ -114,6 +119,13 @@ export function confetti(width, colors) {
   }
 }
 
+const COMBO_WORDS = [[12, 'UNSTOPPABLE'], [9, 'AMAZING'], [7, 'AWESOME'], [5, 'GREAT'], [3, 'NICE']];
+export function comboCount(side, n, color) {
+  const now = performance.now();
+  if (combo && combo.side === side && n > combo.n) Object.assign(combo, { n, at: now });
+  else combo = { side, n, color, born: now, at: now };
+}
+
 export function floatText(x, y, text, color, size = 22) {
   texts.push({ x, y, text, color, size, life: 1 });
 }
@@ -164,7 +176,49 @@ export function updateFx(dt = 1000 / 60) {
   return { x: (Math.random() - 0.5) * s * 2, y: (Math.random() - 0.5) * s * 2 };
 }
 
+function drawCombo(ctx) {
+  if (!combo) return;
+  const now = performance.now();
+  const age = now - combo.at;
+  if (age > 1400) {
+    combo = null;
+    return;
+  }
+  const W = ARENA.W;
+  const pop = 1 + Math.max(0, 1 - age / 140) * 0.35; // swells on each new blow
+  const fade = Math.min(1, (1400 - age) / 300);
+  const x = combo.side < 0 ? 110 : W - 110;
+  const word = COMBO_WORDS.find(([at]) => combo.n >= at)?.[1];
+  ctx.save();
+  ctx.globalAlpha = fade;
+  ctx.translate(x, 330); // below the practice panel, above the energy bars
+  ctx.scale(pop, pop);
+  ctx.rotate(combo.side < 0 ? -0.06 : 0.06);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.lineJoin = 'round';
+  ctx.font = 'italic 900 56px Teko, Impact, "Arial Black", sans-serif';
+  ctx.lineWidth = 8;
+  ctx.strokeStyle = '#0b070d';
+  ctx.strokeText(String(combo.n), 0, 0);
+  ctx.fillStyle = combo.color;
+  ctx.fillText(String(combo.n), 0, 0);
+  ctx.font = 'italic 800 20px Teko, Impact, "Arial Black", sans-serif';
+  ctx.lineWidth = 5;
+  ctx.strokeText('HITS', 0, 32);
+  ctx.fillStyle = '#fff6dc';
+  ctx.fillText('HITS', 0, 32);
+  if (word) {
+    ctx.font = 'italic 900 24px Teko, Impact, "Arial Black", sans-serif';
+    ctx.strokeText(word, 0, 58);
+    ctx.fillStyle = '#ffd34d';
+    ctx.fillText(word, 0, 58);
+  }
+  ctx.restore();
+}
+
 export function drawFx(ctx) {
+  drawCombo(ctx);
   ctx.save();
   for (const p of particles) {
     if (p.kind === 'confetti') {
