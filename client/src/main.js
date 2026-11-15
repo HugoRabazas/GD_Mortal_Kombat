@@ -151,11 +151,18 @@ const TIPS = [
   (c) => `Tip: gold crystals give energy, green ones health. Walk over one to take it.`,
   (c) => `Tip: a guard only stops what comes from the front. Get behind a blocking rival.`,
   (c) => `Tip: in a brawl, do not stand between two rivals.`,
+  // Only on the website, on a touch screen, when not opened from the home screen.
+  () => (NET && app.touch && !installed ? `Tip: add GD Arena to your <b>home screen</b> to play full screen.` : ''),
 ];
 let tipAt = Math.floor(Math.random() * TIPS.length);
 function menuTip() {
-  tipAt = (tipAt + 1) % TIPS.length;
-  return TIPS[tipAt](controlNames());
+  // Skip a tip that does not apply here (it says nothing).
+  for (let i = 0; i < TIPS.length; i++) {
+    tipAt = (tipAt + 1) % TIPS.length;
+    const tip = TIPS[tipAt](controlNames());
+    if (tip) return tip;
+  }
+  return '';
 }
 
 // True until this device has started its first fight.
@@ -223,6 +230,9 @@ function buildLadder(playerId) {
   return STAGES.map((st, i) => ({ ...st, char: order[i], rivals: st.brawl ? rivalsFor([playerId]) : null }));
 }
 
+// Opened from a phone's home screen, the game is full screen already.
+const installed = !!window.matchMedia?.('(display-mode: fullscreen), (display-mode: standalone)').matches || navigator.standalone === true;
+
 function menuScreen() {
   const best = bestScore();
   return `
@@ -245,7 +255,7 @@ function menuScreen() {
         <button type="button" class="link" data-act="record">Record</button>
         <button type="button" class="link" data-act="touch" data-short="1" aria-pressed="${app.touch}">${touchLabel(true)}</button>
         <button type="button" class="link" data-act="arrange">Arrange buttons</button>
-        <button type="button" class="link" data-act="fullscreen">Full screen</button>
+        ${installed ? '' : '<button type="button" class="link" data-act="fullscreen">Full screen</button>'}
       </div>
       <p class="ver">version ${BUILD}</p>
     </section>`;

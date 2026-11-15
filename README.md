@@ -215,6 +215,13 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   The site lives at https://hugorabazas.github.io/GD_Mortal_Kombat/ (Pages is
   switched on in the repository's Settings -> Pages, Source: "GitHub
   Actions").
+- **On a phone the site can go on the home screen** (Android: the browser
+  menu, Add to Home screen or Install app; iPhone: Share, Add to Home
+  Screen). Its manifest and icons (`client/web`, copied into `dist-web` by
+  the web build) open it full screen and sideways, like an app; Chrome
+  reports it installable with no errors. On a touch screen the menu's tips
+  suggest it, until the game is opened that way, and the menu then drops
+  its Full screen link.
 - The Supabase project needs no tables. On the free plan Realtime allows 200
   people connected and 100 messages a second, which is plenty while matches
   run over direct links, and about one four-player match at a time if every

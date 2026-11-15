@@ -1314,6 +1314,19 @@ kbd {
     display: none;
   }
 
+  /* A phone held sideways: the version number goes, and the menu's tip keeps
+     to one line, so the menu fits even with the Online button. */
+  .menu .ver {
+    display: none;
+  }
+
+  .menu .note {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .screen {
     gap: 8px;
   }

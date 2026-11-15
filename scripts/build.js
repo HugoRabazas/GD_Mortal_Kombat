@@ -9,7 +9,7 @@
 // skeleton, so the build can be opened and tested in any browser.
 
 import { build } from 'vite';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -79,7 +79,21 @@ ${page}</body>
 
 if (web) {
   mkdirSync(path.join(root, 'dist-web'), { recursive: true });
-  writeFileSync(path.join(root, 'dist-web', 'index.html'), preview.replace('<head>', '<head>\n<meta name="description" content="GD Arena: a 3D arena fighting game for the alliance, playable online.">'));
+  // The website can be added to a phone's home screen: the manifest and its
+  // icons (client/web) open it full screen, sideways, like an app.
+  const head = [
+    '<meta name="description" content="GD Arena: a 3D arena fighting game for the alliance, playable online.">',
+    '<link rel="manifest" href="manifest.webmanifest">',
+    '<meta name="theme-color" content="#0d0812">',
+    '<link rel="icon" type="image/png" href="icon-192.png">',
+    '<link rel="apple-touch-icon" href="icon-180.png">',
+    '<meta name="apple-mobile-web-app-capable" content="yes">',
+    '<meta name="mobile-web-app-capable" content="yes">',
+    '<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">',
+    '<meta name="apple-mobile-web-app-title" content="GD Arena">',
+  ].join('\n');
+  for (const file of readdirSync(path.join(root, 'client', 'web'))) copyFileSync(path.join(root, 'client', 'web', file), path.join(root, 'dist-web', file));
+  writeFileSync(path.join(root, 'dist-web', 'index.html'), preview.replace('<meta charset="utf-8">', `<meta charset="utf-8">\n${head}`));
   console.log(`dist-web/index.html  ${(preview.length / 1024).toFixed(0)} KB  online: ${net ? 'yes' : 'no'}`);
 } else {
   mkdirSync(path.join(root, 'dist'), { recursive: true });
