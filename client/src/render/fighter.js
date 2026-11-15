@@ -40,7 +40,31 @@ export const vanished = (f) => f.state === 'attack' && f.move === 'eclipse' && f
 const FLIP = 16; // ticks of the somersault that opens an air jump
 const turnOf = (t, ticks) => Math.min(1, t / ticks) * Math.PI * 2;
 
+// The ordinary blows get anticipation and follow-through on top of their key
+// poses: the wind-up builds over the whole startup instead of snapping into
+// place, the first tick of the strike overshoots a little, and the recovery
+// settles back towards the guard rather than holding the extended pose.
+const SHAPED = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'lunge', 'grab', 'launch', 'rollUpper', 'riseKick', 'howl3', 'eclipse3']);
+const GUARD = { hipX: 0, hipY: -60, lean: 0.15, tilt: 0, hfx: 26, hfy: -6, hbx: 14, hby: 6, ffx: 18, ffy: 0, fbx: -22, fby: 0, rot: 0, lift: 0, spin: 0 };
 function attackPose(f) {
+  const key = attackKey(f);
+  const m = MOVES[f.move];
+  if (!m || !SHAPED.has(f.move)) return key;
+  const end = m.startup + m.active;
+  let out;
+  if (f.t < m.startup) out = mix(GUARD, key, 0.35 + 0.65 * ease((f.t + 1) / m.startup));
+  else if (f.t < end) {
+    if (f.t - m.startup > 1) return key;
+    // The strike's first ticks: thrown a little past its mark.
+    out = { ...key, hipX: key.hipX + 4, lean: key.lean * 1.15, hfx: key.hfx * 1.08, ffx: key.ffx * 1.06 };
+  } else out = mix(key, GUARD, 0.85 * ease((f.t - end) / Math.max(1, m.recovery)));
+  out.spin = key.spin; // a turn on the spot is never blended (it would unwind)
+  out.rot = key.rot;
+  out.lift = key.lift;
+  return out;
+}
+
+function attackKey(f) {
   const m = MOVES[f.move];
   if (!m) return pose({});
   const phase = f.t < m.startup ? 'pre' : f.t < m.startup + m.active ? 'act' : 'rec';
@@ -298,8 +322,11 @@ function targetPose(f, now) {
         lean: 0.2,
       });
     }
-    case 'land':
-      return pose({ ...CROUCH, hipY: -46 });
+    case 'land': {
+      // Landing: squashed low on touching down, then rising out of it.
+      const k = ease(f.t / 7);
+      return pose({ ...CROUCH, hipY: -34 - 16 * k, lean: 0.34 - 0.12 * k, hfx: 28, hfy: 10 - 8 * k, hbx: 8, hby: 16 - 6 * k, ffx: 26, fbx: -28 });
+    }
     case 'roll':
       // Tucked into a ball, turning head over heels.
       return pose({ hipY: -30, lean: 0.9, tilt: 0.5, hfx: 16, hfy: 22, hbx: 10, hby: 22, ffx: 14, ffy: -8, fbx: -6, fby: -8, rot: f.t * 0.42, lift: -6 });
@@ -310,6 +337,10 @@ function targetPose(f, now) {
         const rot = (f.t / FLIP) * Math.PI * 2;
         return pose({ hipY: -48, lean: 0.7, hfx: 18, hfy: 20, hbx: 10, hby: 22, ffx: 18, ffy: -22, fbx: 4, fby: -20, rot, lift: -48 * (1 - Math.cos(rot)) });
       }
+      // Pushing off (legs straight, arms thrown up), tucked at the top, then
+      // reaching down for the floor on the way back.
+      if (f.t < 4 && f.vh > 6) return pose({ hipY: -66, lean: 0.04, ffx: 6, ffy: 2, fbx: -10, fby: 4, hfx: 18, hfy: -40, hbx: -12, hby: -34 });
+      if (Math.abs(f.vh) < 3) return pose({ ...AIR, ffx: 16, ffy: -30, fbx: -6, fby: -24, hfx: 22, hfy: -10, hbx: -14, hby: -4 });
       return f.vh < -3 ? pose({ ...AIR, ffx: 14, ffy: -8, fbx: -10, fby: -2, hfy: -30, hby: -24 }) : pose(AIR);
     case 'airAttack': {
       const pre = f.t < (MOVES[f.move]?.startup ?? 0);
@@ -332,6 +363,16 @@ function targetPose(f, now) {
       if (f.deflect > 0) return pose({ hipX: 6, hipY: -56, lean: 0.24, hfx: 48, hfy: -24, hbx: 42, hby: -12, ffx: 24, fbx: -28 });
       // Forearms crossed in front of the chest, low enough to be seen below
       // the big head from the camera.
+      // Each build guards its own way: the sumo low and wide behind both
+      // forearms, the slim fighter high and light, bobbing behind the hands.
+      {
+        const build = getFighter(f.char).build;
+        if (build === 'sumo') return pose({ hipY: -48, lean: 0.18, hfx: 34, hfy: 2, hbx: 30, hby: 12, ffx: 28, fbx: -30 });
+        if (build === 'slim') {
+          const b = Math.sin(f.t * 0.3) * 1.5;
+          return pose({ hipY: -60 + b, lean: -0.02, hfx: 24, hfy: -16 + b, hbx: 22, hby: -6 + b, ffx: 14, ffy: -2, fbx: -20 });
+        }
+      }
       return pose({ hipY: -58, lean: -0.05, hfx: 30, hfy: -4, hbx: 26, hby: 6, ffx: 16, fbx: -22 });
     case 'throw': {
       // Seize low with both hands, heave the rival up and over the head
@@ -363,13 +404,26 @@ function targetPose(f, now) {
         const sway = Math.sin(f.t * 0.45);
         return pose({ hipX: -12 + sway * 4, hipY: -56, lean: -0.5 + sway * 0.14, tilt: -0.35, hfx: -10, hfy: -38 + sway * 6, hbx: -32, hby: -24 - sway * 6, ffx: 22, ffy: -Math.max(0, sway) * 8, fbx: -20 });
       }
-      const jolt = f.t < 5 ? 1 : 0.6;
       // Which way the blow came from, read from the push at the moment it
       // landed (it fades during the stun, so it is remembered): struck from
-      // behind, the body is thrown forward instead of back.
-      if (f.t < 3 || hitFrom[f.slot] === undefined) hitFrom[f.slot] = Math.cos(f.dir) * (f.vx || 0) + Math.sin(f.dir) * (f.vz || 0) > 0.5;
-      if (hitFrom[f.slot]) return pose({ hipX: 6, hipY: -57, lean: 0.5 * jolt, tilt: 0.25 * jolt, hfx: 22, hfy: 16, hbx: -20, hby: -10, ffx: 20, fbx: -20 });
-      return pose({ hipX: -6, hipY: -58, lean: -0.4 * jolt, tilt: -0.3 * jolt, hfx: -4, hfy: 12, hbx: -24, hby: 2, ffx: 14, fbx: -18 });
+      // behind, the body is thrown forward instead of back. How hard it was
+      // shows too: a light blow is a flinch, a heavy one a stagger with the
+      // arms flung and a foot lifted, and the head snaps to alternate sides
+      // as blows keep landing. Both ease off as the stun runs out.
+      if (f.t < 3 || hitFrom[f.slot] === undefined) {
+        hitFrom[f.slot] = Math.cos(f.dir) * (f.vx || 0) + Math.sin(f.dir) * (f.vz || 0) > 0.5;
+        hitLen[f.slot] = Math.max(hitLen[f.slot] && f.t > 0 ? hitLen[f.slot] : 0, f.stun + f.t);
+      }
+      const heavy = hitLen[f.slot] >= 18;
+      const k = Math.min(1, f.t / Math.max(6, hitLen[f.slot] || 12));
+      const amt = (heavy ? 1.25 : 0.8) * (1 - 0.65 * ease(k));
+      const side = (f.taken || 1) % 2 ? 1 : -1;
+      if (hitFrom[f.slot]) return pose({ hipX: 6 * amt, hipY: -57, lean: 0.55 * amt, tilt: 0.25 * amt * side, hfx: 22, hfy: 16, hbx: -20 - (heavy ? 12 * amt : 0), hby: -10, ffx: 20, fbx: -20 });
+      return pose({
+        hipX: -7 * amt - (heavy ? 5 * amt : 0), hipY: -58 + (heavy ? 3 : 0), lean: -0.45 * amt, tilt: -0.32 * amt * side,
+        hfx: heavy ? -16 * amt : -4, hfy: heavy ? -14 * amt : 12, hbx: -24 - (heavy ? 8 * amt : 0), hby: heavy ? -6 * amt : 2,
+        ffx: 14 + (heavy ? 12 * amt : 0), ffy: heavy ? -10 * amt : 0, fbx: -18 - (heavy ? 8 * amt : 0),
+      });
     }
     case 'down':
     case 'ko': {
@@ -417,6 +471,7 @@ function targetPose(f, now) {
 const smooth = [];
 const lastAt = []; // when each slot's pose was last eased
 const hitFrom = []; // per slot: was the last blow taken from behind?
+const hitLen = []; // per slot: how long the current stun lasts (its strength)
 const rolled = []; // per slot: was the fighter rolling last frame?
 const TAU = Math.PI * 2;
 
@@ -424,6 +479,7 @@ export function resetPoses() {
   smooth.length = 0;
   lastAt.length = 0;
   hitFrom.length = 0;
+  hitLen.length = 0;
   thrown.length = 0;
   rolled.length = 0;
 }
@@ -443,7 +499,8 @@ export function currentPose(f, now) {
   // slower phone sees the same timing (a long stall counts as four frames).
   const frames = Math.min(4, Math.max(0, (now - (lastAt[f.slot] ?? now)) / (1000 / 60)));
   lastAt[f.slot] = now;
-  const rate = f.state === 'attack' || f.state === 'hit' || f.state === 'airAttack' ? 0.62 : 0.36;
+  // (The first ticks of being hit snap hardest, so the impact reads.)
+  const rate = f.state === 'hit' && f.t < 3 ? 0.8 : f.state === 'attack' || f.state === 'hit' || f.state === 'airAttack' ? 0.62 : 0.36;
   const k = 1 - Math.pow(1 - rate, frames);
   for (const key in target) cur[key] += (target[key] - cur[key]) * k;
   cur.spin = target.spin; // a turn on the spot is drawn as it is: easing would unwind it

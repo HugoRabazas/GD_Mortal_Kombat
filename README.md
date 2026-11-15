@@ -90,7 +90,17 @@ runs on the clock), so a phone stays cooler and its battery lasts longer
 while someone reads; a fight is always drawn at full rate. Each build walks its own way too: the heavy fighter waddles, wide and low,
 rocking from side to side; the slim one goes on quick, springy steps.
 A blow knocks a fighter away from where it came from: struck from the
-front the body is thrown back, struck from behind it is thrown forward. The beaten go down in their own way too: the heavy fighter sits down
+front the body is thrown back, struck from behind it is thrown forward. How
+hard shows as well: a light blow is a flinch, a heavy one a stagger with the
+arms flung and a foot off the floor, the head snapping to alternate sides as
+blows keep landing, easing off as the stun runs out (and the first ticks of
+a hit snap harder so the impact reads). Every ordinary blow has anticipation
+and follow-through: the wind-up builds over the whole startup, the strike
+overshoots its mark for a tick or two, and the recovery settles back towards
+the guard. A jump pushes off with the legs straight and the arms thrown up,
+tucks at the top and reaches for the floor on the way down; landing squashes
+low and rises out of it. Each build guards in its own way (the sumo low and
+wide, the slim fighter high and bobbing). The beaten go down in their own way too: the heavy fighter sits down
 hard with legs out, the slim one drops to a knee, the others stand slumped.
 The result screen opens with the winner's own line (Ruko: "The moon
 saw that one coming. You did not."; Shadow: "Quiet. Quick. Finished.";
