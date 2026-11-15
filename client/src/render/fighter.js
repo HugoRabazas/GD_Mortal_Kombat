@@ -137,7 +137,9 @@ function targetPose(f, now) {
     case 'block':
       // A perfect guard: both arms shove the blow away before settling back.
       if (f.deflect > 0) return pose({ hipX: 6, hipY: -56, lean: 0.24, hfx: 48, hfy: -24, hbx: 42, hby: -12, ffx: 24, fbx: -28 });
-      return pose({ hipY: -58, lean: -0.1, hfx: 22, hfy: -18, hbx: 18, hby: -8, ffx: 16, fbx: -22 });
+      // Forearms crossed in front of the chest, low enough to be seen below
+      // the big head from the camera.
+      return pose({ hipY: -58, lean: -0.05, hfx: 30, hfy: -4, hbx: 26, hby: 6, ffx: 16, fbx: -22 });
     case 'hit': {
       if (f.reel > 0) {
         // Thrown off balance by a perfect guard: arms flung wide, swaying on the heels.

@@ -137,7 +137,9 @@ blows give a light rumble too), where the browser allows it.
   fast again. Measured over 600 CPU rounds, rounds won from 30 points of
   health behind went from 11.6 % to 14.8 %.
 - **Block** only stops what comes from the front, and a blocked hit can never
-  knock you out.
+  knock you out. While a fighter blocks, an arc on the floor shows what the
+  guard covers; it flares during the last moments in which a block would be
+  a perfect guard, so the timing can be seen as well as felt.
 - **Jump** over a ground stomp; attack in the air for a diving kick.
 - **Crystals** appear on the floor: gold gives energy, green gives health.
 - As the clock runs down a **ring of fire** closes in. A fighter knocked into

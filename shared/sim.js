@@ -30,7 +30,7 @@ const GETUP_TICKS = 18;
 // TECH_TICKS instead of DOWN_TICKS - once per knockdown, and not in the
 // last few ticks, when there would be nothing to gain.
 const TECH_TICKS = 8;
-const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle of where you face
+export const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle of where you face
 const ROLL = { ticks: 15, safe: 11, speed: 8.5, rest: 7 }; // the dodge roll
 const SPLAT = { speed: 3.2, dmg: 5 }; // being knocked into the ring of fire
 // A counter hit: a blow that lands while the rival is still winding up an

@@ -15,7 +15,7 @@
 
 import { ARENA, TIMING } from '../../../shared/constants.js';
 import { getFighter, dressLineUp, dressColors } from '../../../shared/fighters.js';
-import { MOVES } from '../../../shared/sim.js';
+import { MOVES, BLOCK_ARC } from '../../../shared/sim.js';
 import { takeFlashes } from './fx.js';
 import { createRig } from './rig3d.js';
 import { play } from '../audio.js';
@@ -577,6 +577,24 @@ export function create3D(canvas) {
   });
   let nextTrail = 0;
 
+  // ---------- guard arcs ----------
+  // A guard covers only the front (BLOCK_ARC either side of where the fighter
+  // faces). While a fighter blocks, an arc on the floor shows what it covers,
+  // and it flares during the last moments in which a block would be a
+  // perfect guard - the timing made visible.
+  const guards = Array.from({ length: 4 }, () => {
+    const turn = new THREE.Group();
+    const arc = new THREE.Mesh(
+      new THREE.RingGeometry(0.62, 0.8, 28, 1, -BLOCK_ARC, BLOCK_ARC * 2),
+      new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, fog: false }),
+    );
+    arc.rotation.x = -Math.PI / 2;
+    turn.add(arc);
+    turn.visible = false;
+    scene.add(turn);
+    return { turn, arc };
+  });
+
   // ---------- special-move flair ----------
   // The spinning leap: two flames orbit the fighter as they rise, leaving a
   // spiral of glows behind them. One pair per fighter slot.
@@ -1024,6 +1042,18 @@ export function create3D(canvas) {
         if (!f) continue;
         rigs[i].setOutline(quality < 2);
         rigs[i].update(f, now, camera);
+        const guard = guards[i];
+        if (guard) {
+          guard.turn.visible = f.state === 'block' && f.hp > 0;
+          if (guard.turn.visible) {
+            guard.turn.position.set(f.x * S, 0.04 + f.h * S, f.z * S);
+            guard.turn.rotation.y = -f.dir;
+            guard.arc.material.color.set(glowOf(i));
+            guard.arc.material.opacity = f.guard > 0 ? 0.95 : 0.35;
+            const swell = f.guard > 0 ? 1.12 : 1;
+            guard.arc.scale.setScalar((getFighter(f.char).build === 'sumo' ? 1.3 : 1) * swell);
+          }
+        }
         const height = f.h * S;
         const spread = 1 - Math.min(0.5, height * 0.25);
         const big = getFighter(f.char).build === 'sumo' ? 1.5 : 1;
