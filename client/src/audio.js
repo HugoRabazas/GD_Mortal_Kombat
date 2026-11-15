@@ -282,7 +282,7 @@ const SOUNDS = {
 //   frost     - D minor, B flat, G minor, A at 104: a bell melody (a pure
 //               tone plus the out-of-tune overtone real bells have) over a
 //               hollow square bass, softer drums and a high ice chime.
-const MUSIC_THEMES = {
+export const MUSIC_THEMES = {
   courtyard: {
     bpm: 116,
     finalBpm: 130,

@@ -133,6 +133,25 @@ function placePicker() {
   return `<div class="seg places" role="group" aria-label="Arena">${ARENAS.map((a) => `<button type="button" class="${app.place === a.id ? 'on' : ''}" data-act="place" data-id="${a.id}" aria-pressed="${app.place === a.id}">${a.name}</button>`).join('')}</div>`;
 }
 
+// One tip each time the menu is shown, in turn, so the deeper rules surface
+// over time without a manual. Written for the controls in use.
+const TIPS = [
+  (c) => `Tip: hit a rival while they wind up a blow for a <b>counter</b> - a quarter more damage.`,
+  (c) => `Tip: press <kbd>${c.b}</kbd> just before a blow lands for a <b>perfect guard</b>; heavy attackers are left reeling.`,
+  (c) => `Tip: under a quarter of your health your energy fills faster. A round is never over until it is over.`,
+  (c) => `Tip: <kbd>${c.p}</kbd> + <kbd>${c.k}</kbd> together is a <b>grab</b>, and it goes straight through a guard.`,
+  (c) => `Tip: <kbd>${c.b}</kbd> and a direction is a <b>dodge roll</b> - blows pass through you for a moment.`,
+  (c) => `Tip: knock a rival into the <b>ring of fire</b> as it closes in for extra damage.`,
+  (c) => `Tip: gold crystals give energy, green ones health. Walk over one to take it.`,
+  (c) => `Tip: a guard only stops what comes from the front. Get behind a blocking rival.`,
+  (c) => `Tip: in a brawl, do not stand between two rivals.`,
+];
+let tipAt = Math.floor(Math.random() * TIPS.length);
+function menuTip() {
+  tipAt = (tipAt + 1) % TIPS.length;
+  return TIPS[tipAt](controlNames());
+}
+
 // True until this device has started its first fight.
 function isNewcomer() {
   try {
@@ -210,7 +229,7 @@ function menuScreen() {
         <button type="button" class="btn quiet" data-act="help">How to play</button>
       </div>
       ${best ? `<p class="best">Arcade best <b>${points(best)}</b></p>` : ''}
-      ${isNewcomer() ? '<p class="note">New here? <b>Training</b> lets you try every move with no clock.</p>' : ''}
+      ${isNewcomer() ? '<p class="note">New here? <b>Training</b> lets you try every move with no clock.</p>' : `<p class="note tip">${menuTip()}</p>`}
       <div class="foot">
         <button type="button" class="link" data-act="settings">Settings</button>
         <button type="button" class="link" data-act="touch">${touchLabel()}</button>

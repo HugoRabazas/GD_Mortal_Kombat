@@ -191,6 +191,10 @@ function paintBackdrop() {
   return c;
 }
 
+// Without WebGL every arena is the courtyard picture, its hue turned to the
+// arena's own: ice for the summit, sun-baked sandstone for the ruins.
+export const FLAT_TINTS = { courtyard: null, frost: '#2f86d8', dunes: '#d89a40' };
+
 export function drawArena(ctx, now, theme) {
   if (!backdrop) backdrop = paintBackdrop();
   ctx.drawImage(backdrop, 0, 0, W, H);
@@ -237,10 +241,10 @@ export function drawArena(ctx, now, theme) {
   ctx.restore();
 
   // The frozen arena is the same picture with every colour turned to ice.
-  if (theme === 'frost' || theme === 'dunes') {
+  if (FLAT_TINTS[theme]) {
     ctx.save();
     ctx.globalCompositeOperation = 'hue';
-    ctx.fillStyle = theme === 'frost' ? '#2f86d8' : '#d89a40'; // ice, or sun-baked sandstone
+    ctx.fillStyle = FLAT_TINTS[theme];
     ctx.fillRect(0, 0, W, H);
     ctx.restore();
   }

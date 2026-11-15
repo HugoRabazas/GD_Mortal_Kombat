@@ -1393,6 +1393,33 @@ kbd {
   }
 }
 
+/* The main menu on screens of middling height (a laptop window, the artifact
+   panel, a tablet held sideways): a smaller title and the modes in two
+   columns, so the whole menu fits without scrolling. */
+@media (min-height: 481px) and (max-height: 700px) and (min-width: 700px) {
+  .brand {
+    font-size: clamp(3.4rem, 16vh, 5.4rem);
+  }
+
+  .menu {
+    gap: 10px;
+  }
+
+  .menu .stack {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: min(100%, 640px);
+    gap: 10px 12px;
+  }
+
+  .menu .btn {
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    white-space: nowrap;
+  }
+}
+
 /* Wide but not very tall (a laptop, a browser window, a tablet held sideways):
    each fighter card turns sideways - portrait and name on the left, stats,
    moves and the picker on the right - so the whole screen fits without

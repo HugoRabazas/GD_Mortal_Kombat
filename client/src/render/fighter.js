@@ -162,7 +162,18 @@ function targetPose(f, now) {
     case 'lose':
       return pose({ hipY: -54, lean: 0.48, tilt: 0.4, hfx: 6, hfy: 36, hbx: -4, hby: 36 });
     default: {
-      // idle: a gentle breathing bounce
+      // idle: a gentle breathing bounce, in each build's own stance - the
+      // sumo low and wide, breathing slowly; the slim fighter light on the
+      // toes, bouncing quicker; everyone else square and ready.
+      const build = getFighter(f.char).build;
+      if (build === 'sumo') {
+        const b = Math.sin(now / 420 + f.slot * 2);
+        return pose({ hipY: -50 + b * 1.2, lean: 0.2, ffx: 28, fbx: -30, hfx: 26, hfy: 6 + b, hbx: 14, hby: 12 + b });
+      }
+      if (build === 'slim') {
+        const b = Math.abs(Math.sin(now / 170 + f.slot * 2));
+        return pose({ hipY: -63 - b * 3, lean: 0.08, ffy: -b * 2, fby: -b * 3, hfx: 22, hfy: -10 + b, hbx: 8, hby: 2 - b });
+      }
       const b = Math.sin(now / 240 + f.slot * 2);
       return pose({ hipY: -62 + b * 1.6, hfy: -4 + b, hby: 8 - b });
     }

@@ -55,6 +55,11 @@ finisher's cut-in all take their colour from one place (`dressColors` in
 
 A duel is first to two round wins.
 
+Each body type also stands its own way between blows: the sumo low and
+wide, breathing slowly; the slim fighter light on the toes, bouncing
+quicker. The main menu shows a different tip each time, written for the
+controls in use.
+
 When a match ends, every fighter who won celebrates in their own way - Ruko
 raises a fist to the sky, Shadow stands with arms folded, Jackie stamps like a sumo
 wrestler, Pixie hops and waves - turned three-quarters to the camera so it
@@ -237,9 +242,11 @@ blows and knockouts land - and it is heard: a low murmur under every fight
 knockouts, then settles back down. Inside every round, the ring of fire shrinks the
 fighting ground as time runs out.
 
-To add a third arena: add an entry to `THEMES` in
-`client/src/render/scene3d.js` (colours, weather and the three moods) and its
-name to `client/src/arenas.js`.
+To add another arena: add its name to `client/src/arenas.js`, its look to
+`THEMES` in `client/src/render/themes.js` (colours, weather and the three
+moods), its tune to `MUSIC_THEMES` in `client/src/audio.js` and its tint to
+`FLAT_TINTS` in `client/src/render/arena.js`. `npm test` says what is
+missing.
 
 ## How it is built, from the ground up
 
@@ -345,8 +352,11 @@ checks use it to act at an exact moment of a fight - for example, to raise
 the guard three ticks before a kick lands. Without `?debug` nothing changes.
 
 `npm test` first runs a linter (`eslint.config.js`) and then the tests: the
-rules (`tests/sim.test.js`), the roster's costumes (`tests/fighters.test.js`)
-and online play (`tests/online.test.js`). The
+rules (`tests/sim.test.js`), the roster's costumes (`tests/fighters.test.js`),
+the arenas (`tests/arenas.test.js`: every arena in the picker has a 3D theme
+with three moods, its own music and a look without WebGL - the themes live
+as plain data in `client/src/render/themes.js` so Node can read them) and
+online play (`tests/online.test.js`). The
 online test runs two players in Node on the same-browser bus (Node has
 BroadcastChannel too): they meet in the lobby, make a room, get ready, fight
 in the host's arena, and come back for one more. Node has no WebRTC, so it
