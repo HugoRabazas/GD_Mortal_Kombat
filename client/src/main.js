@@ -533,6 +533,8 @@ function movesCard() {
     <dl class="movelist" aria-label="Moves">
       <dt>${k(key.p, key.p, key.p)}</dt><dd><b>Three-punch combo</b>; each punch must land, the third knocks down.</dd>
       <dt>${k(key.k)}</dt><dd><b>Kick</b>: slower than a punch, heavier, longer reach.</dd>
+      <dt>Run + ${k(key.p)}</dt><dd><b>Lunging straight</b>: after a few steps, punch with the stick held to leap in from long range. Chains into the second punch.</dd>
+      <dt>Run + ${k(key.k)}</dt><dd><b>Slide</b>: kick while running to slide in feet-first and sweep the rival off their feet. Low: jump it.</dd>
       <dt>${k(key.g)}</dt><dd><b>Throw</b>: seize, lift and slam. Short reach, goes straight through a guard.</dd>
       <dt>${k(key.j)}, ${k(key.p)}</dt><dd><b>Diving attack</b> from the air.</dd>
       <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b>.</dd>

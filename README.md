@@ -153,6 +153,12 @@ and the heartbeat, the crowd and the weather go quiet.
   aim does not have to be exact.
 - **Punch three times** for a combo that ends in a knockdown; each punch has
   to land for the next to come out.
+- **Moving attacks**: after about eight ticks of walking, punching with the
+  stick still held gives a **lunging straight** (leaps about 50 units in from
+  outside jab range, 7 damage, chains into the second punch) and kicking gives
+  a **slide** (feet-first along the floor, 6 damage, sweeps the rival down,
+  but low enough to be jumped and slow to recover). A single step still gives
+  a plain jab or kick, so close-range play is unchanged.
 - **Throw** has its own button (GRAB on a phone, `M` / `V`, the right stick
   on a pad), so it can be done while moving with one thumb on the stick; punch
   and kick pressed together (within 3 ticks) still work on a keyboard. It is a

@@ -707,9 +707,14 @@ kbd {
   color: var(--bone);
 }
 
-/* The pause screen: the buttons on one side, the move list on the other. */
+/* The pause screen: the buttons on one side, the move list on the other.
+   When the list outgrows a tall phone it scrolls inside the screen, so the
+   page itself never does (the list grows with every new move). */
 .screen.pause {
   width: min(100%, 760px);
+  box-sizing: border-box;
+  max-height: 100%;
+  overflow-y: auto;
 }
 
 .cols {

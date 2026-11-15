@@ -511,6 +511,52 @@ test('punch and kick together is a grab that goes through a guard, but not throu
   assert.equal(far.f[0].state, 'attack', 'and leaves the grabber open');
 });
 
+test('punch on the move is a lunging straight that travels and reaches further than a jab', () => {
+  const still = startFight();
+  closeUp(still, 150);
+  step(still, [INPUT.PUNCH, 0]);
+  run(still, 20);
+  assert.equal(still.f[1].hp, still.f[1].maxHp, 'a jab from a standstill does not reach');
+
+  const s = startFight();
+  closeUp(s, 180);
+  run(s, 9, [INPUT.RIGHT, 0]); // running in
+  const gap = s.f[1].x - s.f[0].x;
+  assert.ok(gap > 84 + 34, `still out of a jab's reach (${gap.toFixed(0)})`);
+  assert.equal(s.f[0].state, 'walk');
+  const x0 = s.f[0].x;
+  step(s, [INPUT.RIGHT | INPUT.PUNCH, 0]);
+  assert.equal(s.f[0].move, 'lunge');
+  run(s, 14);
+  assert.ok(s.f[0].x - x0 > 40, `the lunge carries forward (${(s.f[0].x - x0).toFixed(0)})`);
+  assert.ok(s.f[1].hp < s.f[1].maxHp, 'and lands from where a jab would not');
+});
+
+test('a punch from a single step is still a jab', () => {
+  const s = startFight();
+  closeUp(s, 120);
+  run(s, 2, [INPUT.RIGHT, 0]);
+  step(s, [INPUT.RIGHT | INPUT.PUNCH, 0]);
+  assert.equal(s.f[0].move, 'punch');
+});
+
+test('kick on the move is a slide that sweeps a standing rival but passes under a jump', () => {
+  const s = startFight();
+  closeUp(s, 175);
+  run(s, 9, [INPUT.RIGHT, 0]);
+  step(s, [INPUT.RIGHT | INPUT.KICK, 0]);
+  assert.equal(s.f[0].move, 'slide');
+  run(s, 18);
+  assert.equal(s.f[1].state === 'down' || s.f[1].state === 'getup', true, 'swept off the feet');
+
+  const air = startFight();
+  closeUp(air, 175);
+  run(air, 9, [INPUT.RIGHT, 0]);
+  step(air, [INPUT.RIGHT | INPUT.KICK, INPUT.JUMP]);
+  run(air, 18);
+  assert.equal(air.f[1].hp, air.f[1].maxHp, 'a rival in the air is over the slide');
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);

@@ -259,6 +259,8 @@ export function aiInput(ai, s, me) {
   }
 
   if (dist > 112) {
+    // Running in from just out of reach: a lunging straight or a slide.
+    if (dist < 170 && f.state === 'walk' && f.t >= 8 && o.h <= 0 && rnd(ai) < cfg.attack * 0.3) return press(rnd(ai) < 0.6 ? INPUT.PUNCH : INPUT.KICK, toward(dx, dz));
     if (rnd(ai) < 0.05) return hold(toward(dx, dz) | INPUT.JUMP, 3);
     return hold(toward(dx, dz), 5 + Math.floor(rnd(ai) * 7));
   }

@@ -49,6 +49,16 @@ function attackPose(f) {
       if (phase === 'pre') return pose({ ...CROUCH, lean: 0.3, hfx: 8, hfy: 28, hbx: -10, hby: 14 });
       if (phase === 'act') return pose({ hipX: 10, hipY: -68, lean: 0.08, hfx: 34, hfy: -50, hbx: -16, hby: 12, ffx: 22, fbx: -20, fby: -6 });
       return pose({ lean: 0.1, hfx: 22, hfy: -28 });
+    case 'lunge': { // a straight thrown on the run: the whole body behind the fist
+      if (phase === 'pre') return pose({ hipY: -56, lean: 0.42, hfx: 6, hfy: 4, hbx: -14, hby: 8, ffx: 26, fbx: -30 });
+      if (phase === 'act') return pose({ hipX: 14, hipY: -58, lean: 0.62, hfx: 66, hfy: -8, hbx: -22, hby: 12, ffx: 30, fbx: -44, fby: -8 });
+      return pose({ lean: 0.3, hfx: 36, hfy: 0, ffx: 22, fbx: -26 });
+    }
+    case 'slide': { // feet first along the floor, leaning back, arms out for balance
+      if (phase === 'pre') return pose({ hipY: -44, lean: -0.15, ffx: 30, ffy: -10, fbx: -18, hfx: 8, hfy: 10, hbx: -20, hby: 6 });
+      if (phase === 'act') return pose({ hipX: -6, hipY: -22, lean: -0.62, ffx: 76, ffy: -2, fbx: 14, fby: -4, hfx: -14, hfy: -18, hbx: -34, hby: 6 });
+      return pose({ hipY: -34, lean: -0.3, ffx: 40, ffy: -2, fbx: 6, hfx: -6, hfy: 10, hbx: -24, hby: 10 });
+    }
     case 'grab': // both hands reach out, then heave
       if (phase === 'pre') return pose({ lean: 0.25, hfx: 30, hfy: -10, hbx: 26, hby: -2 });
       if (phase === 'act') return pose({ lean: 0.45, hipX: 10, hfx: 50, hfy: -10, hbx: 48, hby: 2, fbx: -28 });

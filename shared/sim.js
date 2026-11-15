@@ -32,6 +32,9 @@ export const THROW = { lift: 7, slam: 19, end: 28, height: 120, reach: 46 };
 // window turned deliberate punch-then-kick into grabs that missed, and it
 // cost the fastest CPU a sixth of its wins. The GRAB button needs no timing.
 const GRAB_WINDOW = 3;
+// Walking this long counts as running: punch and kick become the lunge and
+// the slide.
+const RUN_TICKS = 8;
 const DOWN_TICKS = 34; // time spent lying on the floor after a knockdown
 const GETUP_TICKS = 18;
 // Quick rise: block held while lying on the floor gets a fighter up after
@@ -77,6 +80,20 @@ export const MOVES = {
   kick: {
     startup: 8, active: 4, recovery: 13, dmg: 10, reach: 104, arc: 0.75, y0: 30, y1: 140, aim: 210,
     hitstun: 19, blockstun: 12, push: 9, gain: 12, heavy: true,
+  },
+  // Punch on the move: a lunging straight that carries the body forward
+  // (`speed` from tick go[0] to go[1]), reaching further than a jab but
+  // slower to start. It can still open the punch string.
+  lunge: {
+    startup: 6, active: 4, recovery: 12, dmg: 7, reach: 92, arc: 0.8, y0: 70, y1: 150, aim: 240,
+    hitstun: 17, blockstun: 10, push: 6, gain: 10, next: 'punch2', speed: 5.5, go: [0, 10],
+  },
+  // Kick on the move: a slide along the floor, feet first. Low, so a rival
+  // in the air is over it; it sweeps whoever it catches off their feet, but
+  // a slide that misses leaves the slider lying open.
+  slide: {
+    startup: 7, active: 9, recovery: 20, dmg: 6, reach: 66, arc: 0.6, y0: -20, y1: 60, aim: 220,
+    hitstun: 0, blockstun: 12, push: 6, gain: 10, knockdown: true, speed: 7.5, go: [7, 16],
   },
   // Punch and kick together: a grab. Short reach and slow to recover if it
   // misses, but a guard does not stop it - the answer to a rival who only blocks.
@@ -315,7 +332,7 @@ function rememberPresses(f, inp) {
 }
 
 // Turn a remembered button press into an attack, if the fighter can afford it.
-function tryAttack(s, f) {
+function tryAttack(s, f, inp = 0) {
   const b = f.buf;
   if (b & INPUT.SUPER && f.meter >= RULES.SUPER_COST) {
     f.meter = 0;
@@ -337,12 +354,16 @@ function tryAttack(s, f) {
     startAttack(s, f, 'grab');
     return true;
   }
+  // On the run, the same buttons give the moving versions: after a few steps
+  // (a jab from a shuffle stays a jab) and with the stick still held (letting
+  // go of it gives the standing move).
+  const moving = f.state === 'walk' && f.t >= RUN_TICKS && !!stick(inp);
   if (b & INPUT.KICK) {
-    startAttack(s, f, 'kick');
+    startAttack(s, f, moving ? 'slide' : 'kick');
     return true;
   }
   if (b & INPUT.PUNCH) {
-    startAttack(s, f, 'punch');
+    startAttack(s, f, moving ? 'lunge' : 'punch');
     return true;
   }
   f.buf = 0;
@@ -375,7 +396,7 @@ function control(s, f, inp) {
         break;
       }
       f.taken = 0;
-      if (f.buf && tryAttack(s, f)) break;
+      if (f.buf && tryAttack(s, f, inp)) break;
       const dir = stick(inp);
       if (!held(INPUT.BLOCK)) f.rollOk = true;
       if (held(INPUT.BLOCK)) {
@@ -446,7 +467,9 @@ function control(s, f, inp) {
       const t = f.t;
       const activeEnd = m.startup + m.active;
       // The other button soon after a punch or a kick turns it into a grab.
-      if (t < GRAB_WINDOW && ((f.move === 'punch' && f.buf & INPUT.KICK) || (f.move === 'kick' && f.buf & INPUT.PUNCH))) {
+      const punchy = f.move === 'punch' || f.move === 'lunge';
+      const kicky = f.move === 'kick' || f.move === 'slide';
+      if (t < GRAB_WINDOW && ((punchy && f.buf & INPUT.KICK) || (kicky && f.buf & INPUT.PUNCH))) {
         startAttack(s, f, 'grab');
         break;
       }
@@ -454,6 +477,12 @@ function control(s, f, inp) {
         const going = t >= m.startup && t < activeEnd;
         f.vx = going ? Math.cos(f.dir) * m.speed : 0;
         f.vz = going ? Math.sin(f.dir) * m.speed : 0;
+      } else if (m.go) {
+        // Moves that travel: full speed through their stretch, then braking.
+        const going = t >= m.go[0] && t < m.go[1];
+        const v = going ? m.speed : t >= m.go[1] ? Math.hypot(f.vx, f.vz) * 0.75 : 0;
+        f.vx = Math.cos(f.dir) * v;
+        f.vz = Math.sin(f.dir) * v;
       } else if (f.move === 'rise') {
         if (t === m.startup) f.vh = m.vh;
       } else if (f.move === 'quake') {
