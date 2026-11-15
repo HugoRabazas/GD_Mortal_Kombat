@@ -212,6 +212,11 @@ function targetPose(f, now) {
         return pose({ hipX: -12 + sway * 4, hipY: -56, lean: -0.5 + sway * 0.14, tilt: -0.35, hfx: -10, hfy: -38 + sway * 6, hbx: -32, hby: -24 - sway * 6, ffx: 22, ffy: -Math.max(0, sway) * 8, fbx: -20 });
       }
       const jolt = f.t < 5 ? 1 : 0.6;
+      // Which way the blow came from, read from the push at the moment it
+      // landed (it fades during the stun, so it is remembered): struck from
+      // behind, the body is thrown forward instead of back.
+      if (f.t < 3 || hitFrom[f.slot] === undefined) hitFrom[f.slot] = Math.cos(f.dir) * (f.vx || 0) + Math.sin(f.dir) * (f.vz || 0) > 0.5;
+      if (hitFrom[f.slot]) return pose({ hipX: 6, hipY: -57, lean: 0.5 * jolt, tilt: 0.25 * jolt, hfx: 22, hfy: 16, hbx: -20, hby: -10, ffx: 20, fbx: -20 });
       return pose({ hipX: -6, hipY: -58, lean: -0.4 * jolt, tilt: -0.3 * jolt, hfx: -4, hfy: 12, hbx: -24, hby: 2, ffx: 14, fbx: -18 });
     }
     case 'down':
@@ -257,10 +262,12 @@ function targetPose(f, now) {
 // Each fighter slot keeps its own smoothed pose between frames.
 const smooth = [];
 const lastAt = []; // when each slot's pose was last eased
+const hitFrom = []; // per slot: was the last blow taken from behind?
 
 export function resetPoses() {
   smooth.length = 0;
   lastAt.length = 0;
+  hitFrom.length = 0;
 }
 
 // The pose a fighter should be drawn in right now, eased from the last frame.

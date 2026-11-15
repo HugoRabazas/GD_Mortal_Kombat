@@ -80,7 +80,8 @@ about five seconds (fewer pieces, falling slower, for anyone whose device
 asks for reduced motion). Sparks, dust, numbers, confetti, the fighters'
 easing between poses and the arena's lights and embers all move by the
 clock, not by the frame, so they keep the same timing on a phone that
-draws fewer frames a second. The beaten go down in their own way too: the heavy fighter sits down
+draws fewer frames a second. A blow knocks a fighter away from where it came from: struck from the
+front the body is thrown back, struck from behind it is thrown forward. The beaten go down in their own way too: the heavy fighter sits down
 hard with legs out, the slim one drops to a knee, the others stand slumped.
 The result screen opens with the winner's own line (Ruko: "The moon
 saw that one coming. You did not."; Shadow: "Quiet. Quick. Finished.";
