@@ -33,7 +33,8 @@ const CROUCH = { hipY: -38, lean: 0.24, hfx: 24, hfy: 4, hbx: 12, hby: 12, ffx: 
 const AIR = { hipY: -64, lean: 0.1, hfx: 20, hfy: -18, hbx: -16, hby: -10, ffx: 12, ffy: -24, fbx: -12, fby: -12 };
 
 // Shadow's finisher: gone from sight between vanishing and reappearing.
-export const vanished = (f) => f.state === 'attack' && f.move === 'eclipse' && f.t >= 5 && f.t < MOVES.eclipse.blink;
+export const vanished = (f) =>
+  f.state === 'attack' && ((f.move === 'eclipse' && f.t >= 5 && f.t < MOVES.eclipse.blink) || (f.move === 'shadeStep' && f.t >= 2 && f.t < MOVES.shadeStep.blink));
 
 // A whole turn on the spot, over `ticks`: 0 at the start, a full circle at the
 // end (which looks the same as no turn, so the next pose follows on).
@@ -81,6 +82,24 @@ function attackKey(f) {
       if (phase === 'pre') return pose({ ...CROUCH, lean: 0.3, hfx: 8, hfy: 28, hbx: -10, hby: 14 });
       if (phase === 'act') return pose({ hipX: 10, hipY: -68, lean: 0.08, hfx: 34, hfy: -50, hbx: -16, hby: 12, ffx: 22, fbx: -20, fby: -6 });
       return pose({ lean: 0.1, hfx: 22, hfy: -28 });
+    case 'clawLeap': // Ruko's wolf leap: up with the claws drawn back, then raking down
+      if (f.vh > 0) return pose({ hipY: -64, lean: 0.35, hfx: -6, hfy: -30, hbx: -18, hby: -24, ffx: 18, ffy: -30, fbx: -20, fby: -10 });
+      return pose({ hipY: -62, lean: 0.6, hfx: 50, hfy: 26, hbx: 30, hby: 30, ffx: 12, ffy: -24, fbx: -24, fby: -12 });
+    case 'shadeStep': // Shadow sinks into the shadows and rises behind the rival
+      if (f.t < MOVES.shadeStep.blink) return pose({ ...CROUCH, hipY: -40, hfx: 10, hfy: -12, hbx: 14, hby: -14 });
+      return pose({ hipY: -56, lean: 0.25, hfx: 26, hfy: -4, hbx: 18, hby: 4, ffx: 20, fbx: -26 });
+    case 'bellyBump': // Jackie barging in, belly first, arms swung back
+      if (phase === 'pre') return pose({ hipY: -48, lean: -0.1, hfx: -16, hfy: 10, hbx: -24, hby: 12, ffx: 26, fbx: -30 });
+      if (phase === 'act') return pose({ hipX: 18, hipY: -50, lean: -0.32, hfx: -24, hfy: 6, hbx: -30, hby: 10, ffx: 34, fbx: -34 });
+      return pose({ hipY: -50, lean: 0.1, hfx: 16, hfy: 10, hbx: 6, hby: 14, ffx: 26, fbx: -30 });
+    case 'cartwheel': { // Pixie wheels in on her hands and comes out of it with a kick
+      if (phase === 'pre') {
+        const rot = Math.min(1, f.t / m.startup) * Math.PI * 2;
+        return pose({ hipY: -58, lean: 0.4, hfx: 30, hfy: 30, hbx: 18, hby: 34, ffx: 18, ffy: -40, fbx: -18, fby: -40, rot, lift: -58 * (1 - Math.cos(rot)) });
+      }
+      if (phase === 'act') return pose({ hipX: 6, hipY: -62, lean: -0.45, ffx: 80, ffy: -70, fbx: -8, hfx: -10, hfy: 0, hbx: -26, hby: 6 });
+      return pose({ lean: -0.15, ffx: 30, ffy: -20, hfx: 8, hfy: 6 });
+    }
     case 'taunt': // each fighter's own gesture: their victory move, in brief
       return victoryPose(f);
     case 'charge': { // kick held: coiled on the back leg, the knee drawn up, trembling with it

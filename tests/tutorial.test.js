@@ -169,6 +169,7 @@ const BOTS = {
   riseKick: () => (s) => (s.f[0].state === 'getup' && s.f[0].t >= 5 ? INPUT.PUNCH : 0),
   guarded: () => routine(60, 30, (k) => (k === 0 ? INPUT.PUNCH : 0)),
   grab: () => routine(50, 40, (k) => (k === 0 ? INPUT.GRAB : 0)),
+  signature: () => (s, t) => (gap(s) > 120 ? (t % 40 === 0 ? INPUT.GRAB : 0) : t % 2 ? (s.f[1].x > s.f[0].x ? INPUT.LEFT : INPUT.RIGHT) : 0),
   breaker: () => routine(85, 60, (k) => (k < 25 ? INPUT.KICK : 0)),
   // Run in, and strike once close enough (`at` ticks after reaching `near`).
   lunge: () => runIn(150, (k, s) => (k === 0 ? toward(s, 0) | INPUT.PUNCH : 0)),

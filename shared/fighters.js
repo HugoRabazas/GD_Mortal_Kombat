@@ -47,6 +47,7 @@ export const FIGHTERS = [
     stats: { power: 1.03, speed: 1.0, health: 108 },
     special: { type: 'dash', name: 'Crimson Rush' },
     super: { name: 'Red Moon Howl', move: 'howl' },
+    signature: { name: 'Wolf Leap', move: 'clawLeap' },
   },
   {
     id: 'shadow',
@@ -68,6 +69,7 @@ export const FIGHTERS = [
     stats: { power: 1.0, speed: 1.1, health: 101 },
     special: { type: 'bolt', name: 'Storm Bolt' },
     super: { name: 'Total Eclipse', move: 'eclipse' },
+    signature: { name: 'Shade Step', move: 'shadeStep' },
   },
   {
     id: 'jackie',
@@ -89,6 +91,7 @@ export const FIGHTERS = [
     stats: { power: 1.08, speed: 0.82, health: 114 },
     special: { type: 'quake', name: 'Mountain Stomp' },
     super: { name: 'Avalanche Charge', move: 'avalanche' },
+    signature: { name: 'Belly Bump', move: 'bellyBump' },
   },
   {
     id: 'pixie',
@@ -108,9 +111,10 @@ export const FIGHTERS = [
       hair: '#ff8a2a',
     },
     looks: [{ name: 'Flame' }, { name: 'Frost', colors: { primary: '#2a7fb8', secondary: '#0f2236', accent: '#9be7ff', glow: '#7fe0ff', hair: '#bdf0ff' } }],
-    stats: { power: 0.95, speed: 1.18, health: 101 },
+    stats: { power: 0.95, speed: 1.18, health: 99 },
     special: { type: 'rise', name: 'Twin Flame Spiral' },
     super: { name: 'Phoenix Dive', move: 'phoenix' },
+    signature: { name: 'Cartwheel Kick', move: 'cartwheel' },
   },
 ];
 

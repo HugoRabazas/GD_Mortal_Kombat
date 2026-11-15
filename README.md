@@ -219,6 +219,15 @@ and the heartbeat, the crowd and the weather go quiet.
   as often as it punishes, the knee when closing in); measured with them in:
   duels 47-53 %, brawl firsts 16-20 %, ladder 100 / 81 / 61 %. The Tutorial
   teaches them (Combos: hook kick and air string; On the run: flying knee).
+- **Signature moves**: grab with no rival within throw reach (100) is the
+  fighter's own move for crossing the gap - Ruko's **Wolf Leap** (a leap
+  that rakes down with the claws, 7), Shadow's **Shade Step** (sinks into
+  the shadows and rises at the rival's back, no blow of its own), Jackie's
+  **Belly Bump** (a barge that shoves the rival far, 6), Pixie's
+  **Cartwheel Kick** (untouchable as it starts, 7). Up close grab is the
+  throw as before. The CPU uses them to close in; taught in the Tutorial
+  (Against a guard). Pixie 101 -> 99 health (duels 48-54 %, brawl firsts
+  15-24 %).
 - **Air specials**: special pressed in the air (same cost) is each
   fighter's own air version: Ruko **rushes** diagonally down at the rival
   (11), Shadow throws the **bolt angled down** (10, it flies until it meets

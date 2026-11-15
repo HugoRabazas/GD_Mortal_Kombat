@@ -42,6 +42,8 @@ const CHARGE = { hold: 8, min: 8, max: 40, reel: 30 };
 // The ordinary blows that can be cancelled into a special once they land.
 const CANCEL_DMG = 0.6;
 const CANCELS = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'hook', 'lunge', 'slide', 'launch']);
+// Grab with no rival within `near`: the signature move instead of a throw.
+const SIG = { near: 100 };
 // A taunt (block held, grab pressed, standing still): each fighter's own
 // gesture for `ticks`; energy is gained at tick `at`, and until it ends any
 // blow lands as a counter hit (it is still winding up).
@@ -132,6 +134,25 @@ export const MOVES = {
   kick: {
     startup: 8, active: 4, recovery: 13, dmg: 10, reach: 104, arc: 0.75, y0: 30, y1: 140, aim: 210,
     hitstun: 19, blockstun: 12, push: 9, gain: 12, heavy: true, nextK: 'kick2',
+  },
+  // --- signature moves: grab with the rival out of throw reach (SIG) ---
+  // Ruko leaps across the gap and claws down; Shadow steps through the
+  // shadows to the rival's back; Jackie barges in belly first, shoving them
+  // far; Pixie cartwheels in (untouchable as it starts) and kicks.
+  clawLeap: {
+    startup: 8, active: 999, recovery: 0, dmg: 7, speed: 9, reach: 78, arc: 1.0, y0: -80, y1: 130, aim: 320,
+    hitstun: 18, blockstun: 11, push: 6, gain: 9, heavy: true, leap: 8,
+  },
+  shadeStep: {
+    startup: 12, active: 0, recovery: 4, dmg: 0, aim: 320, blink: 5, vanish: 9,
+  },
+  bellyBump: {
+    startup: 9, active: 5, recovery: 16, dmg: 6, reach: 72, arc: 1.0, y0: 20, y1: 150, aim: 320,
+    hitstun: 16, blockstun: 12, push: 20, gain: 9, heavy: true, speed: 7, go: [0, 12],
+  },
+  cartwheel: {
+    startup: 10, active: 4, recovery: 16, dmg: 7, reach: 88, arc: 0.9, y0: 30, y1: 150, aim: 320,
+    hitstun: 18, blockstun: 11, push: 7, gain: 9, heavy: true, speed: 6, go: [0, 11], vanish: 6,
   },
   // A taunt: no blow at all (see TAUNT).
   taunt: {
@@ -594,6 +615,14 @@ function tryAttack(s, f, inp = 0) {
     return true;
   }
   if (b & INPUT.GRAB || (b & INPUT.KICK && b & INPUT.PUNCH)) {
+    // Grab with nobody in reach of a throw: the fighter's signature move.
+    const sig = b & INPUT.GRAB && !nearestRival(s, f, SIG.near) && getFighter(f.char).signature;
+    if (sig) {
+      startAttack(s, f, sig.move);
+      if (MOVES[sig.move].vanish) f.inv = MOVES[sig.move].vanish;
+      emit(s, 'signature', { by: f.slot, move: sig.move });
+      return true;
+    }
     startAttack(s, f, 'grab');
     return true;
   }

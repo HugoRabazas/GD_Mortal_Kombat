@@ -141,6 +141,13 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet) play('burn');
         break;
       }
+      case 'signature': {
+        // The fighter's own move: its name above them.
+        const p = project(by.x, 240, by.z);
+        floatText(p.x, p.y, char.signature.name.toUpperCase(), tint.accent, 22);
+        if (!quiet) play('swing');
+        break;
+      }
       case 'taunt': {
         // Each fighter's own line, and the energy it earned.
         const p = project(by.x, 240, by.z);

@@ -452,6 +452,7 @@ function helpScreen() {
         <li><b>Strings</b>: punch, punch, punch knocks down; punch, punch, kick <b>launches</b> the rival into the air (hold jump to chase and <b>juggle</b> them); punch, kick is a <b>hook kick</b> that spins them round; kick, kick a roundhouse. Each blow must land for the next. A blow that lands can also be <b>cancelled into your special</b>.</li>
         <li><b>On the run</b> (a few steps, the stick still held): punch is a <b>lunging straight</b>, kick a <b>slide</b> along the floor, and jump then kick a <b>flying knee</b>.</li>
         <li><b>In the air</b>: jump again for a <b>double jump</b>; punch dives at the rival, kick is a flying kick, grab a <b>stomp</b> straight down; an air punch that lands flows into an axe kick; special is your <b>air special</b>.</li>
+        <li><b>Grab with the rival out of reach</b> is your fighter's <b>signature move</b> for crossing the gap: Ruko's Wolf Leap, Shadow's Shade Step to the rival's back, Jackie's Belly Bump, Pixie's Cartwheel Kick.</li>
         <li><b>Hold kick</b> to charge a <b>guard-breaker</b>: let go and it smashes a guard open.</li>
         <li><b>Grab</b> (its own button, or punch + kick together) seizes a rival up close, lifts them over your head and slams them down behind you. Short reach, but it goes straight through a guard; in a brawl, anyone can break it with a blow.</li>
         <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment; punch or kick late in it strikes out of it. Block with the stick straight away from the rival is a quick <b>back-step</b>.</li>
@@ -500,6 +501,14 @@ function buildWords(f) {
 }
 
 // What each fighter's own finisher does (by its first stage, `super.move`).
+// What each fighter's signature move does (grab with the rival out of reach).
+const SIG_NOTES = {
+  clawLeap: 'a leap across the gap that rakes down with the claws',
+  shadeStep: 'a step through the shadows to the rival\'s back',
+  bellyBump: 'a barge, belly first, that shoves the rival far',
+  cartwheel: 'a cartwheel in, untouchable as it starts, ending in a kick',
+};
+
 const SUPER_NOTES = {
   howl: 'a rush; if it lands, a flurry of claws and an uppercut to the moon',
   eclipse: 'vanishes, reappears behind the rival, a shadow flurry and a kick that sends them flying',
@@ -538,6 +547,7 @@ function movesCard() {
   const key = two && lastDevice() !== 'pad' ? { p: 'F / J', k: 'G / K', b: 'H / L', s: 'T / I', u: 'Y / O', j: 'Space / U', g: 'V / M' } : controlNames();
   const k = (...names) => names.map((n) => `<kbd>${n}</kbd>`).join(' ');
   const slots = two ? [0, 1] : [app.mode === 'online' ? Math.max(0, app.online?.mySlot ?? 0) : 0];
+  const own2 = two;
   const own = slots
     .map((slot) => {
       const f = getFighter(s.f[slot].char);
@@ -553,6 +563,7 @@ function movesCard() {
       <dt>${k(key.p)}</dt><dd><b>Punch</b>: quick. Into a rival <b>winding up</b> a blow it is a <b>counter hit</b>, a quarter more damage.</dd>
       <dt>${k(key.k)}</dt><dd><b>Kick</b>: slower than a punch, heavier, longer reach.</dd>
       <dt>${k(key.g)}</dt><dd><b>Throw</b>: seize, lift and slam. Short reach, goes straight through a guard.</dd>
+      <dt>${k(key.g)}, far</dt><dd><b>${own2 ? 'Signature move' : esc(getFighter(s.f[slots[0]].char).signature.name)}</b>: grab with the rival out of reach - ${SIG_NOTES[getFighter(s.f[slots[0]].char).signature.move]}.</dd>
       <dt>Hold ${k(key.k)}</dt><dd><b>Guard-breaker</b>: charge a kick, let go - it smashes a guard open. Open to blows while charging.</dd>
       <dt>${k(key.b)} + ${k(key.g)}</dt><dd><b>Taunt</b>: standing still - a little energy, but any blow on you is a counter hit.</dd>
       <dt>Ring of fire</dt><dd>Knock a rival down into the flames: they <b>bounce</b> back off them, open to one more blow.</dd>`],

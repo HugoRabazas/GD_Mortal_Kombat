@@ -359,6 +359,8 @@ export function aiInput(ai, s, me) {
   if (dist > 112) {
     // Running in from just out of reach: a lunging straight or a slide.
     if (dist < 170 && f.state === 'walk' && f.t >= 8 && o.h <= 0 && rnd(ai) < cfg.attack * 0.3) return press(rnd(ai) < 0.6 ? INPUT.PUNCH : INPUT.KICK, toward(dx, dz));
+    // ...or the fighter's signature move to cross the gap (grab out of reach).
+    if (dist > 130 && dist < 240 && o.h <= 0 && rnd(ai) < cfg.attack * 0.08) return press(INPUT.GRAB);
     // ...or a jump out of the run for a flying knee.
     if (dist < 240 && f.state === 'walk' && f.t >= 8 && o.h <= 0 && rnd(ai) < cfg.attack * 0.1) return hold(toward(dx, dz) | INPUT.JUMP, 2);
     if (rnd(ai) < 0.05) return hold(toward(dx, dz) | INPUT.JUMP, 3);

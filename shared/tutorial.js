@@ -54,6 +54,7 @@ export const LESSONS = [
     steps: [
       { id: 'guarded', name: 'Punch the guard', how: (k) => `${k('p')}: a guard stops blows from the front`, ev: (e) => e.type === 'block' && e.by === 0 },
       { id: 'grab', name: 'Throw through the guard', how: (k) => `${k('g')} up close: a throw goes straight through a guard`, ev: mine('seize') },
+      { id: 'signature', name: 'Your signature move', how: (k) => `${k('g')} with the partner out of reach: each fighter's own move to cross the gap`, ev: mine('signature') },
       { id: 'breaker', name: 'Break the guard', how: (k) => `hold ${k('k')} to charge, let go: the kick smashes the guard open`, ev: mine('guardBreak') },
     ],
   },

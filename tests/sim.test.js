@@ -909,6 +909,27 @@ test('special in the air is each fighter\'s own air special, and each one lands'
   }
 });
 
+test('grab with nobody in throw reach is the fighter\'s signature move; up close it is still a throw', () => {
+  const want = { ruko: 'clawLeap', shadow: 'shadeStep', jackie: 'bellyBump', pixie: 'cartwheel' };
+  for (const id of ALL) {
+    const s = startFight([id, 'ruko']);
+    closeUp(s, 160);
+    step(s, [INPUT.GRAB, 0]);
+    assert.equal(s.f[0].move, want[id], id);
+    const near = startFight([id, 'ruko']);
+    closeUp(near, 60);
+    step(near, [INPUT.GRAB, 0]);
+    assert.equal(near.f[0].move, 'grab', `${id} up close`);
+  }
+  // Shadow's step ends at the rival's back.
+  const sh = startFight(['shadow', 'ruko']);
+  closeUp(sh, 200);
+  step(sh, [INPUT.GRAB, 0]);
+  run(sh, 20);
+  const back = Math.cos(sh.f[1].dir - Math.atan2(sh.f[0].z - sh.f[1].z, sh.f[0].x - sh.f[1].x));
+  assert.ok(back < -0.9, 'behind the rival');
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);
