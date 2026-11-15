@@ -10,7 +10,7 @@ import { createGame } from './game.js';
 import { handleEvents } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, setCapture, setTouchLive, lastDevice } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
-import { unlockAudio, play, isMuted, setMuted, setMusic, setMusicTheme, setCrowd, getVolume, setVolume } from './audio.js';
+import { unlockAudio, play, isMuted, setMuted, setMusic, setMusicTheme, setCrowd, duckMusic, getVolume, setVolume } from './audio.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
 
@@ -476,6 +476,8 @@ function settingsScreen() {
       <h2>Settings</h2>
       ${slider('vol-music', 'Music', getVolume('music'))}
       ${slider('vol-sfx', 'Effects', getVolume('sfx'))}
+      <div class="seg" role="group" aria-label="Graphics">${[['auto', 'Graphics: auto'], ['sharp', 'Sharp'], ['fast', 'Fast']].map(([id, label]) => `<button type="button" class="${app.graphics === id ? 'on' : ''}" data-act="graphics" data-id="${id}" aria-pressed="${app.graphics === id}">${label}</button>`).join('')}</div>
+      <p class="note">${{ auto: 'Full detail, lowered by itself if the device struggles.', sharp: 'Full detail always: shadows and full sharpness.', fast: 'For slower phones: no shadows, lower resolution, lighter weather.' }[app.graphics]}</p>
       <div class="row">
         <button type="button" class="btn small" data-act="mute">${isMuted() ? 'Sound off' : 'Sound on'}</button>
         <button type="button" class="btn small" data-act="touch">${touchLabel()}</button>
@@ -1223,6 +1225,16 @@ const ACTIONS = {
     show('settings');
   },
   settingsDone: () => show(app.settingsFrom || 'menu'),
+  graphics(el) {
+    app.graphics = el.dataset.id;
+    stage.setGraphics(app.graphics);
+    try {
+      localStorage.setItem('gd-arena-graphics', app.graphics);
+    } catch {
+      // not remembered
+    }
+    show('settings');
+  },
   arrangeDone: () => show(app.arrangeFrom),
   smaller: () => touchLayout.resize(-0.1),
   bigger: () => touchLayout.resize(0.1),
@@ -1435,6 +1447,10 @@ function frame(now) {
   app.roar = (app.roar || 0) * 0.985;
   const crowdOn = playing && app.mode !== 'training' && g.state.phase !== 'over' && !app.game?.paused;
   setCrowd(crowdOn ? 0.18 + app.roar * 0.82 : 0);
+  // The music holds its breath for a finisher's freeze and the slow motion
+  // after a knockout, then comes back.
+  const st = g.state;
+  duckMusic(playing && (st.freeze > 0 ? 1 : st.phase === 'ko' && st.koKind === 'ko' && st.pt < 60 ? 0.7 : 0));
   handleEvents(events, g.state, { quiet: !playing, project: stage.project, me: self, colors: worn });
 
   const boss = playing && app.mode === 'arcade' ? [false, !!app.arcade.ladder[app.arcade.stage].boss] : null;
@@ -1484,6 +1500,12 @@ async function boot() {
 
   stage = createStage($('#gl'), $('#hud'));
   if (DEBUG) window.gdStage = stage;
+  try {
+    app.graphics = localStorage.getItem('gd-arena-graphics') || 'auto';
+  } catch {
+    app.graphics = 'auto';
+  }
+  stage.setGraphics(app.graphics);
   touchLayout = createTouchLayout(touchEl, isPortrait);
   initKeyboard(togglePause);
   initTouch(touchEl);

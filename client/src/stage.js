@@ -139,6 +139,7 @@ export function createStage(glCanvas, hudCanvas) {
     is3D: !!three,
     project,
     stats: () => three?.stats() ?? null,
+    setGraphics: (mode) => three?.setGraphics(mode),
 
     resize(cssW, cssH) {
       const dpr = window.devicePixelRatio || 1;

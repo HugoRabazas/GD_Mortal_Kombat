@@ -7,13 +7,13 @@
 
 import { getFighter } from '../../shared/fighters.js';
 import { play } from './audio.js';
-import { hitSpark, blockSpark, dust, floatText, showBanner, addShake, addFlash, lightFlash } from './render/fx.js';
+import { hitSpark, blockSpark, dust, floatText as showText, showBanner, addShake, addFlash, lightFlash } from './render/fx.js';
 
 // At the end of a brawl round, show over each fighter the points it earned.
 function showRoundPoints(state, project) {
   for (const f of state.f) {
     const p = project(f.x, f.hp > 0 ? 230 : 90, f.z);
-    floatText(p.x, p.y, `+${state.roundPts[f.slot]} PTS`, state.roundPts[f.slot] ? '#ffd34d' : '#bfaec0', 26);
+    showText(p.x, p.y, `+${state.roundPts[f.slot]} PTS`, state.roundPts[f.slot] ? '#ffd34d' : '#bfaec0', 26);
   }
 }
 
@@ -41,6 +41,9 @@ function buzz(ms) {
 // to make the phone buzz when their own fighter takes a hit.
 // `colors` (optional) is what each slot really wears (see dressColors).
 export function handleEvents(events, state, { quiet, project, me = -1, colors = null }) {
+  // Behind the menus (quiet) the fight keeps its sparks and flashes but not
+  // its words, which would sit on top of the menu's own text.
+  const floatText = quiet ? () => {} : showText;
   const arena = state.mode === 'arena';
   const nameOf = (slot) => getFighter(state.f[slot].char).name;
   for (const e of events) {

@@ -30,7 +30,7 @@ export const getVolume = (kind) => volume[kind];
 export function setVolume(kind, value) {
   volume[kind] = Math.min(1, Math.max(0, value));
   if (kind === 'sfx' && sfxBus) sfxBus.gain.value = volume.sfx;
-  if (kind === 'music' && musicBus) musicBus.gain.value = 0.3 * volume.music;
+  if (kind === 'music' && musicBus) musicBus.gain.value = 0.3 * volume.music * (1 - duck * 0.8);
   try {
     localStorage.setItem(`gd-arena-vol-${kind}`, String(volume[kind]));
   } catch {
@@ -341,6 +341,7 @@ const stepSeconds = () => 60 / (musicMode === 'final' ? tune.finalBpm : tune.bpm
 const BASS_STEPS = [0, 3, 6, 8, 11, 14];
 const LEAD_STEPS = [0, 3, 6, 10, 12, 14];
 let musicBus = null;
+let duck = 0; // 0 = full music, 1 = pushed right down (see duckMusic)
 let musicMode = 'off';
 let musicTimer = null;
 let musicStep = 0;
@@ -403,6 +404,16 @@ function musicTick(i, t) {
   if (tune.bell && s === 0 && Math.floor(i / 16) % 2 === 1) note('sine', bar.notes[2] * 4, t, 1.6, 0.04);
 }
 
+// Pull the music down for a dramatic beat (a finisher's freeze, the slow
+// motion after a knockout) and let it back up after. 0 to 1.
+export function duckMusic(level) {
+  const want = Math.max(0, Math.min(1, level));
+  if (Math.abs(want - duck) < 0.02) return;
+  duck = want;
+  if (!musicBus || !ctx) return;
+  musicBus.gain.setTargetAtTime(0.3 * volume.music * (1 - duck * 0.8), ctx.currentTime, want > 0 ? 0.05 : 0.4);
+}
+
 // Pick the tune of an arena ('courtyard' or 'frost'). The loop carries on
 // from the same step, so a change of arena never breaks the beat.
 export function setMusicTheme(id) {
@@ -426,7 +437,7 @@ export function setMusic(mode) {
   if (!ctx) return; // starts once the audio engine is unlocked
   if (!musicBus) {
     musicBus = ctx.createGain();
-    musicBus.gain.value = 0.3 * volume.music;
+    musicBus.gain.value = 0.3 * volume.music * (1 - duck * 0.8);
     musicBus.connect(master);
   }
   if (mode === 'off') {

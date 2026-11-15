@@ -763,7 +763,7 @@ export function create3D(canvas) {
       snowFallMat.color.set(sand ? 0xd8b078 : 0xffffff);
       snowFallMat.size = sand ? 0.16 : 0.2;
       const wind = rainNow * rainNow * (sand ? 11 : 5.5);
-      const count = Math.round(FLAKES * (0.25 + 0.75 * rainNow));
+      const count = Math.round(FLAKES * (0.25 + 0.75 * rainNow) * share);
       for (let d = 0; d < count; d++) {
         const r = snowSeed[d];
         r.y -= r.v * (1 + rainNow) * dt * (sand ? 0.0003 : 0.001);
@@ -783,7 +783,9 @@ export function create3D(canvas) {
     rainMat.opacity = snowing ? 0 : rainNow * 0.42;
     rain.visible = !snowing && rainNow > 0.02;
     if (rain.visible) {
-      for (let d = 0; d < DROPS; d++) {
+      const drops = Math.round(DROPS * share);
+      rainGeo.setDrawRange(0, drops * 2);
+      for (let d = 0; d < drops; d++) {
         const r = rainSeed[d];
         r.y -= r.v * dt * 0.06;
         if (r.y < 0) r.y += 12;
@@ -897,16 +899,24 @@ export function create3D(canvas) {
   // lower resolution still. Slower devices keep a playable game.
   const size = { w: 960, h: 540, dpr: 1 };
   let quality = 0; // 0 = full, 1 = no cast shadows, 2 = reduced resolution
+  // The player's choice in Settings: 'auto' adapts as above; 'sharp' keeps
+  // full quality whatever happens; 'fast' starts at the lightest level and
+  // also thins the weather and the crowd's movement, for slower phones.
+  let graphics = 'auto';
+  let share = 1; // the share of rain, snow and sand drawn
   let sampleMs = 0;
   let sampleFrames = 0;
   const applyQuality = () => {
+    if (graphics === 'sharp') quality = 0;
+    if (graphics === 'fast') quality = 2;
+    share = graphics === 'fast' ? 0.3 : 1;
     const ratio = quality === 0 ? Math.min(size.dpr, 2) : quality === 1 ? Math.min(size.dpr, 1.25) : 0.75;
     renderer.setPixelRatio(ratio);
     renderer.setSize(size.w, size.h, false);
     key.castShadow = quality === 0;
   };
   const watchFrameRate = (rawDt) => {
-    if (quality >= 2 || rawDt > 250) return; // ignore pauses and tab switches
+    if (graphics !== 'auto' || quality >= 2 || rawDt > 250) return; // ignore pauses and tab switches
     sampleMs += rawDt;
     sampleFrames++;
     if (sampleFrames < 100) return;
@@ -930,6 +940,13 @@ export function create3D(canvas) {
       cam.ready = false;
     },
 
+    setGraphics(mode) {
+      graphics = ['auto', 'sharp', 'fast'].includes(mode) ? mode : 'auto';
+      quality = 0;
+      sampleMs = sampleFrames = 0;
+      applyQuality();
+    },
+
     // What the last frame cost the graphics card (for ?debug and the checks).
     stats() {
       const r = renderer.info.render;
@@ -941,7 +958,7 @@ export function create3D(canvas) {
         seen[kind] = (seen[kind] || 0) + 1;
         if (o.castShadow) seen.casters = (seen.casters || 0) + 1;
       });
-      return { calls: r.calls, triangles: r.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, quality, seen };
+      return { calls: r.calls, triangles: r.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, quality, graphics, pixelRatio: renderer.getPixelRatio(), seen };
     },
 
     // Where a point of the arena (in arena pixels) lands on the flat HUD
@@ -1148,7 +1165,7 @@ export function create3D(canvas) {
       // The crowd: a slow sway, and jumping when excited. Moving a couple of
       // hundred figures every other frame is plenty for a background.
       excite *= Math.pow(0.985, dt / 16.7);
-      crowdTurn = !crowdTurn;
+      crowdTurn = !crowdTurn && (graphics !== 'fast' || Math.floor(now / 100) % 3 === 0);
       for (let i = 0; crowdTurn && i < fans.length; i++) {
         const fan = fans[i];
         const hop = Math.abs(Math.sin(now / 130 + fan.phase)) * 0.28 * excite * fan.keen;

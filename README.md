@@ -208,6 +208,16 @@ and F - that half step is what gives it its colour - with a reedy lead. All
 three speed up and fill out for deciding rounds and the last seconds of a
 round.
 
+**Graphics** (Settings) is Auto, Sharp or Fast. Auto starts at full detail
+and lowers it by itself if the device struggles; Sharp keeps full detail
+always; Fast is for slower phones - no shadows, lower resolution, a third of
+the rain, snow or sand, and a calmer crowd. In software rendering, the
+closest thing here to a weak phone graphics chip, Fast drew a frame 3.6
+times quicker (234 ms against 847 ms).
+
+The music holds its breath during a finisher's freeze and the slow motion
+after a knockout, then comes back.
+
 Music and effects have their own volume sliders (menu and pause screen),
 remembered on the device, next to the sound switch, the touch-button switch
 and the button arranger.
