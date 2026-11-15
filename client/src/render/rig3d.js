@@ -81,23 +81,29 @@ export function createRig(THREE, scene, char, { alt = false, boss = false } = {}
   // Drawn a little larger than life so fighters read clearly from the high camera.
   turn.scale.setScalar(1.16 * build.scale * (boss ? 1.12 : 1));
 
-  const outlined = (mesh, sx, sy, sz) => {
-    const o = new THREE.Mesh(mesh.geometry, hull);
-    o.scale.set(sx, sy, sz);
-    mesh.add(o);
-    mesh.castShadow = true;
+  // Shadows come from the big parts only (see `casters` below): the shadow of
+  // an elbow or a knee is lost inside the shadow of the limb anyway, and each
+  // part that casts one costs the graphics card another draw.
+  // `inner` parts (elbows, knees, the neck) sit inside the outline of the
+  // parts around them, so they get no outline of their own: one draw fewer.
+  const outlined = (mesh, sx, sy, sz, inner) => {
+    if (!inner) {
+      const o = new THREE.Mesh(mesh.geometry, hull);
+      o.scale.set(sx, sy, sz);
+      mesh.add(o);
+    }
     lean.add(mesh);
     return mesh;
   };
   // A limb segment: stretched between two points every frame.
-  const seg = (r, mat, rz = r, geometry = g.cyl) => {
-    const m = outlined(new THREE.Mesh(geometry, mat), 1 + OUTLINE / r, 1, 1 + OUTLINE / rz);
+  const seg = (r, mat, rz = r, geometry = g.cyl, inner = false) => {
+    const m = outlined(new THREE.Mesh(geometry, mat), 1 + OUTLINE / r, 1, 1 + OUTLINE / rz, inner);
     m.userData = { r, rz };
     return m;
   };
   // A joint, fist, foot or body mass.
-  const ball = (rx, ry, rz, mat) => {
-    const m = outlined(new THREE.Mesh(g.ball, mat), 1 + OUTLINE / rx, 1 + OUTLINE / ry, 1 + OUTLINE / rz);
+  const ball = (rx, ry, rz, mat, inner = false) => {
+    const m = outlined(new THREE.Mesh(g.ball, mat), 1 + OUTLINE / rx, 1 + OUTLINE / ry, 1 + OUTLINE / rz, inner);
     m.scale.set(rx, ry, rz);
     return m;
   };
@@ -109,11 +115,11 @@ export function createRig(THREE, scene, char, { alt = false, boss = false } = {}
     side,
     shoulder: ball(0.09 * L, 0.09 * L, 0.09 * L, bare),
     upper: seg(0.068 * L, bare),
-    elbow: ball(0.062 * L, 0.062 * L, 0.062 * L, mats.skin),
+    elbow: ball(0.062 * L, 0.062 * L, 0.062 * L, mats.skin, true),
     fore: seg(0.056 * L, mats.skin),
     fist: ball(0.1 * Math.sqrt(L), 0.1 * Math.sqrt(L), 0.1 * Math.sqrt(L), mats.accent),
     thigh: seg(0.09 * L, legMat),
-    knee: ball(0.078 * L, 0.078 * L, 0.078 * L, legMat),
+    knee: ball(0.078 * L, 0.078 * L, 0.078 * L, legMat, true),
     shin: seg(0.07 * L, legMat),
     foot: ball(0.15, 0.075, 0.09 * Math.sqrt(L), sumo ? mats.skin : mats.accent),
   });
@@ -123,12 +129,15 @@ export function createRig(THREE, scene, char, { alt = false, boss = false } = {}
   const torso = seg(build.torso[0], bare, build.torso[1]);
   const belt = seg(build.torso[0] + 0.017, mats.accent, build.torso[1] + 0.017);
   const chest = ball(...build.chest, bare);
-  const neck = seg(0.055 * L, mats.skin);
+  const neck = seg(0.055 * L, mats.skin, 0.055 * L, g.cyl, true);
   const belly = sumo ? ball(0.31, 0.27, 0.33, mats.skin) : null;
   const apron = sumo ? ball(0.07, 0.17, 0.15, mats.accent) : null; // the front flap of the belt
   const skirt = slim ? seg(0.27, mats.accent, 0.3, g.cone) : null;
   const tail = slim ? [ball(0.1, 0.1, 0.1, mats.hair), ball(0.085, 0.085, 0.085, mats.hair), ball(0.065, 0.065, 0.065, mats.hair)] : [];
   const knot = sumo ? ball(0.09, 0.07, 0.09, mats.secondary) : null; // topknot
+  // The parts whose shadows show: body, limbs and the feet that ground it.
+  const casters = [pelvis, torso, chest, belly, left.upper, right.upper, left.fore, right.fore, left.thigh, right.thigh, left.shin, right.shin, left.foot, right.foot];
+  for (const m of casters) if (m) m.castShadow = true;
 
   // Accessories.
   const gear = char.gear || [];
@@ -182,7 +191,16 @@ export function createRig(THREE, scene, char, { alt = false, boss = false } = {}
       // Stand on the fighter's spot and turn, by the shortest way round, to
       // face where the fighter faces.
       turn.position.set(f.x * S, f.h * S, f.z * S);
-      const targetYaw = -f.dir;
+      // A celebration is drawn side-on (see victoryPose), so a winner turns to
+      // show it three-quarters to the camera, whichever way they were facing.
+      let face = f.dir;
+      if (f.state === 'win') {
+        const toCam = Math.atan2(camera.position.z - turn.position.z, camera.position.x - turn.position.x);
+        const off = Math.PI / 2 - 0.5;
+        const gap = (a) => Math.abs(Math.atan2(Math.sin(a - f.dir), Math.cos(a - f.dir)));
+        face = gap(toCam + off) < gap(toCam - off) ? toCam + off : toCam - off;
+      }
+      const targetYaw = -face;
       if (yaw === null) yaw = targetYaw;
       let d = targetYaw - yaw;
       while (d > Math.PI) d -= Math.PI * 2;

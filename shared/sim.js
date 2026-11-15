@@ -663,6 +663,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   def.scorched = false;
   const scale = Math.max(0.5, 1 - 0.12 * (def.taken - 1)); // long combos hit softer
   const dmg = Math.max(1, Math.round(m.dmg * power * scale));
+  const dealt = Math.min(dmg, def.hp); // a finishing blow cannot take more than is left
   def.hp = Math.max(0, def.hp - dmg);
   addMeter(att, m.gain);
   addMeter(def, m.gain * 0.6 + dmg * 0.4);
@@ -699,7 +700,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   if (s.f.length === 2) s.hitstop = big ? 12 : m.heavy ? 7 : 4;
   else if (big) s.hitstop = 6;
   else att.stop = def.stop = m.heavy ? 5 : 3;
-  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, heavy: !!m.heavy, kind, combo: def.taken });
+  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken });
 }
 
 function resolveHits(s) {

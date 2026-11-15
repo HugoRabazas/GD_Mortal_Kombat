@@ -357,20 +357,22 @@ export function create3D(canvas) {
   const snowMat = new THREE.MeshStandardMaterial({ color: lin(0xe6f0ff), roughness: 1 });
   const snowCaps = new THREE.Group();
   scene.add(snowCaps);
+  // Every plain block of stone (wall, pillars, trims, stands, snow) is noted
+  // here and drawn later as one batch per material: one draw call for all
+  // the pillars instead of one each, which phones notice.
+  const boxLists = new Map();
   const box = (w, h, d, x, y, z, mat) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
-    m.position.set(x, y, z);
-    scene.add(m);
-    return m;
+    if (!boxLists.has(mat)) boxLists.set(mat, []);
+    boxLists.get(mat).push([w, h, d, x, y, z]);
   };
   const WALL_Z = -8.2;
   box(44, 2.6, 0.7, 0, 1.0, WALL_Z, wallMat);
   box(44, 0.22, 0.95, 0, 2.4, WALL_Z, trimMat);
-  snowCaps.add(box(44, 0.09, 1.0, 0, 2.55, WALL_Z, snowMat));
+  box(44, 0.09, 1.0, 0, 2.55, WALL_Z, snowMat);
   for (let x = -19.2; x <= 19.2; x += 3.2) {
     box(0.7, 4.2, 0.7, x, 1.8, WALL_Z + 0.5, wallMat);
     box(0.95, 0.2, 0.95, x, 3.95, WALL_Z + 0.5, trimMat);
-    snowCaps.add(box(1.0, 0.12, 1.0, x, 4.1, WALL_Z + 0.5, snowMat));
+    box(1.0, 0.12, 1.0, x, 4.1, WALL_Z + 0.5, snowMat);
     box(0.95, 0.25, 0.95, x, -0.18, WALL_Z + 0.5, trimMat);
   }
   const paintBanner = ([cloth, border, letters]) => {
@@ -429,6 +431,23 @@ export function create3D(canvas) {
       }
     }
   }
+  {
+    const unit = new THREE.BoxGeometry(1, 1, 1);
+    const place = new THREE.Object3D();
+    for (const [mat, list] of boxLists) {
+      const blocks = new THREE.InstancedMesh(unit, mat, list.length);
+      list.forEach(([w, h, d, x, y, z], i) => {
+        place.position.set(x, y, z);
+        place.scale.set(w, h, d);
+        place.updateMatrix();
+        blocks.setMatrixAt(i, place.matrix);
+      });
+      blocks.instanceMatrix.needsUpdate = true;
+      blocks.frustumCulled = false; // the batch spans the whole arena
+      (mat === snowMat ? snowCaps : scene).add(blocks);
+    }
+  }
+
   const fanBodies = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.21, 0.62, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }), fans.length);
   const fanHeads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 10, 8), new THREE.MeshLambertMaterial({ color: lin(0xd9a98a) }), fans.length);
   const dressCrowd = (cloaks) => {
@@ -930,6 +949,20 @@ export function create3D(canvas) {
 
     snapCamera() {
       cam.ready = false;
+    },
+
+    // What the last frame cost the graphics card (for ?debug and the checks).
+    stats() {
+      const r = renderer.info.render;
+      // What is on show, by kind (a rough guide to where the draws go).
+      const seen = {};
+      scene.traverseVisible((o) => {
+        if (!o.isMesh && !o.isSprite && !o.isPoints && !o.isLine) return;
+        const kind = o.isInstancedMesh ? 'batch' : o.isSprite ? 'sprite' : o.isPoints ? 'points' : o.isLine ? 'line' : o.material?.side === THREE.BackSide ? 'outline' : 'mesh';
+        seen[kind] = (seen[kind] || 0) + 1;
+        if (o.castShadow) seen.casters = (seen.casters || 0) + 1;
+      });
+      return { calls: r.calls, triangles: r.triangles, geometries: renderer.info.memory.geometries, textures: renderer.info.memory.textures, quality, seen };
     },
 
     // Where a point of the arena (in arena pixels) lands on the flat HUD

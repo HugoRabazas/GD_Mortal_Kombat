@@ -123,6 +123,21 @@ test('a guard raised just before the blow is a perfect guard; a held or hammered
   assert.notEqual(mash.f[0].state, 'hit');
 });
 
+test('a hit reports the health it really took, never more than was left', () => {
+  const s = startFight();
+  closeUp(s);
+  s.f[1].hp = 3;
+  step(s, [INPUT.KICK, 0]);
+  const hits = [];
+  for (let i = 0; i < 30; i++) {
+    step(s, idle(s));
+    hits.push(...s.ev.filter((e) => e.type === 'hit'));
+  }
+  assert.equal(hits.length, 1);
+  assert.ok(hits[0].dmg > 3, 'the kick itself is stronger than what was left');
+  assert.equal(hits[0].dealt, 3);
+});
+
 test('a blocked hit never knocks out', () => {
   const s = startFight();
   closeUp(s);

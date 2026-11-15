@@ -908,6 +908,62 @@ kbd {
   color: var(--ash);
 }
 
+.ranking .lname small {
+  display: block;
+  margin-top: 2px;
+  font: 600 0.7rem var(--font-body);
+  letter-spacing: 0.02em;
+  color: var(--ash);
+}
+
+/* The numbers of a duel, one line per fighter; the better figure is gold. */
+.fightstats {
+  border-collapse: collapse;
+  background: rgba(29, 17, 36, 0.92);
+  font-size: 0.85rem;
+  color: var(--bone);
+  font-variant-numeric: tabular-nums;
+}
+
+.fightstats th,
+.fightstats td {
+  padding: 4px 10px;
+  text-align: center;
+}
+
+.fightstats thead th {
+  font: 700 0.62rem var(--font-body);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+.fightstats tbody th {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+  font: 500 1.15rem/1 var(--font-display);
+  letter-spacing: 0.05em;
+}
+
+.fightstats tbody th small {
+  display: block;
+  font: 700 0.6rem var(--font-body);
+  letter-spacing: 0.12em;
+  color: var(--ash);
+}
+
+.fightstats .head {
+  width: 28px;
+  height: 28px;
+}
+
+.fightstats td.lead {
+  color: var(--gold);
+  font-weight: 700;
+}
+
 .ranking .pts {
   font: 700 1.3rem/1 var(--font-display);
   color: var(--bone);

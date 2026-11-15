@@ -12,7 +12,9 @@
 //      'quake' (ground stomp that floors everyone nearby who is not jumping).
 //      `build` picks the body: 'standard', 'sumo' (huge) or 'slim'.
 //      `gear` adds accessories: 'scarf' (trails behind when moving) and
-//      'pads' (shoulder guards).
+//      'pads' (shoulder guards). `victory` picks how they celebrate a won
+//      match: 'howl' (a fist raised to the sky), 'calm' (arms folded),
+//      'stomp' (high stamping steps) or 'cheer' (hopping and waving).
 //   5. Run `npm run build` and publish the new page.
 //
 // Stats are multipliers around 1.0 (health is absolute, 100 is standard).
@@ -26,6 +28,7 @@ export const FIGHTERS = [
     name: 'RUKO',
     title: 'The Crimson Wolf',
     gear: ['scarf'],
+    victory: 'howl',
     head: { x: 81, y: 68, r: 30 },
     colors: {
       primary: '#b5122c',
@@ -43,6 +46,7 @@ export const FIGHTERS = [
     name: 'SHADOW',
     title: 'The Silent Storm',
     gear: ['pads'],
+    victory: 'calm',
     head: { x: 88, y: 99, r: 43 },
     colors: {
       primary: '#2c9a4b',
@@ -60,6 +64,7 @@ export const FIGHTERS = [
     name: 'JACKIE',
     title: 'The Violet Mountain',
     build: 'sumo',
+    victory: 'stomp',
     head: { x: 88, y: 42, r: 40 },
     colors: {
       primary: '#3b2b52',
@@ -77,6 +82,7 @@ export const FIGHTERS = [
     name: 'PIXIE',
     title: 'The Twin Flame',
     build: 'slim',
+    victory: 'cheer',
     head: { x: 84, y: 94, r: 46 },
     colors: {
       primary: '#7a2fc2',

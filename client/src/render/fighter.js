@@ -9,6 +9,7 @@
 // draws the same pose flat, for devices without WebGL.
 
 import { MOVES } from '../../../shared/sim.js';
+import { getFighter } from '../../../shared/fighters.js';
 import { heads } from '../assets.js';
 
 export const LEN = { thigh: 35, shin: 35, upper: 25, fore: 25, torso: 50, neck: 27, head: 32 };
@@ -77,6 +78,37 @@ function attackPose(f) {
   }
 }
 
+// Each fighter celebrates a won match in their own way (`victory` in the roster).
+function victoryPose(f) {
+  const t = f.t;
+  switch (getFighter(f.char).victory) {
+    case 'howl': {
+      // Leaning back, one fist thrust up at the sky, the other arm flung back.
+      const pump = Math.max(0, Math.sin(t * 0.09)) * 8;
+      return pose({ hipY: -63, lean: -0.32, tilt: 0.06, hfx: 24, hfy: -54 - pump, hbx: -26, hby: 6, ffx: 22, fbx: -22 }); // the fist clears the head
+    }
+    case 'calm': {
+      // Arms folded, feet planted, breathing slowly. Nothing to prove.
+      const breathe = Math.sin(t * 0.05) * 1.2;
+      return pose({ hipY: -62 + breathe, lean: -0.06, hfx: 6, hfy: 2 + breathe, hbx: 16, hby: -2 + breathe, ffx: 14, fbx: -16 });
+    }
+    case 'stomp': {
+      // High stamping steps, one leg then the other, hands on the knees.
+      const k = t % 80;
+      const up = (from) => Math.max(0, Math.sin(((k - from) / 30) * Math.PI)) * (k >= from && k < from + 30 ? 1 : 0);
+      const front = up(0);
+      const back = up(40);
+      return pose({ hipX: (back - front) * 6, hipY: -46 + (front + back) * 6, lean: 0.18, tilt: (front - back) * 0.18, hfx: 22, hfy: 20, hbx: -2, hby: 22, ffx: 26 + front * 12, ffy: -front * 70, fbx: -26 - back * 12, fby: -back * 70 });
+    }
+    default: {
+      // cheer: little hops, arms up in a V and waving in turn.
+      const hop = Math.abs(Math.sin(t * 0.13)) * 9;
+      const wave = Math.sin(t * 0.2) * 10;
+      return pose({ hipY: -62 - hop, lean: -0.05, hfx: 30 + wave, hfy: -40 - wave * 0.5, hbx: -28 - wave, hby: -40 + wave * 0.5, ffy: -hop, fby: -hop }); // arms in a wide V, clear of the head
+    }
+  }
+}
+
 function targetPose(f, now) {
   const air = f.h > 0.5;
   switch (f.state) {
@@ -125,10 +157,8 @@ function targetPose(f, now) {
       const k = Math.min(1, f.t / 16);
       return pose({ ...CROUCH, rot: (-Math.PI / 2) * (1 - k) * (1 - k), lift: -15 * (1 - k), hipY: -30 - 20 * k });
     }
-    case 'win': {
-      const hop = Math.abs(Math.sin(f.t * 0.13)) * 9;
-      return pose({ hipY: -62 - hop, lean: -0.05, hfx: 12, hfy: -48, hbx: -10, hby: -48, ffy: -hop, fby: -hop });
-    }
+    case 'win':
+      return victoryPose(f);
     case 'lose':
       return pose({ hipY: -54, lean: 0.48, tilt: 0.4, hfx: 6, hfy: 36, hbx: -4, hby: 36 });
     default: {

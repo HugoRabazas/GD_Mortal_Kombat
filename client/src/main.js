@@ -430,6 +430,55 @@ function arrangeScreen() {
     </section>`;
 }
 
+// ------------------------------------------------------------ fight stats ---
+// Counted from the fight's own events, so they are the same on every screen
+// of an online match: damage dealt, blows landed, the longest combo and the
+// perfect guards of each fighter.
+function tallyFight(g, events) {
+  if (app.statsFor !== g) {
+    app.statsFor = g;
+    app.stats = g.state.f.map(() => ({ dmg: 0, hits: 0, combo: 0, perfect: 0 }));
+  }
+  for (const e of events) {
+    const st = app.stats[e.by];
+    if (!st) continue;
+    if (e.type === 'hit') {
+      st.dmg += e.dealt ?? e.dmg;
+      st.hits++;
+      st.combo = Math.max(st.combo, e.combo || 1);
+    } else if (e.type === 'parry') {
+      st.perfect++;
+    }
+  }
+}
+
+// One line of numbers per fighter, for the result screen of a duel.
+function statsCard() {
+  const s = app.game?.state;
+  if (!s || app.statsFor !== app.game || !app.stats) return '';
+  const who = labels();
+  const best = (k) => Math.max(...app.stats.map((st) => st[k]));
+  const cell = (st, k) => `<td class="${st[k] > 0 && st[k] === best(k) && app.stats.length > 1 ? 'lead' : ''}">${st[k]}</td>`;
+  return `
+    <table class="fightstats">
+      <thead><tr><th></th><th>Damage</th><th>Hits</th><th>Best combo</th><th>Perfect guards</th></tr></thead>
+      <tbody>
+        ${s.f
+          .map((f, i) => {
+            const st = app.stats[i];
+            return `<tr><th scope="row">${head(f.char)}<span>${getFighter(f.char).name}<small>${esc(who[i] ?? '')}</small></span></th>${cell(st, 'dmg')}${cell(st, 'hits')}${cell(st, 'combo')}${cell(st, 'perfect')}</tr>`;
+          })
+          .join('')}
+      </tbody>
+    </table>`;
+}
+
+// In a brawl the numbers ride along in the ranking, under each name.
+function statsLine(slot) {
+  const st = app.statsFor === app.game ? app.stats?.[slot] : null;
+  return st ? `<small>${st.dmg} damage · ${st.hits} hits · combo ${st.combo}${st.perfect ? ` · ${st.perfect} perfect` : ''}</small>` : '';
+}
+
 function resultScreen() {
   const s = app.game.state;
   const won = s.matchWinner === 0;
@@ -439,7 +488,7 @@ function resultScreen() {
       : `<button type="button" class="btn primary" data-act="rematch">Rematch</button>
           <button type="button" class="btn" data-act="select">Change fighter</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>`;
-  if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result"><div class="row">${again}</div></section>`;
+  if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result">${statsCard()}<div class="row">${again}</div></section>`;
   if (s.mode === 'arena') {
     const who = labels();
     const medal = ['1st', '2nd', '3rd', '4th'];
@@ -450,7 +499,7 @@ function resultScreen() {
             .map(
               (r) => `<li class="${r.rank === 1 ? 'top' : ''}">
                 <span class="place">${medal[r.rank - 1]}</span>${head(r.char)}
-                <span class="lname">${getFighter(r.char).name}</span>
+                <span class="lname">${getFighter(r.char).name}${statsLine(r.slot)}</span>
                 <span class="ltag">${esc(who[r.slot])}</span>
                 <span class="pts">${r.points} pts</span>
               </li>`,
@@ -463,6 +512,7 @@ function resultScreen() {
   if (app.mode !== 'arcade') {
     return `
       <section class="screen result">
+        ${statsCard()}
         <div class="row">
           <button type="button" class="btn primary" data-act="rematch">Rematch</button>
           <button type="button" class="btn" data-act="select">Change fighters</button>
@@ -477,6 +527,7 @@ function resultScreen() {
       <section class="screen result">
         <p class="headline">Stopped at stage ${a.stage + 1} of ${total}</p>
         <p class="sub">Score ${points(a.score)}</p>
+        ${statsCard()}
         <div class="row">
           <button type="button" class="btn primary" data-act="retry">Try again</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>
@@ -488,6 +539,7 @@ function resultScreen() {
       <section class="screen result">
         <p class="headline">Arena champion</p>
         <p class="sub">Final score ${points(a.score)}${a.score >= bestScore() ? ' · new best' : ''}</p>
+        ${statsCard()}
         <div class="row">
           <button type="button" class="btn primary" data-act="arcade">Play again</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>
@@ -499,6 +551,7 @@ function resultScreen() {
     <section class="screen result">
       <p class="headline">Stage ${a.stage + 1} cleared · +${points(a.gained)}</p>
       <p class="sub next">Next: ${head(next.char)} <b>${getFighter(next.char).name}</b>${next.boss ? ' · the boss' : ''}</p>
+      ${statsCard()}
       <div class="row">
         <button type="button" class="btn primary" data-act="next">Next fight</button>
         <button type="button" class="btn quiet" data-act="menu">Menu</button>
@@ -1123,7 +1176,9 @@ function frame(now) {
     }
   }
   const self = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
-  handleEvents(g.drain(), g.state, { quiet: !playing, project: stage.project, me: self });
+  const events = g.drain();
+  if (playing) tallyFight(g, events);
+  handleEvents(events, g.state, { quiet: !playing, project: stage.project, me: self });
 
   const boss = playing && app.mode === 'arcade' ? [false, !!app.arcade.ladder[app.arcade.stage].boss] : null;
   const tags = playing ? labels() : [];
@@ -1169,6 +1224,7 @@ async function boot() {
   await Promise.all([loadAssets(), Promise.race([fonts, new Promise((r) => setTimeout(r, 1500))])]);
 
   stage = createStage($('#gl'), $('#hud'));
+  if (DEBUG) window.gdStage = stage;
   touchLayout = createTouchLayout(touchEl, isPortrait);
   initKeyboard(togglePause);
   initTouch(touchEl);

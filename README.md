@@ -38,6 +38,14 @@ signature moves of any existing fighting game.
 
 A duel is first to two round wins.
 
+When a match ends, every fighter who won celebrates in their own way - Ruko
+raises a fist to the sky, Shadow stands with arms folded, Jackie stamps like a sumo
+wrestler, Pixie hops and waves - turned three-quarters to the camera so it
+reads. The result screen shows the numbers of the fight: damage really dealt
+(a finishing blow counts only what was left), blows landed, the longest combo
+and perfect guards, the better figure of each in gold. In a brawl they ride
+along in the ranking, under each name.
+
 ## Play
 
 | | Single player | 2P · Player 1 | 2P · Player 2 | Gamepad |
@@ -247,7 +255,8 @@ editor), `audio.js` (every sound and the music are generated in the browser),
 2. Add an entry to `shared/fighters.js` (copy an existing one): `head` is the
    circle cut from the picture (centre `x`, `y` and radius `r` in picture
    pixels); `build` is `standard`, `sumo` or `slim`; `gear` adds a `scarf` or
-   shoulder `pads`; `special.type` is `dash`,
+   shoulder `pads`; `victory` is how they celebrate a won match (`howl`,
+   `calm`, `stomp` or `cheer`); `special.type` is `dash`,
    `bolt`, `rise` or `quake`; keep `stats` near 1.0.
 3. `npm run build` and publish `dist/gd-arena.html` again.
 
@@ -291,4 +300,10 @@ mistake in browser code that the rules tests cannot see.
 - Online, your own fighter answers after a short delay (the trip to the host
   and back) unless you are the host. If the host leaves, the fight ends.
 - Fighters share one skeleton and the basic moves; what sets them apart is the
-  build, the special, the stats, the colours and the head.
+  build, the special, the stats, the colours, the head and the way they
+  celebrate.
+- Each fighter is about twenty separate rounded parts with a cartoon outline,
+  which costs the graphics card two or three draws a part. A four-fighter
+  brawl is about 240 draws a frame (it was 300 before the arena's stone was
+  batched and the small parts stopped casting shadows); a slow device first
+  drops the shadows, then the resolution, to keep its frame rate.
