@@ -285,6 +285,111 @@ function entrancePose(f, t) {
 // Was this fighter's last fall a throw? (Then they lie the other way round.)
 const thrown = [];
 
+// How each build walks (the pose, before the lean of setting off).
+function walkPose(f) {
+  // Each build walks its own way: the heavy fighter waddles - wide, low,
+  // rocking side to side on slower steps; the slim one goes on light,
+  // quick, springy steps; everyone else strides evenly.
+  const build = getFighter(f.char).build;
+  if (build === 'sumo') {
+    const p = f.t * 0.22;
+    return pose({
+      hipY: -50 + Math.abs(Math.sin(p)) * 2.5, tilt: Math.sin(p) * 0.12,
+      ffx: 26 + 10 * Math.sin(p), ffy: -Math.max(0, Math.cos(p)) * 6,
+      fbx: -28 - 10 * Math.sin(p), fby: -Math.max(0, -Math.cos(p)) * 6,
+      hfx: 28 - 6 * Math.sin(p), hfy: 10, hbx: 14 + 6 * Math.sin(p), hby: 14,
+      lean: 0.18,
+    });
+  }
+  if (build === 'slim') {
+    const p = f.t * 0.38;
+    return pose({
+      hipY: -63 - Math.abs(Math.sin(p)) * 3,
+      ffx: 14 + 15 * Math.sin(p), ffy: -Math.max(0, Math.cos(p)) * 12,
+      fbx: -14 - 15 * Math.sin(p), fby: -Math.max(0, -Math.cos(p)) * 12,
+      hfx: 22 - 12 * Math.sin(p), hfy: -4, hbx: 8 + 12 * Math.sin(p), hby: 4,
+      lean: 0.24,
+    });
+  }
+  const p = f.t * 0.3;
+  return pose({
+    hipY: -61 + Math.abs(Math.sin(p)) * 1.5,
+    ffx: 16 + 15 * Math.sin(p), ffy: -Math.max(0, Math.cos(p)) * 9,
+    fbx: -16 - 15 * Math.sin(p), fby: -Math.max(0, -Math.cos(p)) * 9,
+    // Arms swing against the legs, the way people walk.
+    hfx: 24 - 12 * Math.sin(p), hfy: 2, hbx: 6 + 12 * Math.sin(p), hby: 10,
+    lean: 0.2,
+  });
+}
+
+// The first ticks of walking lean into the step; the first ticks of standing
+// still after it settle back a little, a small dip of the hips.
+function startLean(p, t) {
+  const k = Math.max(0, 1 - t / 7);
+  return { ...p, lean: p.lean + 0.18 * k, hipX: p.hipX + 4 * k };
+}
+
+// Standing at ease, in each build's own stance (before the flourishes).
+function idleBase(f, now) {
+  // idle: a gentle breathing bounce, in each build's own stance - the
+  // sumo low and wide, breathing slowly; the slim fighter light on the
+  // toes, bouncing quicker; everyone else square and ready.
+  const build = getFighter(f.char).build;
+  if (build === 'sumo') {
+    const b = Math.sin(now / 420 + f.slot * 2);
+    return pose({ hipY: -50 + b * 1.2, lean: 0.2, ffx: 28, fbx: -30, hfx: 26, hfy: 6 + b, hbx: 14, hby: 12 + b });
+  }
+  if (build === 'slim') {
+    const b = Math.abs(Math.sin(now / 170 + f.slot * 2));
+    return pose({ hipY: -63 - b * 3, lean: 0.08, ffy: -b * 2, fby: -b * 3, hfx: 22, hfy: -10 + b, hbx: 8, hby: 2 - b });
+  }
+  const b = Math.sin(now / 240 + f.slot * 2);
+  return pose({ hipY: -62 + b * 1.6, hfy: -4 + b, hby: 8 - b });
+}
+
+// Standing still for a while, each fighter does something now and then (a
+// little over a second every seven): the standard build rolls the shoulders
+// and shakes out the hands, the sumo slaps the thighs and sinks, the slim
+// fighter switches feet with a hop. Having just stopped walking, the body
+// settles back a touch first.
+function idlePose(f, now) {
+  const p = idleBase(f, now);
+  if (f.t < 8) {
+    const k = 1 - f.t / 8;
+    return { ...p, lean: p.lean - 0.1 * k, hipY: p.hipY + 3 * k };
+  }
+  if (f.t < 90) return p;
+  const cycle = (now / 1000 + f.slot * 2.3) % 7;
+  if (cycle > 1.3) return p;
+  const k = Math.sin((cycle / 1.3) * Math.PI); // in and out
+  const build = getFighter(f.char).build;
+  if (build === 'sumo') return mix(p, { ...p, hipY: p.hipY + 8, lean: 0.4, hfx: 18, hfy: 34, hbx: 6, hby: 34 }, k);
+  if (build === 'slim') {
+    const hop = Math.abs(Math.sin(cycle * 7)) * 6;
+    return mix(p, { ...p, hipY: p.hipY - hop, ffx: p.fbx + 4, fbx: p.ffx - 4, ffy: -hop * 0.6, fby: -hop * 0.6 }, k);
+  }
+  const roll = Math.sin(cycle * 9);
+  return mix(p, { ...p, tilt: 0.08 * roll, hfx: 12, hfy: 18 + roll * 4, hbx: -4, hby: 20 - roll * 4, lean: 0.05 }, k);
+}
+
+// Each build guards its own way: the sumo low and wide behind both forearms,
+// the slim fighter high and light, bobbing behind the hands.
+function guardPose(f) {
+  const build = getFighter(f.char).build;
+  if (build === 'sumo') return pose({ hipY: -48, lean: 0.18, hfx: 34, hfy: 2, hbx: 30, hby: 12, ffx: 28, fbx: -30 });
+  if (build === 'slim') {
+    const b = Math.sin(f.t * 0.3) * 1.5;
+    return pose({ hipY: -60 + b, lean: -0.02, hfx: 24, hfy: -16 + b, hbx: 22, hby: -6 + b, ffx: 14, ffy: -2, fbx: -20 });
+  }
+  return pose({ hipY: -58, lean: -0.05, hfx: 30, hfy: -4, hbx: 26, hby: 6, ffx: 16, fbx: -22 });
+}
+
+// A guard shoved back by a blow: leaning away, the arms pressed in, the
+// back foot braced.
+function recoil(p, k) {
+  return { ...p, lean: p.lean - 0.2 * k, hipX: p.hipX - 7 * k, hfx: p.hfx - 8 * k, hbx: p.hbx - 6 * k, fbx: p.fbx - 8 * k };
+}
+
 function targetPose(f, now) {
   if (f.state === 'held') thrown[f.slot] = true;
   else if (f.state !== 'down' && f.state !== 'ko' && f.state !== 'getup') thrown[f.slot] = false;
@@ -292,41 +397,9 @@ function targetPose(f, now) {
   if (ritual >= 0 && ritual < ENTRANCE_TICKS && f.state === 'idle') return entrancePose(f, ritual);
   const air = f.h > 0.5;
   switch (f.state) {
-    case 'walk': {
-      // Each build walks its own way: the heavy fighter waddles - wide, low,
-      // rocking side to side on slower steps; the slim one goes on light,
-      // quick, springy steps; everyone else strides evenly.
-      const build = getFighter(f.char).build;
-      if (build === 'sumo') {
-        const p = f.t * 0.22;
-        return pose({
-          hipY: -50 + Math.abs(Math.sin(p)) * 2.5, tilt: Math.sin(p) * 0.12,
-          ffx: 26 + 10 * Math.sin(p), ffy: -Math.max(0, Math.cos(p)) * 6,
-          fbx: -28 - 10 * Math.sin(p), fby: -Math.max(0, -Math.cos(p)) * 6,
-          hfx: 28 - 6 * Math.sin(p), hfy: 10, hbx: 14 + 6 * Math.sin(p), hby: 14,
-          lean: 0.18,
-        });
-      }
-      if (build === 'slim') {
-        const p = f.t * 0.38;
-        return pose({
-          hipY: -63 - Math.abs(Math.sin(p)) * 3,
-          ffx: 14 + 15 * Math.sin(p), ffy: -Math.max(0, Math.cos(p)) * 12,
-          fbx: -14 - 15 * Math.sin(p), fby: -Math.max(0, -Math.cos(p)) * 12,
-          hfx: 22 - 12 * Math.sin(p), hfy: -4, hbx: 8 + 12 * Math.sin(p), hby: 4,
-          lean: 0.24,
-        });
-      }
-      const p = f.t * 0.3;
-      return pose({
-        hipY: -61 + Math.abs(Math.sin(p)) * 1.5,
-        ffx: 16 + 15 * Math.sin(p), ffy: -Math.max(0, Math.cos(p)) * 9,
-        fbx: -16 - 15 * Math.sin(p), fby: -Math.max(0, -Math.cos(p)) * 9,
-        // Arms swing against the legs, the way people walk.
-        hfx: 24 - 12 * Math.sin(p), hfy: 2, hbx: 6 + 12 * Math.sin(p), hby: 10,
-        lean: 0.2,
-      });
-    }
+    case 'walk':
+      // Setting off, the body leans into the first few steps.
+      return startLean(walkPose(f), f.t);
     case 'land': {
       // Landing: squashed low on touching down, then rising out of it.
       const k = ease(f.t / 7);
@@ -378,17 +451,9 @@ function targetPose(f, now) {
       if (f.deflect > 0) return pose({ hipX: 6, hipY: -56, lean: 0.24, hfx: 48, hfy: -24, hbx: 42, hby: -12, ffx: 24, fbx: -28 });
       // Forearms crossed in front of the chest, low enough to be seen below
       // the big head from the camera.
-      // Each build guards its own way: the sumo low and wide behind both
-      // forearms, the slim fighter high and light, bobbing behind the hands.
-      {
-        const build = getFighter(f.char).build;
-        if (build === 'sumo') return pose({ hipY: -48, lean: 0.18, hfx: 34, hfy: 2, hbx: 30, hby: 12, ffx: 28, fbx: -30 });
-        if (build === 'slim') {
-          const b = Math.sin(f.t * 0.3) * 1.5;
-          return pose({ hipY: -60 + b, lean: -0.02, hfx: 24, hfy: -16 + b, hbx: 22, hby: -6 + b, ffx: 14, ffy: -2, fbx: -20 });
-        }
-      }
-      return pose({ hipY: -58, lean: -0.05, hfx: 30, hfy: -4, hbx: 26, hby: 6, ffx: 16, fbx: -22 });
+      // A blow taken on the guard shoves it back (while the block stun lasts).
+      if (f.stun > 0) return recoil(guardPose(f), Math.min(1, f.stun / 12));
+      return guardPose(f);
     case 'throw': {
       // Seize low with both hands, heave the rival up and over the head
       // (leaning back into it), then drive them down behind: bent double.
@@ -446,11 +511,28 @@ function targetPose(f, now) {
       const way = thrown[f.slot] ? 1 : -1;
       const limp = { lean: 0, hfx: 4, hfy: 26, hbx: -8, hby: 24, ffx: 10, fbx: -8, hipY: -64 };
       if (air) return pose({ ...limp, rot: thrown[f.slot] ? 1.45 : -Math.min(1.3, 0.3 + f.t * 0.11), hfy: -6, hby: -12 });
+      // On the floor: a bounce as the body hits it (the first ticks after
+      // landing), rocking a little, then still.
+      const since = 34 - (f.stun || 0);
+      if (f.state === 'down' && since >= 0 && since < 12) {
+        const k = since / 12;
+        const b = Math.sin(k * Math.PI) * (1 - k * 0.4);
+        return pose({ ...limp, rot: (way * Math.PI) / 2 + way * 0.22 * b, lift: -15 - 16 * b, hfy: 26 - 20 * b, ffy: -14 * b });
+      }
       return pose({ ...limp, rot: (way * Math.PI) / 2, lift: -15 });
     }
     case 'getup': {
-      const k = Math.min(1, f.t / 16);
-      return pose({ ...CROUCH, rot: ((thrown[f.slot] ? 1 : -1) * Math.PI / 2) * (1 - k) * (1 - k), lift: -15 * (1 - k), hipY: -30 - 20 * k });
+      // Each build gets up its own way: the sumo heaves up slowly, pushing on
+      // the floor; the slim fighter springs up with a little hop at the end.
+      const build = getFighter(f.char).build;
+      const k = Math.min(1, f.t / (build === 'sumo' ? 18 : build === 'slim' ? 12 : 16));
+      const base = pose({ ...CROUCH, rot: ((thrown[f.slot] ? 1 : -1) * Math.PI / 2) * (1 - k) * (1 - k), lift: -15 * (1 - k), hipY: -30 - 20 * k });
+      if (build === 'sumo') return { ...base, hfx: 20, hfy: 40 - 20 * k, hbx: 6, hby: 40 - 20 * k, lean: base.lean + 0.15 * (1 - k) };
+      if (build === 'slim' && k >= 1) {
+        const hop = Math.sin(Math.min(1, (f.t - 12) / 5) * Math.PI) * 8;
+        return { ...base, hipY: base.hipY - hop, ffy: -hop * 0.7, fby: -hop * 0.7, hfy: -10, hby: -8 };
+      }
+      return base;
     }
     case 'win':
       return victoryPose(f);
@@ -463,22 +545,8 @@ function targetPose(f, now) {
       if (build === 'slim') return pose({ hipY: -40, lean: 0.42, tilt: 0.12, ffx: 22, fbx: -24, fby: -2, hfx: 16, hfy: 30, hbx: -6, hby: 34 });
       return pose({ hipY: -54, lean: 0.48, tilt: 0.4, hfx: 6, hfy: 36, hbx: -4, hby: 36 });
     }
-    default: {
-      // idle: a gentle breathing bounce, in each build's own stance - the
-      // sumo low and wide, breathing slowly; the slim fighter light on the
-      // toes, bouncing quicker; everyone else square and ready.
-      const build = getFighter(f.char).build;
-      if (build === 'sumo') {
-        const b = Math.sin(now / 420 + f.slot * 2);
-        return pose({ hipY: -50 + b * 1.2, lean: 0.2, ffx: 28, fbx: -30, hfx: 26, hfy: 6 + b, hbx: 14, hby: 12 + b });
-      }
-      if (build === 'slim') {
-        const b = Math.abs(Math.sin(now / 170 + f.slot * 2));
-        return pose({ hipY: -63 - b * 3, lean: 0.08, ffy: -b * 2, fby: -b * 3, hfx: 22, hfy: -10 + b, hbx: 8, hby: 2 - b });
-      }
-      const b = Math.sin(now / 240 + f.slot * 2);
-      return pose({ hipY: -62 + b * 1.6, hfy: -4 + b, hby: 8 - b });
-    }
+    default:
+      return idlePose(f, now);
   }
 }
 

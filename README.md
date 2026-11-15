@@ -121,7 +121,14 @@ overshoots its mark for a tick or two, and the recovery settles back towards
 the guard. A jump pushes off with the legs straight and the arms thrown up,
 tucks at the top and reaches for the floor on the way down; landing squashes
 low and rises out of it. Each build guards in its own way (the sumo low and
-wide, the slim fighter high and bobbing). The beaten go down in their own way too: the heavy fighter sits down
+wide, the slim fighter high and bobbing). A blow taken on the guard shoves it back while the
+block stun lasts. Setting off walking leans into the first steps and
+stopping settles back a touch; standing still for a while, each build does
+something now and then (shoulders rolled and hands shaken out, thighs
+slapped by the sumo, a hop to switch feet by the slim fighter). A body that
+hits the floor bounces and rocks before lying still, and gets up in its own
+way: the sumo heaves up pushing on the floor, the slim fighter springs up
+with a hop. The beaten go down in their own way too: the heavy fighter sits down
 hard with legs out, the slim one drops to a knee, the others stand slumped.
 The result screen opens with the winner's own line (Ruko: "The moon
 saw that one coming. You did not."; Shadow: "Quiet. Quick. Finished.";
