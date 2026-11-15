@@ -80,6 +80,29 @@ export function dust(x, y, amount = 6) {
   }
 }
 
+// A match won: confetti in the winner's colours drifts down over the arena
+// (fewer pieces, falling slower, for anyone who asked for less motion).
+const calmMotion = typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+export function confetti(width, colors) {
+  const n = calmMotion ? 24 : 90;
+  for (let i = 0; i < n; i++) {
+    particles.push({
+      kind: 'confetti',
+      x: Math.random() * width,
+      y: -10 - Math.random() * 140,
+      vx: (Math.random() - 0.5) * 0.6,
+      vy: (calmMotion ? 1 : 1.6) + Math.random() * 1.2, // about 100-170 px a second at 60 frames
+      life: 1,
+      decay: 0.0028 + Math.random() * 0.0008, // five to six seconds: long enough to cross the screen
+      color: colors[i % colors.length],
+      size: 5 + Math.random() * 4,
+      rot: Math.random() * Math.PI,
+      spin: (Math.random() - 0.5) * 0.24,
+      sway: Math.random() * Math.PI * 2,
+    });
+  }
+}
+
 export function floatText(x, y, text, color, size = 22) {
   texts.push({ x, y, text, color, size, life: 1 });
 }
@@ -103,6 +126,10 @@ export function updateFx() {
       if (p.kind === 'streak') {
         p.vx *= 0.9;
         p.vy = p.vy * 0.9 + 0.25;
+      } else if (p.kind === 'confetti') {
+        p.sway += 0.07;
+        p.x += Math.sin(p.sway) * 0.7;
+        p.rot += p.spin;
       }
     }
   }
@@ -123,6 +150,18 @@ export function updateFx() {
 export function drawFx(ctx) {
   ctx.save();
   for (const p of particles) {
+    if (p.kind === 'confetti') {
+      // A flat scrap turning over: its width swings with the turn.
+      ctx.globalCompositeOperation = 'source-over';
+      ctx.globalAlpha = Math.min(1, p.life * 3);
+      ctx.fillStyle = p.color;
+      ctx.save();
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillRect(-p.size / 2, -p.size * 0.3, p.size * Math.abs(Math.cos(p.sway * 1.7)) + 1, p.size * 0.6);
+      ctx.restore();
+      continue;
+    }
     if (p.kind === 'dust') {
       ctx.globalCompositeOperation = 'source-over';
       ctx.globalAlpha = p.life * 0.35;

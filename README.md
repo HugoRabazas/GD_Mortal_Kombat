@@ -72,7 +72,9 @@ winner and the result screen are not written over.
 When a match ends, every fighter who won celebrates in their own way - Ruko
 raises a fist to the sky, Shadow stands with arms folded, Jackie stamps like a sumo
 wrestler, Pixie hops and waves - turned three-quarters to the camera so it
-reads. The beaten go down in their own way too: the heavy fighter sits down
+reads. Confetti in the winner's colours then drifts down over the arena for
+about five seconds (fewer pieces, falling slower, for anyone whose device
+asks for reduced motion). The beaten go down in their own way too: the heavy fighter sits down
 hard with legs out, the slim one drops to a knee, the others stand slumped.
 The result screen opens with the winner's own line (Ruko: "The moon
 saw that one coming. You did not."; Shadow: "Quiet. Quick. Finished.";
@@ -429,7 +431,9 @@ with three moods, its own music and a look without WebGL - the themes live
 as plain data in `client/src/render/themes.js` so Node can read them), the
 CPU's difficulty ladder (`tests/ai.test.js`: in mirror duels Normal must beat
 Easy, Hard beat Normal and the boss level beat Hard - over 160 duels each
-step measured 100 %, 81 % and 67 %) and online play
+step measured 100 %, 81 % and 67 %), the website's home-screen manifest
+(`tests/web.test.js`: it opens full screen and sideways, and every icon is
+the size it claims) and online play
 (`tests/online.test.js`). The
 online test runs two players in Node on the same-browser bus (Node has
 BroadcastChannel too): they meet in the lobby, make a room, get ready, fight

@@ -5,9 +5,10 @@
 // Events carry positions on the arena floor; `project` converts them to
 // points on the flat effects layer for whichever view is showing the fight.
 
+import { ARENA } from '../../shared/constants.js';
 import { getFighter } from '../../shared/fighters.js';
 import { play } from './audio.js';
-import { hitSpark, blockSpark, dust, floatText as showText, showBanner, addShake, addFlash, lightFlash, cheerFor } from './render/fx.js';
+import { hitSpark, blockSpark, dust, floatText as showText, showBanner, addShake, addFlash, lightFlash, cheerFor, confetti } from './render/fx.js';
 
 // At the end of a brawl round, show over each fighter the points it earned.
 function showRoundPoints(state, project) {
@@ -227,6 +228,10 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (quiet) break;
         if (e.winner < 0) showBanner('DRAW', arena ? 'THE TOP SPOT IS SHARED' : null, '#e8b454', 2600);
         else showBanner(`${nameOf(e.winner)} WINS`, arena ? 'ARENA CHAMPION' : getFighter(state.f[e.winner].char).title.toUpperCase(), '#e8b454', 2600);
+        if (e.winner >= 0) {
+          const c = colors?.[e.winner] ?? getFighter(state.f[e.winner].char).colors;
+          confetti(ARENA.W, [c.primary, c.accent, c.glow, '#f6ead8']);
+        }
         // The fanfare is for winners: whoever lost at this screen hears the fall.
         play(me >= 0 && e.winner >= 0 && e.winner !== me ? 'defeat' : 'win');
         break;
