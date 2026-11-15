@@ -857,6 +857,42 @@ test('block held and grab pressed while standing still is a taunt: energy, and o
   assert.ok(counter);
 });
 
+test('a blow that lands can be cancelled into the special; a stomp that lands bounces its victim up', () => {
+  const s = startFight();
+  closeUp(s);
+  s.f[0].meter = RULES.SPECIAL_COST;
+  step(s, [INPUT.PUNCH, 0]);
+  run(s, 5);
+  step(s, [INPUT.SPECIAL, 0]);
+  const ev = [];
+  for (let i = 0; i < 30; i++) {
+    step(s, idle(s));
+    ev.push(...s.ev);
+  }
+  assert.ok(ev.some((e) => e.type === 'special' && e.cancel), 'cancelled into the special');
+  // A missed blow cannot be cancelled.
+  const miss = startFight();
+  closeUp(miss, 300);
+  miss.f[0].meter = RULES.SPECIAL_COST;
+  step(miss, [INPUT.PUNCH, 0]);
+  run(miss, 5);
+  step(miss, [INPUT.SPECIAL, 0]);
+  run(miss, 3);
+  assert.equal(miss.f[0].move, 'punch');
+
+  const st = startFight();
+  closeUp(st, 45);
+  step(st, [INPUT.JUMP, 0]);
+  run(st, 12);
+  step(st, [INPUT.GRAB, 0]);
+  let top = 0;
+  for (let i = 0; i < 40; i++) {
+    step(st, idle(st));
+    if (st.f[1].state === 'down') top = Math.max(top, st.f[1].h);
+  }
+  assert.ok(top > 15, `bounced off the floor (${top.toFixed(0)})`);
+});
+
 test('a throw seizes, lifts the rival over the head and slams them down behind', () => {
   const s = startFight();
   closeUp(s, 56);

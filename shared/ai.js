@@ -121,6 +121,13 @@ export function aiInput(ai, s, me) {
   const sm = f.state === 'attack' && MOVES[f.move];
   if (sm && f.hits.length && ai.tapT === 0 && ai.chained !== f.move && (sm.next || sm.nextK || sm.launch)) {
     ai.chained = f.move;
+    // With energy in hand, a blow that landed is sometimes cancelled into
+    // the special (as often as it punishes, by half).
+    if (!sm.launch && f.meter >= RULES.SPECIAL_COST && rnd(ai) < cfg.punish * 0.15) {
+      ai.tap = INPUT.SPECIAL;
+      ai.tapT = 2;
+      return INPUT.SPECIAL;
+    }
     // How reliably it finishes a string is a matter of skill (like punishing).
     if (sm.launch) {
       if (rnd(ai) < cfg.punish) {

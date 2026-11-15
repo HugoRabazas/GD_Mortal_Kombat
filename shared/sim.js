@@ -34,6 +34,9 @@ const JUGGLE = 2;
 // let go as the guard-breaking kick when the button is released (no sooner
 // than `min` ticks of charging, and on its own at `max`).
 const CHARGE = { hold: 8, min: 8, max: 40, reel: 30 };
+// The ordinary blows that can be cancelled into a special once they land.
+const CANCEL_DMG = 0.6;
+const CANCELS = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'hook', 'lunge', 'slide', 'launch']);
 // A taunt (block held, grab pressed, standing still): each fighter's own
 // gesture for `ticks`; energy is gained at tick `at`, and until it ends any
 // blow lands as a counter hit (it is still winding up).
@@ -150,7 +153,7 @@ export const MOVES = {
   // slower to start. It can still open the punch string.
   lunge: {
     startup: 6, active: 4, recovery: 12, dmg: 7, reach: 92, arc: 0.8, y0: 70, y1: 150, aim: 240,
-    hitstun: 17, blockstun: 10, push: 6, gain: 10, next: 'punch2', speed: 5.5, go: [0, 10],
+    hitstun: 17, blockstun: 10, push: 6, gain: 10, next: 'punch2', nextK: 'hook', speed: 5.5, go: [0, 10],
   },
   // Kick on the move: a slide along the floor, feet first. Low, so a rival
   // in the air is over it; it sweeps whoever it catches off their feet, but
@@ -208,7 +211,7 @@ export const MOVES = {
   },
   stomp: {
     startup: 5, active: 999, recovery: 0, dmg: 10, reach: 44, arc: Math.PI, y0: -110, y1: 30, aim: 0,
-    hitstun: 0, blockstun: 14, push: 7, gain: 10, knockdown: true, heavy: true,
+    hitstun: 0, blockstun: 14, push: 7, gain: 10, knockdown: true, heavy: true, bounce: 6.5,
   },
   // --- specials (cost RULES.SPECIAL_COST energy) ---
   dash: {
@@ -489,6 +492,7 @@ function aimGuard(s, f) {
 
 function startAttack(s, f, move) {
   const m = MOVES[move];
+  f.cancelled = !!f.cancel; // a special cancelled out of a blow hits softer (CANCEL_DMG)
   f.state = 'attack';
   f.move = move;
   f.t = 0;
@@ -562,7 +566,7 @@ function tryAttack(s, f, inp = 0) {
     const type = getFighter(f.char).special.type;
     startAttack(s, f, type);
     if (type === 'rise') f.inv = MOVES.rise.startup + 6;
-    emit(s, 'special', { by: f.slot, move: type });
+    emit(s, 'special', { by: f.slot, move: type, cancel: !!f.cancel });
     return true;
   }
   if (b & INPUT.GRAB || (b & INPUT.KICK && b & INPUT.PUNCH)) {
@@ -814,7 +818,14 @@ function control(s, f, inp) {
         break;
       }
       // A blow that connected can flow straight into the next one of its
-      // string: punch for `next`, kick for `nextK`.
+      // string: punch for `next`, kick for `nextK` - or be cancelled into the
+      // special (or the finisher) at once, energy allowing.
+      if (f.hits.length && t >= activeEnd && f.landed > 0 && f.buf & (INPUT.SPECIAL | INPUT.SUPER) && CANCELS.has(f.move)) {
+        f.cancel = true;
+        const ok = tryAttack(s, f, inp);
+        f.cancel = false;
+        if (ok) break;
+      }
       if (f.hits.length && t >= activeEnd) {
         const nx = f.buf & INPUT.KICK ? m.nextK : f.buf & INPUT.PUNCH ? m.next : null;
         if (nx) {
@@ -1215,7 +1226,8 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   def.reel = 0;
   def.scorched = false;
   const scale = m.noScale ? 1 : Math.max(0.5, 1 - 0.12 * (def.taken - 1)); // long combos hit softer
-  const dmg = Math.max(1, Math.round(m.dmg * power * scale * (counter ? COUNTER.dmg : 1)));
+  const soft = att.cancelled && att.state === 'attack' ? CANCEL_DMG : 1;
+  const dmg = Math.max(1, Math.round(m.dmg * power * scale * soft * (counter ? COUNTER.dmg : 1)));
   const dealt = Math.min(dmg, def.hp); // a finishing blow cannot take more than is left
   const wasStanding = lastStand(def);
   def.hp = Math.max(0, def.hp - dmg);
@@ -1236,19 +1248,21 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     def.koBy = kind;
     def.outAt = s.tick;
     emit(s, 'out', { slot: def.slot, by: att.slot });
-  } else if (m.knockdown || def.h > 0) {
+  } else if ((m.knockdown && soft === 1) || def.h > 0) {
     def.state = 'down';
     def.t = 0;
     def.stun = DOWN_TICKS;
-    def.vh = m.launch || (big ? 10 : juggled ? 6.5 : 7.5);
+    def.vh = m.launch || m.bounce || (big ? 10 : juggled ? 6.5 : 7.5);
     const away = m.launch ? 1.2 : big ? 8 : 5; // a launcher keeps them close to chase
     def.vx = dx * away;
     def.vz = dz * away;
-    def.juggle = m.launch ? JUGGLE : juggled ? def.juggle - 1 : 0;
+    // A launcher opens a juggle; a stomp bounces its victim off the floor
+    // for one blow more.
+    def.juggle = m.launch ? JUGGLE : m.bounce ? 1 : juggled ? def.juggle - 1 : 0;
   } else {
     def.state = 'hit';
     def.t = 0;
-    def.stun = m.hitstun;
+    def.stun = soft === 1 ? m.hitstun : 16; // a cancelled special staggers instead of flooring
     def.vx = dx * m.push;
     def.vz = dz * m.push;
   }

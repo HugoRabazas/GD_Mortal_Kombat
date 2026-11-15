@@ -212,6 +212,15 @@ and the heartbeat, the crowd and the weather go quiet.
   as often as it punishes, the knee when closing in); measured with them in:
   duels 47-53 %, brawl firsts 16-20 %, ladder 100 / 81 / 61 %. The Tutorial
   teaches them (Combos: hook kick and air string; On the run: flying knee).
+- **More combo routes**: the lunging straight now opens the hook kick too
+  (run, punch, kick); a **stomp** that lands bounces its victim off the
+  floor, open to one more blow in the air; and a blow that lands can be
+  **cancelled into the special** at once (punch or kick, then special while
+  it lands, energy allowing). A cancelled special hits at 60 % and staggers
+  instead of flooring - the first version, with full damage and the
+  knockdown, let Ruko's rush land every time (67 % of duels), and the CPU
+  cancels only now and then. Taught in the Tutorial (Specials). Duels
+  46-53 % with all of this.
 - **Taunt**: block held and grab pressed, standing still: each fighter's
   own gesture (Ruko's howl at the sky, Shadow's folded arms, Jackie's sumo
   stamp, Pixie's wave) and line ("Awoo!", "Too slow.", "Hmph!", "Catch

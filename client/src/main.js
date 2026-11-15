@@ -549,6 +549,7 @@ function movesCard() {
       <dt>${k(key.p, key.k)}</dt><dd><b>Hook kick</b>: a punch that lands, then a kick swung round that spins the rival, back to you.</dd>
       <dt>Air ${k(key.p)}, ${k(key.k)}</dt><dd><b>Air string</b>: an air punch that lands, then an axe kick chopped down.</dd>
       <dt>Run, ${k(key.j)}, ${k(key.k)}</dt><dd><b>Flying knee</b>: jump out of a run and kick - far, fast, knocks down.</dd>
+      <dt>${k(key.p)}, ${k(key.s)}</dt><dd><b>Special cancel</b>: a blow that lands can be cut short by the special, at once - it staggers instead of flooring, and hits softer.</dd>
       <dt>Ring of fire</dt><dd>Knock a rival down into the flames: they <b>bounce</b> back off them, open to one more blow in the air.</dd>
       <dt>${k(key.k)}</dt><dd><b>Kick</b>: slower than a punch, heavier, longer reach.</dd>
       <dt>Run + ${k(key.p)}</dt><dd><b>Lunging straight</b>: after a few steps, punch with the stick held to leap in from long range. Chains into the second punch.</dd>
