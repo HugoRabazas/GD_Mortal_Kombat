@@ -1942,3 +1942,381 @@ kbd {
     letter-spacing: 0.04em;
   }
 }
+
+/* The lobby's "no rooms" line is a plain line, not a row of columns. */
+.people li.none {
+  display: block;
+}
+
+/* The tutorial's panel on a phone: just the step in hand. Held upright it
+   sits under the arena, across the width; sideways it stays a narrow corner. */
+#drill.compact {
+  width: min(230px, 30%);
+  padding: 5px 9px 6px;
+}
+
+#drill.compact b small {
+  font-size: 0.8em;
+  color: var(--ash);
+  margin-left: 4px;
+}
+
+#drill.compact p {
+  margin: 3px 0 0;
+}
+
+#drill.compact .step span {
+  display: block;
+  color: var(--bone);
+}
+
+#app.portrait #drill.compact {
+  left: 3%;
+  top: calc(100vw * 0.5625 + 6px);
+  width: 94%;
+  box-sizing: border-box;
+}
+
+/* The pause list never grows wider than its place (its padding counts
+   inside), so nothing is cut off on a narrow phone. */
+.movelist {
+  box-sizing: border-box;
+}
+
+.movetabs .movelist {
+  width: 100%;
+}
+
+.movelist dd {
+  min-width: 0;
+}
+
+.movelist dt {
+  white-space: normal;
+}
+
+/* On a short, wide phone the brawl's result leaves the winner's line out:
+   the ranking needs the room. */
+@media (max-height: 480px) {
+  .result:has(.ranking) .quote {
+    display: none;
+  }
+}
+
+/* ---- The online lobby and a room on a phone held sideways ----
+   Everything on one screen, no scrolling: two columns under a small title -
+   who is there and the chat on the left; the rooms (or your fighter and the
+   host's options) on the right; the buttons along the bottom. */
+@media (max-height: 480px) and (orientation: landscape) {
+  .screen.room,
+  .screen.lobby {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-auto-flow: dense;
+    gap: 4px 10px;
+    align-items: start;
+    box-sizing: border-box;
+    width: min(100%, 920px);
+    max-height: 100%;
+    padding: 4px 10px 6px;
+  }
+
+  .screen.room > h2,
+  .screen.lobby > h2 {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.1;
+  }
+
+  .screen.room > .versus,
+  .screen.lobby > .versus {
+    display: contents;
+  }
+
+  .screen.room .ladder,
+  .screen.lobby .ladder {
+    width: auto;
+    min-width: 0;
+    gap: 2px;
+    padding: 4px 8px 5px;
+  }
+
+  .screen.room .ladder,
+  .screen.lobby .ladder:first-child {
+    grid-column: 1;
+  }
+
+  .screen.lobby .ladder:last-child,
+  .screen.room .slot {
+    grid-column: 2;
+  }
+
+  .screen.room .people,
+  .screen.lobby .people {
+    max-height: none;
+    gap: 2px;
+  }
+
+  .screen.room .people li,
+  .screen.lobby .people li {
+    padding-top: 1px;
+    padding-bottom: 1px;
+    min-height: 0;
+    font-size: 0.9rem;
+  }
+
+  .screen.room .people .head,
+  .screen.lobby .people .head {
+    width: 22px;
+    height: 22px;
+  }
+
+  .screen.lobby .people {
+    max-height: 30vh;
+  }
+
+  .screen.room .rules,
+  .screen.lobby .rules {
+    margin: 0;
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .screen.lobby .rules.aside {
+    display: none;
+  }
+
+  /* Your fighter: the face, the name beside it, the picker under them. */
+  .screen.room .slot {
+    width: auto;
+    min-width: 0;
+    min-height: 0;
+    padding: 4px 8px 6px;
+  }
+
+  .screen.room .slot .stats,
+  .screen.room .slot .title,
+  .screen.room .slot .moves {
+    display: none;
+  }
+
+  .screen.room .slot .head.big {
+    width: 46px;
+    height: 46px;
+  }
+
+  .screen.room .slot .name {
+    font-size: 1.3rem;
+  }
+
+  .screen.room .slot .picker {
+    gap: 4px;
+    margin-top: 2px;
+  }
+
+  .screen.room .slot .picker .head {
+    width: 28px;
+    height: 28px;
+  }
+
+  .screen.room > .opts {
+    grid-column: 2;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 0;
+  }
+
+  .screen.room .seg button {
+    padding: 4px 8px 3px;
+    font-size: 0.9rem;
+  }
+
+  .screen.room > .chat,
+  .screen.lobby > .chat {
+    grid-column: 1;
+    width: auto;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .screen.room .chat ol,
+  .screen.lobby .chat ol {
+    max-height: 2.5em;
+    margin: 0;
+    font-size: 0.75rem;
+  }
+
+  .screen.room .chat .dim,
+  .screen.lobby .chat .dim {
+    display: none;
+  }
+
+  .screen.room .chat .field,
+  .screen.lobby .chat .field {
+    padding-top: 4px;
+    padding-bottom: 4px;
+    min-height: 0;
+  }
+
+  .screen.room > .note,
+  .screen.lobby > .note {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.72rem;
+  }
+
+  .screen.room > .acts {
+    grid-column: 1 / -1;
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin: 0;
+  }
+
+  .screen.lobby > .acts {
+    grid-column: 2;
+    flex-wrap: nowrap;
+    gap: 6px;
+    margin: 0;
+    align-self: end;
+  }
+
+  .screen.room .btn,
+  .screen.lobby .btn {
+    padding: 5px 12px 4px;
+    font-size: 1rem;
+    min-height: 0;
+  }
+}
+
+/* ---- The menu, the select screen and the settings on a short phone held
+   sideways (under 400 px tall): everything tightened so nothing scrolls. ---- */
+@media (max-height: 400px) and (orientation: landscape) {
+  #ui {
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  .screen.menu {
+    gap: 4px;
+  }
+
+  .menu .brand {
+    font-size: clamp(1.7rem, 11vh, 3rem);
+    margin: 0;
+    line-height: 1;
+  }
+
+  .menu .stack {
+    gap: 4px;
+  }
+
+  .menu .btn {
+    padding: 4px 14px 3px;
+    font-size: 1.15rem;
+    min-height: 0;
+  }
+
+  .menu .btn small {
+    font-size: 0.62rem;
+  }
+
+  .menu .note,
+  .menu .best {
+    margin: 0;
+    font-size: 0.72rem;
+  }
+
+  .menu .foot {
+    margin: 0;
+    gap: 2px 14px;
+  }
+
+  .menu .foot .link {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    font-size: 0.8rem;
+  }
+
+  .screen.select:not(.room):not(.lobby):not(.lessons) {
+    gap: 5px;
+    padding: 4px 14px 6px;
+  }
+
+  .screen.select > h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.1;
+  }
+
+  .screen.select .slot {
+    padding-top: 4px;
+    padding-bottom: 6px;
+    min-height: 0;
+  }
+
+  .screen.select .slot .head.big {
+    width: 50px;
+    height: 50px;
+  }
+
+  .screen.select .slot .name {
+    font-size: 1.35rem;
+  }
+
+  .screen.select .slot .picker {
+    gap: 4px;
+    margin-top: 2px;
+  }
+
+  .screen.select .slot .picker .head {
+    width: 27px;
+    height: 27px;
+  }
+
+  .screen.select .ladder {
+    gap: 2px;
+    padding: 4px 8px 6px;
+  }
+
+  .screen.select .ladder li {
+    padding-top: 1px;
+    padding-bottom: 1px;
+    min-height: 0;
+  }
+
+  .screen.select .seg button {
+    padding: 4px 12px 3px;
+    font-size: 0.95rem;
+  }
+
+  .screen.select > .note {
+    margin: 0;
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .screen.select > .row .btn,
+  .screen.select .stack .btn {
+    padding: 4px 16px 3px;
+    font-size: 1.05rem;
+    min-height: 0;
+  }
+
+  .screen.select.narrow {
+    gap: 5px;
+  }
+
+  .slider {
+    margin: 0;
+  }
+}
+
+/* Shorter still (a small phone, 340 px or less): the menu drops its tip and
+   the select screen its notes. */
+@media (max-height: 345px) and (orientation: landscape) {
+  .menu .note,
+  .screen.select:not(.narrow) > .note {
+    display: none;
+  }
+}

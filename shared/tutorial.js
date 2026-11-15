@@ -48,7 +48,7 @@ export const LESSONS = [
   },
   {
     id: 'throws',
-    title: 'Against a guard',
+    title: 'Guards',
     partner: 'blocker',
     intro: 'Your partner keeps a guard up.',
     steps: [

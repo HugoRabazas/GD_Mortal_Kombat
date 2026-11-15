@@ -115,7 +115,16 @@ rocking from side to side; the slim one goes on quick, springy steps.
 From the third blow of a combo a big counter stands at the attacker's side
 of the screen - the number swelling with each blow, HITS under it and a word
 for how good it is (NICE from 3, GREAT 5, AWESOME 7, AMAZING 9,
-UNSTOPPABLE 12) - and fades a moment after the combo ends. **Full screen** is on offer wherever a player may be - the menu, the online
+UNSTOPPABLE 12) - and fades a moment after the combo ends. On a phone held sideways no menu needs scrolling: the online lobby and a
+room lay themselves out in two columns under a small title (who is there and
+the chat on the left; the rooms, or your fighter and the host's options, on
+the right; the buttons along the bottom), and the menu, the select screen
+and the settings tighten up under 400 px of height. Measured for every
+screen from 568 x 320 to 915 x 412 (the old layout overflowed a room by 55 to
+219 px there). In the Tutorial a phone's lesson panel keeps to the step in
+hand, clear of the stick; held upright it sits under the arena.
+
+**Full screen** is on offer wherever a player may be - the menu, the online
 lobby, a room and the pause screen - since someone who comes in through an
 invite link never sees the menu; on a phone, pressing Ready or Start fight in
 a room also goes full screen (the tap is the gesture the browser needs).
@@ -252,7 +261,7 @@ and the heartbeat, the crowd and the weather go quiet.
   **Belly Bump** (a barge that shoves the rival far, 6), Pixie's
   **Cartwheel Kick** (untouchable as it starts, 7). Up close grab is the
   throw as before. The CPU uses them to close in; taught in the Tutorial
-  (Against a guard). Pixie 101 -> 99 health (duels 48-54 %, brawl firsts
+  (Guards). Pixie 101 -> 99 health (duels 48-54 %, brawl firsts
   15-24 %).
 - **Air specials**: special pressed in the air (same cost) is each
   fighter's own air version: Ruko **rushes** diagonally down at the rival
@@ -297,7 +306,7 @@ and the heartbeat, the crowd and the weather go quiet.
   does no damage but **smashes the guard open** (GUARD BREAK!), leaving the
   rival reeling for half a second. A perfect guard still turns it away. A
   tapped kick is the kick as ever. The CPU charges it now and then against a
-  guard; taught in the Tutorial (Against a guard). Duels 48-52 % with it.
+  guard; taught in the Tutorial (Guards). Duels 48-52 % with it.
 - **Kick, kick**: a kick that lands flows into a spinning **roundhouse**
   that steps in after the rival and knocks down. The lunge also opens the
   punch string, so running punch, punch, kick launches too.

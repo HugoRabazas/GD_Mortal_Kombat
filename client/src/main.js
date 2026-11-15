@@ -767,6 +767,19 @@ function drawLesson(justDone) {
   const names = controlNames();
   const k = (id) => `<kbd>${names[id] ?? id}</kbd>`;
   const next = l.steps.find((st) => !app.lessonRun.has(st.id));
+  // With the on-screen buttons out (a phone), the panel keeps to the step in
+  // hand, so it stays clear of the stick and the arena.
+  if (app.touch) {
+    const n = l.steps.filter((st) => app.lessonRun.has(st.id)).length;
+    const just = l.steps.find((st) => st.id === justDone);
+    drillEl.classList.add('compact');
+    drillEl.innerHTML = `
+      <b>${l.title} <small>${n} / ${l.steps.length}</small></b>
+      ${just ? `<p class="got">✓ ${just.name}</p>` : ''}
+      ${next ? `<p class="step">${next.name}<span>${next.how(k, names)}</span></p>` : '<p class="got">Lesson complete!</p>'}`;
+    return;
+  }
+  drillEl.classList.remove('compact');
   drillEl.innerHTML = `
     <b>${l.title}</b>
     ${l.intro ? `<p class="intro">${l.intro}</p>` : ''}
@@ -1003,7 +1016,7 @@ function lobbyScreen() {
                       return `<li class="roomrow"><span class="faces" aria-hidden="true">${r.chars.slice(0, on.maxPlayers).map((c) => head(c)).join('')}</span><span class="lname">${esc(r.names.slice(0, 3).join(', '))}${r.names.length > 3 ? '…' : ''}<small>${r.playing ? 'fighting now' : full ? 'full' : `${r.names.length} of ${on.maxPlayers}`}${r.arena ? ` · ${ARENAS.find((a) => a.id === r.arena)?.name ?? ''}` : ''}</small></span><button type="button" class="btn small" data-act="joinRoom" data-id="${esc(r.code)}">${r.playing || full ? 'Watch' : 'Join'}</button></li>`;
                     })
                     .join('')
-                : '<li><span class="lname dim">No rooms open yet</span></li>'
+                : '<li class="none"><span class="lname dim">No rooms open yet</span></li>'
             }
           </ol>
           <div class="row">
@@ -1015,7 +1028,7 @@ function lobbyScreen() {
       </div>
       ${chatBox()}
       ${app.notice ? `<p class="note warn">${esc(app.notice)}</p>` : ''}
-      <div class="row"><button type="button" class="btn quiet" data-act="offline">Leave online</button>${fullscreenButton()}</div>
+      <div class="row acts"><button type="button" class="btn quiet" data-act="offline">Leave online</button>${fullscreenButton()}</div>
     </section>`;
 }
 
@@ -1042,7 +1055,7 @@ function roomScreen() {
   const watching = room.peers.slice(4);
   const link = on.linkKind();
   return `
-    <section class="screen select">
+    <section class="screen select room">
       <h2>Room ${esc(room.code)}</h2>
       <div class="versus">
         <div class="ladder">
@@ -1072,12 +1085,12 @@ function roomScreen() {
           </div>
         </div>
       </div>
-      ${room.isHost ? `<div class="row"><div class="seg" role="group"><button type="button" class="${app.fill ? 'on' : ''}" data-act="fill" data-id="1">Fill with CPU</button><button type="button" class="${app.fill ? '' : 'on'}" data-act="fill" data-id="0">Players only</button></div>${placePicker()}</div>` : ''}
+      ${room.isHost ? `<div class="row opts"><div class="seg" role="group"><button type="button" class="${app.fill ? 'on' : ''}" data-act="fill" data-id="1">Fill with CPU</button><button type="button" class="${app.fill ? '' : 'on'}" data-act="fill" data-id="0">Players only</button></div>${placePicker()}</div>` : ''}
       ${chatBox()}
       ${room.again ? `<p class="note">${room.isHost ? 'Everyone from the last fight is still ready: start again whenever you like.' : 'Still ready from the last fight. Press Not ready to sit the next one out.'}</p>` : ''}
       ${room.mixed ? '<p class="note warn">Someone here has an older or newer version of the game. Everyone should reload the page before fighting.</p>' : ''}
       ${app.notice ? `<p class="note warn">${esc(app.notice)}</p>` : ''}
-      <div class="row">
+      <div class="row acts">
         <button type="button" class="btn quiet" data-act="leaveRoom">Leave room</button>
         <button type="button" class="btn" data-act="invite">Copy invite link</button>
         ${fullscreenButton()}
@@ -1329,7 +1342,7 @@ function recordScreen() {
               <div><dt>Favourite</dt><dd>${fav[1] ? fav[0].name : '-'}</dd></div>
             </dl>
             <ol class="ranking">${rows}</ol>`
-          : '<p class="note">No fights yet. Every finished fight except Training and two players on one device counts here.</p>'
+          : '<p class="note">No fights yet. Every finished fight counts here, except the Tutorial, Training and two players on one device.</p>'
       }
       <div class="row"><button type="button" class="btn primary" data-act="menu">Back</button></div>
     </section>`;
