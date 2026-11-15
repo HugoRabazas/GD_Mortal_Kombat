@@ -214,6 +214,11 @@ const SOUNDS = {
     tone('sine', 70, 28, 1.4, 0.8, 0.05);
   },
   wind: () => gust(2.6 + Math.random() * 1.4, 0.34),
+  // Lub-dub: two low thumps, the second softer.
+  heartbeat: () => {
+    tone('sine', 64, 40, 0.13, 0.75);
+    tone('sine', 58, 36, 0.11, 0.5, 0.17);
+  },
 };
 
 // ------------------------------------------------------------------ music ---

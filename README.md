@@ -35,6 +35,10 @@ signature moves of any existing fighting game.
   (one kick every 100 ticks, about 1.7 s) - the way to learn the timing of
   the perfect guard. That partner always kicks from the outer side, so its
   kicks push you back towards the middle and never into the ring of fire.
+  A checklist of eleven moves sits in the corner and ticks each one off the
+  first time you really do it (a combo has to land, a block has to stop a
+  blow), with how to do the next ones; the device remembers it, and the menu
+  shows how many you have learned.
 
 A duel is first to two round wins.
 
@@ -64,6 +68,11 @@ are actually using. A gamepad also works the menus: stick or D-pad
 moves between buttons, A chooses, B goes back. On a phone or tablet a thumb stick and six buttons
 appear on screen; **Arrange buttons** (menu and pause screen) lets you drag
 each one where you like and resize them, saved per orientation on the device.
+The stick also floats: a thumb that lands anywhere free on the stick's half
+of the screen brings the stick under it, and letting go sends it home - so a
+fight never stalls because a thumb missed the circle by a finger.
+When your fighter is nearly out (under a quarter of their health), a quiet
+heartbeat plays, so the danger reaches you even with your eyes off the bar.
 Being hit makes a phone buzz and a gamepad with motors rumble (your own heavy
 blows give a light rumble too), where the browser allows it.
 

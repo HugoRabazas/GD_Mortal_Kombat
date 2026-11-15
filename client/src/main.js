@@ -32,8 +32,10 @@ root.innerHTML = `
     <canvas id="gl" aria-hidden="true"></canvas>
     <canvas id="hud" role="img" aria-label="GD Arena fight"></canvas>
     <button id="pause-btn" class="chip" type="button" hidden>Pause</button>
+    <aside id="drill" hidden aria-live="polite"></aside>
   </div>
   <div id="touch" hidden>
+    <div id="stickzone" aria-hidden="true"></div>
     <div id="stick" class="ctl" data-ctl="stick" aria-label="Move"><div id="knob"></div></div>
     <button type="button" class="ctl tb tb-ult" data-ctl="ult" data-bit="256">ULT</button>
     <button type="button" class="ctl tb tb-sp" data-ctl="sp" data-bit="128">SP</button>
@@ -51,6 +53,7 @@ const stageEl = $('#stage');
 const ui = $('#ui');
 const touchEl = $('#touch');
 const pauseBtn = $('#pause-btn');
+const drillEl = $('#drill');
 const spBtn = $('.tb-sp');
 const ultBtn = $('.tb-ult');
 
@@ -178,7 +181,7 @@ function menuScreen() {
         <button type="button" class="btn" data-act="arcade">Arcade <small>single player · ${STAGES.length} duels</small></button>
         <button type="button" class="btn" data-act="quick">Quick Fight <small>one duel vs CPU</small></button>
         <button type="button" class="btn" data-act="versus">2 Players <small>keyboard or gamepads</small></button>
-        <button type="button" class="btn quiet" data-act="training">Training <small>practise your moves</small></button>
+        <button type="button" class="btn quiet" data-act="training">Training <small>${drillsDone().size ? `${drillsDone().size} of ${DRILLS.length} moves learned` : 'practise your moves'}</small></button>
         <button type="button" class="btn quiet" data-act="help">How to play</button>
       </div>
       ${best ? `<p class="best">Arcade best <b>${points(best)}</b></p>` : ''}
@@ -330,8 +333,9 @@ function helpScreen() {
         <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage.</li>
         <li><b>Arcade</b>: ${STAGES.length} fights in a row, the last against a boss, moving between the arenas as you climb.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
-        <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks or fights back.</li>
-        <li>On a phone, use the stick and the buttons on screen. <b>Arrange buttons</b> lets you drag them where you like.</li>
+        <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks, kicks on a beat or fights back. A checklist ticks off each move the first time you really do it.</li>
+        <li>A <b>heartbeat</b> means your fighter is nearly out.</li>
+        <li>On a phone, use the stick and the buttons on screen. The stick follows your thumb: touch anywhere free on its side of the screen. <b>Arrange buttons</b> lets you drag them where you like.</li>
         <li>With a <b>gamepad</b> you can also work the menus: stick or D-pad to move, A to choose, B to go back.</li>
         <li>Press <kbd>P</kbd>, <kbd>Esc</kbd> or Start to pause.</li>
       </ul>
@@ -428,6 +432,89 @@ function arrangeScreen() {
         <button type="button" class="btn small primary" data-act="arrangeDone">Done</button>
       </div>
     </section>`;
+}
+
+// --------------------------------------------------------------- drills ---
+// Training keeps a checklist of every move. Each one ticks itself off the
+// first time the player really does it (a combo has to land, a block has to
+// stop a blow), and the device remembers the progress.
+const DRILLS = [
+  { id: 'walk', name: 'Walk', how: (k) => (app.touch ? 'drag the stick' : `${k('W')} ${k('A')} ${k('S')} ${k('D')}`) },
+  { id: 'jump', name: 'Jump', how: (k) => k('j') },
+  { id: 'combo', name: 'Three-punch combo', how: (k) => `${k('p')} ${k('p')} ${k('p')}, each punch landing` },
+  { id: 'kick', name: 'Land a kick', how: (k) => k('k') },
+  { id: 'grab', name: 'Grab', how: (k) => `${k('p')} + ${k('k')} together, up close` },
+  { id: 'dive', name: 'Diving attack', how: (k) => `${k('j')}, then ${k('p')} in the air` },
+  { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction` },
+  { id: 'block', name: 'Block a blow', how: (k) => `${k('b')} as a blow comes (pick a partner who attacks)` },
+  { id: 'perfect', name: 'Perfect guard', how: (k) => `${k('b')} just before a blow lands (the Kicks partner helps)` },
+  { id: 'special', name: 'Special move', how: (k) => `${k('s')} with a third of the energy bar` },
+  { id: 'super', name: 'Finisher', how: (k) => `${k('u')} with a full energy bar` },
+];
+
+let drillMemo = null;
+function drillsDone() {
+  if (!drillMemo) {
+    drillMemo = new Set();
+    try {
+      for (const id of JSON.parse(localStorage.getItem('gd-arena-drills') || '[]')) drillMemo.add(id);
+    } catch {
+      // nothing remembered
+    }
+  }
+  return drillMemo;
+}
+
+function markDrill(id) {
+  const done = drillsDone();
+  if (done.has(id) || !DRILLS.some((d) => d.id === id)) return;
+  done.add(id);
+  try {
+    localStorage.setItem('gd-arena-drills', JSON.stringify([...done]));
+  } catch {
+    // not remembered
+  }
+  play('pickup');
+  drawDrills(id);
+}
+
+// Watch the training fight for moves the player has not ticked off yet.
+function watchDrills(s, events) {
+  if (s.f[0].state === 'walk') markDrill('walk');
+  for (const e of events) {
+    if (e.type === 'jump' && e.by === 0) markDrill('jump');
+    else if (e.type === 'roll' && e.by === 0) markDrill('roll');
+    else if (e.type === 'special' && e.by === 0) markDrill('special');
+    else if (e.type === 'super' && e.by === 0) markDrill('super');
+    else if (e.type === 'parry' && e.by === 0) markDrill('perfect');
+    else if (e.type === 'block' && e.on === 0) markDrill('block');
+    else if (e.type === 'hit' && e.by === 0) {
+      if (e.kind === 'punch3') markDrill('combo');
+      else if (e.kind === 'kick') markDrill('kick');
+      else if (e.kind === 'grab') markDrill('grab');
+      else if (e.kind === 'airKick') markDrill('dive');
+    }
+  }
+}
+
+// The checklist panel: progress, and the next few moves with how to do them.
+function drawDrills(justDone) {
+  const done = drillsDone();
+  const names = app.touch ? { p: 'P', k: 'K', b: 'BLK', s: 'SP', u: 'ULT', j: 'JMP' } : { p: 'J', k: 'K', b: 'L', s: 'I', u: 'O', j: 'Space' };
+  const k = (id) => `<kbd>${names[id] ?? id}</kbd>`;
+  const left = DRILLS.filter((d) => !done.has(d.id));
+  const just = DRILLS.find((d) => d.id === justDone);
+  drillEl.innerHTML = `
+    <b>Moves ${done.size} / ${DRILLS.length}</b>
+    ${just ? `<p class="got">✓ ${just.name}</p>` : ''}
+    ${
+      left.length
+        ? `<ol>${left
+            .slice(0, 3)
+            .map((d, i) => `<li>${d.name}${i === 0 ? `<span>${d.how(k)}</span>` : ''}</li>`)
+            .join('')}</ol>`
+        : '<p>Every move learned. Try the Fights back partner, or a Quick Fight.</p>'
+    }`;
 }
 
 // ------------------------------------------------------------ fight stats ---
@@ -713,6 +800,8 @@ function show(screen) {
   ui.innerHTML = SCREENS[screen] ? SCREENS[screen]() : '';
   ui.dataset.screen = screen;
   pauseBtn.hidden = screen !== 'fight';
+  drillEl.hidden = !(screen === 'fight' && app.mode === 'training');
+  if (!drillEl.hidden) drawDrills();
   refreshTouch();
   touchLayout.setEditing(screen === 'arrange');
   setTouchLive(screen !== 'arrange');
@@ -1178,6 +1267,17 @@ function frame(now) {
   const self = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
   const events = g.drain();
   if (playing) tallyFight(g, events);
+  if (playing && app.mode === 'training') watchDrills(g.state, events);
+  // A heartbeat when a player's fighter is nearly out: tension, and a warning
+  // that reaches the player even when their eyes are off the health bar.
+  if (playing && g.state.phase === 'fight' && app.mode !== 'training') {
+    const players = app.mode === 'versus' ? [0, 1] : self >= 0 ? [self] : [];
+    const low = players.some((i) => g.state.f[i] && g.state.f[i].hp > 0 && g.state.f[i].hp < g.state.f[i].maxHp * 0.25);
+    if (low && now >= (app.nextBeat || 0)) {
+      play('heartbeat');
+      app.nextBeat = now + 900;
+    }
+  }
   handleEvents(events, g.state, { quiet: !playing, project: stage.project, me: self });
 
   const boss = playing && app.mode === 'arcade' ? [false, !!app.arcade.ladder[app.arcade.stage].boss] : null;

@@ -179,8 +179,35 @@ export function initTouch(root) {
     if (e.pointerId !== stickId) return;
     stickId = null;
     knob.style.transform = '';
+    stick.style.translate = '';
+    stick.classList.remove('floating');
     touchBits &= ~MOVE;
   };
+
+  // A floating stick: a thumb that lands anywhere free on the stick's half of
+  // the screen brings the stick to it, so a fight never stalls because the
+  // thumb missed the circle by a finger. Let go and it goes home.
+  const zone = root.querySelector('#stickzone');
+  zone?.addEventListener('pointerdown', (e) => {
+    if (!touchLive || stickId !== null) return;
+    stick.style.translate = '';
+    const home = stick.getBoundingClientRect();
+    const area = root.getBoundingClientRect();
+    const mid = area.left + area.width / 2;
+    const cx = home.left + home.width / 2;
+    if (e.clientX < mid !== cx < mid) return; // the other half is not the stick's
+    stick.style.translate = `${e.clientX - cx}px ${e.clientY - (home.top + home.height / 2)}px`;
+    stick.classList.add('floating');
+    stickId = e.pointerId;
+    grab(zone, e.pointerId);
+    moveStick(e);
+    e.preventDefault();
+  });
+  zone?.addEventListener('pointermove', (e) => {
+    if (e.pointerId === stickId) moveStick(e);
+  });
+  zone?.addEventListener('pointerup', releaseStick);
+  zone?.addEventListener('pointercancel', releaseStick);
   stick.addEventListener('pointerdown', (e) => {
     if (!touchLive) return;
     stickId = e.pointerId;

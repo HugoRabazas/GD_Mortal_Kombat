@@ -76,8 +76,56 @@ body {
   pointer-events: none;
 }
 
+/* The training checklist, top left under the scoreboard. */
+#drill {
+  position: absolute;
+  left: 2%;
+  top: 19%;
+  width: min(250px, 34%); /* no z-index: the touch controls stay above it */
+  padding: 8px 12px 10px;
+  background: var(--veil);
+  border-left: 2px solid var(--gold);
+  color: var(--ash);
+  font-size: 0.78rem;
+  pointer-events: none;
+}
+
+#drill b {
+  font: 600 1.1rem/1 var(--font-display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--bone);
+}
+
+#drill ol {
+  margin: 6px 0 0;
+  padding-left: 1.2em;
+  display: grid;
+  gap: 3px;
+}
+
+#drill li span {
+  display: block;
+  color: var(--bone);
+}
+
+#drill p {
+  margin: 6px 0 0;
+}
+
+#drill .got {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+#drill kbd {
+  font-size: 0.7rem;
+  padding: 0 4px;
+}
+
 .chip {
   position: absolute;
+  z-index: 3; /* above the reach of the floating stick */
   left: 50%;
   bottom: 2.2%;
   transform: translateX(-50%);
@@ -594,6 +642,26 @@ kbd {
   inset: 0;
   pointer-events: none;
   touch-action: none;
+}
+
+/* The reach of the floating stick: everything free under the controls,
+   below the scoreboard. The controls themselves sit on top of it. */
+#stickzone {
+  position: absolute;
+  inset: 16% 0 0 0;
+  pointer-events: auto;
+}
+
+#app.portrait #stickzone {
+  inset: 0;
+}
+
+#touch.arranging #stickzone {
+  display: none;
+}
+
+#stick.floating {
+  opacity: 0.85;
 }
 
 #app.portrait #touch {
