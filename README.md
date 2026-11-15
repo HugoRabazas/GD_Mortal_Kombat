@@ -80,7 +80,9 @@ about five seconds (fewer pieces, falling slower, for anyone whose device
 asks for reduced motion). Sparks, dust, numbers, confetti, the fighters'
 easing between poses and the arena's lights and embers all move by the
 clock, not by the frame, so they keep the same timing on a phone that
-draws fewer frames a second. A blow knocks a fighter away from where it came from: struck from the
+draws fewer frames a second. Each build walks its own way too: the heavy fighter waddles, wide and low,
+rocking from side to side; the slim one goes on quick, springy steps.
+A blow knocks a fighter away from where it came from: struck from the
 front the body is thrown back, struck from behind it is thrown forward. The beaten go down in their own way too: the heavy fighter sits down
 hard with legs out, the slim one drops to a knee, the others stand slumped.
 The result screen opens with the winner's own line (Ruko: "The moon
@@ -493,7 +495,7 @@ CPU's difficulty ladder (`tests/ai.test.js`: in mirror duels Normal must beat
 Easy, Hard beat Normal and the boss level beat Hard - over 160 duels each
 step measured 100 %, 81 % and 67 %), the tunes' answering phrase (in
 `tests/arenas.test.js`), what the announcer says (`tests/effects.test.js`,
-with a fake speech engine), the website's home-screen manifest
+with a fake speech engine), a brawl's awards (`tests/awards.test.js`), the website's home-screen manifest
 (`tests/web.test.js`: it opens full screen and sideways, and every icon is
 the size it claims) and online play
 (`tests/online.test.js`). The

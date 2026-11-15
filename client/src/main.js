@@ -3,6 +3,7 @@
 
 import { FIGHTERS, getFighter, lookColors, dressColors } from '../../shared/fighters.js';
 import { ritualSounds } from './render/fighter.js';
+import { awardsFor as brawlAwards } from './awards.js';
 import { ARENA, INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
 import { loadAssets, headUrls } from './assets.js';
@@ -710,22 +711,8 @@ function statsLine(slot, extra = '') {
   return st ? `<small>${st.dmg} damage · ${st.hits} hits · combo ${st.combo}${st.perfect ? ` · ${st.perfect} perfect` : ''}${extra}</small>` : '';
 }
 
-// A brawl's awards: whoever alone did the most damage, strung the longest
-// combo (3 hits or more) or made the most perfect guards - so a fighter who
-// placed low but hit hardest still gets a word. Ties earn nothing.
-const AWARDS = [
-  ['dmg', 'Heavy hitter', 1],
-  ['combo', 'Combo master', 3],
-  ['perfect', 'Iron guard', 1],
-];
-function awardsFor(slot) {
-  const all = app.statsFor === app.game ? app.stats : null;
-  if (!all) return [];
-  return AWARDS.filter(([key, , least]) => {
-    const best = Math.max(...all.map((st) => st[key]));
-    return best >= least && all[slot][key] === best && all.filter((st) => st[key] === best).length === 1;
-  }).map(([, name]) => name);
-}
+// A brawl's awards (see awards.js), from this fight's numbers.
+const awardsFor = (slot) => brawlAwards(app.statsFor === app.game ? app.stats : null, slot);
 
 // The final standings of a brawl, with each fighter's numbers under the name.
 function rankingList() {

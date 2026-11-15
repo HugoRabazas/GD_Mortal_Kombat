@@ -178,6 +178,30 @@ function targetPose(f, now) {
   const air = f.h > 0.5;
   switch (f.state) {
     case 'walk': {
+      // Each build walks its own way: the heavy fighter waddles - wide, low,
+      // rocking side to side on slower steps; the slim one goes on light,
+      // quick, springy steps; everyone else strides evenly.
+      const build = getFighter(f.char).build;
+      if (build === 'sumo') {
+        const p = f.t * 0.22;
+        return pose({
+          hipY: -50 + Math.abs(Math.sin(p)) * 2.5, tilt: Math.sin(p) * 0.12,
+          ffx: 26 + 10 * Math.sin(p), ffy: -Math.max(0, Math.cos(p)) * 6,
+          fbx: -28 - 10 * Math.sin(p), fby: -Math.max(0, -Math.cos(p)) * 6,
+          hfx: 28 - 6 * Math.sin(p), hfy: 10, hbx: 14 + 6 * Math.sin(p), hby: 14,
+          lean: 0.18,
+        });
+      }
+      if (build === 'slim') {
+        const p = f.t * 0.38;
+        return pose({
+          hipY: -63 - Math.abs(Math.sin(p)) * 3,
+          ffx: 14 + 15 * Math.sin(p), ffy: -Math.max(0, Math.cos(p)) * 12,
+          fbx: -14 - 15 * Math.sin(p), fby: -Math.max(0, -Math.cos(p)) * 12,
+          hfx: 22 - 12 * Math.sin(p), hfy: -4, hbx: 8 + 12 * Math.sin(p), hby: 4,
+          lean: 0.24,
+        });
+      }
       const p = f.t * 0.3;
       return pose({
         hipY: -61 + Math.abs(Math.sin(p)) * 1.5,
