@@ -14,7 +14,7 @@
 // is the origin; the camera looks from +z towards -z.
 
 import { ARENA, TIMING } from '../../../shared/constants.js';
-import { getFighter } from '../../../shared/fighters.js';
+import { getFighter, dressLineUp } from '../../../shared/fighters.js';
 import { MOVES } from '../../../shared/sim.js';
 import { takeFlashes } from './fx.js';
 import { createRig } from './rig3d.js';
@@ -540,14 +540,9 @@ export function create3D(canvas) {
   let rigKey = '';
   const ensureRigs = (view) => {
     const s = view.state;
-    const seen = new Set();
-    const opts = s.f.map((f, i) => {
-      const boss = !!view.boss?.[i];
-      const alt = !boss && seen.has(f.char); // a second copy of a fighter wears other colours
-      seen.add(f.char);
-      return { alt, boss };
-    });
-    const key = s.f.map((f, i) => `${f.char}:${opts[i].alt}:${opts[i].boss}`).join('|');
+    const looks = dressLineUp(s.f.map((f) => f.char), view.looks);
+    const opts = s.f.map((f, i) => ({ look: looks[i], boss: !!view.boss?.[i] }));
+    const key = s.f.map((f, i) => `${f.char}:${opts[i].look}:${opts[i].boss}`).join('|');
     if (key === rigKey) return;
     rigKey = key;
     for (const r of rigs) r.dispose();

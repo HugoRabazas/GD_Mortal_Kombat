@@ -18,6 +18,13 @@ signature moves of any existing fighting game.
 | JACKIE | sumo | Mountain Stomp: floors everyone nearby who is not jumping; a shockwave ring on the floor shows how far it reaches | slow, heavy, hard to knock out |
 | PIXIE | slim | Twin Flame Spiral: a spinning leap that hits all around, two flames orbiting and leaving a spiral | quick and fragile |
 
+Every fighter has two costumes, picked with the two split discs under the
+portraits on the select screen (and in an online room): Ruko wears Crimson or
+Midnight, Shadow Storm or Thunder, Jackie Violet or Granite, Pixie Flame or
+Frost. The device remembers the choice, and online it travels with you. Two
+copies of the same fighter never dress alike: the second takes the other
+costume, and a third copy wears plain alternate colours.
+
 ## Modes
 
 - **Arena**: four fighters at once (you and three CPU). Exactly three rounds.
@@ -278,7 +285,8 @@ editor), `audio.js` (every sound and the music are generated in the browser),
    circle cut from the picture (centre `x`, `y` and radius `r` in picture
    pixels); `build` is `standard`, `sumo` or `slim`; `gear` adds a `scarf` or
    shoulder `pads`; `victory` is how they celebrate a won match (`howl`,
-   `calm`, `stomp` or `cheer`); `special.type` is `dash`,
+   `calm`, `stomp` or `cheer`); `looks` are their costumes (the first is their
+   own colours, the second names the colours it changes); `special.type` is `dash`,
    `bolt`, `rise` or `quake`; keep `stats` near 1.0.
 3. `npm run build` and publish `dist/gd-arena.html` again.
 
@@ -312,7 +320,8 @@ checks use it to act at an exact moment of a fight - for example, to raise
 the guard three ticks before a kick lands. Without `?debug` nothing changes.
 
 `npm test` first runs a linter (`eslint.config.js`) and then the tests: the
-rules (`tests/sim.test.js`) and online play (`tests/online.test.js`). The
+rules (`tests/sim.test.js`), the roster's costumes (`tests/fighters.test.js`)
+and online play (`tests/online.test.js`). The
 online test runs two players in Node on the same-browser bus (Node has
 BroadcastChannel too): they meet in the lobby, make a room, get ready, fight
 in the host's arena, and come back for one more. Node has no WebRTC, so it

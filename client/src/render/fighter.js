@@ -9,7 +9,7 @@
 // draws the same pose flat, for devices without WebGL.
 
 import { MOVES } from '../../../shared/sim.js';
-import { getFighter } from '../../../shared/fighters.js';
+import { getFighter, lookColors } from '../../../shared/fighters.js';
 import { heads } from '../assets.js';
 
 export const LEN = { thigh: 35, shin: 35, upper: 25, fore: 25, torso: 50, neck: 27, head: 32 };
@@ -244,8 +244,8 @@ function blob(ctx, x, y, rx, ry, color) {
 
 // Draws a fighter standing at screen point (sx, sy), facing left (-1) or
 // right (1), `lift` pixels above the floor.
-export function drawFighter(ctx, f, char, now, { sx, sy, facing, lift = 0, scale = 1, alt = false }) {
-  const col = alt ? { ...char.colors, ...ALT } : char.colors;
+export function drawFighter(ctx, f, char, now, { sx, sy, facing, lift = 0, scale = 1, look = 0 }) {
+  const col = look >= 0 ? lookColors(char.id, look) : { ...char.colors, ...ALT };
   const wide = char.build === 'sumo' ? 1.45 : char.build === 'slim' ? 0.82 : 1;
   const p = currentPose(f, now);
   const D = facing;

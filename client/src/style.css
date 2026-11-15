@@ -488,6 +488,34 @@ button:focus-visible {
   box-shadow: 0 0 0 3px var(--gold);
 }
 
+/* Costume swatches: each a disc split between the costume's main colour and
+   its accent, after the fighter portraits. */
+.looks {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 6px;
+  padding-left: 10px;
+  border-left: 1px solid rgba(246, 234, 216, 0.25);
+}
+
+.look {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--a) 50%, var(--b) 50%);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.look.on {
+  opacity: 1;
+  box-shadow: 0 0 0 3px var(--gold);
+}
+
 .vs {
   align-self: center;
   font: 700 2.4rem/1 var(--font-display);

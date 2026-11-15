@@ -1,7 +1,7 @@
 // The app shell: builds the page, runs the frame loop and moves between the
 // screens (menu -> fighter select -> fight -> result).
 
-import { FIGHTERS, getFighter } from '../../shared/fighters.js';
+import { FIGHTERS, getFighter, lookColors } from '../../shared/fighters.js';
 import { ARENA, INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
 import { loadAssets, headUrls } from './assets.js';
@@ -94,6 +94,29 @@ const app = {
     (navigator.maxTouchPoints > 0 && !window.matchMedia?.('(any-pointer: fine)').matches) ||
     false,
 };
+// The costume picked for each of the two selectable places (see `looks` in
+// the roster), remembered on the device.
+app.looks = [0, 0];
+try {
+  const saved = JSON.parse(localStorage.getItem('gd-arena-looks') || '[0,0]');
+  if (Array.isArray(saved)) app.looks = [0, 1].map((i) => (Number.isInteger(saved[i]) ? saved[i] : 0));
+} catch {
+  // the fighters' own colours
+}
+
+// Two swatches per costume: the main colour and the accent, as a split disc.
+function lookButtons(id, current, act, slot = '') {
+  const f = getFighter(id);
+  const looks = f.looks || [{ name: 'Standard' }];
+  if (looks.length < 2) return '';
+  return `<span class="looks" role="group" aria-label="Costume">${looks
+    .map((l, i) => {
+      const c = lookColors(id, i);
+      return `<button type="button" class="look ${i === current ? 'on' : ''}" data-act="${act}" ${slot !== '' ? `data-slot="${slot}"` : ''} data-id="${i}" aria-pressed="${i === current}" title="${l.name}" style="--a:${c.primary};--b:${c.accent}"></button>`;
+    })
+    .join('')}</span>`;
+}
+
 let stage = null;
 let touchLayout = null;
 if (DEBUG) window.gd = app;
@@ -210,8 +233,9 @@ function statBars(f) {
 
 function slotCard(slot, who) {
   const f = getFighter(app.picks[slot]);
+  const c = lookColors(f.id, app.looks[slot] ?? 0); // the card wears the chosen costume
   return `
-    <div class="slot" style="--tint:${f.colors.primary};--ring:${f.colors.accent}">
+    <div class="slot" style="--tint:${c.primary};--ring:${c.accent}">
       <span class="who">${who}</span>
       ${head(f.id, 'big')}
       <strong class="name">${f.name}</strong>
@@ -225,6 +249,7 @@ function slotCard(slot, who) {
         ${FIGHTERS.map(
           (o) => `<button type="button" class="pick ${o.id === f.id ? 'on' : ''}" data-act="pick" data-slot="${slot}" data-id="${o.id}" aria-pressed="${o.id === f.id}" title="${o.name}">${head(o.id)}</button>`,
         ).join('')}
+        ${lookButtons(f.id, app.looks[slot] ?? 0, 'look', slot)}
       </div>
     </div>`;
 }
@@ -758,7 +783,7 @@ function roomScreen() {
           ${watching.length ? `<p class="rules">Watching: ${esc(watching.map((p) => p.name).join(', '))}</p>` : ''}
           <p class="rules">${link === 'direct' ? 'Connected directly.' : link === 'relayed' ? (on.canLink ? 'Connecting… (relayed for now)' : 'Connected through the server: this browser does not allow direct links, so moves may arrive a little later.') : 'Waiting for others. Share the room name, or start with CPU rivals.'}</p>
         </div>
-        <div class="slot" style="--tint:${getFighter(room.char).colors.primary};--ring:${getFighter(room.char).colors.accent}">
+        <div class="slot" style="--tint:${lookColors(room.char, room.look ?? 0).primary};--ring:${lookColors(room.char, room.look ?? 0).accent}">
           <span class="who">Your fighter</span>
           ${head(room.char, 'big')}
           <strong class="name">${getFighter(room.char).name}</strong>
@@ -766,6 +791,7 @@ function roomScreen() {
           ${statBars(getFighter(room.char))}
           <div class="picker" role="group" aria-label="Your fighter">
             ${FIGHTERS.map((o) => `<button type="button" class="pick ${o.id === room.char ? 'on' : ''}" data-act="onChar" data-id="${o.id}" aria-pressed="${o.id === room.char}" title="${o.name}">${head(o.id)}</button>`).join('')}
+            ${lookButtons(room.char, room.look ?? 0, 'onLook')}
           </div>
         </div>
       </div>
@@ -1057,6 +1083,16 @@ const ACTIONS = {
     const mine = app.online.room.peers.find((p) => p.id === app.online.me.id);
     app.online.setReady(!mine?.ready);
   },
+  onLook(el) {
+    app.looks[0] = Number(el.dataset.id) || 0;
+    try {
+      localStorage.setItem('gd-arena-looks', JSON.stringify(app.looks));
+    } catch {
+      // not remembered
+    }
+    app.online.setLook(app.looks[0]);
+    show('room');
+  },
   fill(el) {
     app.fill = el.dataset.id === '1';
     show('room');
@@ -1093,6 +1129,15 @@ const ACTIONS = {
   select: () => show('select'),
   pick(el) {
     app.picks[Number(el.dataset.slot)] = el.dataset.id;
+    show('select');
+  },
+  look(el) {
+    app.looks[Number(el.dataset.slot)] = Number(el.dataset.id) || 0;
+    try {
+      localStorage.setItem('gd-arena-looks', JSON.stringify(app.looks));
+    } catch {
+      // not remembered
+    }
     show('select');
   },
   level(el) {
@@ -1157,6 +1202,7 @@ async function goOnline(name) {
     name: app.nick,
     version: BUILD,
     char: () => app.picks[0],
+    look: () => app.looks[0],
     arena: () => app.place,
     readInput: () => readKeys('solo') | readTouch() | readPad(0),
     // Redraw the lobby or the room whenever someone joins, leaves or changes.
@@ -1246,6 +1292,14 @@ function labels() {
   return ['YOU', 'CPU', 'CPU', 'CPU'].slice(0, n);
 }
 
+// The costumes in the fight being played, by slot: the places the players
+// chose for, as picked; CPU rivals in their own colours.
+function fightLooks() {
+  if (app.mode === 'online') return app.online?.info?.slots.map((sl) => sl.look || 0) ?? null;
+  if (app.mode === 'versus' || app.mode === 'quick' || app.mode === 'training') return [app.looks[0], app.looks[1], 0, 0];
+  return [app.looks[0], 0, 0, 0];
+}
+
 // Training never ends: the clock stays full, energy is always there to spend,
 // and anyone who gets low on health is topped up once they are back on their feet.
 function keepTraining(s) {
@@ -1323,7 +1377,7 @@ function frame(now) {
       : 'WASD move · Space jump · J punch (x3 combo) · K kick · J+K grab · L block (+move = roll) · I special · O finisher';
   const place = playing ? app.fightPlace : app.place;
   setMusicTheme(place);
-  stage.render({ state: g.state, theme: place, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: app.mode === 'training' }, now);
+  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: app.mode === 'training' }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {

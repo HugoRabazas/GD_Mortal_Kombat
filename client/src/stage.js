@@ -4,7 +4,7 @@
 // has no WebGL the flat canvas draws the whole fight on a painted backdrop.
 
 import { ARENA, TIMING } from '../../shared/constants.js';
-import { getFighter } from '../../shared/fighters.js';
+import { getFighter, dressLineUp } from '../../shared/fighters.js';
 import { heads } from './assets.js';
 import { create3D } from './render/scene3d.js';
 import { drawArena } from './render/arena.js';
@@ -173,15 +173,10 @@ export function createStage(glCanvas, hudCanvas) {
         ctx.translate(shake.x, shake.y);
         drawArena(ctx, now, view.theme);
         // Far fighters first, so nearer ones overlap them.
-        const seen = new Set();
-        const alts = s.f.map((f) => {
-          const alt = seen.has(f.char);
-          seen.add(f.char);
-          return alt;
-        });
+        const looks = dressLineUp(s.f.map((f) => f.char), view.looks);
         for (const f of [...s.f].sort((a, b) => a.z - b.z)) {
           const p = flat(f.x, 0, f.z);
-          drawFighter(ctx, f, getFighter(f.char), now, { sx: p.x, sy: p.y, facing: Math.cos(f.dir) >= 0 ? 1 : -1, lift: f.h * 0.8, scale: 0.7 * p.k, alt: alts[f.slot] });
+          drawFighter(ctx, f, getFighter(f.char), now, { sx: p.x, sy: p.y, facing: Math.cos(f.dir) >= 0 ? 1 : -1, lift: f.h * 0.8, scale: 0.7 * p.k, look: looks[f.slot] });
         }
         for (const p of s.proj) {
           const q = flat(p.x, p.h, p.z);

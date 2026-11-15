@@ -17,6 +17,7 @@
 // with a skirt and a ponytail).
 
 import { LEN, ALT, joint, currentPose } from './fighter.js';
+import { lookColors } from '../../../shared/fighters.js';
 import { heads } from '../assets.js';
 
 const S = 0.01; // world units per arena pixel
@@ -49,12 +50,13 @@ function shared(THREE) {
   return geo;
 }
 
-export function createRig(THREE, scene, char, { alt = false, boss = false } = {}) {
+// look: the costume (see `looks` in the roster); -1 means plain alternate colours.
+export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
   const g = shared(THREE);
   const build = BUILDS[char.build] || BUILDS.standard;
   const sumo = char.build === 'sumo';
   const slim = char.build === 'slim';
-  const col = { ...char.colors, ...(alt ? ALT : null), ...(boss ? BOSS : null) };
+  const col = { ...(look >= 0 ? lookColors(char.id, look) : { ...char.colors, ...ALT }), ...(boss ? BOSS : null) };
   // Colours are written the way a designer picks them (sRGB); the renderer
   // does its lighting maths in linear light, so convert on the way in.
   const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();

@@ -44,6 +44,7 @@ test('two players meet, fight, and one press of the host starts the next fight',
     await beto.online.joinRoom(code);
     await until(() => ana.online.players().length === 2, 'Beto to arrive');
     assert.equal(ana.online.canStart(), false, 'not before Beto is ready');
+    beto.online.setLook(1); // Frost, Pixie's second costume
     beto.online.setReady(true);
     await until(() => ana.online.canStart(), 'Beto to be ready');
     assert.equal(beto.online.arena(), 'frost', "the guest sees the host's arena");
@@ -54,6 +55,7 @@ test('two players meet, fight, and one press of the host starts the next fight',
     assert.equal(info.mode, 'duel');
     assert.equal(info.arena, 'frost');
     assert.deepEqual(info.slots.map((sl) => sl.char), ['jackie', 'pixie']);
+    assert.deepEqual(info.slots.map((sl) => sl.look), [0, 1], 'costumes travel with the players');
     assert.equal(ana.online.linkKind(), 'relayed', 'no WebRTC here: the bus carries the fight');
 
     // The host runs the fight; a few frames go by and reach the guest.

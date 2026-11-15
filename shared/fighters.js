@@ -15,6 +15,9 @@
 //      'pads' (shoulder guards). `victory` picks how they celebrate a won
 //      match: 'howl' (a fist raised to the sky), 'calm' (arms folded),
 //      'stomp' (high stamping steps) or 'cheer' (hopping and waving).
+//      `looks` are the costumes a player can pick: the first is the fighter's
+//      own colours, the second changes some of them (any of primary,
+//      secondary, accent, glow, hair).
 //   5. Run `npm run build` and publish the new page.
 //
 // Stats are multipliers around 1.0 (health is absolute, 100 is standard).
@@ -37,6 +40,7 @@ export const FIGHTERS = [
       skin: '#e6b594',
       glow: '#ff2b2b',
     },
+    looks: [{ name: 'Crimson' }, { name: 'Midnight', colors: { primary: '#28385f', secondary: '#0d111c', accent: '#b9c8ff', glow: '#6f8cff' } }],
     stats: { power: 1.03, speed: 1.0, health: 102 },
     special: { type: 'dash', name: 'Crimson Rush' },
     super: { name: 'Red Moon Howl' },
@@ -55,6 +59,7 @@ export const FIGHTERS = [
       skin: '#f0c8a4',
       glow: '#8f63ff',
     },
+    looks: [{ name: 'Storm' }, { name: 'Thunder', colors: { primary: '#5b3fa6', secondary: '#1a1230', accent: '#f2c14e', glow: '#c9a3ff' } }],
     stats: { power: 1.0, speed: 1.1, health: 105 },
     special: { type: 'bolt', name: 'Storm Bolt' },
     super: { name: 'Total Eclipse' },
@@ -73,6 +78,7 @@ export const FIGHTERS = [
       skin: '#9a93a6',
       glow: '#c44dff',
     },
+    looks: [{ name: 'Violet' }, { name: 'Granite', colors: { primary: '#4d525c', secondary: '#1c1d22', accent: '#e0a83c', glow: '#ffcc55' } }],
     stats: { power: 1.08, speed: 0.82, health: 115 },
     special: { type: 'quake', name: 'Mountain Stomp' },
     super: { name: 'Avalanche Charge' },
@@ -92,6 +98,7 @@ export const FIGHTERS = [
       glow: '#ff7a1a',
       hair: '#ff8a2a',
     },
+    looks: [{ name: 'Flame' }, { name: 'Frost', colors: { primary: '#2a7fb8', secondary: '#0f2236', accent: '#9be7ff', glow: '#7fe0ff', hair: '#bdf0ff' } }],
     stats: { power: 0.95, speed: 1.18, health: 102 },
     special: { type: 'rise', name: 'Twin Flame Spiral' },
     super: { name: 'Phoenix Dive' },
@@ -106,4 +113,34 @@ export function getFighter(id) {
 
 export function isFighterId(id) {
   return BY_ID.has(id);
+}
+
+// How many costumes a fighter has (at least one: their own colours).
+export const lookCount = (id) => getFighter(id).looks?.length || 1;
+
+// The colours of one costume.
+export function lookColors(id, look = 0) {
+  const f = getFighter(id);
+  return { ...f.colors, ...(f.looks?.[look]?.colors || null) };
+}
+
+// Who wears what in a line-up. `looks[i]` is the costume picked for slot i.
+// Two copies of a fighter never dress alike: the second takes the other
+// costume, and a copy with no costume left gets -1 (plain alternate colours,
+// see ALT in client/src/render/fighter.js).
+export function dressLineUp(chars, looks) {
+  const taken = new Set();
+  looks = looks || []; // no choices (the fight behind the menus): everyone's own colours
+  return chars.map((id, i) => {
+    const n = lookCount(id);
+    const wanted = Number.isInteger(looks[i]) && looks[i] >= 0 && looks[i] < n ? looks[i] : 0;
+    for (let k = 0; k < n; k++) {
+      const look = (wanted + k) % n;
+      if (!taken.has(`${id}:${look}`)) {
+        taken.add(`${id}:${look}`);
+        return look;
+      }
+    }
+    return -1;
+  });
 }

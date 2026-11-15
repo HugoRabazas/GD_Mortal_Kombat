@@ -18,7 +18,7 @@ import { createGame } from '../game.js';
 import { ARENAS, isArenaId } from '../arenas.js';
 import { createMatch } from '../../../shared/sim.js';
 import { createAI, aiInput } from '../../../shared/ai.js';
-import { FIGHTERS, getFighter, isFighterId } from '../../../shared/fighters.js';
+import { FIGHTERS, getFighter, isFighterId, lookCount } from '../../../shared/fighters.js';
 import { INPUT, INPUT_MASK } from '../../../shared/constants.js';
 
 const SNAP_EVERY = 3; // ticks between snapshots on a direct link (20 a second)
@@ -41,7 +41,10 @@ const compact = (key, value) => (typeof value === 'number' && !Number.isInteger(
 // same one, or the host and its guests would disagree about the rules.
 // `arena` returns the arena this player would host a fight in; the room shows
 // everyone the host's choice.
-export function createOnline({ config, name, char, arena = () => ARENAS[0].id, version, readInput, onChange, onStart, onEnd }) {
+// A costume number someone sent, checked against the fighter's real costumes.
+const cleanLook = (char, look) => (Number.isInteger(look) && look >= 0 && look < lookCount(char) ? look : 0);
+
+export function createOnline({ config, name, char, arena = () => ARENAS[0].id, look = () => 0, version, readInput, onChange, onStart, onEnd }) {
   const bus = createBus(config);
   const me = { id: newId(), name: cleanName(name) };
   let lobby = null;
@@ -125,7 +128,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
 
   // ----------------------------------------------------------------- room ---
 
-  const roomState = () => ({ name: me.name, char: room.char, ready: room.ready, at: room.at, v: version, arena: room.arena });
+  const roomState = () => ({ name: me.name, char: room.char, look: room.look, ready: room.ready, at: room.at, v: version, arena: room.arena });
 
   // Send game data to one member: directly when the link is up, otherwise
   // through the bus (and then only now and again, to stay within its limits).
@@ -160,7 +163,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
 
   function onPeers(list) {
     const peers = list
-      .map((p) => ({ id: p.id, name: cleanName(p.name), char: isFighterId(p.char) ? p.char : FIGHTERS[0].id, ready: !!p.ready, at: Number(p.at) || 0, same: p.v === version, arena: isArenaId(p.arena) ? p.arena : ARENAS[0].id }))
+      .map((p) => ({ id: p.id, name: cleanName(p.name), char: isFighterId(p.char) ? p.char : FIGHTERS[0].id, ready: !!p.ready, at: Number(p.at) || 0, same: p.v === version, arena: isArenaId(p.arena) ? p.arena : ARENAS[0].id, look: cleanLook(isFighterId(p.char) ? p.char : FIGHTERS[0].id, p.look) }))
       .sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : 1));
     const hostBefore = room.hostId;
     room.peers = peers;
@@ -186,7 +189,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
   online.joinRoom = async (code) => {
     if (room) await online.leaveRoom();
     code = String(code).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || newCode();
-    room = { code, ch: null, peers: [], hostId: null, isHost: false, links: new Map(), at: Date.now(), char: char(), ready: false, arena: arena() };
+    room = { code, ch: null, peers: [], hostId: null, isHost: false, links: new Map(), at: Date.now(), char: char(), look: look(), ready: false, arena: arena() };
     online.chat = []; // a room starts with a clean slate
     const ch = bus.channel(`room-${code}`, me.id, roomState());
     room.ch = ch;
@@ -226,9 +229,17 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
     onChange();
   };
 
+  // Pick a costume for your fighter (sent with your place in the room).
+  online.setLook = (n) => {
+    if (!room) return;
+    room.look = cleanLook(room.char, n);
+    room.ch.track(roomState());
+  };
+
   online.setChar = (id) => {
     if (!room || !isFighterId(id)) return;
     room.char = id;
+    room.look = cleanLook(id, room.look);
     room.ready = false;
     room.ch.track(roomState());
     lobby?.track(lobbyState());
@@ -278,7 +289,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
   // Host: start a match with everyone who is in the room.
   online.start = ({ fill = true, arena = ARENAS[0].id } = {}) => {
     if (!online.canStart()) return;
-    const slots = online.players().map((p) => ({ id: p.id, name: p.name, char: p.char }));
+    const slots = online.players().map((p) => ({ id: p.id, name: p.name, char: p.char, look: p.look }));
     const spare = FIGHTERS.map((f) => f.id).filter((id) => !slots.some((sl) => sl.char === id));
     while (slots.length < 2 || (fill && slots.length < MAX_PLAYERS)) {
       slots.push({ cpu: true, name: 'CPU', char: spare.shift() || FIGHTERS[slots.length % FIGHTERS.length].id });
@@ -339,7 +350,10 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, v
   function beginClient(info) {
     if (room) room.again = false;
     if (!info || !Array.isArray(info.slots) || info.slots.length < 2 || info.slots.length > MAX_PLAYERS) return;
-    const slots = info.slots.map((sl) => ({ id: sl.id || null, cpu: !!sl.cpu, name: cleanName(sl.name), char: isFighterId(sl.char) ? sl.char : FIGHTERS[0].id }));
+    const slots = info.slots.map((sl) => {
+      const char = isFighterId(sl.char) ? sl.char : FIGHTERS[0].id;
+      return { id: sl.id || null, cpu: !!sl.cpu, name: cleanName(sl.name), char, look: cleanLook(char, sl.look) };
+    });
     const clean = { slots, mode: slots.length > 2 ? 'arena' : 'duel', arena: isArenaId(info.arena) ? info.arena : ARENAS[0].id };
     const mySlot = slots.findIndex((sl) => sl.id === me.id);
     let prev = null;
