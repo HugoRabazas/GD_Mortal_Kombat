@@ -271,6 +271,14 @@ your Record: 10 wins in all · best streak, 2 wins in a row".
 
 ## Settings
 
+An **announcer** calls the fight out loud - "Round one", "Fight!", "K. O.!",
+"Ruko wins!" (in a brawl, "Shadow takes it") - using the browser's own
+speech synthesis, so it is free and works offline; the voice is whatever
+English voice the device has, pitched down. It follows the effects volume,
+is silent when the sound is off, never speaks over the menu's demo fight,
+and **Announcer: on/off** in Settings switches it off for good on that
+device.
+
 Every special move has its own sound, made in the browser like everything
 else: Crimson Rush tears the air open with a rising whoosh, Twin Flame Spiral
 crackles and climbs, Mountain Stomp heaves as the leg goes up and lands with

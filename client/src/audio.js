@@ -618,3 +618,46 @@ export function play(name) {
     // a failed sound must never break the game
   }
 }
+
+// ------------------------------------------------------------ announcer ---
+// A voice that calls the fight - "Round two", "Fight!", "K.O.", "Ruko wins!" -
+// spoken by the browser's own speech synthesis, so it costs nothing and works
+// offline; how it sounds depends on the device's voices. It can be switched
+// off in Settings, and it is silent when the sound is off.
+let announcer = true;
+try {
+  announcer = localStorage.getItem('gd-arena-announcer') !== 'off';
+} catch {
+  // remembered nowhere: on by default
+}
+export const isAnnouncer = () => announcer;
+export function setAnnouncer(on) {
+  announcer = on;
+  try {
+    localStorage.setItem('gd-arena-announcer', on ? 'on' : 'off');
+    if (!on) window.speechSynthesis?.cancel();
+  } catch {
+    // not remembered
+  }
+}
+let voice = null;
+export function announce(text) {
+  if (!announcer || muted || typeof window === 'undefined' || !window.speechSynthesis) return;
+  try {
+    const synth = window.speechSynthesis;
+    synth.cancel(); // the newest call wins: never a queue of stale ones
+    if (!voice) {
+      const all = synth.getVoices();
+      voice = all.find((v) => /^en[-_]GB/i.test(v.lang)) || all.find((v) => /^en/i.test(v.lang)) || null;
+    }
+    const u = new SpeechSynthesisUtterance(text);
+    if (voice) u.voice = voice;
+    u.lang = voice?.lang || 'en-GB';
+    u.rate = 1.05;
+    u.pitch = 0.7; // a deeper voice, closer to an arena announcer
+    u.volume = Math.min(1, volume.sfx * 1.1);
+    synth.speak(u);
+  } catch {
+    // no voice here; the banners still say it
+  }
+}

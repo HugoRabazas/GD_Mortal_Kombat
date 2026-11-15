@@ -11,7 +11,7 @@ import { createGame } from './game.js';
 import { handleEvents } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, padStyle, hasPad, setCapture, setTouchLive, lastDevice } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
-import { unlockAudio, play, isMuted, setMuted, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, getVolume, setVolume } from './audio.js';
+import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, getVolume, setVolume } from './audio.js';
 import { THEMES } from './render/themes.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
@@ -255,6 +255,7 @@ const head = (id, cls = '') => `<img class="head ${cls}" src="${headUrls.get(id)
 // (The menu's footer uses the short form, which fits a phone held sideways.)
 const touchLabel = (short) => `${short ? 'Touch' : 'Touch buttons'}: ${app.touch ? 'on' : 'off'}`;
 const soundLabel = () => `Sound: ${isMuted() ? 'off' : 'on'}`;
+const announcerLabel = () => `Announcer: ${isAnnouncer() ? 'on' : 'off'}`;
 const points = (n) => n.toLocaleString('en-US');
 
 function buildLadder(playerId) {
@@ -552,6 +553,7 @@ function settingsScreen() {
       <p class="note">${{ auto: 'Full detail, lowered by itself if the device struggles.', sharp: 'Full detail always: shadows and full sharpness.', fast: 'For slower phones: no shadows, lower resolution, lighter weather.' }[app.graphics]}</p>
       <div class="row">
         <button type="button" class="btn small" data-act="mute" aria-pressed="${!isMuted()}">${soundLabel()}</button>
+        <button type="button" class="btn small" data-act="announcer" aria-pressed="${isAnnouncer()}">${announcerLabel()}</button>
         <button type="button" class="btn small" data-act="touch" aria-pressed="${app.touch}">${touchLabel()}</button>
         <button type="button" class="btn small" data-act="arrange">Arrange buttons</button>
       </div>
@@ -1466,6 +1468,11 @@ const ACTIONS = {
   smaller: () => touchLayout.resize(-0.1),
   bigger: () => touchLayout.resize(0.1),
   resetLayout: () => touchLayout.reset(),
+  announcer(el) {
+    setAnnouncer(!isAnnouncer());
+    el.textContent = announcerLabel();
+    el.setAttribute('aria-pressed', String(isAnnouncer()));
+  },
   mute(el) {
     setMuted(!isMuted());
     el.textContent = soundLabel();

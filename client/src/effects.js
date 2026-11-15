@@ -7,7 +7,7 @@
 
 import { ARENA } from '../../shared/constants.js';
 import { getFighter } from '../../shared/fighters.js';
-import { play } from './audio.js';
+import { play, announce } from './audio.js';
 import { hitSpark, blockSpark, dust, floatText as showText, showBanner, addShake, addFlash, lightFlash, cheerFor, confetti } from './render/fx.js';
 
 // At the end of a brawl round, show over each fighter the points it earned.
@@ -47,6 +47,8 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
   const floatText = quiet ? () => {} : showText;
   const arena = state.mode === 'arena';
   const nameOf = (slot) => getFighter(state.f[slot].char).name;
+  // Names as a voice should read them (RUKO would be spelled out).
+  const spoken = (slot) => nameOf(slot).charAt(0) + nameOf(slot).slice(1).toLowerCase();
   for (const e of events) {
     const by = e.by !== undefined ? state.f[e.by] : null;
     const char = by ? getFighter(by.char) : null;
@@ -57,11 +59,13 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (arena) showBanner(`ROUND ${e.round}`, 'OF 3 · EVERYONE FOR THEMSELVES', '#e8b454', 1100);
         else showBanner(state.pts[0] === 1 && state.pts[1] === 1 ? 'FINAL ROUND' : `ROUND ${e.round}`, null, '#e8b454', 1100);
         play('round');
+        announce(!arena && state.pts[0] === 1 && state.pts[1] === 1 ? 'Final round' : `Round ${['one', 'two', 'three'][e.round - 1] || e.round}`);
         break;
       case 'fight':
         if (quiet) break;
         showBanner('FIGHT!', null, '#ff5a36', 850);
         play('fight');
+        announce('Fight!');
         break;
       case 'swing':
         if (!quiet) play('swing');
@@ -216,12 +220,15 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         else showBanner(e.winner < 0 ? 'DOUBLE K.O.' : 'K.O.', e.finisher ? 'FINISHER!' : e.perfect ? 'PERFECT!' : null, '#ff5a36', 2300);
         if (!arena) play('ko');
         play('cheer');
+        if (arena) announce(e.winner < 0 ? 'Round shared' : `${spoken(e.winner)} takes it`);
+        else announce(e.winner < 0 ? 'Double K. O.' : e.finisher ? 'Finisher!' : 'K. O.!');
         break;
       case 'timeup':
         if (arena) showRoundPoints(state, project);
         if (quiet) break;
         showBanner('TIME UP', e.winner < 0 ? 'ROUND SHARED' : `${nameOf(e.winner)} TAKES IT`, '#e8b454', 2000);
         play('round');
+        announce('Time!');
         break;
       case 'matchEnd':
         cheerFor(e.winner, 1);
@@ -234,6 +241,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         }
         // The fanfare is for winners: whoever lost at this screen hears the fall.
         play(me >= 0 && e.winner >= 0 && e.winner !== me ? 'defeat' : 'win');
+        announce(e.winner < 0 ? 'Draw' : `${spoken(e.winner)} wins!`);
         break;
       default:
         break;
