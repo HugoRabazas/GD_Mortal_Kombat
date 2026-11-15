@@ -196,7 +196,11 @@ The website build adds an **Online** mode for the whole alliance:
 - The lobby and every room have a **chat**. Messages reach whoever is there at
   that moment and are not stored anywhere.
 - **Copy invite link** in a room gives an address ending in `#room-ABCD`;
-  whoever opens it only has to type a name to land in that room.
+  whoever opens it only has to type a name to land in that room. While you
+  are in a room its code stays in your own address too, so a reload - easy
+  to do by accident on a phone - brings you back with one press (your name
+  is remembered), and the address bar is an invite as it stands. Leaving
+  the room or going offline clears it.
 - Everyone in a room must be on the same version of the game. If someone has
   an old page open, the room says so and the fight cannot start until they
   reload. During a fight a small line under the timer shows whether the data

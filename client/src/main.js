@@ -26,6 +26,16 @@ const BUILD = typeof __BUILD__ === 'undefined' ? 'dev' : __BUILD__;
 const DEBUG = new URLSearchParams(location.search).has('debug');
 // An invite link ends in #room-ABCD: opening it takes you straight to that room.
 const invited = () => (/^#room-([A-Za-z0-9]{2,8})$/.exec(location.hash) || [])[1] || null;
+// While in a room its code stays in the address (#room-ABCD), so a reload -
+// easy to do by accident on a phone - comes back to the same room with one
+// press, and the address bar itself is an invite. Cleared on leaving.
+function roomInAddress(code) {
+  try {
+    history.replaceState(null, '', location.pathname + location.search + (code ? `#room-${code}` : ''));
+  } catch {
+    // some viewers do not allow it; the invite button still works
+  }
+}
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
 const root = document.getElementById('app');
@@ -1280,23 +1290,27 @@ const ACTIONS = {
   async offline() {
     await app.online?.close();
     app.online = null;
+    roomInAddress(null);
     show('menu');
   },
   async createRoom() {
     await app.online.createRoom();
+    roomInAddress(app.online.room?.code);
     show('room');
   },
   async quickMatch() {
     await app.online.quickMatch();
+    roomInAddress(app.online.room?.code);
     show('room');
   },
   async joinRoom(el) {
     await app.online.joinRoom(el.dataset.id);
+    roomInAddress(app.online.room?.code);
     show('room');
   },
   async leaveRoom() {
     await app.online.leaveRoom();
-    if (invited()) history.replaceState(null, '', location.pathname + location.search); // do not rejoin on reload
+    roomInAddress(null); // do not rejoin on reload
     app.notice = '';
     show('lobby');
   },
