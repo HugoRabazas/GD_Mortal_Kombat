@@ -212,6 +212,13 @@ and the heartbeat, the crowd and the weather go quiet.
   as often as it punishes, the knee when closing in); measured with them in:
   duels 47-53 %, brawl firsts 16-20 %, ladder 100 / 81 / 61 %. The Tutorial
   teaches them (Combos: hook kick and air string; On the run: flying knee).
+- **Back-step**: block with the stick pointing straight away from the
+  nearest rival is a quick hop back instead of a roll - over sooner (10
+  ticks and 3 to settle, against the roll's 15 and 7), safe for fewer
+  ticks (7 against 11), still facing the rival, and far enough to leave a
+  kick's reach. Sideways or forwards it is the roll as before. The CPU hops
+  back now and then instead of guarding; taught in the Tutorial (Defence).
+  Duels 46-53 %, brawl firsts 17-22 % with it.
 - **Hold kick** to charge it: after eight ticks the kick coils (the knee
   drawn up, glowing, open to any blow) and, let go (no sooner than eight
   ticks, on its own at forty), it becomes the **guard-breaker**, a driving

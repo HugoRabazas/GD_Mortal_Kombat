@@ -64,7 +64,7 @@ test('the kicking partner gives you kicks to block and roll through', () => {
   const lesson = LESSONS.find((l) => l.id === 'defence');
   const blocked = play(lesson, () => INPUT.BLOCK, 600);
   assert.ok(blocked.has('block'), 'a kick is blocked');
-  const rolled = play(lesson, (s, t) => (t % 40 < 2 ? INPUT.BLOCK | INPUT.LEFT : 0), 300);
+  const rolled = play(lesson, (s, t) => (t % 40 < 2 ? INPUT.BLOCK | INPUT.UP : 0), 300);
   assert.ok(rolled.has('roll'));
 });
 
@@ -163,7 +163,8 @@ const BOTS = {
   kick: () => routine(80, 40, (k) => (k === 0 ? INPUT.KICK : 0)),
   block: () => () => INPUT.BLOCK,
   perfect: () => (s) => (s.f[1].state === 'attack' && s.f[1].move === 'kick' && s.f[1].t >= 4 ? INPUT.BLOCK : 0),
-  roll: () => (s, t) => (t % 40 < 2 ? INPUT.BLOCK | INPUT.LEFT : 0),
+  roll: () => (s, t) => (t % 40 < 2 ? INPUT.BLOCK | INPUT.UP : 0),
+  backstep: () => (s, t) => (t % 40 < 2 ? INPUT.BLOCK | (s.f[1].x > s.f[0].x ? INPUT.LEFT : INPUT.RIGHT) : 0),
   tech: () => (s) => (s.f[0].state === 'down' ? INPUT.BLOCK : 0),
   riseKick: () => (s) => (s.f[0].state === 'getup' && s.f[0].t >= 5 ? INPUT.PUNCH : 0),
   guarded: () => routine(60, 30, (k) => (k === 0 ? INPUT.PUNCH : 0)),
@@ -199,8 +200,8 @@ const BOTS = {
   hook: () => routine(55, 50, (k) => (k === 0 ? INPUT.PUNCH : k === 9 ? INPUT.KICK : 0)),
   axeKick: () => routine(70, 60, (k, s) => (k === 0 ? INPUT.JUMP | toward(s, 0) : k === 10 ? INPUT.PUNCH : k === 16 ? INPUT.KICK : 0)),
   counter: () => (s) => (s.f[1].state === 'attack' && s.f[1].move === 'kick' && s.f[1].t <= 2 && gap(s) < 100 ? INPUT.PUNCH : 0),
-  rollUpper: () => (s, t) => (t % 50 < 2 ? INPUT.BLOCK | INPUT.LEFT : s.f[0].state === 'roll' && s.f[0].t >= 7 ? INPUT.PUNCH : 0),
-  rollSpin: () => (s, t) => (t % 50 < 2 ? INPUT.BLOCK | INPUT.LEFT : s.f[0].state === 'roll' && s.f[0].t >= 7 ? INPUT.KICK : 0),
+  rollUpper: () => (s, t) => (t % 50 < 2 ? INPUT.BLOCK | INPUT.UP : s.f[0].state === 'roll' && s.f[0].t >= 7 ? INPUT.PUNCH : 0),
+  rollSpin: () => (s, t) => (t % 50 < 2 ? INPUT.BLOCK | INPUT.UP : s.f[0].state === 'roll' && s.f[0].t >= 7 ? INPUT.KICK : 0),
   special: () => (s, t) => (t % 60 === 0 ? INPUT.SPECIAL : 0),
   super: () => (s, t) => (t % 120 === 0 ? INPUT.SUPER : 0),
   final: () => routine(60, 300, (k) => (k === 0 ? INPUT.SUPER : 0)),

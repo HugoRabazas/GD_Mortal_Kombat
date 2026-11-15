@@ -462,6 +462,26 @@ test('three punches in a row chain into a knockdown, but only if they connect', 
   assert.equal(air.f[0].move, 'punch');
 });
 
+test('block with the stick straight away from the rival is a quick back-step, still facing them', () => {
+  const s = startFight();
+  closeUp(s, 70);
+  step(s, [INPUT.BLOCK | INPUT.LEFT, 0]);
+  assert.equal(s.f[0].state, 'backstep');
+  const x0 = s.f[0].x;
+  run(s, 12);
+  assert.ok(x0 - s.f[0].x > 40, `hopped back (${(x0 - s.f[0].x).toFixed(0)})`);
+  assert.ok(Math.cos(s.f[0].dir) > 0.9, 'still facing the rival');
+  assert.ok(['land', 'idle'].includes(s.f[0].state));
+  // Out of the way of a kick coming out.
+  const k = startFight();
+  closeUp(k, 70);
+  step(k, [0, INPUT.KICK]);
+  run(k, 2);
+  step(k, [INPUT.BLOCK | INPUT.LEFT, 0]);
+  run(k, 20);
+  assert.equal(k.f[0].hp, k.f[0].maxHp, 'the kick missed');
+});
+
 test('block plus a direction is a dodge roll that attacks pass through', () => {
   const s = startFight();
   closeUp(s, 70);
@@ -856,7 +876,7 @@ test('random button mashing never breaks the match (duel and arena)', () => {
     seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
     return seed / 4294967296;
   };
-  const STATES = new Set(['idle', 'walk', 'jump', 'airAttack', 'attack', 'block', 'roll', 'hit', 'land', 'down', 'getup', 'ko', 'win', 'lose', 'throw', 'held']);
+  const STATES = new Set(['idle', 'walk', 'jump', 'airAttack', 'attack', 'block', 'roll', 'backstep', 'hit', 'land', 'down', 'getup', 'ko', 'win', 'lose', 'throw', 'held']);
   for (const chars of [['ruko', 'shadow'], ['jackie', 'pixie'], ALL, ['pixie', 'pixie', 'jackie']]) {
     for (let game = 0; game < 6; game++) {
       const s = createMatch(chars, [], undefined, game + 1);

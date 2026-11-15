@@ -559,6 +559,7 @@ function movesCard() {
       <dt>Air ${k(key.g)}</dt><dd><b>Stomp</b>: plunge feet first and flatten whoever is below. Rooted if it misses.</dd>
       <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b>.</dd>
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b>: attacks pass through you.</dd>
+      <dt>${k(key.b)} + away</dt><dd><b>Back-step</b>: the stick straight away from the rival - a quick hop back, still facing them.</dd>
       <dt>${k(key.b)}</dt><dd>On the floor: a <b>quick rise</b>.</dd>
       <dt>Roll, ${k(key.p)} / ${k(key.k)}</dt><dd>Late in a roll: a <b>rising uppercut</b> that knocks down, or a <b>spinning heel kick</b> with a wide arc.</dd>
       <dt>Getting up, ${k(key.p)}</dt><dd><b>Rising sweep</b>: can't be hit while it starts. Slow if guarded.</dd>
@@ -733,7 +734,7 @@ const DRILLS = [
   { id: 'kick', name: 'Land a kick', how: (k) => k('k') },
   { id: 'grab', name: 'Throw', how: (k) => `${k('g')} up close` },
   { id: 'dive', name: 'Diving attack', how: (k) => `${k('j')}, then ${k('p')} in the air` },
-  { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction` },
+  { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction sideways` },
   { id: 'block', name: 'Block a blow', how: (k) => `${k('b')} as a blow comes (pick a partner who attacks)` },
   { id: 'perfect', name: 'Perfect guard', how: (k) => `${k('b')} just before a blow lands (the Kicks partner helps)` },
   { id: 'counter', name: 'Counter hit', how: (k) => `${k('p')} while the rival winds up a blow (the Kicks partner helps)` },

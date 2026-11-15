@@ -413,6 +413,11 @@ function targetPose(f, now) {
       const k = ease(f.t / 7);
       return pose({ ...CROUCH, hipY: -34 - 16 * k, lean: 0.34 - 0.12 * k, hfx: 28, hfy: 10 - 8 * k, hbx: 8, hby: 16 - 6 * k, ffx: 26, fbx: -28 });
     }
+    case 'backstep': {
+      // A hop back, still facing the rival: off the floor, guard up.
+      const k = Math.sin(Math.min(1, f.t / 9) * Math.PI);
+      return pose({ hipX: -4, hipY: -60 - 8 * k, lean: -0.2, ffx: 14, ffy: -10 * k, fbx: -26, fby: -14 * k, hfx: 26, hfy: -10, hbx: 20, hby: 0 });
+    }
     case 'roll':
       // Tucked into a ball, turning head over heels.
       return pose({ hipY: -30, lean: 0.9, tilt: 0.5, hfx: 16, hfy: 22, hbx: 10, hby: 22, ffx: 14, ffy: -8, fbx: -6, fby: -8, rot: f.t * 0.42, lift: -6 });

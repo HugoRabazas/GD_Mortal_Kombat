@@ -244,6 +244,8 @@ export function aiInput(ai, s, me) {
     if (ed < 190 && facingMe && rnd(ai) < blockChance) {
       // Sometimes roll round to the attacker's side instead of blocking.
       if (rnd(ai) < 0.22) return hold(toward(-ez, ex) | INPUT.BLOCK, 3);
+      // ...or hop straight back out of reach.
+      if (rnd(ai) < 0.12) return hold(toward(ex, ez) | INPUT.BLOCK, 3);
       if (fumbles((MOVES[e.move]?.startup ?? 0) - e.t)) {
         if (rnd(ai) < 0.5) return hold(toward(-ez, ex) | INPUT.BLOCK, 3);
         continue; // caught flat-footed

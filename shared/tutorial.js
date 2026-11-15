@@ -32,7 +32,8 @@ export const LESSONS = [
     steps: [
       { id: 'block', name: 'Block a kick', how: (k) => `hold ${k('b')} as the kick comes`, ev: (e) => e.type === 'block' && e.on === 0 },
       { id: 'perfect', name: 'Perfect guard', how: (k) => `press ${k('b')} just before the kick lands`, ev: mine('parry') },
-      { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction: the kick passes through you`, ev: mine('roll') },
+      { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction sideways or forwards: the kick passes through you`, ev: mine('roll') },
+      { id: 'backstep', name: 'Back-step', how: (k) => `${k('b')} + the stick away from the partner: a quick hop back out of reach`, ev: mine('backstep') },
     ],
   },
   {
@@ -96,8 +97,8 @@ export const LESSONS = [
     intro: 'Your partner walks up and kicks on a steady beat.',
     steps: [
       { id: 'counter', name: 'Counter hit', how: (k) => `${k('p')} while the partner winds up the kick`, ev: (e) => e.type === 'hit' && e.by === 0 && e.counter },
-      { id: 'rollUpper', name: 'Uppercut out of a roll', how: (k) => `${k('b')} + a direction, then ${k('p')} late in the roll`, ev: swing('rollUpper') },
-      { id: 'rollSpin', name: 'Spinning heel kick', how: (k) => `${k('b')} + a direction, then ${k('k')} late in the roll`, ev: swing('rollSpin') },
+      { id: 'rollUpper', name: 'Uppercut out of a roll', how: (k) => `${k('b')} + a direction sideways, then ${k('p')} late in the roll`, ev: swing('rollUpper') },
+      { id: 'rollSpin', name: 'Spinning heel kick', how: (k) => `${k('b')} + a direction sideways, then ${k('k')} late in the roll`, ev: swing('rollSpin') },
     ],
   },
   {

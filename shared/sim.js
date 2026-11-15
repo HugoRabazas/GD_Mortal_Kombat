@@ -57,6 +57,10 @@ const GETUP_TICKS = 18;
 const TECH_TICKS = 8;
 export const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle of where you face
 const ROLL = { ticks: 15, safe: 11, speed: 8.5, rest: 7 }; // the dodge roll
+// Block with the stick pointing straight away from the nearest rival: a hop
+// back instead of a roll - shorter, safe for fewer ticks, but over sooner,
+// and still facing the rival, ready to answer.
+const BACKSTEP = { ticks: 10, safe: 7, speed: 11.5, rest: 3, away: -0.85 };
 // Punch or kick late in a roll comes out of it as an attack (from tick
 // `from`, when the roll has done most of its travelling); a fighter getting
 // up can strike from tick `rise` of the getup.
@@ -603,6 +607,17 @@ function control(s, f, inp) {
         // quick, and nothing can hit you for most of it.
         if (dir && f.rollOk && f.state !== 'block') {
           f.rollOk = false;
+          const o = nearestRival(s, f, 400);
+          const d = o ? Math.hypot(o.x - f.x, o.z - f.z) || 1 : 1;
+          if (o && (dir.x * (o.x - f.x) + dir.z * (o.z - f.z)) / d < BACKSTEP.away) {
+            setState(f, 'backstep');
+            f.dir = angleTo(f.x, f.z, o.x, o.z);
+            f.vx = dir.x * BACKSTEP.speed;
+            f.vz = dir.z * BACKSTEP.speed;
+            f.inv = BACKSTEP.safe;
+            emit(s, 'backstep', { by: f.slot, x: f.x, z: f.z });
+            break;
+          }
           setState(f, 'roll');
           f.dir = Math.atan2(dir.z, dir.x);
           f.vx = dir.x * ROLL.speed;
@@ -641,6 +656,16 @@ function control(s, f, inp) {
         setState(f, 'idle');
         f.vx = 0;
         f.vz = 0;
+      }
+      break;
+    }
+    case 'backstep': {
+      f.vx *= 0.88;
+      f.vz *= 0.88;
+      if (f.t >= BACKSTEP.ticks) {
+        setState(f, 'land');
+        f.stun = BACKSTEP.rest;
+        f.vx = f.vz = 0;
       }
       break;
     }

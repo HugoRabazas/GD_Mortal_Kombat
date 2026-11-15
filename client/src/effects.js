@@ -115,6 +115,12 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet) play('jump');
         break;
       }
+      case 'backstep': {
+        const p = project(e.x, 0, e.z);
+        dust(p.x, p.y, 3);
+        if (!quiet) play('swing');
+        break;
+      }
       case 'roll': {
         const p = project(by.x, 0, by.z);
         dust(p.x, p.y, 4);
