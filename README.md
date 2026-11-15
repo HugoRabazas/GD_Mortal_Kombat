@@ -281,6 +281,11 @@ your Record: 10 wins in all · best streak, 2 wins in a row".
 
 ## Settings
 
+Around the arena there is life too, while the weather is calm: now and then
+a bird's chirps in the daylight arenas (Dune Ruins and Blossom Terrace, first
+two rounds) and a cricket's trill in the courtyard's night round - quiet,
+under the fight.
+
 An **announcer** calls the fight out loud - "Round one", "Fight!", "K. O.!",
 "Ruko wins!" (in a brawl, "Shadow takes it") - using the browser's own
 speech synthesis, so it is free and works offline; the voice is whatever

@@ -235,6 +235,16 @@ const SOUNDS = {
   win: () => {
     [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.22, 0.35, i * 0.13));
   },
+  // Life around the arena: a bird's quick chirps (by day) and a cricket's
+  // pulsed trill (at night), quiet under the fight.
+  chirp: () => {
+    const base = 2300 + Math.random() * 1300;
+    const n = 2 + Math.floor(Math.random() * 3);
+    for (let i = 0; i < n; i++) tone('sine', base, base * 1.35, 0.07, 0.07, i * 0.11);
+  },
+  cricket: () => {
+    for (let i = 0; i < 6; i++) tone('sine', 4700, 4600, 0.025, 0.036, i * 0.05);
+  },
   // Online: a soft two-note chime for a chat message from someone else, and
   // a rising one when someone joins your room.
   chime: () => {
@@ -660,4 +670,20 @@ export function announce(text) {
   } catch {
     // no voice here; the banners still say it
   }
+}
+
+// ------------------------------------------------------------- ambience ---
+// Now and then a bird (by day) or a cricket (at night) is heard around the
+// arena: 'birds', 'crickets' or null, set every frame like the weather.
+let nextLife = 0;
+export function setAmbience(kind) {
+  if (!kind || !ctx || ctx.state !== 'running' || muted) return;
+  const now = ctx.currentTime;
+  if (now < nextLife) return;
+  if (nextLife === 0) {
+    nextLife = now + 1 + Math.random() * 2; // not the very moment it starts
+    return;
+  }
+  play(kind === 'birds' ? 'chirp' : 'cricket');
+  nextLife = now + (kind === 'birds' ? 2.5 + Math.random() * 5 : 1.2 + Math.random() * 2.4);
 }

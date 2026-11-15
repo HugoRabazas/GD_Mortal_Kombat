@@ -12,7 +12,7 @@ import { createGame } from './game.js';
 import { handleEvents } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, padStyle, hasPad, setCapture, setTouchLive, lastDevice } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
-import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, getVolume, setVolume } from './audio.js';
+import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, setAmbience, getVolume, setVolume } from './audio.js';
 import { THEMES } from './render/themes.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
@@ -1711,6 +1711,10 @@ function frame(now) {
   const sky = THEMES[app.fightPlace] || THEMES.courtyard;
   const mood = sky.moods[Math.min(2, Math.max(0, g.state.round - 1))];
   setWeather(sky.weather, crowdOn ? mood.rain : 0);
+  // Life around the arena, while the weather is calm: birds in the daylight
+  // arenas' first two rounds, crickets in the courtyard's night round.
+  const round = g.state.round;
+  setAmbience(crowdOn && mood.rain < 0.5 ? (sky.sun && round < 3 ? 'birds' : app.fightPlace === 'courtyard' && round === 2 ? 'crickets' : null) : null);
   // The music holds its breath for a finisher's freeze and the slow motion
   // after a knockout, then comes back.
   const st = g.state;
