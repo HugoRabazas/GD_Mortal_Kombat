@@ -40,6 +40,7 @@ test('two players meet, fight, and one press of the host starts the next fight',
     await until(() => beto.online.rooms().some((r) => r.code === code), 'the room to show in the lobby');
     const listed = beto.online.rooms().find((r) => r.code === code);
     assert.deepEqual(listed.chars, ['jackie'], 'the lobby shows the fighter inside');
+    await until(() => beto.online.rooms().find((r) => r.code === code)?.arena === 'frost', "the room's arena to show in the lobby");
 
     await beto.online.quickMatch(); // the only open room is Ana's
     assert.equal(beto.online.room.code, code, 'quick match found the open room');

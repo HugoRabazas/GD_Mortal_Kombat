@@ -232,6 +232,7 @@ function menuScreen() {
       ${isNewcomer() ? '<p class="note">New here? <b>Training</b> lets you try every move with no clock.</p>' : `<p class="note tip">${menuTip()}</p>`}
       <div class="foot">
         <button type="button" class="link" data-act="settings">Settings</button>
+        <button type="button" class="link" data-act="record">Record</button>
         <button type="button" class="link" data-act="touch">${touchLabel()}</button>
         <button type="button" class="link" data-act="arrange">Arrange buttons</button>
         <button type="button" class="link" data-act="fullscreen">Full screen</button>
@@ -790,7 +791,7 @@ function lobbyScreen() {
                 ? rooms
                     .map((r) => {
                       const full = r.names.length >= on.maxPlayers;
-                      return `<li class="roomrow"><span class="faces" aria-hidden="true">${r.chars.slice(0, on.maxPlayers).map((c) => head(c)).join('')}</span><span class="lname">${esc(r.names.slice(0, 3).join(', '))}${r.names.length > 3 ? '…' : ''}<small>${r.playing ? 'fighting now' : full ? 'full' : `${r.names.length} of ${on.maxPlayers}`}</small></span><button type="button" class="btn small" data-act="joinRoom" data-id="${esc(r.code)}">${r.playing || full ? 'Watch' : 'Join'}</button></li>`;
+                      return `<li class="roomrow"><span class="faces" aria-hidden="true">${r.chars.slice(0, on.maxPlayers).map((c) => head(c)).join('')}</span><span class="lname">${esc(r.names.slice(0, 3).join(', '))}${r.names.length > 3 ? '…' : ''}<small>${r.playing ? 'fighting now' : full ? 'full' : `${r.names.length} of ${on.maxPlayers}`}${r.arena ? ` · ${ARENAS.find((a) => a.id === r.arena)?.name ?? ''}` : ''}</small></span><button type="button" class="btn small" data-act="joinRoom" data-id="${esc(r.code)}">${r.playing || full ? 'Watch' : 'Join'}</button></li>`;
                     })
                     .join('')
                 : '<li><span class="lname dim">No rooms open yet</span></li>'
@@ -863,7 +864,7 @@ function roomScreen() {
     </section>`;
 }
 
-const SCREENS = { settings: settingsScreen, menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
+const SCREENS = { record: recordScreen, settings: settingsScreen, menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
 
 // Keep a phone's screen from dimming or locking in the middle of a fight.
 let wakeLock = null;
@@ -1073,7 +1074,80 @@ function stepAutoLevel(won) {
   }
 }
 
+// ---------------------------------------------------------------- record ---
+// A lifetime record of the player's own fights, kept on the device: every
+// finished match except Training and two-player games on one device.
+const RECORD_KEY = 'gd-arena-record';
+function readRecord() {
+  try {
+    const r = JSON.parse(localStorage.getItem(RECORD_KEY) || 'null');
+    if (r && typeof r === 'object' && r.v === 1) return r;
+  } catch {
+    // start a fresh one
+  }
+  return { v: 1, fights: 0, wins: 0, streak: 0, bestStreak: 0, bestCombo: 0, perfect: 0, damage: 0, online: 0, by: {} };
+}
+function noteRecord() {
+  if (app.mode === 'training' || app.mode === 'versus') return;
+  const s = app.game.state;
+  const me = app.mode === 'online' ? app.online?.mySlot ?? -1 : 0;
+  if (me < 0 || !s.f[me]) return;
+  const r = readRecord();
+  const won = s.matchWinner === me;
+  const st = app.statsFor === app.game ? app.stats?.[me] : null;
+  const char = s.f[me].char;
+  r.fights++;
+  if (won) r.wins++;
+  r.streak = won ? r.streak + 1 : 0;
+  r.bestStreak = Math.max(r.bestStreak, r.streak);
+  if (app.mode === 'online') r.online++;
+  if (st) {
+    r.bestCombo = Math.max(r.bestCombo, st.combo);
+    r.perfect += st.perfect;
+    r.damage += st.dmg;
+  }
+  const f = (r.by[char] = r.by[char] || { fights: 0, wins: 0 });
+  f.fights++;
+  if (won) f.wins++;
+  try {
+    localStorage.setItem(RECORD_KEY, JSON.stringify(r));
+  } catch {
+    // not remembered
+  }
+}
+
+function recordScreen() {
+  const r = readRecord();
+  const pct = (w, n) => (n ? `${Math.round((w / n) * 100)}%` : '-');
+  const rows = FIGHTERS.map((f) => {
+    const x = r.by[f.id] || { fights: 0, wins: 0 };
+    return `<li>${head(f.id)}<span class="lname">${f.name}</span><span class="ltag">${x.fights} fights</span><span class="pts">${pct(x.wins, x.fights)}</span></li>`;
+  }).join('');
+  const fav = FIGHTERS.map((f) => [f, r.by[f.id]?.fights || 0]).sort((a, b) => b[1] - a[1])[0];
+  return `
+    <section class="screen select narrow record">
+      <h2>Your record</h2>
+      ${
+        r.fights
+          ? `<dl class="recordstats">
+              <div><dt>Fights</dt><dd>${r.fights}</dd></div>
+              <div><dt>Won</dt><dd>${r.wins} · ${pct(r.wins, r.fights)}</dd></div>
+              <div><dt>Best run</dt><dd>${r.bestStreak} in a row</dd></div>
+              <div><dt>Best combo</dt><dd>${r.bestCombo} hits</dd></div>
+              <div><dt>Perfect guards</dt><dd>${r.perfect}</dd></div>
+              <div><dt>Damage dealt</dt><dd>${points(r.damage)}</dd></div>
+              <div><dt>Online fights</dt><dd>${r.online}</dd></div>
+              <div><dt>Favourite</dt><dd>${fav[1] ? fav[0].name : '-'}</dd></div>
+            </dl>
+            <ol class="ranking">${rows}</ol>`
+          : '<p class="note">No fights yet. Every finished fight except Training and two players on one device counts here.</p>'
+      }
+      <div class="row"><button type="button" class="btn primary" data-act="menu">Back</button></div>
+    </section>`;
+}
+
 function scoreMatch() {
+  noteRecord();
   stepAutoLevel(app.game.state.matchWinner === 0);
   if (app.mode !== 'arcade') return;
   const a = app.arcade;
@@ -1259,6 +1333,7 @@ const ACTIONS = {
     show('settings');
   },
   settingsDone: () => show(app.settingsFrom || 'menu'),
+  record: () => show('record'),
   graphics(el) {
     app.graphics = el.dataset.id;
     stage.setGraphics(app.graphics);

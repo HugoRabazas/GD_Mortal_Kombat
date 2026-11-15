@@ -96,12 +96,12 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
 
   // What the lobby sees of each player: name, room, whether they are fighting,
   // and the fighter they have picked (shown as a portrait next to the name).
-  const lobbyState = () => ({ name: me.name, room: room ? room.code : null, playing: !!match, char: room ? room.char : char() });
+  const lobbyState = () => ({ name: me.name, room: room ? room.code : null, playing: !!match, char: room ? room.char : char(), arena: room ? online.arena() : null });
 
   online.connect = async () => {
     lobby = bus.channel('lobby', me.id, lobbyState());
     lobby.onPeers((list) => {
-      online.lobbyPeers = list.map((p) => ({ id: p.id, name: cleanName(p.name), room: typeof p.room === 'string' ? p.room.slice(0, 8) : null, playing: !!p.playing, char: isFighterId(p.char) ? p.char : FIGHTERS[0].id }));
+      online.lobbyPeers = list.map((p) => ({ id: p.id, name: cleanName(p.name), room: typeof p.room === 'string' ? p.room.slice(0, 8) : null, playing: !!p.playing, char: isFighterId(p.char) ? p.char : FIGHTERS[0].id, arena: isArenaId(p.arena) ? p.arena : null }));
       onChange();
     });
     lobby.on('chat', (m) => {
@@ -119,6 +119,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       const r = map.get(p.room);
       r.names.push(p.name);
       r.chars.push(p.char);
+      r.arena = r.arena || p.arena; // every member reports the host's arena
       r.playing = r.playing || p.playing;
     }
     // Rooms with a free place first, then the fullest; fights in progress last.
@@ -170,6 +171,10 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     room.hostId = peers.length ? peers[0].id : me.id;
     room.isHost = room.hostId === me.id;
     room.mixed = peers.some((p) => !p.same); // somebody is on another version
+    if (lobby && room.lobbyArena !== online.arena()) {
+      room.lobbyArena = online.arena();
+      lobby.track(lobbyState());
+    }
 
     // Drop links to people who left; if the host changed, start over.
     for (const [id, link] of room.links) {

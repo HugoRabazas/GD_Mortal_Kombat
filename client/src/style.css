@@ -1050,6 +1050,40 @@ kbd {
 }
 
 /* The numbers of a duel, one line per fighter; the better figure is gold. */
+/* The lifetime record: figures in two columns, then one line per fighter. */
+.recordstats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 18px;
+  width: 100%;
+  margin: 0;
+}
+
+.recordstats div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid rgba(232, 180, 84, 0.18);
+  padding: 3px 0;
+}
+
+.recordstats dt {
+  font: 700 0.68rem var(--font-body);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+.recordstats dd {
+  margin: 0;
+  font: 500 1.1rem/1 var(--font-display);
+  color: var(--bone);
+}
+
+.record .ranking li {
+  grid-template-columns: 34px minmax(0, 1fr) auto auto;
+}
+
 /* The winner's line on the result screen. */
 .quote {
   margin: 0;
@@ -1402,6 +1436,28 @@ kbd {
   .rules.aside,
   .note.aside {
     display: none;
+  }
+
+  /* The record's fighters in two columns, compact. */
+  .record .ranking {
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 4px 8px;
+  }
+
+  .record .ranking li {
+    padding: 2px 8px 2px 4px;
+    gap: 6px;
+  }
+
+  .record .ranking .head {
+    width: 26px;
+    height: 26px;
+  }
+
+  .record .ranking .lname,
+  .record .ranking .pts {
+    font-size: 1.05rem;
   }
 
   /* The chat keeps its last few lines (it scrolls for more). */

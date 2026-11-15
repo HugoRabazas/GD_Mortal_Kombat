@@ -152,7 +152,8 @@ The website build adds an **Online** mode for the whole alliance:
   lobby also shows who is online,
   each with the portrait of the fighter they have picked, and which rooms are
   open: the faces of the fighters already inside, how full the room is (or
-  whether a fight is on), and Join - or Watch, when it is full or fighting.
+  whether a fight is on), the arena it fights in, and Join - or Watch, when
+  it is full or fighting.
   Rooms with a free place are listed first.
 - A **room** holds up to four fighters (more can watch). Everyone picks a
   fighter and presses Ready; the host starts the fight, optionally filling the
@@ -198,6 +199,14 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   people connected and 100 messages a second, which is plenty while matches
   run over direct links, and about one four-player match at a time if every
   player has to be relayed.
+
+## Your record
+
+**Record** (at the foot of the menu) keeps a lifetime tally of your own
+fights on the device: fights and wins, the best run of wins, the best
+combo, perfect guards, damage dealt, online fights, your favourite fighter,
+and fights and win rate with each fighter. Every finished fight counts
+except Training and two players on one device.
 
 ## Settings
 
