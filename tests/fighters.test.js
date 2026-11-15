@@ -37,3 +37,17 @@ test('every fighter is complete: picture circle, special, costumes, a celebratio
     for (const k of ['primary', 'secondary', 'accent', 'skin', 'glow']) assert.match(f.colors[k], /^#[0-9a-f]{6}$/i, `${f.id} ${k}`);
   }
 });
+
+test('the pictures in the page are just the head squares, cut from art/fighters', async () => {
+  const { readFileSync, existsSync } = await import('node:fs');
+  const size = (file) => {
+    const b = readFileSync(file);
+    return [b.readUInt32BE(16), b.readUInt32BE(20)];
+  };
+  for (const f of FIGHTERS) {
+    const head = new URL(`../client/src/fighters/${f.id}.png`, import.meta.url);
+    const full = new URL(`../art/fighters/${f.id}.png`, import.meta.url);
+    assert.ok(existsSync(full), `${f.id}: the full picture is kept in art/fighters`);
+    assert.deepEqual(size(head), [f.head.r * 2, f.head.r * 2], `${f.id}: run scripts/crop-heads.py after changing a picture or its head circle`);
+  }
+});

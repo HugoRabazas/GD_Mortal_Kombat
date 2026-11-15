@@ -421,7 +421,8 @@ editor), `audio.js` (every sound and the music are generated in the browser),
 
 ## Add an alliance member
 
-1. Save their picture as `client/src/fighters/<id>.png`.
+1. Save their picture as `art/fighters/<id>.png` (the full picture is kept
+   there, outside the page).
 2. Add an entry to `shared/fighters.js` (copy an existing one): `head` is the
    circle cut from the picture (centre `x`, `y` and radius `r` in picture
    pixels); `build` is `standard`, `sumo` or `slim`; `gear` adds a `scarf` or
@@ -431,7 +432,12 @@ editor), `audio.js` (every sound and the music are generated in the browser),
    at most); `looks` are their costumes (the first is their
    own colours, the second names the colours it changes); `special.type` is `dash`,
    `bolt`, `rise` or `quake`; keep `stats` near 1.0.
-3. `npm run build` and publish `dist/gd-arena.html` again.
+3. Run `python3 scripts/crop-heads.py` (needs Pillow): it cuts each head
+   square out of its picture into `client/src/fighters/<id>.png`, which is
+   all the page carries - this halved the page, from 549 KB to 277 KB, with
+   heads that look the same. A test fails if a picture and its head circle
+   disagree.
+4. `npm run build` and publish `dist/gd-arena.html` again.
 
 The roster is balanced by simulating hundreds of CPU matches; a new fighter
 may need the same treatment. Larger, cleaner pictures give sharper heads.

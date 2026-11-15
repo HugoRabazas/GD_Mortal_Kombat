@@ -4,7 +4,9 @@
 import { FIGHTERS } from '../../shared/fighters.js';
 
 // Every picture in ./fighters is embedded into the page at build time, keyed
-// by its file name (ruko.png -> 'ruko').
+// by its file name (ruko.png -> 'ruko'). They are just the head squares, cut
+// from the full pictures in art/fighters by scripts/crop-heads.py (using
+// `head` in the roster), so the page carries nothing it does not show.
 const pictures = import.meta.glob('./fighters/*.png', { eager: true, query: '?inline', import: 'default' });
 const pictureOf = (id) => pictures[`./fighters/${id}.png`];
 
@@ -50,8 +52,7 @@ export async function loadAssets() {
         g.beginPath();
         g.arc(HEAD_PX / 2, HEAD_PX / 2, HEAD_PX / 2, 0, Math.PI * 2);
         g.clip();
-        const { x, y, r } = f.head;
-        g.drawImage(img, x - r, y - r, r * 2, r * 2, 0, 0, HEAD_PX, HEAD_PX);
+        g.drawImage(img, 0, 0, img.width, img.height, 0, 0, HEAD_PX, HEAD_PX);
       } catch {
         canvas = placeholder(f);
       }
