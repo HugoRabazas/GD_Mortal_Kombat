@@ -19,12 +19,21 @@ function showRoundPoints(state, project) {
 
 // `quiet` is used for the demo fight behind the menu: sparks yes, banners and
 // sound no.
-// A short buzz on phones that support it. Some browsers refuse; that is fine.
+// A short buzz on phones that support it, and a rumble on the first gamepad
+// if it has motors. Some browsers refuse either; that is fine.
 function buzz(ms) {
   try {
     navigator.vibrate?.(ms);
   } catch {
     // not available here
+  }
+  try {
+    const pad = navigator.getGamepads?.()[0];
+    pad?.vibrationActuator
+      ?.playEffect?.('dual-rumble', { duration: Math.max(60, ms * 2.5), strongMagnitude: Math.min(1, ms / 60), weakMagnitude: 0.5 })
+      ?.catch?.(() => {});
+  } catch {
+    // no gamepad, or one without motors
   }
 }
 
@@ -119,6 +128,7 @@ export function handleEvents(events, state, { quiet, project, me = -1 }) {
         if (e.kind === 'super') addFlash(0.6);
         if (!quiet) play(e.heavy ? 'heavy' : 'hit');
         if (!quiet && e.on === me) buzz(e.kind === 'super' ? 120 : e.heavy ? 45 : 20);
+        else if (!quiet && e.by === me && e.heavy) buzz(12); // your own heavy blows are felt too, lightly
         break;
       }
       case 'block': {
@@ -134,7 +144,8 @@ export function handleEvents(events, state, { quiet, project, me = -1 }) {
         blockSpark(p.x, p.y);
         blockSpark(p.x, p.y);
         lightFlash(e.x, e.h, e.z, '#9fe8ff', true);
-        floatText(p.x, p.y - 34, 'PERFECT GUARD', '#9fe8ff', 24);
+        const top = project(e.x, 290, e.z); // above the name tags
+        floatText(top.x, top.y, 'PERFECT GUARD', '#9fe8ff', 24);
         addShake(5);
         addFlash(0.18);
         if (!quiet) play('parry');

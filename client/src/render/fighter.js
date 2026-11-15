@@ -103,8 +103,15 @@ function targetPose(f, now) {
     case 'attack':
       return attackPose(f);
     case 'block':
+      // A perfect guard: both arms shove the blow away before settling back.
+      if (f.deflect > 0) return pose({ hipX: 6, hipY: -56, lean: 0.24, hfx: 48, hfy: -24, hbx: 42, hby: -12, ffx: 24, fbx: -28 });
       return pose({ hipY: -58, lean: -0.1, hfx: 22, hfy: -18, hbx: 18, hby: -8, ffx: 16, fbx: -22 });
     case 'hit': {
+      if (f.reel > 0) {
+        // Thrown off balance by a perfect guard: arms flung wide, swaying on the heels.
+        const sway = Math.sin(f.t * 0.45);
+        return pose({ hipX: -12 + sway * 4, hipY: -56, lean: -0.5 + sway * 0.14, tilt: -0.35, hfx: -10, hfy: -38 + sway * 6, hbx: -32, hby: -24 - sway * 6, ffx: 22, ffy: -Math.max(0, sway) * 8, fbx: -20 });
+      }
       const jolt = f.t < 5 ? 1 : 0.6;
       return pose({ hipX: -6, hipY: -58, lean: -0.4 * jolt, tilt: -0.3 * jolt, hfx: -4, hfy: 12, hbx: -24, hby: 2, ffx: 14, fbx: -18 });
     }

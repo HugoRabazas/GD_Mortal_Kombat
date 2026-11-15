@@ -143,6 +143,8 @@ function newFighter(charId, slot, count, mod) {
     rollOk: true, // the block button must be released before the next roll
     guard: 0, // ticks left in which a blocked blow counts as a perfect guard
     open: 99, // ticks since this fighter last had the guard up
+    deflect: 0, // ticks left of the shove that follows a perfect guard (for show)
+    reel: 0, // ticks left staggering after a heavy blow was guarded perfectly
     prev: 0, // buttons held on the previous tick
     buf: 0, // remembered attack presses
     bufT: 0,
@@ -325,6 +327,8 @@ function stick(inp) {
 function control(s, f, inp) {
   const held = (bit) => (inp & bit) !== 0;
   if (f.guard > 0) f.guard--;
+  if (f.deflect > 0) f.deflect--;
+  if (f.reel > 0) f.reel--;
   if (f.state === 'block') f.open = 0;
   else if (f.open < 99) f.open++;
   switch (f.state) {
@@ -622,6 +626,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     // Perfect guard: nothing gets through, and a heavy blow thrown from the
     // ground bounces off and leaves its owner open.
     def.guard = 0;
+    def.deflect = 14;
     def.stun = 3;
     addMeter(def, GUARD.gain);
     const stagger = !!m.heavy && kind !== 'bolt' && kind !== 'super' && att.h <= 0 && !isOut(att);
@@ -631,6 +636,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
       att.move = null;
       att.buf = 0;
       att.stun = GUARD.stagger;
+      att.reel = GUARD.stagger;
       att.vx = -dx * 5;
       att.vz = -dz * 5;
     }
@@ -653,6 +659,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   }
 
   def.taken++;
+  def.reel = 0;
   def.scorched = false;
   const scale = Math.max(0.5, 1 - 0.12 * (def.taken - 1)); // long combos hit softer
   const dmg = Math.max(1, Math.round(m.dmg * power * scale));

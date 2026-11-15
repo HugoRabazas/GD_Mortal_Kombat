@@ -39,7 +39,9 @@ const compact = (key, value) => (typeof value === 'number' && !Number.isInteger(
 // when a match begins; onEnd(reason) when it is over or the host is lost.
 // `version` identifies this build of the game: everyone in a room must run the
 // same one, or the host and its guests would disagree about the rules.
-export function createOnline({ config, name, char, version, readInput, onChange, onStart, onEnd }) {
+// `arena` returns the arena this player would host a fight in; the room shows
+// everyone the host's choice.
+export function createOnline({ config, name, char, arena = () => ARENAS[0].id, version, readInput, onChange, onStart, onEnd }) {
   const bus = createBus(config);
   const me = { id: newId(), name: cleanName(name) };
   let lobby = null;
@@ -118,7 +120,7 @@ export function createOnline({ config, name, char, version, readInput, onChange,
 
   // ----------------------------------------------------------------- room ---
 
-  const roomState = () => ({ name: me.name, char: room.char, ready: room.ready, at: room.at, v: version });
+  const roomState = () => ({ name: me.name, char: room.char, ready: room.ready, at: room.at, v: version, arena: room.arena });
 
   // Send game data to one member: directly when the link is up, otherwise
   // through the bus (and then only now and again, to stay within its limits).
@@ -143,7 +145,7 @@ export function createOnline({ config, name, char, version, readInput, onChange,
 
   function onPeers(list) {
     const peers = list
-      .map((p) => ({ id: p.id, name: cleanName(p.name), char: isFighterId(p.char) ? p.char : FIGHTERS[0].id, ready: !!p.ready, at: Number(p.at) || 0, same: p.v === version }))
+      .map((p) => ({ id: p.id, name: cleanName(p.name), char: isFighterId(p.char) ? p.char : FIGHTERS[0].id, ready: !!p.ready, at: Number(p.at) || 0, same: p.v === version, arena: isArenaId(p.arena) ? p.arena : ARENAS[0].id }))
       .sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : 1));
     const hostBefore = room.hostId;
     room.peers = peers;
@@ -169,7 +171,7 @@ export function createOnline({ config, name, char, version, readInput, onChange,
   online.joinRoom = async (code) => {
     if (room) await online.leaveRoom();
     code = String(code).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || newCode();
-    room = { code, ch: null, peers: [], hostId: null, isHost: false, links: new Map(), at: Date.now(), char: char(), ready: false };
+    room = { code, ch: null, peers: [], hostId: null, isHost: false, links: new Map(), at: Date.now(), char: char(), ready: false, arena: arena() };
     online.chat = []; // a room starts with a clean slate
     const ch = bus.channel(`room-${code}`, me.id, roomState());
     room.ch = ch;
@@ -215,6 +217,16 @@ export function createOnline({ config, name, char, version, readInput, onChange,
     room.ready = false;
     room.ch.track(roomState());
   };
+
+  // Tell the room which arena this player has picked (it matters for the host).
+  online.setArena = (id) => {
+    if (!room || !isArenaId(id) || room.arena === id) return;
+    room.arena = id;
+    room.ch.track(roomState());
+  };
+
+  // The arena the next fight in this room will be held in: the host's choice.
+  online.arena = () => room?.peers.find((p) => p.id === room.hostId)?.arena ?? ARENAS[0].id;
 
   online.setReady = (ready) => {
     if (!room) return;

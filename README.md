@@ -31,7 +31,10 @@ signature moves of any existing fighting game.
 - **Quick Fight**: one duel against the CPU on Easy, Normal or Hard.
 - **2 Players**: a duel on one device, or a brawl with two CPU fighters added.
 - **Training**: a duel with no clock where health and energy refill, against a
-  partner who stands still, blocks or fights back.
+  partner who stands still, blocks, fights back, or **kicks on a steady beat**
+  (one kick every 100 ticks, about 1.7 s) - the way to learn the timing of
+  the perfect guard. That partner always kicks from the outer side, so its
+  kicks push you back towards the middle and never into the ring of fire.
 
 A duel is first to two round wins.
 
@@ -53,6 +56,8 @@ are actually using. A gamepad also works the menus: stick or D-pad
 moves between buttons, A chooses, B goes back. On a phone or tablet a thumb stick and six buttons
 appear on screen; **Arrange buttons** (menu and pause screen) lets you drag
 each one where you like and resize them, saved per orientation on the device.
+Being hit makes a phone buzz and a gamepad with motors rumble (your own heavy
+blows give a light rumble too), where the browser allows it.
 
 - You walk in any direction. Attacks turn you towards the nearest rival, so
   aim does not have to be exact.
@@ -149,7 +154,8 @@ the same ring of fire - they differ in paint, light, weather and sound.
   with gusts of wind.
 
 The arcade ladder moves to the other arena after every fight. Online, the
-host picks the arena in the room and everyone fights there.
+host picks the arena in the room; everyone else sees the choice there before
+the fight starts, and everyone fights in it.
 
 Every round opens with the camera low and wide, looking up at the sky and
 the mountains over the wall, and cranes down to the fighters before the call
@@ -254,6 +260,11 @@ npm run build
 
 `npm run build` writes `dist/gd-arena.html` (the page to publish) and
 `dist/index.html` (the same page wrapped so any browser can open it).
+
+Add `?debug` to the page address to reach the running game from the browser
+console as `window.gd` (the match state is `gd.game.state`). The automated
+checks use it to act at an exact moment of a fight - for example, to raise
+the guard three ticks before a kick lands. Without `?debug` nothing changes.
 
 `npm test` first runs a linter (`eslint.config.js`) and then the rules tests.
 The linter is not a style guide: it only catches a name used without being

@@ -19,6 +19,9 @@ import { ARENAS, isArenaId } from './arenas.js';
 // for a same-browser bus, which is what the automated tests use.
 const NET = typeof __NET__ === 'undefined' || !__NET__ ? null : new URLSearchParams(location.search).get('net') === 'local' ? { local: true } : __NET__;
 const BUILD = typeof __BUILD__ === 'undefined' ? 'dev' : __BUILD__;
+// With ?debug in the address, the running game is reachable from the browser
+// console (and from the automated checks) as window.gd. Nothing else changes.
+const DEBUG = new URLSearchParams(location.search).has('debug');
 // An invite link ends in #room-ABCD: opening it takes you straight to that room.
 const invited = () => (/^#room-([A-Za-z0-9]{2,8})$/.exec(location.hash) || [])[1] || null;
 const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -88,6 +91,7 @@ const app = {
 };
 let stage = null;
 let touchLayout = null;
+if (DEBUG) window.gd = app;
 
 try {
   const saved = localStorage.getItem('gd-arena-place');
@@ -279,13 +283,13 @@ function selectScreen() {
       </div>
       <div class="row">
         ${mode === 'quick' || mode === 'arena' ? seg(levels, app.level, 'level') : ''}
-        ${mode === 'training' ? seg([['still', 'Stands still'], ['block', 'Blocks'], ['fight', 'Fights back']], app.dummy, 'dummy') : ''}
+        ${mode === 'training' ? seg([['still', 'Still'], ['block', 'Blocks'], ['beat', 'Kicks'], ['fight', 'Fights back']], app.dummy, 'dummy') : ''}
         ${mode === 'versus' ? seg([['duel', 'Duel'], ['brawl', 'Brawl with 2 CPU']], app.vsArena ? 'brawl' : 'duel', 'vsKind') : ''}
         ${placePicker()}
       </div>
-      ${mode === 'training' ? '<p class="note">No clock, and health and energy refill, so you can try every move. Pause to leave.</p>' : ''}
+      ${mode === 'training' ? `<p class="note">No clock, and health and energy refill, so you can try every move. ${app.dummy === 'beat' ? 'Your partner walks up and kicks on a steady beat: raise your guard just before the kick lands for a perfect guard, or roll through it.' : 'Pause to leave.'}</p>` : ''}
       ${mode === 'versus' && app.touch ? '<p class="note">Two players need a keyboard or gamepads: the on-screen buttons control one fighter only.</p>' : ''}
-      ${mode === 'arcade' ? '<p class="note">The ladder moves to the other arena after every fight.</p>' : ''}
+      ${mode === 'arcade' ? '<p class="note aside">The ladder moves to the other arena after every fight.</p>' : ''}
       <div class="row">
         <button type="button" class="btn quiet" data-act="menu">Back</button>
         <button type="button" class="btn primary" data-act="fight">${mode === 'arcade' ? 'Start' : 'Fight'}</button>
@@ -324,6 +328,7 @@ function helpScreen() {
         <li><b>Jump</b> over a ground stomp; punch or kick in the air for a diving attack.</li>
         <li><b>Crystals</b> appear on the floor: gold gives energy, green gives health. Walk over one to take it.</li>
         <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage.</li>
+        <li><b>Arcade</b>: ${STAGES.length} fights in a row, the last against a boss, moving between the arenas as you climb.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
         <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks or fights back.</li>
         <li>On a phone, use the stick and the buttons on screen. <b>Arrange buttons</b> lets you drag them where you like.</li>
@@ -596,7 +601,7 @@ function roomScreen() {
           </div>
         </div>
       </div>
-      ${room.isHost ? `<div class="row"><div class="seg" role="group"><button type="button" class="${app.fill ? 'on' : ''}" data-act="fill" data-id="1">Fill with CPU</button><button type="button" class="${app.fill ? '' : 'on'}" data-act="fill" data-id="0">Players only</button></div>${placePicker()}</div>` : ''}
+      ${room.isHost ? `<div class="row"><div class="seg" role="group"><button type="button" class="${app.fill ? 'on' : ''}" data-act="fill" data-id="1">Fill with CPU</button><button type="button" class="${app.fill ? '' : 'on'}" data-act="fill" data-id="0">Players only</button></div>${placePicker()}</div>` : `<p class="note">Arena: <b>${ARENAS.find((a) => a.id === on.arena())?.name ?? ''}</b> (the host chooses)</p>`}
       ${chatBox()}
       ${room.mixed ? '<p class="note warn">Someone here has an older or newer version of the game. Everyone should reload the page before fighting.</p>' : ''}
       ${app.notice ? `<p class="note warn">${esc(app.notice)}</p>` : ''}
@@ -673,6 +678,60 @@ function cpu(level) {
   return (state, slot) => aiInput(ai, state, slot);
 }
 
+// A training partner who kicks on a steady beat, so guards, perfect guards and
+// rolls can be practised against a known rhythm. It stands on the outer side
+// of the player, so every kick pushes them towards the middle of the arena
+// and never into the ring of fire. The beat is counted in real ticks (hit
+// pauses included), so it stays steady to the ear.
+const BEAT = 100;
+function drummer() {
+  let beat = BEAT;
+  const walk = (dx, dz) => {
+    const d = Math.hypot(dx, dz) || 1;
+    let bits = 0;
+    if (dx / d < -0.38) bits |= INPUT.LEFT;
+    if (dx / d > 0.38) bits |= INPUT.RIGHT;
+    if (dz / d < -0.38) bits |= INPUT.UP;
+    if (dz / d > 0.38) bits |= INPUT.DOWN;
+    return bits;
+  };
+  return (s, slot) => {
+    const me = s.f[slot];
+    const you = s.f[0];
+    if (beat > 0) beat--;
+    const r = Math.hypot(you.x, you.z);
+    const gap = Math.hypot(you.x - me.x, you.z - me.z) || 1;
+    // Away from the middle, take the outer side; near it, any side will do.
+    const out = r > 150;
+    const vx = out ? you.x / r : (me.x - you.x) / gap;
+    const vz = out ? you.z / r : (me.z - you.z) / gap;
+    if (out && ((me.x - you.x) * vx + (me.z - you.z) * vz) / gap < 0.5) {
+      // Not on the outer side yet: walk round the player, not into them.
+      const sgn = (me.x - you.x) * -vz + (me.z - you.z) * vx >= 0 ? 1 : -1;
+      return walk(you.x - vz * sgn * 115 + vx * 95 - me.x, you.z + vx * sgn * 115 + vz * 95 - me.z);
+    }
+    let tx = you.x + vx * 80;
+    let tz = you.z + vz * 80;
+    const limit = s.ringR - 50;
+    const tr = Math.hypot(tx, tz);
+    const clamped = tr > limit;
+    if (clamped) {
+      tx *= limit / tr;
+      tz *= limit / tr;
+    }
+    const there = Math.hypot(tx - me.x, tz - me.z) < 20 || (clamped && gap < 105);
+    if (!there) return walk(tx - me.x, tz - me.z);
+    // Never kick a player towards the fire from the inside.
+    const inside = (me.x - you.x) * you.x + (me.z - you.z) * you.z < 0;
+    const risky = inside && r > s.ringR - 160;
+    if (beat === 0 && gap < 105 && !risky && (me.state === 'idle' || me.state === 'walk')) {
+      beat = BEAT;
+      return INPUT.KICK;
+    }
+    return 0;
+  };
+}
+
 function startDemo() {
   // A four-fighter brawl plays behind the menus, in a random order.
   const ids = FIGHTERS.map((f) => f.id).sort(() => Math.random() - 0.5);
@@ -698,7 +757,7 @@ function startFight() {
   } else if (app.mode === 'quick') {
     controllers = [solo, cpu(app.level)];
   } else if (app.mode === 'training') {
-    const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
+    const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'beat' ? drummer() : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
     controllers = [solo, partner];
   } else if (app.vsArena) {
     chars = [...app.picks, ...rivalsFor(app.picks)];
@@ -833,6 +892,7 @@ const ACTIONS = {
     } catch {
       // not remembered
     }
+    app.online?.setArena(app.place);
     show(app.screen);
   },
   onStart: () => app.online.start({ fill: app.fill, arena: app.place }),
@@ -920,6 +980,7 @@ async function goOnline(name) {
     name: app.nick,
     version: BUILD,
     char: () => app.picks[0],
+    arena: () => app.place,
     readInput: () => readKeys('solo') | readTouch() | readPad(0),
     // Redraw the lobby or the room whenever someone joins, leaves or changes.
     onChange() {
