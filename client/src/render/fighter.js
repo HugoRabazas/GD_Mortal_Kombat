@@ -142,7 +142,9 @@ function attackPose(f) {
       if (phase === 'act') return pose({ hipX: 10, hipY: -48, lean: 0.78, hfx: 54, hfy: 4, hbx: -30, hby: 10, ffx: 26, ffy: -4, fbx: -46, fby: -10 });
       return pose({ ...CROUCH, lean: 0.3 });
     case 'bolt':
-      if (phase === 'pre') return pose({ lean: -0.12, hfx: -12, hfy: -2, hbx: -20, hby: 4 });
+      // Cupped hands in front while the bolt gathers between them, then both
+      // palms thrust out.
+      if (phase === 'pre') return pose({ hipY: -56, lean: 0.06, hfx: 18, hfy: 2, hbx: 15, hby: 7, ffx: 22, fbx: -26, tilt: Math.sin(f.t * 1.3) * 0.04 });
       return pose({ lean: 0.3, hipX: 6, hfx: 52, hfy: -4, hbx: 46, hby: 6, fbx: -28 });
     case 'rise':
       if (phase === 'pre') return pose({ ...CROUCH });

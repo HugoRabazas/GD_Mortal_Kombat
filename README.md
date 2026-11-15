@@ -13,10 +13,10 @@ signature moves of any existing fighting game.
 
 | Fighter | Build | Special | Plays like |
 | --- | --- | --- | --- |
-| RUKO | standard | Crimson Rush: a lunging strike that leaves a trail of glows | all-rounder who closes distance |
-| SHADOW | standard | Storm Bolt: a projectile | fast, fights from range |
-| JACKIE | sumo | Mountain Stomp: floors everyone nearby who is not jumping; a shockwave ring on the floor shows how far it reaches | slow, heavy, hard to knock out |
-| PIXIE | slim | Twin Flame Spiral: a spinning leap that hits all around, two flames orbiting and leaving a spiral | quick and fragile |
+| RUKO | standard | Crimson Rush: a lunging strike that leaves a trail of glows and speed lines streaming off the body | all-rounder who closes distance |
+| SHADOW | standard | Storm Bolt: a projectile, gathered as a glowing ball between cupped hands, fired with both palms, lightning crackling round it in flight | fast, fights from range |
+| JACKIE | sumo | Mountain Stomp: floors everyone nearby who is not jumping; a shockwave ring on the floor shows how far it reaches, the floor splits in glowing cracks and shards of rock fly up | slow, heavy, hard to knock out |
+| PIXIE | slim | Twin Flame Spiral: a spinning leap that hits all around, two flames orbiting and leaving a spiral, lit by a ring of fire on the floor at take-off | quick and fragile |
 
 **How to play** ends with the fighters: each one's face, title, a few words
 on their build drawn from their stats ("the quickest, lighter blows"; "slow

@@ -640,6 +640,101 @@ export function create3D(canvas) {
   let nextWave = 0;
   const stomped = []; // per slot: the current stomp already sent its wave
 
+  // The stomp also splits the floor: a pattern of cracks painted once,
+  // laid where the foot came down and fading, and shards of rock thrown up.
+  const crackTex = (() => {
+    const c = makeCanvas(256, 256);
+    const g = c.getContext('2d');
+    g.translate(128, 128);
+    g.strokeStyle = '#fff';
+    g.lineCap = 'round';
+    for (let i = 0; i < 11; i++) {
+      let a = (i / 11) * Math.PI * 2 + Math.sin(i * 7) * 0.2;
+      let x = 0;
+      let y = 0;
+      g.lineWidth = 5;
+      g.beginPath();
+      g.moveTo(0, 0);
+      for (let j = 0; j < 7; j++) {
+        a += Math.sin(i * 3 + j * 5) * 0.45;
+        x += Math.cos(a) * 17;
+        y += Math.sin(a) * 17;
+        g.lineTo(x, y);
+        g.lineWidth = Math.max(1, 5 - j * 0.6);
+      }
+      g.stroke();
+    }
+    const t = new THREE.CanvasTexture(c);
+    return t;
+  })();
+  const cracks = Array.from({ length: 3 }, () => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: crackTex, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+    m.rotation.x = -Math.PI / 2;
+    m.visible = false;
+    scene.add(m);
+    return { m, life: 0 };
+  });
+  let nextCrack = 0;
+  const shardGeo = new THREE.TetrahedronGeometry(0.09);
+  const shards = Array.from({ length: 16 }, () => {
+    const m = new THREE.Mesh(shardGeo, new THREE.MeshLambertMaterial({ color: 0x7a6a5e }));
+    m.visible = false;
+    scene.add(m);
+    return { m, life: 0, vx: 0, vy: 0, vz: 0 };
+  });
+  let nextShard = 0;
+
+  // The storm bolt: lightning crackling round each orb, and a ball of it
+  // gathering in the hands while the bolt is charged.
+  const ARC_SEGS = 10;
+  const arcs = Array.from({ length: 6 }, () => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(ARC_SEGS * 6), 3));
+    const l = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+    l.frustumCulled = false;
+    l.visible = false;
+    scene.add(l);
+    return l;
+  });
+  const jag = (l, cx, cy, cz, r) => {
+    const a = l.geometry.attributes.position.array;
+    for (let i = 0; i < ARC_SEGS; i++) {
+      // Each segment: a short zig-zag stroke from near the core outwards.
+      const th = Math.random() * Math.PI * 2;
+      const ph = (Math.random() - 0.5) * Math.PI;
+      const r0 = r * (0.3 + Math.random() * 0.3);
+      const r1 = r * (0.8 + Math.random() * 0.7);
+      a[i * 6] = cx + Math.cos(th) * Math.cos(ph) * r0;
+      a[i * 6 + 1] = cy + Math.sin(ph) * r0;
+      a[i * 6 + 2] = cz + Math.sin(th) * Math.cos(ph) * r0;
+      const th2 = th + (Math.random() - 0.5) * 0.9;
+      a[i * 6 + 3] = cx + Math.cos(th2) * Math.cos(ph) * r1;
+      a[i * 6 + 4] = cy + Math.sin(ph) * r1 + (Math.random() - 0.5) * 0.1;
+      a[i * 6 + 5] = cz + Math.sin(th2) * Math.cos(ph) * r1;
+    }
+    l.geometry.attributes.position.needsUpdate = true;
+  };
+  const charges = Array.from({ length: 4 }, () => {
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: flameTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false }));
+    sp.visible = false;
+    scene.add(sp);
+    return sp;
+  });
+
+  // Rushes, leaps and dives: speed lines streaming off the body.
+  const SPEED_LINES = 8;
+  const streaks = Array.from({ length: 4 }, () => {
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SPEED_LINES * 6), 3));
+    const l = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, fog: false }));
+    l.frustumCulled = false;
+    l.visible = false;
+    scene.add(l);
+    return l;
+  });
+  const takeoff = []; // per slot: the rising special already lit its ring of fire
+  const cracked = []; // per slot: the current stomp already split the floor
+
   // ---------- rain ----------
   const DROPS = 900;
   const rainPos = new Float32Array(DROPS * 6);
@@ -1208,6 +1303,98 @@ export function create3D(canvas) {
         }
         stomped[f.slot] = stomping;
       }
+      for (const f of s.f) {
+        const glow = glowOf(f.slot);
+        const m = f.state === 'attack' && MOVES[f.move];
+        // The stomp's cracks and shards, once per stomp.
+        const quaking = f.move === 'quake' && f.state === 'attack' && f.t >= MOVES.quake.startup;
+        if (quaking && !cracked[f.slot]) {
+          const c = cracks[nextCrack++ % cracks.length];
+          c.life = 1;
+          const r = (MOVES.quake.reach + 40) * S * 2;
+          c.m.scale.set(r, r, 1);
+          c.m.position.set(f.x * S, 0.025, f.z * S);
+          c.m.material.color.set(glow);
+          c.m.visible = true;
+          for (let i = 0; i < 10; i++) {
+            const sh = shards[nextShard++ % shards.length];
+            const a = (i / 10) * Math.PI * 2 + Math.random() * 0.5;
+            const d = 0.4 + Math.random() * 0.9;
+            sh.m.position.set(f.x * S + Math.cos(a) * d, 0.05, f.z * S + Math.sin(a) * d);
+            sh.vx = Math.cos(a) * (0.02 + Math.random() * 0.03);
+            sh.vz = Math.sin(a) * (0.02 + Math.random() * 0.03);
+            sh.vy = 0.07 + Math.random() * 0.06;
+            sh.life = 1;
+            sh.m.visible = true;
+          }
+        }
+        // The rising special lights a ring of fire on the floor at take-off.
+        const lifting = f.state === 'attack' && (f.move === 'rise' || f.move === 'phoenix') && f.t >= MOVES[f.move].startup;
+        if (lifting && !takeoff[f.slot]) {
+          const w = waves[nextWave++ % waves.length];
+          w.life = 1;
+          w.r = 1.4;
+          w.m.position.set(f.x * S, 0.03, f.z * S);
+          w.m.material.color.set('#ff9a2a');
+          w.m.visible = true;
+        }
+        takeoff[f.slot] = lifting;
+        cracked[f.slot] = quaking;
+        // The storm bolt gathering between the hands.
+        const ch = charges[f.slot];
+        if (ch) {
+          const charging = f.state === 'attack' && f.move === 'bolt' && f.t < MOVES.bolt.startup;
+          ch.visible = charging;
+          if (charging) {
+            const k = f.t / MOVES.bolt.startup;
+            const sz = 0.35 + k * 0.9 + Math.sin(now / 30) * 0.08;
+            ch.position.set(f.x * S + Math.cos(f.dir) * 0.42, 1.2, f.z * S + Math.sin(f.dir) * 0.42);
+            ch.material.color.set(glow);
+            ch.scale.set(sz, sz, 1);
+          }
+        }
+        // Speed lines off anything rushing, leaping or diving.
+        const sl = streaks[f.slot];
+        if (sl) {
+          const speed = Math.hypot(f.vx, f.vz);
+          const fast = m && (m.rush || m.leap || m.dive || m.go) && speed > 4;
+          sl.visible = !!fast;
+          if (fast) {
+            const a = sl.geometry.attributes.position.array;
+            const ux = -f.vx / speed;
+            const uz = -f.vz / speed;
+            for (let i = 0; i < SPEED_LINES; i++) {
+              const side = (Math.random() - 0.5) * 0.9;
+              const y = 0.3 + Math.random() * 1.5 + f.h * S;
+              const x0 = f.x * S - uz * side + ux * 0.3;
+              const z0 = f.z * S + ux * side + uz * 0.3;
+              const len = 0.6 + Math.random() * speed * 0.09;
+              a.set([x0, y, z0, x0 + ux * len, y, z0 + uz * len], i * 6);
+            }
+            sl.geometry.attributes.position.needsUpdate = true;
+            sl.material.color.set(glow);
+            sl.material.opacity = 0.7;
+          }
+        }
+      }
+      for (const c of cracks) {
+        if (c.life <= 0) continue;
+        c.life -= dt / 1300;
+        c.m.visible = c.life > 0;
+        c.m.material.opacity = Math.min(1, Math.max(0, c.life) * 1.6);
+      }
+      for (const sh of shards) {
+        if (sh.life <= 0) continue;
+        const k = dt / 16.7;
+        sh.life -= dt / 900;
+        sh.vy -= 0.006 * k;
+        sh.m.position.x += sh.vx * k;
+        sh.m.position.y = Math.max(0.03, sh.m.position.y + sh.vy * k);
+        sh.m.position.z += sh.vz * k;
+        sh.m.rotation.x += 0.2 * k;
+        sh.m.rotation.y += 0.13 * k;
+        sh.m.visible = sh.life > 0;
+      }
       for (const w of waves) {
         if (w.life <= 0) continue;
         w.life -= dt / 420;
@@ -1235,6 +1422,14 @@ export function create3D(canvas) {
         o.halo.scale.set(1.3 * pulse, 1.3 * pulse, 1);
         o.light.color.set(col);
         o.light.intensity = 7 * pulse;
+      }
+      // Lightning crackling round each orb.
+      for (let i = 0; i < arcs.length; i++) {
+        const p = s.proj[i];
+        arcs[i].visible = !!p;
+        if (!p) continue;
+        jag(arcs[i], p.x * S, p.h * S, p.z * S, 0.7);
+        arcs[i].material.color.set(glowOf(p.owner));
       }
 
       // Hit flashes: a short burst of light where a blow lands.
