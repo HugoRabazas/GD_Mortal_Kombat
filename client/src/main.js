@@ -303,7 +303,7 @@ function menuScreen() {
         <button type="button" class="btn" data-act="versus">2 Players <small>keyboard or gamepads</small></button>
         <div class="pair">
           <button type="button" class="btn quiet" data-act="tutorial">Tutorial <small>${LESSONS.filter(lessonComplete).length ? `${LESSONS.filter(lessonComplete).length} of ${LESSONS.length} lessons` : 'step by step'}</small></button>
-          <button type="button" class="btn quiet" data-act="training">Training <small>${drillsDone().size ? `${drillsDone().size} of ${DRILLS.length} moves` : 'free practice'}</small></button>
+          <button type="button" class="btn quiet" data-act="training">Training <small>free practice</small></button>
         </div>
         <button type="button" class="btn quiet" data-act="help">How to play</button>
       </div>
@@ -494,7 +494,7 @@ function helpScreen() {
         <li><b>Arcade</b>: ${STAGES.length} fights in a row, the last against a boss, moving between the arenas as you climb.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
         <li>The <b>Tutorial</b> teaches every move in short lessons, each against a partner who does what the lesson needs (one even throws you down so you can practise getting up).</li>
-        <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks, kicks on a beat or fights back. A checklist ticks off each move the first time you really do it.</li>
+        <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks, kicks on a beat or fights back. Free practice, with nothing else on screen.</li>
         ${NET ? '<li><b>Online</b>: pick a name, then make a room or join one in the lobby; <b>Copy invite link</b> brings friends straight in. The room keeps score of who has won, and a reload brings you back to it.</li>' : ''}
         <li><b>Record</b> at the foot of the menu keeps your lifetime tally on this device: wins, best run, best combo and how you do with each fighter.</li>
         <li>A <b>heartbeat</b> means your fighter is nearly out.</li>
@@ -788,91 +788,6 @@ function watchLesson(s, events) {
   play('pickup');
   drawLesson(got[got.length - 1]);
   if (l.steps.every((st) => app.lessonRun.has(st.id)) && !app.lessonEnd) app.lessonEnd = performance.now() + 1600;
-}
-
-// --------------------------------------------------------------- drills ---
-// Training keeps a checklist of every move. Each one ticks itself off the
-// first time the player really does it (a combo has to land, a block has to
-// stop a blow), and the device remembers the progress.
-const DRILLS = [
-  { id: 'walk', name: 'Walk', how: () => (controlNames().walk === 'WASD' ? '<kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>' : 'move the stick') },
-  { id: 'jump', name: 'Jump', how: (k) => k('j') },
-  { id: 'combo', name: 'Three-punch combo', how: (k) => `${k('p')} ${k('p')} ${k('p')}, each punch landing` },
-  { id: 'kick', name: 'Land a kick', how: (k) => k('k') },
-  { id: 'grab', name: 'Throw', how: (k) => `${k('g')} up close` },
-  { id: 'dive', name: 'Diving attack', how: (k) => `${k('j')}, then ${k('p')} in the air` },
-  { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction sideways` },
-  { id: 'block', name: 'Block a blow', how: (k) => `${k('b')} as a blow comes (pick a partner who attacks)` },
-  { id: 'perfect', name: 'Perfect guard', how: (k) => `${k('b')} just before a blow lands (the Kicks partner helps)` },
-  { id: 'counter', name: 'Counter hit', how: (k) => `${k('p')} while the rival winds up a blow (the Kicks partner helps)` },
-  { id: 'special', name: 'Special move', how: (k) => `${k('s')} with a third of the energy bar` },
-  { id: 'super', name: 'Finisher', how: (k) => `${k('u')} with a full energy bar` },
-];
-
-let drillMemo = null;
-function drillsDone() {
-  if (!drillMemo) {
-    drillMemo = new Set();
-    try {
-      for (const id of JSON.parse(localStorage.getItem('gd-arena-drills') || '[]')) drillMemo.add(id);
-    } catch {
-      // nothing remembered
-    }
-  }
-  return drillMemo;
-}
-
-function markDrill(id) {
-  const done = drillsDone();
-  if (done.has(id) || !DRILLS.some((d) => d.id === id)) return;
-  done.add(id);
-  try {
-    localStorage.setItem('gd-arena-drills', JSON.stringify([...done]));
-  } catch {
-    // not remembered
-  }
-  play('pickup');
-  drawDrills(id);
-}
-
-// Watch the training fight for moves the player has not ticked off yet.
-function watchDrills(s, events) {
-  if (s.f[0].state === 'walk') markDrill('walk');
-  for (const e of events) {
-    if (e.type === 'jump' && e.by === 0) markDrill('jump');
-    else if (e.type === 'roll' && e.by === 0) markDrill('roll');
-    else if (e.type === 'special' && e.by === 0) markDrill('special');
-    else if (e.type === 'super' && e.by === 0) markDrill('super');
-    else if (e.type === 'parry' && e.by === 0) markDrill('perfect');
-    else if (e.type === 'block' && e.on === 0) markDrill('block');
-    else if (e.type === 'hit' && e.by === 0) {
-      if (e.counter) markDrill('counter');
-      if (e.kind === 'punch3') markDrill('combo');
-      else if (e.kind === 'kick') markDrill('kick');
-      else if (e.kind === 'grab') markDrill('grab');
-      else if (e.kind === 'airKick' || e.kind === 'airPunch' || e.kind === 'stomp') markDrill('dive');
-    }
-  }
-}
-
-// The checklist panel: progress, and the next few moves with how to do them.
-function drawDrills(justDone) {
-  const done = drillsDone();
-  const names = controlNames();
-  const k = (id) => `<kbd>${names[id] ?? id}</kbd>`;
-  const left = DRILLS.filter((d) => !done.has(d.id));
-  const just = DRILLS.find((d) => d.id === justDone);
-  drillEl.innerHTML = `
-    <b>Moves ${done.size} / ${DRILLS.length}</b>
-    ${just ? `<p class="got">✓ ${just.name}</p>` : ''}
-    ${
-      left.length
-        ? `<ol>${left
-            .slice(0, 3)
-            .map((d, i) => `<li>${d.name}${i === 0 ? `<span>${d.how(k)}</span>` : ''}</li>`)
-            .join('')}</ol>`
-        : '<p>Every move learned. Try the Fights back partner, or a Quick Fight.</p>'
-    }`;
 }
 
 // ------------------------------------------------------------ fight stats ---
@@ -1208,11 +1123,9 @@ function show(screen) {
   ui.innerHTML = SCREENS[screen] ? SCREENS[screen]() : '';
   ui.dataset.screen = screen;
   pauseBtn.hidden = screen !== 'fight';
-  drillEl.hidden = !(screen === 'fight' && practising());
-  if (!drillEl.hidden) {
-    if (app.mode === 'tutorial') drawLesson();
-    else drawDrills();
-  }
+  // The lesson panel belongs to the tutorial; Training is free practice.
+  drillEl.hidden = !(screen === 'fight' && app.mode === 'tutorial');
+  if (!drillEl.hidden) drawLesson();
   refreshTouch();
   touchLayout.setEditing(screen === 'arrange');
   setTouchLive(screen !== 'arrange');
@@ -1882,7 +1795,6 @@ function frame(now) {
   const self = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
   const events = g.drain();
   if (playing) tallyFight(g, events);
-  if (playing && app.mode === 'training') watchDrills(g.state, events);
   if (playing && app.mode === 'tutorial') {
     watchLesson(g.state, events);
     // Every step done: a moment to see the last tick, then the lesson's end.
@@ -1892,11 +1804,10 @@ function frame(now) {
       show('lessonDone');
     }
   }
-  // A change of controller renames the controls in the checklist at once.
-  if (playing && practising() && !drillEl.hidden && lastDevice() !== app.drillDevice) {
+  // A change of controller renames the controls in the lesson panel at once.
+  if (playing && !drillEl.hidden && lastDevice() !== app.drillDevice) {
     app.drillDevice = lastDevice();
-    if (app.mode === 'tutorial') drawLesson();
-    else drawDrills();
+    drawLesson();
   }
   // A heartbeat when a player's fighter is nearly out: tension, and a warning
   // that reaches the player even when their eyes are off the health bar.

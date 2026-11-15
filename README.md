@@ -61,10 +61,8 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   (one kick every 100 ticks, about 1.7 s) - the way to learn the timing of
   the perfect guard. That partner always kicks from the outer side, so its
   kicks push you back towards the middle and never into the ring of fire.
-  A checklist of twelve moves sits in the corner and ticks each one off the
-  first time you really do it (a combo has to land, a block has to stop a
-  blow), with how to do the next ones; the device remembers it, and the menu
-  shows how many you have learned.
+  It is free practice: nothing on screen but the fight (the list of moves to
+  learn lives in the Tutorial).
 - **Tutorial**: nine short lessons (Basics, Defence, Getting up, Throws, On
   the run, In the air, Combos, Counters, Specials), each against a partner
   scripted for it: one stands still, one kicks on the beat (to block, perfect
@@ -175,7 +173,7 @@ along in the ranking, under each name.
 the fighter you are playing, written with the controls you are actually
 using: the game notices whether you last touched the keyboard, the screen or
 a gamepad, and the move list, the hint at the start of a fight and the
-Training checklist all name the controls to match (`J` / `P` / `X` for a
+Tutorial's lesson panel all name the controls to match (`J` / `P` / `X` for a
 punch). Every gamepad button was checked with a simulated standard pad:
 D-pad and A/B in the menus, the stick to walk, X, B, A, Y, LB/LT and RB/RT
 in a fight, Start to pause - and two pads at once in 2 Players, each driving
