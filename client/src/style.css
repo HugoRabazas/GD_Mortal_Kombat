@@ -931,6 +931,10 @@ kbd {
   opacity: 0.85;
 }
 
+#app.portrait .tb {
+  width: calc(min(64px, 15vw, 19vh) * var(--ts)); /* upright the buttons sit 17.5 % apart */
+}
+
 #app.portrait #touch {
   position: relative;
   inset: auto;
@@ -966,7 +970,9 @@ kbd {
 }
 
 .tb {
-  width: calc(min(64px, 16vw, 19vh) * var(--ts));
+  /* Never wider than the gap between two buttons of the default layout
+     (8.5 % of the width sideways), so they do not overlap on a small phone. */
+  width: calc(min(64px, 7.7vw, 19vh) * var(--ts));
   aspect-ratio: 1;
   padding: 0;
   border: 0;
@@ -2316,6 +2322,235 @@ kbd {
    the select screen its notes. */
 @media (max-height: 345px) and (orientation: landscape) {
   .menu .note,
+  .screen.select:not(.narrow) > .note {
+    display: none;
+  }
+}
+
+/* ---- The pause screen on a phone held sideways: the buttons in a narrow
+   column, the move list beside them, nothing below the fold. ---- */
+@media (max-height: 480px) and (orientation: landscape) {
+  .screen.pause {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+
+  .screen.pause h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.1;
+  }
+
+  .pause .cols {
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .pause .cols .stack {
+    flex: none;
+    width: min(34%, 220px);
+    gap: 4px;
+  }
+
+  .pause .stack .btn {
+    padding: 4px 8px 3px;
+    font-size: 1rem;
+    min-height: 0;
+  }
+
+  .pause .movetabs {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    gap: 3px;
+  }
+
+  .pause .movetabs .tab {
+    padding: 3px 5px;
+    font-size: 0.72rem;
+  }
+
+  .pause .movelist {
+    padding: 4px 8px;
+    font-size: 0.66rem;
+    line-height: 1.2;
+  }
+}
+
+/* The brawl's standings on a very short screen. */
+@media (max-height: 345px) and (orientation: landscape) {
+  .result .ranking li {
+    padding-top: 1px;
+    padding-bottom: 1px;
+    min-height: 0;
+  }
+
+  .result .ranking small {
+    font-size: 0.62rem;
+  }
+
+  .screen.result {
+    padding-top: 4px;
+    padding-bottom: 6px;
+  }
+
+  .screen.result .row .btn {
+    padding: 4px 12px 3px;
+    font-size: 1rem;
+  }
+}
+
+/* The pause screen on a phone held upright: Resume across, the other
+   buttons two by two, so the move list has the room. */
+@media (max-width: 520px) and (orientation: portrait) {
+  .pause .cols .stack {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    width: 100%;
+  }
+
+  .pause .stack .btn {
+    width: 100%;
+    min-width: 0;
+    padding: 6px 6px 5px;
+    font-size: 1.05rem;
+  }
+
+  .pause .stack .btn.primary {
+    grid-column: 1 / -1;
+  }
+
+  .pause .movelist {
+    font-size: 0.74rem;
+    line-height: 1.25;
+    gap: 3px 8px;
+    padding: 8px 10px;
+  }
+}
+
+/* ---- A small phone held upright (up to 700 px tall): the menu, the
+   lessons, the lobby and a room without scrolling. ---- */
+@media (max-width: 520px) and (orientation: portrait) {
+  .lessons .lesson-list {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .lessons .lesson-list .btn {
+    padding: 7px 6px 6px;
+    font-size: 1.05rem;
+  }
+}
+
+@media (max-width: 520px) and (max-height: 700px) and (orientation: portrait) {
+  .menu .brand {
+    font-size: clamp(2.2rem, 13vw, 3.4rem);
+    margin: 0;
+  }
+
+  .menu .tag {
+    display: none;
+  }
+
+  .menu .stack {
+    gap: 5px;
+  }
+
+  .menu .btn {
+    padding: 6px 12px 5px;
+    font-size: 1.3rem;
+    min-height: 0;
+  }
+
+  .menu .note {
+    margin: 0;
+    font-size: 0.75rem;
+  }
+
+  .screen.select > .note {
+    margin: 0;
+    font-size: 0.7rem;
+    line-height: 1.2;
+  }
+
+  .screen.select > h2 {
+    margin: 0;
+    font-size: 1.4rem;
+  }
+
+  .screen.room,
+  .screen.lobby {
+    gap: 5px;
+  }
+
+  .screen.room .slot .stats,
+  .screen.room .slot .title,
+  .screen.room .slot .moves,
+  .screen.room .chat .dim,
+  .screen.lobby .chat .dim,
+  .screen.lobby .rules.aside {
+    display: none;
+  }
+
+  .screen.room .slot .head.big {
+    width: 54px;
+    height: 54px;
+  }
+
+  .screen.room .slot,
+  .screen.room .ladder,
+  .screen.lobby .ladder {
+    padding-top: 5px;
+    padding-bottom: 6px;
+    min-height: 0;
+  }
+
+  .screen.room .people li,
+  .screen.lobby .people li {
+    padding-top: 2px;
+    padding-bottom: 2px;
+    min-height: 0;
+  }
+
+  .screen.room .rules {
+    margin: 0;
+    font-size: 0.72rem;
+  }
+
+  .screen.room > .acts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    width: 100%;
+  }
+
+  .screen.room > .acts .btn {
+    width: 100%;
+    min-width: 0;
+    padding: 6px 6px 5px;
+    font-size: 1.05rem;
+  }
+
+  .screen.lobby .row .btn {
+    padding: 6px 12px 5px;
+    font-size: 1.05rem;
+  }
+
+  .screen.room > .acts .btn.primary {
+    grid-column: 1 / -1;
+    order: -1;
+  }
+}
+
+@media (max-width: 520px) and (orientation: portrait) {
+  .screen.room .chat .dim {
+    display: none;
+  }
+}
+
+@media (max-width: 520px) and (max-height: 700px) and (orientation: portrait) {
   .screen.select:not(.narrow) > .note {
     display: none;
   }

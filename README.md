@@ -124,6 +124,13 @@ screen from 568 x 320 to 915 x 412 (the old layout overflowed a room by 55 to
 219 px there). In the Tutorial a phone's lesson panel keeps to the step in
 hand, clear of the stick; held upright it sits under the arena.
 
+The on-screen buttons never overlap: their size is capped by the gap
+between two of them in the default layout (they overlapped by up to 13 px on
+phones under about 750 px wide held sideways). The pause screen puts its
+buttons in a narrow column beside the move list sideways, and two by two
+above it upright. Every screen is measured at seven phone sizes, both ways
+up, by a scripted walk through the game: no screen scrolls.
+
 **Full screen** is on offer wherever a player may be - the menu, the online
 lobby, a room and the pause screen - since someone who comes in through an
 invite link never sees the menu; on a phone, pressing Ready or Start fight in
