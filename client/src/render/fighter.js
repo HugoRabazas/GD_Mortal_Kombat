@@ -607,7 +607,7 @@ function targetPose(f, now) {
       // feet, or halfway round the body would sink into the floor (the lift
       // makes up for the turn, as for the somersault of the air jump).
       const rot = f.t * 0.42;
-      return pose({ hipY: -30, lean: 0.9, tilt: 0.5, hfx: 16, hfy: 22, hbx: 10, hby: 22, ffx: 14, ffy: -8, fbx: -6, fby: -8, rot, lift: -6 - 36 * (1 - Math.cos(rot)) });
+      return pose({ hipY: -30, lean: 0.9, tilt: 0.5, hfx: 16, hfy: 22, hbx: 10, hby: 22, ffx: 14, ffy: -8, fbx: -6, fby: -8, rot, lift: -6 - 42 * (1 - Math.cos(rot)) });
     }
     case 'jump':
       if (f.air2 && f.t < FLIP) {

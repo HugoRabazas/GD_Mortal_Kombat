@@ -482,6 +482,14 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **Two buttons pressed a moment apart, checked**: after the roll, every
+  other two-button move was tried with the second button 0, 2, 4 and 8 ticks
+  late: the taunt (block held, then grab) comes out however late the grab;
+  punch and kick within two ticks are the throw, later the punch-kick string
+  (as designed); the back-step has the roll's six ticks. Nothing else to
+  fix. The roll's lift was raised a little (36 -> 42) so that in the flat
+  view the head no longer goes through the floor at the top of the turn.
+  Zelrith's new look checked on the result screen and in the ritual.
 - **Rolling, fixed twice over**: block and a direction pressed a moment
   apart (the direction a few ticks after the guard, as a thumb or a finger
   does) now still rolls - within six ticks of raising the guard (a test);
