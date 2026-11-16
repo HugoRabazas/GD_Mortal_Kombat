@@ -27,8 +27,18 @@ import clothRoughUrl from './tex/cloth_rough.jpg';
 
 // The realistic body (a prototype, see README): ?realbody in the address
 // gives it to Ruko, ?realbody=all to everyone, ?realbody=<id> to one fighter.
+// Settings can also turn it on for everyone (kept on the device; read at
+// each new fight).
 const REAL = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('realbody') : null;
-const realFor = (id) => REAL !== null && (REAL === 'all' || REAL === id || (REAL === '' && id === 'ruko'));
+export const BODY_KEY = 'gd-arena-body';
+const realChosen = () => {
+  try {
+    return localStorage.getItem(BODY_KEY) === 'real';
+  } catch {
+    return false;
+  }
+};
+const realFor = (id) => realChosen() || (REAL !== null && (REAL === 'all' || REAL === id || (REAL === '' && id === 'ruko')));
 
 const S = 0.01; // world units per arena pixel
 // Moves drawn glowing in the fighter's colour: the specials and the finisher.

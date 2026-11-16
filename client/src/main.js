@@ -731,6 +731,7 @@ function settingsScreen() {
         <button type="button" class="btn small" data-act="announcer" aria-pressed="${isAnnouncer()}">${announcerLabel()}</button>
         <button type="button" class="btn small" data-act="touch" aria-pressed="${app.touch}">${touchLabel()}</button>
         ${canVibrate() ? `<button type="button" class="btn small" data-act="vibrate" aria-pressed="${vibrateOn()}">${vibrateLabel()}</button>` : ''}
+        <button type="button" class="btn small" data-act="body" aria-pressed="${bodyReal()}">${bodyLabel()}</button>
         <button type="button" class="btn small" data-act="arrange">Arrange buttons</button>
       </div>
       <div class="row"><button type="button" class="btn primary" data-act="settingsDone">Done</button></div>
@@ -771,6 +772,15 @@ const vibrateOn = () => {
   return vibOn;
 };
 const vibrateLabel = () => `Vibration: ${vibrateOn() ? 'on' : 'off'}`;
+// The realistic body (a beta, see rig3d.js): from the next fight, in 3D.
+const bodyReal = () => {
+  try {
+    return localStorage.getItem('gd-arena-body') === 'real';
+  } catch {
+    return false;
+  }
+};
+const bodyLabel = () => `Bodies: ${bodyReal() ? 'realistic (beta)' : 'classic'}`;
 
 // -------------------------------------------------------------- tutorial ---
 // Lessons of a few steps each (shared/tutorial.js), against a partner who
@@ -1782,6 +1792,15 @@ const ACTIONS = {
   smaller: () => touchLayout.resize(-0.1),
   bigger: () => touchLayout.resize(0.1),
   resetLayout: () => touchLayout.reset(),
+  body(el) {
+    try {
+      localStorage.setItem('gd-arena-body', bodyReal() ? 'classic' : 'real');
+    } catch {
+      // not remembered
+    }
+    el.textContent = bodyLabel();
+    el.setAttribute('aria-pressed', String(bodyReal()));
+  },
   vibrate(el) {
     vibOn = !vibrateOn();
     setBuzz(vibOn);

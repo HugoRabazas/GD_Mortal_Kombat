@@ -786,6 +786,11 @@ and the heartbeat, the crowd and the weather go quiet.
   Loop 192: the dais's gold rim is fully metal (it reflects the sky and the
   torches) and the GD emblem inlaid brass - lit and reflecting, quieter,
   where it was painted on with a flat material.
+  Loop 193: Settings has **Bodies: classic / realistic (beta)** (kept on
+  the device, from the next fight), so the realistic body can be tried on a
+  phone or in the Artifact without typing `?realbody`; Settings still fits
+  at the seven sizes. The ring of fire and the hit flashes checked under
+  the new light: bright and readable.
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the
