@@ -3110,12 +3110,14 @@ kbd {
   }
 }
 
-/* Held upright, the photo's buttons sit just under the picture (the arena
-   is (width - 32px) x 9/16 tall, from the top), not at the far bottom. */
-#app.portrait #ui[data-screen='photo'] {
+/* Held upright, the photo's buttons and the KO replay's bar sit just under
+   the picture (the arena is (width - 32px) x 9/16 tall, from the top), not
+   at the far bottom. */
+#app.portrait #ui[data-screen='photo'],
+#app.portrait #ui[data-screen='replay'] {
   align-items: flex-start;
 }
-#app.portrait .screen.photo {
+#app.portrait .screen.replay {
   margin: calc((100vw - 32px) * 0.5625 + 8px) auto 0;
 }
 
