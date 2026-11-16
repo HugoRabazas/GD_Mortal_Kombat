@@ -4,6 +4,7 @@
 import { FIGHTERS, getFighter, lookColors, dressColors } from '../../shared/fighters.js';
 import { ritualSounds } from './render/fighter.js';
 import { awardsFor as brawlAwards } from './awards.js';
+import { howWon } from './outcome.js';
 import { ARENA, INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
 import { LESSONS, lessonById, stepsDone, tutorPartner, drummer } from '../../shared/tutorial.js';
@@ -849,8 +850,11 @@ function tallyFight(g, events) {
   if (app.statsFor !== g) {
     app.statsFor = g;
     app.stats = g.state.f.map(() => ({ dmg: 0, hits: 0, combo: 0, perfect: 0, kinds: new Set() }));
+    app.roundEnds = [];
   }
   for (const e of events) {
+    // Each round's end, for the winner's line (howWon).
+    if (e.type === 'ko' || e.type === 'timeup') app.roundEnds.push({ winner: e.winner, perfect: !!e.perfect });
     const st = app.stats[e.by];
     if (!st) continue;
     if (e.type === 'hit') {
@@ -923,12 +927,15 @@ function rankingList() {
 // What a finished arcade fight shows: the duel's numbers, or a brawl's standings.
 const outcome = () => (app.game.state.mode === 'arena' ? rankingList() : statsCard());
 
-// The winner's own line, shown at the top of the result screen.
+// The winner's own line, shown at the top of the result screen: the one for
+// how the match went, if they have one.
 function winnerQuote() {
   const s = app.game?.state;
   if (!s || s.matchWinner < 0) return '';
   const f = getFighter(s.f[s.matchWinner].char);
-  return f.quote ? `<p class="quote">“${f.quote}” <span>${f.name}</span></p>` : '';
+  const how = howWon(s, app.roundEnds || []);
+  const line = (how && f.quotes?.[how]) || f.quote;
+  return line ? `<p class="quote">“${line}” <span>${f.name}</span></p>` : '';
 }
 
 // A milestone reached or a best broken in this fight (see the Record screen),

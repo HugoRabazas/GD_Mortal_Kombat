@@ -44,6 +44,8 @@ export const FIGHTERS = [
     victory: 'howl',
     entrance: 'prowl', // the ritual while a round is announced
     quote: 'The moon saw that one coming. You did not.',
+    // Said instead when the match went a certain way (see winnerQuote).
+    quotes: { perfect: 'Not a scratch. The moon is kind tonight.', comeback: 'One round to wake up. Then the moon rose.', close: 'Close. The moon still chose me.' },
     head: { x: 81, y: 68, r: 30 },
     colors: {
       primary: '#b5122c',
@@ -66,6 +68,8 @@ export const FIGHTERS = [
     victory: 'calm',
     entrance: 'bow', // the ritual while a round is announced
     quote: 'Quiet. Quick. Finished.',
+    // Said instead when the match went a certain way (see winnerQuote).
+    quotes: { perfect: 'You never touched me. You never saw me.', comeback: 'I let you have one. Only one.', close: 'Closer than I like. Still mine.' },
     head: { x: 88, y: 99, r: 43 },
     colors: {
       primary: '#2c9a4b',
@@ -88,6 +92,8 @@ export const FIGHTERS = [
     victory: 'stomp',
     entrance: 'clap', // the ritual while a round is announced
     quote: 'The mountain does not move. You did.',
+    // Said instead when the match went a certain way (see winnerQuote).
+    quotes: { perfect: 'Not one stone fell.', comeback: 'Mountains are slow to start. Then they do not stop.', close: 'Shaken. Not moved.' },
     head: { x: 88, y: 98, r: 36 }, // the face inside the frame (not the figure on the frame)
     colors: {
       primary: '#3b2b52',
@@ -111,6 +117,8 @@ export const FIGHTERS = [
     victory: 'cheer',
     entrance: 'swirl', // the ritual while a round is announced
     quote: 'Two flames, one winner!',
+    // Said instead when the match went a certain way (see winnerQuote).
+    quotes: { perfect: 'Not even singed!', comeback: 'Down one - then two flames up!', close: 'Phew, a hot one! Still won!' },
     head: { x: 84, y: 94, r: 46 },
     colors: {
       primary: '#7a2fc2',
@@ -134,6 +142,8 @@ export const FIGHTERS = [
     victory: 'salute',
     entrance: 'oath',
     quote: 'I gave my word. You gave up.',
+    // Said instead when the match went a certain way (see winnerQuote).
+    quotes: { perfect: 'Clean, as I promised.', comeback: 'I lost a round. I never lost my word.', close: 'Barely kept. Still kept.' },
     head: { x: 170, y: 195, r: 74 }, // the face inside the avatar's frame
     colors: {
       primary: '#3d5a52',
@@ -158,6 +168,8 @@ export const FIGHTERS = [
     victory: 'volley',
     entrance: 'draw',
     quote: 'The moon never misses. Neither do I.',
+    // Said instead when the match went a certain way (see winnerQuote).
+    quotes: { perfect: 'Not a single miss on me.', comeback: 'The moon grows back. So did I.', close: 'A thin moon is still a moon.' },
     head: { x: 193, y: 128, r: 55 }, // the face inside the avatar's frame
     colors: {
       primary: '#6a4fa8',
@@ -181,6 +193,8 @@ export const FIGHTERS = [
     victory: 'sheathe',
     entrance: 'flourish',
     quote: 'One step ahead. Always.',
+    // Said instead when the match went a certain way (see winnerQuote).
+    quotes: { perfect: 'Too fast to touch.', comeback: 'Behind you? Not for long.', close: 'Half a step. Enough.' },
     head: { x: 138, y: 116, r: 56 }, // the face inside the avatar's frame
     colors: {
       primary: '#8a6a2a',
@@ -205,6 +219,8 @@ export const FIGHTERS = [
     victory: 'laugh',
     entrance: 'twirl',
     quote: 'Ha! Again, again!',
+    // Said instead when the match went a certain way (see winnerQuote).
+    quotes: { perfect: 'Ha! Didn\'t even feel it!', comeback: 'Ha! Thought I was done? Again!', close: 'Ha... ha... again? Give me a minute.' },
     head: { x: 133, y: 95, r: 58 }, // the face inside the avatar's frame
     colors: {
       primary: '#2f6fb0',

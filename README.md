@@ -722,6 +722,14 @@ and the heartbeat, the crowd and the weather go quiet.
   Its whoosh plays at once too (1-13 ms after the press instead of
   180-290 ms relayed), and the host's own word of that swing is then not
   played again - checked on ten presses, each heard once.
+- **The winner's line fits the match**: besides their usual line, each
+  fighter has one for a perfect win (no round lost, a flawless last
+  knockout), one for a comeback (the first round lost) and one for a close
+  win (it went to the deciding round, or the winner ended under a quarter
+  of their health) - Zelrith's comeback: "Ha! Thought I was done? Again!".
+  Picked from the rounds' ends (outcome.js, with tests; every fighter has
+  all three); brawls keep the usual line. The longest fits the result card
+  at 360x640, 568x320, 640x360 and 740x340.
 - **Replay KO**: the result screen of a fight that ended on a knockout
   offers Replay KO - the last 1.7 seconds before the final blow and the
   fall after it, again at half speed (the knockout's own slow motion
