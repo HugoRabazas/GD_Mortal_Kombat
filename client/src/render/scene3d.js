@@ -510,7 +510,13 @@ export function create3D(canvas) {
     }
   }
 
-  const fanBodies = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.21, 0.62, 8), new THREE.MeshLambertMaterial({ color: 0xffffff }), fans.length);
+  // Each fan a cloaked figure: a robe widening to the hem, sloping
+  // shoulders, a hood rising at the back of the head (a lathe turned round
+  // y, the same height as the old plain cylinder, centred on it).
+  const robe = new THREE.LatheGeometry([[0, -0.31], [0.23, -0.31], [0.21, -0.1], [0.18, 0.12], [0.2, 0.22], [0.15, 0.3], [0.1, 0.33], [0, 0.34]].map(([r, y]) => new THREE.Vector2(r, y)), 10);
+  const robeWeave = new THREE.TextureLoader().load(clothNorUrl);
+  robeWeave.wrapS = robeWeave.wrapT = THREE.RepeatWrapping;
+  const fanBodies = new THREE.InstancedMesh(robe, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.95, metalness: 0, normalMap: robeWeave }), fans.length);
   const fanHeads = new THREE.InstancedMesh(new THREE.SphereGeometry(0.15, 10, 8), new THREE.MeshLambertMaterial({ color: lin(0xd9a98a) }), fans.length);
   // Some of the crowd came for one fighter: each stretch of the stands (left
   // to right, one per fighter in the line-up) has supporters wearing that

@@ -775,7 +775,10 @@ and the heartbeat, the crowd and the weather go quiet.
   place - the night is cold and blue again (seen in the courtyard and on
   the summit). Loop 189: the banners are cloth - the physical material
   with the denim relief (folds, a seam, the weave) under their painted
-  letters, where a flat Lambert material had none.
+  letters, where a flat Lambert material had none. Loop 190: the crowd
+  wears cloaks - each fan a robe widening to the hem with sloping
+  shoulders and a hood (a lathe shape) in matt cloth with the same
+  relief, instead of a plain shiny cylinder; still one instanced draw.
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the
