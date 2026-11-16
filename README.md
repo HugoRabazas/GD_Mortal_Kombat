@@ -561,6 +561,11 @@ and the heartbeat, the crowd and the weather go quiet.
   phone held sideways "PAUSED" sat on the clock. While paused the hint and
   the tags are not drawn, and there the title's place is kept but the word
   goes.
+- **Result cards under the scoreboard on a very short phone**: over the
+  full-screen arena at 568x320, an arcade stage's "STAGE 1 CLEARED" title
+  sat on the scoreboard's clock. On phones under 340 px tall a duel's
+  result card now starts under the scoreboard (a brawl's standings keep
+  the height they need); every arcade and arena result still fits.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

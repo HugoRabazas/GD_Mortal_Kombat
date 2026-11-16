@@ -2860,3 +2860,12 @@ kbd {
     visibility: hidden;
   }
 }
+
+/* A very short phone held sideways: a duel's result card starts under the
+   scoreboard rather than on it (a brawl's standings need the height). */
+@media (max-height: 340px) and (orientation: landscape) {
+  #ui[data-screen='result']:not(:has(.ranking)) {
+    padding-top: 46px;
+    padding-bottom: 2px;
+  }
+}
