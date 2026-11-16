@@ -433,11 +433,13 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       slots.push({ cpu: true, name: 'CPU', char: spare.shift() || FIGHTERS[slots.length % FIGHTERS.length].id });
     }
     const info = { slots, mode: slots.length > 2 ? 'arena' : 'duel', arena: isArenaId(arena) ? arena : ARENAS[0].id };
-    // Rollback (beta): a duel between two players with a direct link.
-    const other = slots.find((sl) => sl.id && sl.id !== me.id);
-    if (online.rollback && slots.length === 2 && !slots.some((sl) => sl.cpu) && other && room.links.get(other.id)?.isOpen()) {
-      const ping = room.pings.get(other.id) ?? 60;
-      info.rb = { seed: (Math.random() * 0xffffffff) >>> 0 || 1, delay: ping > 140 ? 3 : 2 };
+    // Rollback (beta): when every two players have a direct link between
+    // them (their pings, measured over those links, are known), so each can
+    // send its buttons straight to every other.
+    const humans = slots.filter((sl) => !sl.cpu);
+    const pairs = humans.flatMap((x, i) => humans.slice(i + 1).map((y) => (x.id === me.id ? (room.links.get(y.id)?.isOpen() ? room.pings.get(y.id) ?? 60 : null) : y.id === me.id ? (room.links.get(x.id)?.isOpen() ? room.pings.get(x.id) ?? 60 : null) : pingBetween(x.id, y.id))));
+    if (online.rollback && humans.length >= 2 && pairs.every((ms) => ms !== null)) {
+      info.rb = { seed: (Math.random() * 0xffffffff) >>> 0 || 1, delay: Math.max(...pairs) > 140 ? 3 : 2 };
     }
     room.ch.send('start', info);
     if (info.rb) beginRollback(info);
@@ -678,32 +680,41 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     onStart(clean);
   }
 
-  // Rollback (see rollback.js and README): both players run the whole fight;
-  // each sends its buttons for every tick over the direct link, the last ones
-  // not yet confirmed by the other side repeated in each message.
+  // Rollback (see rollback.js and README): every player runs the whole fight;
+  // each sends its buttons for every tick to every other player over the
+  // direct links, the last ones not yet confirmed by that player repeated in
+  // each message. CPU fighters are part of the fight itself: their minds are
+  // seeded alike everywhere and go back in time with it.
   function beginRollback(raw) {
     match?.stop?.();
     if (room) room.again = false;
-    const slots = (raw.slots || []).slice(0, 2).map((sl) => {
+    const slots = (raw.slots || []).slice(0, MAX_PLAYERS).map((sl) => {
       const ch = isFighterId(sl.char) ? sl.char : FIGHTERS[0].id;
-      return { id: sl.id || null, cpu: false, name: cleanName(sl.name), char: ch, look: cleanLook(ch, sl.look) };
+      return { id: sl.cpu ? null : sl.id || null, cpu: !!sl.cpu, name: cleanName(sl.name), char: ch, look: cleanLook(ch, sl.look) };
     });
     const mySlot = slots.findIndex((sl) => sl.id === me.id);
-    if (slots.length !== 2 || mySlot < 0) return;
-    const them = 1 - mySlot;
-    const themId = slots[them].id;
-    const info = { slots, mode: 'duel', arena: isArenaId(raw.arena) ? raw.arena : ARENAS[0].id, rb: raw.rb };
+    if (slots.length < 2 || mySlot < 0) return;
+    const mode = slots.length > 2 ? 'arena' : 'duel';
+    const info = { slots, mode, arena: isArenaId(raw.arena) ? raw.arena : ARENAS[0].id, rb: raw.rb };
     const seed = raw.rb.seed >>> 0 || 1;
     const delay = Math.min(4, Math.max(1, Number(raw.rb.delay) || 2));
+    // The other humans, by slot; and who referees (the host's slot).
+    const others = slots.map((sl, i) => i).filter((i) => i !== mySlot && !slots[i].cpu);
+    const slotOf = (id) => slots.findIndex((sl) => sl.id === id && !sl.cpu);
+    const hostSlot = slotOf(room?.hostId);
+    const cpus = slots.map((sl, i) => (sl.cpu ? i : -1)).filter((i) => i >= 0);
     const rb = createRollback({
-      world: { s: createMatch(slots.map((sl) => sl.char), [], 'duel', seed) },
-      players: 2,
-      mine: [mySlot],
+      world: {
+        s: createMatch(slots.map((sl) => sl.char), [], mode, seed),
+        ais: slots.map((sl, i) => (sl.cpu ? createAI('normal', (seed + i * 7919) >>> 0 || 1) : null)),
+      },
+      players: slots.length,
+      mine: [mySlot, ...cpus], // (a CPU's buttons come from inside the fight)
       step: (w, bits) => {
         // (debugDrift: an automated check makes this device's fight go wrong
         // at one tick, for the referee to put right)
         if (online.debugDrift === w.s.tick) w.s.f[0].hp -= 9;
-        stepRules(w.s, bits);
+        stepRules(w.s, w.s.f.map((_, i) => (w.ais[i] ? aiInput(w.ais[i], w.s, i) : bits[i])));
         return w.s.ev;
       },
       copy: (w) => structuredClone(w),
@@ -715,45 +726,50 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       rb.local(mySlot, t, 0);
       sent.set(t, 0);
     }
-    let theirAck = -1; // my buttons they have, every tick up to here
+    const acks = new Map(others.map((i) => [i, -1])); // my buttons each one has, every tick up to here
     const shown = [];
-    const prints = new Map(); // tick -> [mine, theirs]
+    const prints = new Map(); // tick -> { mine, host, bySlot: Map }
     let lastPrint = 0;
     let acc = 0;
     let last = null;
     let stalls = 0;
     let lastPingAt = 0;
-    const send = (payload) => room?.links.get(themId)?.send(JSON.stringify(payload));
+    const pings = slots.map(() => null);
+    const sendTo = (slot, payload) => room?.links.get(slots[slot].id)?.send(JSON.stringify(payload));
     const take = (events) => {
       for (const e of filter.pass(events)) shown.push(e);
     };
     let lastSendAt = 0;
-    // Every button of ours the other side has not confirmed (at most 40 ticks).
+    // Every button of ours each other player has not confirmed (at most 40 ticks).
     function sendButtons(now) {
       lastSendAt = now;
       const newest = rb.tick - 1 + delay;
-      const from = Math.max(theirAck + 1, newest - 40);
-      const b = [];
-      for (let u = from; u <= newest; u++) b.push(sent.get(u) ?? 0);
-      send({ rb: from, b, a: rb.heard(them) });
-      for (const u of sent.keys()) if (u < theirAck - 60) sent.delete(u);
+      for (const i of others) {
+        const from = Math.max(acks.get(i) + 1, newest - 40);
+        const b = [];
+        for (let u = from; u <= newest; u++) b.push(sent.get(u) ?? 0);
+        sendTo(i, { rb: from, b, a: rb.heard(i) });
+      }
+      const oldest = Math.min(...acks.values());
+      for (const u of sent.keys()) if (u < oldest - 60) sent.delete(u);
     }
+    const worstPing = () => (pings.some((p) => p !== null) ? Math.max(...pings.filter((p) => p !== null)) : null);
     function run(now) {
       if (last === null) last = now;
       acc += Math.min(now - last, 100);
       last = now;
       while (acc >= 1000 / 60) {
-        // Running ahead of the other player (their newest buttons are for a
-        // tick well behind ours, more than the trip explains): hold back a
-        // little now and then, so neither side does all the guessing.
-        const theirs = rb.lastHeard(them) - delay;
-        const trip = Math.round((match?.ping ?? 60) / 2 / (1000 / 60));
+        // Running ahead of the slowest other player (their newest buttons are
+        // for a tick well behind ours, more than the trip explains): hold
+        // back a little now and then, so nobody does all the guessing.
+        const theirs = Math.min(...others.map((i) => rb.lastHeard(i))) - delay;
+        const trip = Math.round((worstPing() ?? 60) / 2 / (1000 / 60));
         if (rb.tick - theirs > trip + 3 && rb.tick % 6 === 0 && acc < 2000 / 60) break;
         if (!rb.canAdvance()) {
           stalls++;
           take(rb.settle());
-          // Waiting for them: our buttons again (they may be waiting too, and
-          // the last messages may have been lost).
+          // Waiting for someone: our buttons again (they may be waiting too,
+          // and the last messages may have been lost).
           if (now - lastSendAt > 50) sendButtons(now);
           acc = Math.min(acc, 1000 / 60);
           break;
@@ -765,37 +781,46 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         sent.set(t, bits);
         take(rb.advance());
         sendButtons(now);
-        // A fingerprint of a tick both sides are sure of, every two seconds.
+        // A fingerprint of a tick everyone is sure of, every two seconds: the
+        // host sends its own to every guest, a guest its own to the host.
         const sure = rb.sureUpTo();
         const k = Math.floor(sure / 120) * 120;
         if (k > lastPrint && rb.savedAt(k)) {
           lastPrint = k;
           const h = fingerprint(rb.savedAt(k).s);
-          prints.set(k, [h, prints.get(k)?.[1]]);
-          send({ fp: k, h });
+          note(k).mine = h;
+          for (const i of match?.host ? others : [hostSlot]) if (i >= 0) sendTo(i, { fp: k, h });
           check(k);
         }
       }
       if (now - lastPingAt > 1000) {
         lastPingAt = now;
-        send({ ping: performance.now() });
+        for (const i of others) sendTo(i, { ping: performance.now() });
       }
       if (match?.goneSince && now - match.goneSince > 3000 && rb.world.s.phase !== 'over') stopMatch(match.host ? 'player_left' : 'host_left');
     }
+    const note = (k) => {
+      if (!prints.has(k)) prints.set(k, { mine: undefined, bySlot: new Map() });
+      return prints.get(k);
+    };
+    // Out of step: the host is the referee. It sends its own world as it was
+    // just before that tick to the guest that differs; the guest puts it in
+    // place and plays every tick since again (rollback.js restore). Until a
+    // later fingerprint agrees, the line under the clock says so.
     function check(k) {
-      const [a, b] = prints.get(k) || [];
-      if (a === undefined || b === undefined) return;
-      if (!match) return;
-      match.checked = (match.checked || 0) + 1;
-      // Out of step: the host is the referee. It sends its own world as it
-      // was just before that tick; the guest puts it in place and plays
-      // every tick since again (rollback.js restore). Until a later
-      // fingerprint agrees, the line under the clock says so.
-      if (a !== b) {
-        if (match.desync < 0) match.drifts = (match.drifts || 0) + 1;
-        match.desync = k;
-        if (match.host && rb.savedAt(k)) send({ fix: k, w: rb.savedAt(k) });
-      } else match.desync = -1;
+      const p = prints.get(k);
+      if (!p || p.mine === undefined || !match) return;
+      const theirs = match.host ? [...p.bySlot] : p.bySlot.has(hostSlot) ? [[hostSlot, p.bySlot.get(hostSlot)]] : [];
+      for (const [slot, h] of theirs) {
+        if (p.done?.has(slot)) continue;
+        (p.done ||= new Set()).add(slot);
+        match.checked = (match.checked || 0) + 1;
+        if (h !== p.mine) {
+          if (match.desync < 0) match.drifts = (match.drifts || 0) + 1;
+          match.desync = k;
+          if (match.host && rb.savedAt(k)) sendTo(slot, { fix: k, w: rb.savedAt(k) });
+        } else if (match.desync <= k) match.desync = -1;
+      }
       for (const t of prints.keys()) if (t < k - 600) prints.delete(t);
     }
     const game = {
@@ -817,26 +842,26 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       rollback: true,
       host: !!room?.isHost,
       mySlot,
-      ping: null,
-      pings: [null, null],
+      get ping() {
+        return worstPing();
+      },
+      pings,
       desync: -1,
       fps: () => 60,
       rb,
       stalls: () => stalls,
       take(from, msg) {
-        if (from !== themId) return;
+        const slot = slotOf(from);
+        if (slot < 0 || slot === mySlot) return;
         if (typeof msg.rb === 'number' && Array.isArray(msg.b) && msg.b.length <= 64) {
-          msg.b.forEach((bits, i) => typeof bits === 'number' && rb.remote(them, msg.rb + i, bits & INPUT_MASK));
-          if (typeof msg.a === 'number' && msg.a > theirAck) theirAck = msg.a;
+          msg.b.forEach((bits, i) => typeof bits === 'number' && rb.remote(slot, msg.rb + i, bits & INPUT_MASK));
+          if (typeof msg.a === 'number' && msg.a > acks.get(slot)) acks.set(slot, msg.a);
         }
-        if (typeof msg.ping === 'number') send({ pong: msg.ping });
-        if (typeof msg.pong === 'number') {
-          match.ping = Math.round(performance.now() - msg.pong);
-          match.pings[them] = match.ping;
-        }
-        if (!match.host && typeof msg.fix === 'number' && msg.w?.s && Array.isArray(msg.w.s.f) && rb.restore(msg.fix, msg.w)) match.fixes = (match.fixes || 0) + 1;
+        if (typeof msg.ping === 'number') sendTo(slot, { pong: msg.ping });
+        if (typeof msg.pong === 'number') pings[slot] = Math.round(performance.now() - msg.pong);
+        if (!match.host && slot === hostSlot && typeof msg.fix === 'number' && msg.w?.s && Array.isArray(msg.w.s.f) && rb.restore(msg.fix, msg.w)) match.fixes = (match.fixes || 0) + 1;
         if (typeof msg.fp === 'number' && typeof msg.h === 'number') {
-          prints.set(msg.fp, [prints.get(msg.fp)?.[0], msg.h]);
+          note(msg.fp).bySlot.set(slot, msg.h);
           check(msg.fp);
         }
       },

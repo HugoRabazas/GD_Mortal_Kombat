@@ -1145,6 +1145,21 @@ world hide that wait:
     referee it stays wrong) and in two browsers, locally and on the live
     service: the guest's fight made to drift once, found at the next
     checkpoint, put right once, every fingerprint since identical.
+  - *Step 7 done (loop 163): brawls and CPU fighters.* Rollback now runs
+    fights of two to four players, with CPU fighters filling places:
+    every player sends its buttons to every other over the direct links
+    the room already makes between all members (each with its own
+    confirmations); CPU fighters are part of the fight itself - their
+    minds seeded alike on every device and copied with it, so they go
+    back in time too. The host referees every guest (guests send their
+    fingerprints to the host, the host its own to everyone). A host with
+    `?rollback` uses it when every two players have a working direct link
+    (their pings over those links are known); the delay is 3 ticks when
+    any of those pings is over 140 ms. Checked with every message held
+    back 100-130 ms and 5 % lost: three players and a CPU fighter, and four
+    players with one made to drift (found and put right once) - every
+    fingerprint the same on every screen, never a wait; three players and
+    a CPU fighter on the live service, drift included, the same.
 - **Steps.** 1) the cross-browser fingerprint test and our own trigonometry
   (offline play unchanged, all tests and balance figures checked);
   2) the ring of past ticks and the replay, tested in Node with two
