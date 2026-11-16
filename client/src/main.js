@@ -16,6 +16,7 @@ import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed,
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, setAmbience, getVolume, setVolume, STEP_SOUND } from './audio.js';
 import { setFloor, showBanner } from './render/fx.js';
+import { dailyChallenge, dayKey } from './daily.js';
 import { THEMES } from './render/themes.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
@@ -249,6 +250,14 @@ function newsLine() {
   }
 }
 
+// The day's challenge, in place of the tip until it is beaten (see daily.js).
+const dailyDone = () => readRecord().dailyLast === dayKey();
+function dailyLine() {
+  if (dailyDone()) return '';
+  const d = dailyChallenge();
+  return `<button type="button" class="linkish" data-act="daily">Today's challenge: win as <b>${getFighter(d.you).name}</b> against <b>${getFighter(d.rival).name}</b> on ${LEVEL_NAMES[d.level]} ›</button>`;
+}
+
 function isNewcomer() {
   try {
     return localStorage.getItem('gd-arena-played') !== '1';
@@ -366,7 +375,7 @@ function menuScreen() {
         <button type="button" class="btn quiet" data-act="help">How to play</button>
       </div>
       ${best ? `<p class="best">Arcade best <b>${points(best)}</b></p>` : ''}
-      ${isNewcomer() ? '<p class="note">New here? The <b>Tutorial</b> teaches every move, step by step.</p>' : `<p class="note tip">${newsLine() || menuTip()}</p>`}
+      ${isNewcomer() ? '<p class="note">New here? The <b>Tutorial</b> teaches every move, step by step.</p>' : `<p class="note tip">${dailyLine() || newsLine() || menuTip()}</p>`}
       <div class="foot">
         <button type="button" class="link" data-act="settings">Settings</button>
         <button type="button" class="link" data-act="record">Record</button>
@@ -1032,6 +1041,11 @@ function arcadeHeading() {
   return [`STAGE ${a.stage + 1} OF ${a.ladder.length}`, `ROUND 1 · CPU ON ${LEVEL_NAMES[st.level].toUpperCase()}`];
 }
 
+const dailyNote = () =>
+  app.daily.won
+    ? `<p class="note">Today's challenge: <b>beaten</b>. ${app.daily.total === 1 ? 'Your first day.' : `${app.daily.total} days beaten.`} A new one tomorrow.</p>`
+    : `<p class="note">Today's challenge: not yet - Rematch to try again.</p>`;
+
 const survivalNote = () => {
   const { wins, best, over, newBest, beaten = [] } = app.surv;
   const run = `${wins} ${wins === 1 ? 'win' : 'wins'}`;
@@ -1068,7 +1082,7 @@ function resultScreen() {
         ${winnerQuote()}
         ${statsCard()}
         ${app.levelMoved ? `<p class="note">The CPU is now on <b>${LEVEL_NAMES[app.levelMoved]}</b> for your next fight.</p>` : ''}
-        ${surviving() ? survivalNote() : couchNote()}
+        ${surviving() ? survivalNote() : app.daily ? dailyNote() : couchNote()}
         ${recordNews()}<div class="row">
           ${surviving() ? (app.surv.over ? '<button type="button" class="btn primary" data-act="survAgain">Try again</button>' : '<button type="button" class="btn primary" data-act="survNext">Next rival</button>') : '<button type="button" class="btn primary" data-act="rematch">Rematch</button>'}
           <button type="button" class="btn" data-act="select">Change fighters</button>
@@ -1418,7 +1432,7 @@ function startFight() {
   shuffleRivals(); // the next fight's rivals
   // The arcade ladder alternates between the arenas, starting from the chosen one.
   const first = ARENAS.findIndex((a) => a.id === app.place);
-  app.fightPlace = app.mode === 'arcade' ? ARENAS[(first + app.arcade.stage) % ARENAS.length].id : app.place;
+  app.fightPlace = app.mode === 'arcade' ? ARENAS[(first + app.arcade.stage) % ARENAS.length].id : app.daily && app.mode === 'quick' ? app.daily.arena : app.place;
   try {
     localStorage.setItem('gd-arena-played', '1');
   } catch {
@@ -1454,14 +1468,14 @@ function autoLevel() {
 // the sixth; the first defeat ends it. The best run is kept on the Record.
 const survivalLevel = () => { const n = app.surv?.wins || 0; return n < 2 ? 'normal' : n < 5 ? 'hard' : 'boss'; };
 const surviving = () => app.mode === 'quick' && app.level === 'survival' && !!app.surv;
-const cpuLevel = () => (app.level === 'survival' ? (app.mode === 'quick' ? survivalLevel() : autoLevel()) : app.level === 'auto' ? autoLevel() : app.level);
+const cpuLevel = () => (app.daily && app.mode === 'quick' ? app.daily.level : app.level === 'survival' ? (app.mode === 'quick' ? survivalLevel() : autoLevel()) : app.level === 'auto' ? autoLevel() : app.level);
 function nextSurvivalRival() {
   const pool = FIGHTERS.map((f) => f.id).filter((id) => id !== app.picks[0] && id !== app.picks[1]);
   return pool[Math.floor(Math.random() * pool.length)] || app.picks[1];
 }
 function stepAutoLevel(won) {
   app.levelMoved = null;
-  if (app.level !== 'auto' || (app.mode !== 'quick' && app.mode !== 'arena')) return;
+  if (app.level !== 'auto' || app.daily || (app.mode !== 'quick' && app.mode !== 'arena')) return; // (the day's challenge has its own level)
   const at = AUTO_STEPS.indexOf(autoLevel());
   const next = AUTO_STEPS[Math.max(0, Math.min(AUTO_STEPS.length - 1, at + (won ? 1 : -1)))];
   if (next !== AUTO_STEPS[at]) app.levelMoved = next;
@@ -1531,6 +1545,14 @@ function noteRecord() {
   if (won) r.wins++;
   r.streak = won ? r.streak + 1 : 0;
   r.bestStreak = Math.max(r.bestStreak, r.streak);
+  if (app.daily && app.mode === 'quick') {
+    app.daily.won = won;
+    if (won && r.dailyLast !== app.daily.key) {
+      r.dailyLast = app.daily.key;
+      r.dailyWins = (r.dailyWins || 0) + 1;
+    }
+    app.daily.total = r.dailyWins || 0;
+  }
   if (surviving()) {
     // The best as it stood when this run began (the Record is updated on
     // every win, so a run would never beat itself).
@@ -1659,6 +1681,16 @@ const ACTIONS = {
   quick() {
     app.mode = 'quick';
     show('select');
+  },
+  // The day's challenge: a Quick fight set up from the date (its level and
+  // arena for this fight only).
+  daily() {
+    const d = dailyChallenge();
+    app.mode = 'quick';
+    app.picks = [d.you, d.rival];
+    app.surv = null;
+    app.daily = d;
+    startFight();
   },
   training() {
     app.mode = 'training';
@@ -1810,10 +1842,14 @@ const ACTIONS = {
   },
   help: () => show('help'),
   menu() {
+    app.daily = null;
     stage.reset();
     show('menu');
   },
-  select: () => show('select'),
+  select() {
+    app.daily = null;
+    show('select');
+  },
   pick(el) {
     app.picks[Number(el.dataset.slot)] = el.dataset.id;
     show('select');
@@ -1847,6 +1883,7 @@ const ACTIONS = {
     show('select');
   },
   fight() {
+    app.daily = null;
     app.couch = null;
     app.surv = app.mode === 'quick' && app.level === 'survival' ? { wins: 0 } : null;
     if (app.mode === 'arcade') startArcade();

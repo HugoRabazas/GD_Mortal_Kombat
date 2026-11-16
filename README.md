@@ -69,6 +69,14 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   rivals it beat (the last eight of a long one). The rivals get no extra health or power, unlike the arcade
   boss: measured, a strong player beats Hard about a third of the time and
   the boss's mind about a fifth, so six in a row is already rare.
+- **Today's challenge**: the same fight for the whole alliance each day -
+  your fighter, the rival, the arena and the CPU's level (Normal or Hard),
+  drawn from the UTC date alone (client/src/daily.js), so everyone shares
+  it with no server. The menu's tip line offers it (Today's challenge: win
+  as SHADOW against KICHTA on Hard ›) until you beat it; the result says
+  so and how many days you have beaten. It plays as a Quick fight without
+  changing your own level, arena or Auto difficulty. (On the two shortest
+  phone screens held sideways the menu has no tip line, so no challenge.)
 - **2 Players**: a duel on one device, or a brawl with two CPU fighters added.
   From the second fight in a row the result keeps score between the two
   (This session: P1 2 · P2 1); Rematch carries it on, choosing fighters

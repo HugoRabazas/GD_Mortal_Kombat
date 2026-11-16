@@ -126,3 +126,14 @@ test('a run\'s heading replaces the first round\'s banner and call (Survival: RI
   handleEvents([{ type: 'round', round: 2 }], s, { quiet: false, project: () => ({ x: 0, y: 0 }), heading: ['RIVAL 4', 'ROUND 1 · CPU ON HARD'] });
   assert.equal(said.at(-1), 'Round two');
 });
+
+test('the daily challenge is the same for a day, differs across days, and is a fair fight', async () => {
+  const { dailyChallenge, dayKey } = await import('../client/src/daily.js');
+  const a = dailyChallenge('2026-11-16');
+  assert.deepEqual(dailyChallenge('2026-11-16'), a);
+  assert.notEqual(a.you, a.rival);
+  const days = Array.from({ length: 30 }, (_, i) => dailyChallenge(dayKey(Date.UTC(2026, 10, 1 + i))));
+  assert.ok(new Set(days.map((d) => d.you + d.rival + d.arena)).size > 20, 'varied');
+  assert.ok(days.every((d) => d.you !== d.rival && ['normal', 'hard'].includes(d.level)));
+  assert.equal(dayKey(Date.UTC(2026, 10, 16, 23, 59)), '2026-11-16');
+});
