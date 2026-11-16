@@ -90,6 +90,17 @@ export function blockSpark(x, y) {
   }
 }
 
+// An EX special setting off: two golden rings thrown out round the fighter
+// and a spray of sparks.
+export function exBurst(x, y, color) {
+  particles.push({ kind: 'ring', x, y, life: 1, decay: 0.045, color: '#ffe37a', size: 90 });
+  particles.push({ kind: 'ring', x, y, life: 1, decay: 0.065, color, size: 60 });
+  for (let i = 0; i < 14; i++) {
+    const a = (i / 14) * Math.PI * 2;
+    particles.push({ kind: 'streak', x, y, vx: Math.cos(a) * 5.5, vy: Math.sin(a) * 3.2 - 1.5, life: 1, decay: 0.045, color: i % 2 ? '#ffe37a' : color, size: 3 });
+  }
+}
+
 export function dust(x, y, amount = 6) {
   for (let i = 0; i < amount; i++) {
     particles.push({ kind: 'dust', x: x + (Math.random() - 0.5) * 30, y: y + 2, vx: (Math.random() - 0.5) * 2.4, vy: -Math.random() * 1.2, life: 1, decay: 0.035 + Math.random() * 0.02, color: '#c9b0a8', size: 5 + Math.random() * 6 });

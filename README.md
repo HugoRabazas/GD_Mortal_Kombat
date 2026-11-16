@@ -482,6 +482,13 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **An EX special looks the part**: as it sets off, two rings are thrown
+  out round the fighter - gold, and the fighter's own glow - with a spray
+  of sparks and a flare of sound (fx.js exBurst), besides EX before its
+  name and the brighter glow. UNDER THE GUARD! seen on screen on a slide
+  into a held guard. Gleh's duels on a larger sample: 47 % (weak against
+  the quick fighters, the strongest in brawls at 23 %: a zoner's profile);
+  the slide is not among the twelve moves that deal the most in a brawl.
 - **High and low: the slide goes under a guard**: the slide is a low blow
   (`low`): an ordinary guard does not stop it (UNDER THE GUARD!), a
   perfect guard still does, and a jump or a roll gets out of its way. The

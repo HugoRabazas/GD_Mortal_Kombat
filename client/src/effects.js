@@ -8,7 +8,7 @@
 import { ARENA } from '../../shared/constants.js';
 import { getFighter } from '../../shared/fighters.js';
 import { play, announce } from './audio.js';
-import { hitSpark, blockSpark, dust, comboCount, floatText as showText, showBanner, addShake, addFlash, lightFlash, cheerFor, confetti } from './render/fx.js';
+import { hitSpark, blockSpark, dust, exBurst, comboCount, floatText as showText, showBanner, addShake, addFlash, lightFlash, cheerFor, confetti } from './render/fx.js';
 
 // At the end of a brawl round, show over each fighter the points it earned.
 function showRoundPoints(state, project) {
@@ -336,9 +336,13 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         const p = project(by.x, 210, by.z);
         floatText(p.x, p.y, (e.ex ? 'EX ' : '') + char.special.name.toUpperCase(), e.ex ? '#ffe37a' : tint.accent, e.ex ? 26 : 22);
         if (e.ex) {
-          // The EX version: a brighter flash and a stronger light around them.
+          // The EX version: golden rings thrown out round them, a brighter
+          // flash and a stronger light.
+          const q = project(by.x, 90, by.z);
+          exBurst(q.x, q.y, tint.glow);
           lightFlash(by.x, 120, by.z, tint.glow, true);
           addShake(4);
+          if (!quiet) play('flare');
         }
         if (!quiet) play({ dash: 'rush', rise: 'flare', quake: 'heave', airDash: 'rush', airSpiral: 'flare', bodyPress: 'heave' }[e.move] || 'special');
         break;
