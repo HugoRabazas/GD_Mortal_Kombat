@@ -1734,3 +1734,29 @@ test('Moon Vault kicks from well out of reach', () => {
   assert.ok(lands(MOVES.kick.reach * 2.5), 'from 2.5 kicks away');
   assert.ok(!lands(ARENA.R * 0.8), 'not from most of the arena away');
 });
+
+// Every fighter's own moves land on a rival who stands still, from a range
+// each is meant for: the special and its air version up close, the
+// signature move (grab out of reach) from beyond a kick, the finisher.
+test('every fighter\'s special, air special, signature move and finisher land', () => {
+  const lands = (id, d0, plan) => {
+    const s = createMatch([id, 'jackie']);
+    while (s.phase !== 'fight') step(s, [0, 0]);
+    s.f[0].x = -d0 / 2;
+    s.f[1].x = d0 / 2;
+    s.f[0].z = s.f[1].z = 0;
+    s.f[0].meter = RULES.METER_MAX;
+    for (let t = 0; t < 150; t++) {
+      step(s, [plan(t), 0]);
+      if (s.ev.some((e) => e.type === 'hit' && e.by === 0)) return true;
+    }
+    return false;
+  };
+  const press = (button, from = 0) => (t) => (t >= from && t < from + 2 ? button : 0);
+  for (const f of FIGHTERS) {
+    assert.ok(lands(f.id, 80, press(INPUT.SPECIAL)), `${f.id} special`);
+    assert.ok([4, 8, 12, 16].some((at) => lands(f.id, 80, (t) => (t < 2 ? INPUT.JUMP : press(INPUT.SPECIAL, at)(t)))), `${f.id} air special`);
+    if (f.id !== 'shadow') assert.ok(lands(f.id, 150, press(INPUT.GRAB)), `${f.id} signature`); // (Shade Step strikes nothing: it steps behind)
+    assert.ok(lands(f.id, 80, press(INPUT.SUPER)), `${f.id} finisher`);
+  }
+});
