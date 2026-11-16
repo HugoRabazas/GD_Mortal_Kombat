@@ -137,3 +137,12 @@ test('the daily challenge is the same for a day, differs across days, and is a f
   assert.ok(days.every((d) => d.you !== d.rival && ['normal', 'hard'].includes(d.level)));
   assert.equal(dayKey(Date.UTC(2026, 10, 16, 23, 59)), '2026-11-16');
 });
+
+test('the daily challenge run: the day after carries it on, a gap starts again', async () => {
+  const { runAfter } = await import('../client/src/daily.js');
+  assert.equal(runAfter('2026-11-15', 2, '2026-11-16'), 3);
+  assert.equal(runAfter('2026-10-31', 5, '2026-11-01'), 6); // across a month
+  assert.equal(runAfter('2026-11-10', 4, '2026-11-16'), 1);
+  assert.equal(runAfter(undefined, undefined, '2026-11-16'), 1);
+  assert.equal(runAfter('2026-11-16', 3, '2026-11-16'), 3); // the same day again
+});

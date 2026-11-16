@@ -16,7 +16,7 @@ import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed,
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, setAmbience, getVolume, setVolume, STEP_SOUND } from './audio.js';
 import { setFloor, showBanner } from './render/fx.js';
-import { dailyChallenge, dayKey } from './daily.js';
+import { dailyChallenge, dayKey, runAfter } from './daily.js';
 import { THEMES } from './render/themes.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
@@ -255,7 +255,11 @@ const dailyDone = () => readRecord().dailyLast === dayKey();
 function dailyLine() {
   if (dailyDone()) return '';
   const d = dailyChallenge();
-  return `<button type="button" class="linkish" data-act="daily">Today's challenge: win as <b>${getFighter(d.you).name}</b> against <b>${getFighter(d.rival).name}</b> on ${LEVEL_NAMES[d.level]} ›</button>`;
+  // A run going (yesterday beaten): today would be its next day.
+  const r = readRecord();
+  const next = runAfter(r.dailyLast, r.dailyRun, d.key);
+  const lead = next > 1 ? `Day ${next} of your run` : "Today's challenge";
+  return `<button type="button" class="linkish" data-act="daily">${lead}: win as <b>${getFighter(d.you).name}</b> against <b>${getFighter(d.rival).name}</b> on ${LEVEL_NAMES[d.level]} ›</button>`;
 }
 
 function isNewcomer() {
@@ -1570,9 +1574,7 @@ function noteRecord() {
   if (app.daily && app.mode === 'quick') {
     app.daily.won = won;
     if (won && r.dailyLast !== app.daily.key) {
-      // Days in a row: yesterday's beaten too carries the run on.
-      const yesterday = dayKey(Date.parse(app.daily.key + 'T12:00:00Z') - 864e5);
-      r.dailyRun = r.dailyLast === yesterday ? (r.dailyRun || 1) + 1 : 1;
+      r.dailyRun = runAfter(r.dailyLast, r.dailyRun, app.daily.key); // days in a row
       r.dailyLast = app.daily.key;
       r.dailyWins = (r.dailyWins || 0) + 1;
     }

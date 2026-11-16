@@ -80,7 +80,8 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   fight's select screen (Back · Today's challenge · Fight). The Record
   counts the days beaten on its Won line (99 · 71% · 6 daily).
   Beating it on consecutive days makes a run (Challenge beaten · 3 days in
-  a row), which starts again after a day missed. Once beaten, the result
+  a row), which starts again after a day missed; with a run going the
+  menu's line says so (Day 4 of your run: win as SHADOW against KICHTA…). Once beaten, the result
   offers **Copy result**: a line to paste in the
   alliance's chat (GD Arena · Today's challenge 2026-11-16: beaten as
   SHADOW against KICHTA on Hard - 214 damage, best combo 7). Where the

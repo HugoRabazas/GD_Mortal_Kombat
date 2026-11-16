@@ -29,3 +29,11 @@ export function dailyChallenge(key = dayKey()) {
   const level = Math.floor(h / 7919) % 3 === 0 ? 'normal' : 'hard';
   return { key, you, rival, arena, level };
 }
+
+// The run of days in a row once `key` is beaten, given the last day beaten
+// and the run it had: the day after carries it on, anything else starts again.
+export function runAfter(lastKey, run, key) {
+  if (lastKey === key) return run || 1;
+  const yesterday = dayKey(Date.parse(key + 'T12:00:00Z') - 864e5);
+  return lastKey === yesterday ? (run || 1) + 1 : 1;
+}
