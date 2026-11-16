@@ -70,7 +70,7 @@ export function create3D(canvas) {
 
   const scene = new THREE.Scene();
   scene.fog = new THREE.FogExp2(lin(0x2a1030), 0.02);
-  const camera = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 300);
+  const camera = new THREE.PerspectiveCamera(38, 16 / 9, 0.1, 300); // (FOV below)
 
   // ---------- sky, moon and mountains (far away, so they barely move) ----------
   const paintSky = (th) => {
@@ -1076,6 +1076,10 @@ export function create3D(canvas) {
   // drop the cast shadows and the extra-sharp resolution, then render at a
   // lower resolution still. Slower devices keep a playable game.
   const size = { w: 960, h: 540, dpr: 1 };
+  // The canvas can reach past the 16:9 stage (to fill a wide phone): `kx`
+  // and `ky` are how many times wider and taller it is than the stage.
+  const bleed = { kx: 1, ky: 1 };
+  const FOV = 38;
   let quality = 0; // 0 = full, 1 = no cast shadows, 2 = reduced resolution
   // The player's choice in Settings: 'auto' adapts as above; 'sharp' keeps
   // full quality whatever happens; 'fast' starts at the lightest level and
@@ -1107,10 +1111,15 @@ export function create3D(canvas) {
   };
 
   return {
-    resize(w, h, dpr) {
-      Object.assign(size, { w, h, dpr });
+    // w x h: the stage; fullW x fullH: the canvas, centred on it. The
+    // camera keeps the stage's view the same and only adds to the sides.
+    resize(w, h, dpr, fullW = w, fullH = h) {
+      Object.assign(size, { w: fullW, h: fullH, dpr });
+      bleed.kx = fullW / w;
+      bleed.ky = fullH / h;
       applyQuality();
-      camera.aspect = w / h;
+      camera.aspect = fullW / fullH;
+      camera.fov = (2 * Math.atan(Math.tan((FOV * Math.PI) / 360) * bleed.ky) * 180) / Math.PI;
       camera.updateProjectionMatrix();
     },
 
@@ -1145,7 +1154,7 @@ export function create3D(canvas) {
       probe.set(x * S, h * S, z * S);
       const dist = probe.distanceTo(camera.position);
       probe.project(camera);
-      return { x: (probe.x * 0.5 + 0.5) * ARENA.W, y: (-probe.y * 0.5 + 0.5) * ARENA.H, k: 12 / dist };
+      return { x: (probe.x * 0.5 * bleed.kx + 0.5) * ARENA.W, y: (-probe.y * 0.5 * bleed.ky + 0.5) * ARENA.H, k: 12 / dist };
     },
 
     render(view, now, shake) {

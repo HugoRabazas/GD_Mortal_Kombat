@@ -477,12 +477,20 @@ export function createStage(glCanvas, hudCanvas) {
     stats: () => three?.stats() ?? null,
     setGraphics: (mode) => three?.setGraphics(mode),
 
-    resize(cssW, cssH) {
+    // fullW x fullH: how far the 3D arena may reach round the stage (it
+    // fills a wide phone's sides; the HUD keeps to the stage).
+    resize(cssW, cssH, fullW = cssW, fullH = cssH) {
       const dpr = window.devicePixelRatio || 1;
       scale = Math.max(0.5, Math.min(2.5, (cssW * dpr) / W));
       hudCanvas.width = Math.round(W * scale);
       hudCanvas.height = Math.round(H * scale);
-      three?.resize(cssW, cssH, dpr);
+      const wide = !!three && (fullW > cssW + 1 || fullH > cssH + 1);
+      glCanvas.style.left = wide ? `${-(fullW - cssW) / 2}px` : '';
+      glCanvas.style.top = wide ? `${-(fullH - cssH) / 2}px` : '';
+      glCanvas.style.width = wide ? `${fullW}px` : '';
+      glCanvas.style.height = wide ? `${fullH}px` : '';
+      three?.resize(cssW, cssH, dpr, wide ? fullW : cssW, wide ? fullH : cssH);
+      return wide;
     },
 
     // Call when a new fight starts so nothing carries over from the last one.

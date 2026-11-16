@@ -259,7 +259,18 @@ function layout() {
   const h = Math.floor((w * 9) / 16);
   stageEl.style.width = `${w}px`;
   stageEl.style.height = `${h}px`;
-  stage?.resize(w, h);
+  // Held sideways, the 3D arena reaches past the stage to the screen's edges
+  // (an even margin all round the stage, so the view stays centred).
+  let fullW = w;
+  let fullH = h;
+  if (!portrait) {
+    const a = root.getBoundingClientRect();
+    const r = stageEl.getBoundingClientRect();
+    fullW = w + 2 * Math.ceil(Math.max(0, r.left - a.left, a.right - r.right));
+    fullH = h + 2 * Math.ceil(Math.max(0, r.top - a.top, a.bottom - r.bottom));
+  }
+  const wide = stage?.resize(w, h, fullW, fullH);
+  root.classList.toggle('bleed', !!wide);
   touchLayout?.apply();
 }
 

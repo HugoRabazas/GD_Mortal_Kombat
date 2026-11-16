@@ -546,6 +546,13 @@ and the heartbeat, the crowd and the weather go quiet.
   the leg at the rival's feet). In a busy brawl the floating texts (damage,
   COUNTER, a special's name, the hits) landed on top of one another: each
   is now lifted clear of those already there, and stays put.
+- **The arena fills a phone held sideways**: a phone is wider than 16:9, so
+  the fight sat between two black bars with the touch controls on them.
+  In 3D the arena now reaches to the screen's edges (the crowd and the
+  torches at the sides): the canvas grows evenly round the 16:9 stage and
+  the camera keeps the stage's view exactly as it was, only adding to the
+  sides, so the scoreboard, the name tags and every hit mark stay where
+  they were. Upright, and in the flat 2D view, nothing changes.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

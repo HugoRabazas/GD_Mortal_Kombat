@@ -2833,3 +2833,21 @@ kbd {
     font-size: 0.92rem;
   }
 }
+
+/* Held sideways, the 3D arena fills the screen round the 16:9 stage (see
+   layout() in main.js): no frame round the stage then, and nothing past
+   the screen's edges. */
+#app.bleed {
+  overflow: hidden;
+}
+
+#app.bleed #stage {
+  overflow: visible;
+  outline: none;
+  box-shadow: none;
+  background: transparent;
+}
+
+#app.bleed #hud {
+  z-index: 1;
+}
