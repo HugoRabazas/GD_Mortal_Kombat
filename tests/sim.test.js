@@ -1449,3 +1449,45 @@ test('random button mashing never breaks the match (duel and arena)', () => {
     }
   }
 });
+
+test('in the air, special and punch together is the EX air special', () => {
+  // Every kind of air special: jump, then the special (with punch or not).
+  const air = (char, bits, gap = char === 'jackie' ? 80 : 120, first = 0) => {
+    const s = startFight([char, 'shadow']);
+    closeUp(s, gap);
+    s.f[0].meter = 100;
+    s.f[1].hp = 999;
+    step(s, [INPUT.JUMP, 0]);
+    run(s, 8);
+    step(s, [first || bits, 0]);
+    if (first) step(s, [bits, 0]);
+    const ex = s.f[0].ex;
+    const meter = s.f[0].meter;
+    let dmg = 0;
+    for (let i = 0; i < 90; i++) {
+      step(s, idle(s));
+      for (const e of s.ev) if (e.type === 'hit' && e.by === 0) dmg += e.dmg;
+    }
+    return { ex, meter, dmg, state: s.f[0].move };
+  };
+  for (const char of ['ruko', 'shadow', 'jackie', 'pixie']) {
+    const plain = air(char, INPUT.SPECIAL);
+    const ex = air(char, INPUT.SPECIAL | INPUT.PUNCH);
+    assert.equal(plain.ex, false, char);
+    assert.equal(ex.ex, true, char);
+    assert.ok(plain.meter > ex.meter, `${char}: it costs more`);
+    assert.ok(plain.dmg > 0 && ex.dmg > plain.dmg, `${char}: EX ${ex.dmg} against ${plain.dmg}`);
+    // A beat apart, either way round.
+    assert.equal(air(char, INPUT.PUNCH, undefined, INPUT.SPECIAL).ex, true, `${char}: special just after an air punch`);
+    assert.equal(air(char, INPUT.SPECIAL, undefined, INPUT.PUNCH).ex, true, `${char}: punch just after the air special`);
+  }
+  // Not enough energy: the plain air special.
+  const s = startFight(['ruko', 'shadow']);
+  closeUp(s, 120);
+  s.f[0].meter = 50;
+  step(s, [INPUT.JUMP, 0]);
+  run(s, 8);
+  step(s, [INPUT.SPECIAL | INPUT.PUNCH, 0]);
+  assert.equal(s.f[0].ex, false);
+  assert.equal(s.f[0].state, 'airAttack');
+});

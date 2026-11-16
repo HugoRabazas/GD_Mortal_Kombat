@@ -100,11 +100,14 @@ export const LESSONS = [
     id: 'aircombos',
     title: 'Air combos',
     partner: 'still',
+    energy: true,
+    intro: 'Your energy bar stays full in this lesson.',
     steps: [
       { id: 'juggle', name: 'Juggle', how: (k) => `after the launcher, hold ${k('j')} to jump after them and ${k('p')} in the air`, ev: (e) => e.type === 'hit' && e.by === 0 && e.juggle },
       { id: 'airThrow', name: 'Air throw', how: (k) => `after the launcher, hold ${k('j')} to jump after them, then ${k('g')}: seized in the air and driven into the floor`, ev: hit('airThrow') },
       { id: 'hammer', name: 'Hammer fist', how: (k) => `${k('j')}, ${k('k')} in the air and, once it lands, ${k('p')}: they bounce off the floor`, ev: hit('hammer') },
       { id: 'axeKick', name: 'Air string', how: (k) => `${k('j')}, ${k('p')} in the air and, once it lands, ${k('k')}: an axe kick`, ev: hit('axeKick') },
+      { id: 'exAir', name: 'EX air special', how: (k) => `${k('j')}, then ${k('s')} and ${k('p')} together in the air: the air special, stronger, and it shrugs off a blow`, ev: (e) => e.type === 'special' && e.by === 0 && e.ex && ['airDash', 'airBolt', 'bodyPress', 'airSpiral'].includes(e.move) },
     ],
   },
   {

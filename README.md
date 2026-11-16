@@ -499,6 +499,13 @@ and the heartbeat, the crowd and the weather go quiet.
   screens check (four players; name, lobby, room as host and as guest)
   now runs at ten sizes, upright too, with the cut and lap checks: all
   clean.
+- **EX air special**: in the air, special and punch together (or a beat
+  apart, either way round) with two thirds of the energy bar give the EX
+  version of your air special - nearly half as much damage again, a
+  golden burst, and it shrugs off one blow as it starts, as on the ground.
+  The CPU on Hard and Boss uses it now and then; the Air combos lesson
+  (energy bar full) teaches it. Names over a fighter in the air now float
+  above where they are, not on their head.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

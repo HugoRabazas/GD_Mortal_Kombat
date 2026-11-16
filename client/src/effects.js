@@ -149,14 +149,14 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
       }
       case 'signature': {
         // The fighter's own move: its name above them.
-        const p = project(by.x, aboveTag(char), by.z);
+        const p = project(by.x, aboveTag(char) + (by.h || 0), by.z);
         floatText(p.x, p.y, char.signature.name.toUpperCase(), tint.accent, 22, OVER);
         if (!quiet) play('swing');
         break;
       }
       case 'taunt': {
         // Each fighter's own line, and the energy it earned.
-        const p = project(by.x, aboveTag(char), by.z);
+        const p = project(by.x, aboveTag(char) + (by.h || 0), by.z);
         floatText(p.x, p.y, TAUNTS[by.char] || 'Come on!', tint.accent, 22, OVER);
         if (!quiet) play('pickup');
         break;
@@ -341,12 +341,12 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
       case 'special': {
         // (Names over a fighter float above their name tag, at 250: the tag
         // sits on top of the head.)
-        const p = project(by.x, aboveTag(char), by.z);
+        const p = project(by.x, aboveTag(char) + (by.h || 0), by.z); // (in the air, above where they are now)
         floatText(p.x, p.y, (e.ex ? 'EX ' : '') + char.special.name.toUpperCase(), e.ex ? '#ffe37a' : tint.accent, e.ex ? 26 : 22, OVER);
         if (e.ex) {
           // The EX version: golden rings thrown out round them, a brighter
           // flash and a stronger light.
-          const q = project(by.x, 90, by.z);
+          const q = project(by.x, 90 + (by.h || 0), by.z);
           exBurst(q.x, q.y, tint.glow);
           lightFlash(by.x, 120, by.z, tint.glow, true);
           addShake(4);

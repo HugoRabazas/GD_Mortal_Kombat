@@ -227,9 +227,11 @@ export function aiInput(ai, s, me) {
     const d = Math.hypot(o.x - f.x, o.z - f.z);
     ai.airSpecial = true;
     if (d < 170 && o.h <= 0 && rnd(ai) < cfg.punish * 0.4) {
-      ai.tap = INPUT.SPECIAL;
+      // Now and then the EX version, as on the ground.
+      const ex = cfg.parry >= 0.28 && f.meter >= EX.cost && f.meter < RULES.SUPER_COST && rnd(ai) < 0.35;
+      ai.tap = ex ? INPUT.SPECIAL | INPUT.PUNCH : INPUT.SPECIAL;
       ai.tapT = 2;
-      return INPUT.SPECIAL;
+      return ai.tap;
     }
   }
   else if (f.state === 'jump' && ai.target >= 0 && f.runJump && f.t >= 2 && f.t < 12 && ai.airPlan < 2) {

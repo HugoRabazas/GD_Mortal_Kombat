@@ -95,6 +95,7 @@ const exCache = new Map();
 // (A shot from afar is safer to throw than a blow up close: its EX version
 // gains less.)
 let exBolt = null;
+let exAirBolt = null;
 const exOf = (m) => {
   if (!exCache.has(m)) exCache.set(m, { ...m, dmg: Math.round(m.dmg * EX.dmg), ex: true });
   return exCache.get(m);
@@ -927,11 +928,14 @@ function control(s, f, inp) {
     case 'jump': {
       const b = f.buf;
       if (b & INPUT.SPECIAL && f.meter >= RULES.SPECIAL_COST) {
+        // With punch too (and the energy for it): the EX air special.
         const move = AIR_SPECIAL[getFighter(f.char).special.type];
-        f.meter -= RULES.SPECIAL_COST;
+        const ex = !!(b & INPUT.PUNCH) && f.meter >= EX.cost;
+        f.meter -= ex ? EX.cost : RULES.SPECIAL_COST;
         airAttack(s, f, move);
+        f.ex = ex;
         if (move === 'airSpiral') f.vh = Math.max(f.vh, 4); // a lift into the twirl
-        emit(s, 'special', { by: f.slot, move });
+        emit(s, 'special', { by: f.slot, move, ex });
         break;
       }
       if (b & (INPUT.PUNCH | INPUT.KICK | INPUT.GRAB)) {
@@ -955,6 +959,23 @@ function control(s, f, inp) {
       break;
     }
     case 'airAttack': {
+      // Special and punch a beat apart still make the EX air special: an air
+      // punch turns into it, or the air special is upgraded (paying the rest).
+      if (f.t < GRAB_WINDOW && !f.ex && f.buf & INPUT.SPECIAL && f.move === 'airPunch' && f.meter >= EX.cost) {
+        const move = AIR_SPECIAL[getFighter(f.char).special.type];
+        f.meter -= EX.cost;
+        airAttack(s, f, move);
+        f.ex = true;
+        if (move === 'airSpiral') f.vh = Math.max(f.vh, 4);
+        emit(s, 'special', { by: f.slot, move, ex: true });
+        break;
+      }
+      if (f.t < GRAB_WINDOW && !f.ex && AIR_MOVES[f.move] && f.buf & INPUT.PUNCH && f.meter >= EX.cost - RULES.SPECIAL_COST) {
+        f.meter -= EX.cost - RULES.SPECIAL_COST;
+        f.ex = true;
+        f.buf &= ~INPUT.PUNCH;
+        emit(s, 'special', { by: f.slot, move: f.move, ex: true, upgrade: true });
+      }
       // The other button a beat after the first makes a stomp, as on the ground.
       if (f.move !== 'stomp' && f.move !== 'airThrow' && f.t < GRAB_WINDOW && f.buf & (f.move === 'airPunch' ? INPUT.KICK : INPUT.PUNCH)) {
         airAttack(s, f, 'stomp');
@@ -994,6 +1015,7 @@ function control(s, f, inp) {
           z: f.z + Math.sin(f.dir) * 40,
           h: f.h + 70,
           vh: -3.6,
+          ex: f.ex,
           vx: Math.cos(f.dir) * PROJECTILE.speed * 0.85,
           vz: Math.sin(f.dir) * PROJECTILE.speed * 0.85,
           life: PROJECTILE.life,
@@ -1295,6 +1317,8 @@ function airAttack(s, f, move) {
     f.vz = Math.sin(f.dir) * v;
   }
   f.state = 'airAttack';
+  f.ex = false; // (set again for an EX air special)
+  f.exHit = false;
   f.move = move;
   f.t = 0;
   f.hits = [];
@@ -1321,7 +1345,7 @@ function land(s, f) {
           if (o === f || f.hits.includes(o.slot) || !canBeHit(o) || o.h > 20) continue;
           if (Math.hypot(o.x - f.x, o.z - f.z) > m.crash) continue;
           f.hits.push(o.slot);
-          applyHit(s, f, o, m, f.x, f.z, f.move);
+          applyHit(s, f, o, f.ex ? exOf(m) : m, f.x, f.z, f.move);
         }
         emit(s, 'quake', { by: f.slot, x: f.x, z: f.z, r: m.crash });
       }
@@ -1482,7 +1506,8 @@ function activeMove(f) {
   if (f.state === 'airAttack') {
     const m = MOVES[f.move];
     if (m.airOnly && f.t >= m.startup + m.active) return null; // a grasp that closed on nothing
-    return !m.reach || f.t < m.startup ? null : m;
+    if (!m.reach || f.t < m.startup) return null;
+    return f.ex && AIR_MOVES[f.move] ? exOf(m) : m;
   }
   return null;
 }
@@ -1590,7 +1615,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
 
   // An EX special shrugs off the first blow while it starts (a throw still
   // takes hold, a finisher still stops it, a knockout blow still knocks out).
-  if (def.state === 'attack' && def.ex && !def.exHit && def.t < MOVES[def.move].startup + EX.armour && kind !== 'super' && kind !== 'grab') {
+  if ((def.state === 'attack' || (def.state === 'airAttack' && AIR_MOVES[def.move])) && def.ex && !def.exHit && def.t < MOVES[def.move].startup + EX.armour && kind !== 'super' && kind !== 'grab') {
     const dmg = Math.max(1, Math.round(m.dmg * power));
     if (dmg < def.hp) {
       def.exHit = true;
@@ -1766,7 +1791,7 @@ function resolveHits(s) {
       if (Math.hypot(def.x - p.x, def.z - p.z) > PROJECTILE.r + BODY_R) continue;
       if (p.h + PROJECTILE.r < def.h || p.h - PROJECTILE.r > def.h + BODY_H) continue;
       p.dead = true;
-      applyHit(s, s.f[p.owner], def, p.rain ? RAIN_HIT : p.vh ? AIR_BOLT_HIT : p.ex ? (exBolt ??= { ...MOVES.bolt, dmg: Math.round(MOVES.bolt.dmg * 1.2), ex: true }) : MOVES.bolt, p.x - p.vx * 3, p.z - p.vz * 3, 'bolt');
+      applyHit(s, s.f[p.owner], def, p.rain ? RAIN_HIT : p.vh ? (p.ex ? (exAirBolt ??= { ...AIR_BOLT_HIT, dmg: Math.round(AIR_BOLT_HIT.dmg * 1.2), ex: true }) : AIR_BOLT_HIT) : p.ex ? (exBolt ??= { ...MOVES.bolt, dmg: Math.round(MOVES.bolt.dmg * 1.2), ex: true }) : MOVES.bolt, p.x - p.vx * 3, p.z - p.vz * 3, 'bolt');
       break;
     }
   }
