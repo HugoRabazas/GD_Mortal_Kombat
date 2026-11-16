@@ -2228,6 +2228,39 @@ kbd {
     padding-top: 4px;
     padding-bottom: 4px;
     min-height: 0;
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  /* The host's options keep inside their column: the four arenas in a
+     narrower picker. */
+  .screen.room > .opts .seg button {
+    padding-left: 7px;
+    padding-right: 7px;
+    font-size: 0.78rem;
+  }
+
+  .screen.room > .opts {
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* The box and Send stay inside their column (Send ran into the arena
+     picker beside it). */
+  .screen.room .chat .row,
+  .screen.lobby .chat .row {
+    flex-wrap: nowrap;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .screen.room .chat .row .btn,
+  .screen.lobby .chat .row .btn {
+    flex: none;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 
   .screen.room > .note,
@@ -2587,6 +2620,12 @@ kbd {
     padding-top: 5px;
     padding-bottom: 6px;
     min-height: 0;
+  }
+
+  /* The lobby's two lists are stacked upright: each takes its own height
+     (a share of 0, meant for side by side, squashed them flat). */
+  .screen.lobby .ladder {
+    flex: 0 0 auto;
   }
 
   .screen.room .people li,

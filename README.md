@@ -482,6 +482,16 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **The online lobby upright, and the room sideways, put right**: a fresh
+  look at every screen at 568x320 and 360x640 found the lobby broken on a
+  phone held upright - its two lists (who is online, the rooms) were
+  squashed flat (a share of the height meant for side by side) and Quick
+  match lay over the message box; they now take their own height. And in a
+  room on a small phone held sideways, Send ran into the arena picker: the
+  picker is narrower there and the message box keeps to its column. Neither
+  showed as overflow, so the screen walk now also reports controls cut off
+  at the sides (cut) and controls lying on top of each other (lap): it
+  flags the old lobby (lap3) and the old room (lap1), and nothing now.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
