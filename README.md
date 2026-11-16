@@ -722,6 +722,17 @@ and the heartbeat, the crowd and the weather go quiet.
   Its whoosh plays at once too (1-13 ms after the press instead of
   180-290 ms relayed), and the host's own word of that swing is then not
   played again - checked on ten presses, each heard once.
+- **Towards a realistic look - the floor** (loop 182): the first step of a
+  realism pass on the arenas (the fighters later; the user chose to keep
+  each member's avatar on the head). The floor and the dais are now
+  photographed stone - Poly Haven's "Stone Tiles 02" by Charlotte
+  Baglioni (CC0, public domain): its colour, relief (normal map) and
+  roughness, reduced to 512 px (118 KB in all, client/src/render/tex),
+  tinted to each arena (keeping most of the stone's own grey: tinted
+  fully it looked like coloured plastic, and too grey the desert lost its
+  sand) and frosted on the summit. The painted slabs stand in until the
+  photographs load. Draw calls unchanged (~298). Seen in 3D in the four
+  arenas, before and after.
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the

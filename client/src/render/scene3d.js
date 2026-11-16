@@ -20,6 +20,12 @@ import { takeFlashes, takeCheers } from './fx.js';
 import { createRig } from './rig3d.js';
 import { play } from '../audio.js';
 import { THEMES } from './themes.js';
+// Photographed stone for the floor: colour, relief (normal map) and
+// roughness, from Poly Haven's "Stone Tiles 02" (CC0, public domain),
+// reduced to 512 px.
+import stoneDiffUrl from './tex/stone_diff.jpg';
+import stoneNorUrl from './tex/stone_nor.jpg';
+import stoneRoughUrl from './tex/stone_rough.jpg';
 
 const S = 0.01;
 
@@ -230,7 +236,37 @@ export function create3D(canvas) {
     return t;
   };
 
-  const groundMat = new THREE.MeshStandardMaterial({ roughness: 0.92, metalness: 0 });
+  // The photographed stone, loaded once per use (each use repeats it
+  // differently); until it arrives the painted slabs stand in.
+  let photosIn = 0;
+  const photo = (url, repeat, srgb) => {
+    const t = new THREE.TextureLoader().load(url, () => {
+      // Both colour photographs in: on with them, whatever arena is showing.
+      if (srgb && ++photosIn === 2) {
+        groundMat.map = groundPhoto.map;
+        daisMat.map = daisPhoto.map;
+        groundMat.needsUpdate = daisMat.needsUpdate = true;
+      }
+    });
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.repeat.set(repeat, repeat);
+    if (srgb) t.encoding = THREE.sRGBEncoding;
+    t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+    return t;
+  };
+  const stonePhoto = (repeat) => ({ map: photo(stoneDiffUrl, repeat, true), normalMap: photo(stoneNorUrl, repeat), roughnessMap: photo(stoneRoughUrl, repeat) });
+  const groundPhoto = stonePhoto(10);
+  const daisPhoto = stonePhoto(2.2);
+  // An arena's stone colour as a tint over the grey photograph (snow: frost).
+  // (Mostly the stone's own grey, a little of the arena's colour: tinted
+  // fully, the photograph turned to coloured plastic.)
+  const stoneTint = (rgb, snow) => {
+    if (snow) return lin(0xdfe8f4);
+    const grey = (rgb[0] + rgb[1] + rgb[2]) / 3;
+    return new THREE.Color(...rgb.map((v) => Math.min(1, ((grey + (v - grey) * 0.65) / 255) * 2.1))).convertSRGBToLinear();
+  };
+
+  const groundMat = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, normalMap: groundPhoto.normalMap, roughnessMap: groundPhoto.roughnessMap, normalScale: new THREE.Vector2(1.6, 1.6) });
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(96, 96), groundMat);
   ground.rotation.x = -Math.PI / 2;
   ground.position.y = -0.3;
@@ -239,7 +275,7 @@ export function create3D(canvas) {
 
   // The fighting dais: a raised stone disc.
   const daisSideMat = new THREE.MeshStandardMaterial({ roughness: 0.8 });
-  const daisMat = new THREE.MeshStandardMaterial({ roughness: 0.78, metalness: 0.05 });
+  const daisMat = new THREE.MeshStandardMaterial({ roughness: 0.95, metalness: 0.05, normalMap: daisPhoto.normalMap, roughnessMap: daisPhoto.roughnessMap, normalScale: new THREE.Vector2(1.5, 1.5) });
   const dais = new THREE.Mesh(
     new THREE.CylinderGeometry(6.6, 6.9, 0.3, 64),
     [daisSideMat, daisMat, new THREE.MeshStandardMaterial({ color: lin(0x20131d) })],
@@ -811,8 +847,12 @@ export function create3D(canvas) {
       r.mat.map = theme.ridges[i];
       r.mat.needsUpdate = true;
     });
-    groundMat.map = theme.ground;
-    daisMat.map = theme.dais;
+    // The photographed stone, tinted to the arena (the painted slabs only
+    // if the photographs are missing).
+    groundMat.map = photosIn === 2 ? groundPhoto.map : theme.ground;
+    daisMat.map = photosIn === 2 ? daisPhoto.map : theme.dais;
+    groundMat.color.copy(stoneTint(th.ground, th.snow));
+    daisMat.color.copy(stoneTint(th.dais, th.snow));
     daisSideMat.color.copy(lin(th.daisSide));
     wallMat.color.copy(lin(th.wall));
     trimMat.color.copy(lin(th.trim));
