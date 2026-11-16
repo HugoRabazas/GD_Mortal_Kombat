@@ -51,6 +51,10 @@ const SIG = { near: 100 };
 // ticks of the thrower's throw. Both are pushed apart and stagger for `stun`
 // ticks, the thrower `edge` longer (the escaper moves first).
 const ESCAPE = { window: 9, stun: 12, edge: 6 };
+// The burst: caught in a combo (the second blow on), special and block
+// together spend half the energy to break out - a shockwave that pushes
+// back and staggers whoever is close (no damage), and a moment untouchable.
+export const BURST = { cost: 50, from: 2, reach: 130, push: 46, stun: 18, inv: 14 };
 // A taunt (block held, grab pressed, standing still): each fighter's own
 // gesture for `ticks`; energy is gained at tick `at`, and until it ends any
 // blow lands as a counter hit (it is still winding up).
@@ -751,6 +755,32 @@ function startAttack(s, f, move) {
   emit(s, 'swing', { by: f.slot, move });
 }
 
+// Break out of a combo (see BURST).
+function burst(s, f) {
+  f.meter -= BURST.cost;
+  f.stun = 0;
+  f.taken = 0;
+  f.buf = 0;
+  f.move = null;
+  setState(f, 'idle');
+  f.inv = BURST.inv;
+  for (const o of s.f) {
+    if (o === f || o.hp <= 0 || o.state === 'down' || o.state === 'ko') continue;
+    const dx = o.x - f.x;
+    const dz = o.z - f.z;
+    const d = hypot(dx, dz) || 1;
+    if (d > BURST.reach) continue;
+    o.x += (dx / d) * BURST.push;
+    o.z += (dz / d) * BURST.push;
+    keepInside(s, o);
+    o.move = null;
+    o.buf = 0;
+    setState(o, 'hit');
+    o.stun = BURST.stun;
+  }
+  emit(s, 'burst', { by: f.slot, x: f.x, z: f.z });
+}
+
 // Vanish and reappear just behind the nearest rival (or a long step ahead).
 function blink(s, f) {
   const o = nearestRival(s, f, 900);
@@ -1235,6 +1265,10 @@ function control(s, f, inp) {
     }
     case 'hit':
     case 'land': {
+      if (f.state === 'hit' && f.taken >= BURST.from && f.h <= 0 && held(INPUT.BLOCK) && f.buf & INPUT.SPECIAL && f.meter >= BURST.cost) {
+        burst(s, f);
+        break;
+      }
       if (--f.stun <= 0) {
         f.stun = 0;
         setState(f, 'idle');

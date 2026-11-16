@@ -136,6 +136,17 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet) play('pickup');
         break;
       }
+      case 'burst': {
+        // Breaking out of a combo: a ring of the fighter's own glow thrown
+        // out, a flash and a jolt.
+        const q = project(by.x, 90, by.z);
+        exBurst(q.x, q.y, tint.glow);
+        lightFlash(by.x, 110, by.z, tint.glow, true);
+        addShake(6);
+        floatText(q.x, q.y - 70, 'BURST!', '#ffd36a', 22);
+        if (!quiet) play('flare');
+        break;
+      }
       case 'tech': {
         // A quick rise off the floor.
         const p = project(by.x, 0, by.z);

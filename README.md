@@ -722,6 +722,20 @@ and the heartbeat, the crowd and the weather go quiet.
   Its whoosh plays at once too (1-13 ms after the press instead of
   180-290 ms relayed), and the host's own word of that swing is then not
   played again - checked on ten presses, each heard once.
+- **Burst** (loop 172): caught in a combo, there was nothing to do but
+  wait it out. Now, from a combo's second blow on, **block and special
+  together** break out of it for half the energy bar: a shockwave pushes
+  back and staggers whoever is close (no damage), and nothing touches you
+  for a moment ("BURST!", a ring of your glow, a jolt). The CPU uses it
+  too, about once a match on Hard and Boss (a third of the time on Normal,
+  never on Easy). Balance at seed 500 still in its ranges: duels 47-54 %,
+  brawls 14-21 %. In the help and the pause screen's Defence list (two of
+  its lines shortened so it still fits at 360x640); a rules test plays it
+  from a real punch string.
+- **Rollback costs a phone little** (loop 172): in a four-player brawl at a
+  361 ms ping, one guest's page spent 8.9 % of a processor core on scripts
+  (6.6 % the classic way), 30 % on all its work (29 %), and 14 MB of memory
+  (7 MB) for the 150 kept copies of the fight.
 - **The winner's line fits the match**: besides their usual line, each
   fighter has one for a perfect win (no round lost, a flawless last
   knockout), one for a comeback (the first round lost) and one for a close

@@ -511,6 +511,7 @@ function helpScreen() {
         <li><b>Grab</b> (its own button, or punch + kick together) seizes a rival up close, lifts them over your head and slams them down behind you. Short reach, but it goes straight through a guard; in a brawl, anyone can break it with a blow. Kick as they land: a <b>pursuit</b> onto them (a quick rise escapes it).</li>
         <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment; punch or kick late in it strikes out of it - a <b>rising uppercut</b> or a <b>spinning heel kick</b>. Block with the stick straight away from the rival is a quick <b>back-step</b>.</li>
         <li>Seized? Press <b>grab</b> at once to <b>break the throw</b>: both of you stagger apart.</li>
+        <li>Caught in a combo? From its second blow, <b>block and special together</b> <b>burst</b> out of it: half your energy, and a shockwave pushes back and staggers whoever is close (no damage), with a moment in which nothing touches you.</li>
         <li>Knocked down? Press <b>block</b> on the floor for a <b>quick rise</b>: you are back up in a blink. Punch or kick while getting up for a <b>rising sweep</b>.</li>
         <li><b>Taunt</b>: block held and grab, standing still. A little energy, but any blow on you is a counter.</li>
         <li>Hit a rival while they are <b>winding up</b> a blow of their own for a <b>counter</b>: a quarter more damage.</li>
@@ -651,13 +652,14 @@ function movesCard() {
       <dt>Air ${k(key.s)}</dt><dd><b>Air special</b>: your special's own air version. With ${k(key.p)} too: its <b>EX</b> version.</dd>`],
     defence: ['Defence', `
       <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b> - then ${k(key.p)} is a <b>riposte</b>, ${k(key.k)} a launcher.</dd>
-      <dt>${k(key.b)}, ${k(key.k)}</dt><dd><b>Guard sweep</b>: low, under a guard - down they go. A jump or a perfect guard beats it.</dd>
+      <dt>${k(key.b)}, ${k(key.k)}</dt><dd><b>Guard sweep</b>: low, under a guard. A jump or a perfect guard beats it.</dd>
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b> sideways or forwards: attacks pass through you.</dd>
       <dt>${k(key.b)} + away</dt><dd><b>Back-step</b>: a quick hop back.</dd>
       <dt>Roll, ${k(key.p)} / ${k(key.k)}</dt><dd>Late in a roll: a <b>rising uppercut</b>, or a <b>spinning heel kick</b>.</dd>
       <dt>${k(key.g)}</dt><dd>The moment you are seized: a <b>throw escape</b>.</dd>
+      <dt>${k(key.b)} + ${k(key.s)}</dt><dd>Caught in a combo: <b>burst</b> out, for half your energy.</dd>
       <dt>${k(key.b)}</dt><dd>On the floor: a <b>quick rise</b>.</dd>
-      <dt>Getting up</dt><dd>${k(key.p)}: a <b>rising sweep</b>, safe as it starts, slow if guarded. ${k(key.b)} + move: <b>roll clear</b>.</dd>`],
+      <dt>Getting up</dt><dd>${k(key.p)}: a <b>rising sweep</b>. ${k(key.b)} + move: <b>roll clear</b>.</dd>`],
     yours: [two ? 'Fighters' : 'Yours', own],
   };
   const tab = groups[app.moveTab] ? app.moveTab : 'basics';

@@ -7,7 +7,7 @@
 
 import { INPUT, RULES } from './constants.js';
 import { getFighter } from './fighters.js';
-import { MOVES, markedBy, EX } from './sim.js';
+import { MOVES, markedBy, EX, BURST } from './sim.js';
 import { atan2, hypot } from './dmath.js';
 
 // `parry` is how often the CPU manages a last-moment guard (a perfect guard,
@@ -123,6 +123,10 @@ export function aiInput(ai, s, me) {
     // A throw of ours just slammed them down: now and then the pursuit.
     if (e.type === 'slam' && e.by === me && cfg.parry > 0 && rnd(ai) < cfg.punish * 0.6) ai.pursue = s.tick;
   }
+
+  // Caught in a combo with half the energy: now and then, break out (the
+  // better it guards perfectly, the more often; never on Easy).
+  if (f.state === 'hit' && f.taken >= BURST.from && f.h <= 0 && f.meter >= BURST.cost && cfg.parry > 0 && rnd(ai) < cfg.parry * 0.08) return INPUT.BLOCK | INPUT.SPECIAL;
 
   // Attack buttons are tapped (held 2 ticks) so each decision is one press.
   let tap = 0;

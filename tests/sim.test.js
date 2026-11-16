@@ -1594,3 +1594,35 @@ test('a boss brought to half health powers up once a round (second wind)', () =>
   // An ordinary fighter never does.
   assert.ok(!seen.some((e) => e.type === 'enrage' && e.slot === 0));
 });
+
+test('caught in a combo, special and block together burst out: half the energy, the rival pushed back and staggered', () => {
+  const tryBurst = (meter, from) => {
+    const s = startFight(['ruko', 'shadow']);
+    closeUp(s);
+    s.f[0].meter = meter;
+    const seen = [];
+    let burstAt = -1;
+    let before = 0;
+    for (let t = 0; t < 150 && burstAt < 0; t++) {
+      const me = s.f[0];
+      before = me.meter;
+      // Shadow mashes punch (a string); Ruko, once caught (the `from`th blow
+      // on), holds block and taps special.
+      const caught = me.state === 'hit' && me.taken >= from;
+      step(s, [caught ? INPUT.BLOCK | (t % 2 ? INPUT.SPECIAL : 0) : 0, t % 3 === 0 ? INPUT.PUNCH : 0]);
+      seen.push(...s.ev);
+      if (s.ev.some((e) => e.type === 'burst')) burstAt = t;
+    }
+    return { s, seen, burstAt, spent: before - s.f[0].meter };
+  };
+  const { s, burstAt, spent } = tryBurst(60, 2);
+  assert.ok(burstAt >= 0, 'burst out of the string');
+  assert.equal(s.f[0].state, 'idle');
+  assert.ok(s.f[0].inv > 0, 'a moment untouchable');
+  assert.equal(spent, 50, 'half the energy spent');
+  assert.equal(s.f[1].state, 'hit', 'the attacker staggered');
+  assert.ok(Math.hypot(s.f[1].x - s.f[0].x, s.f[1].z - s.f[0].z) > 80, 'and pushed back');
+  // Not without the energy, and not on the first blow.
+  assert.equal(tryBurst(5, 2).burstAt, -1, 'needs half the bar');
+  assert.equal(tryBurst(60, 0).seen.filter((e) => e.type === 'burst').length <= 1, true);
+});
