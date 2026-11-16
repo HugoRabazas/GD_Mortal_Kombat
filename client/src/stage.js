@@ -590,6 +590,26 @@ export function createStage(glCanvas, hudCanvas) {
           ctx.fillText(view.net, W / 2, 90);
           ctx.restore();
         }
+        // Online, a fight standing still for a player who went quiet or left
+        // the app: why, large in the middle (it would look frozen otherwise).
+        if (view.wait) {
+          ctx.save();
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.lineJoin = 'round';
+          ctx.font = 'italic 700 34px Teko, Impact, "Arial Black", sans-serif';
+          ctx.lineWidth = 6;
+          ctx.strokeStyle = '#0b070d';
+          ctx.strokeText(view.wait, W / 2, H / 2 - 30);
+          ctx.fillStyle = '#ffd36a';
+          ctx.fillText(view.wait, W / 2, H / 2 - 30);
+          ctx.font = '600 14px Barlow, system-ui, sans-serif';
+          ctx.lineWidth = 4;
+          ctx.strokeText('The fight goes on when they are back', W / 2, H / 2);
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          ctx.fillText('The fight goes on when they are back', W / 2, H / 2);
+          ctx.restore();
+        }
         // Knocked out of a brawl that is still going: say so, and keep watching.
         if (view.me >= 0 && s.f.length > 2 && s.phase === 'fight' && s.f[view.me].hp <= 0) {
           ctx.save();

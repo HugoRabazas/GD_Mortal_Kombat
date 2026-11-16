@@ -2034,6 +2034,7 @@ function frame(now) {
   const mine = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
   const humans = app.mode === 'online' ? tags.map((_, i) => i === mine) : tags.map((t) => t === 'YOU' || t === 'P1' || t === 'P2');
   const net = app.mode === 'online' && playing ? app.online?.status() : '';
+  const wait = app.mode === 'online' && playing ? app.online?.waiting?.() ?? '' : '';
   const hint = !playing || !touchEl.hidden || app.screen !== 'fight' // (not through the pause screen)
     ? ''
     : app.mode === 'versus' && lastDevice() === 'pad'
@@ -2056,7 +2057,7 @@ function frame(now) {
   // guests: they see the fight through the host's updates, not its screen.
   if (app.mode === 'online' && playing && app.online?.isHosting?.() && app.hostDrawMs > 30 && now - (app.lastDrawAt || 0) < 90) return;
   const drawStart = performance.now();
-  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: practising(), clearCorners: touchOver(), noTags: app.screen === 'pause' }, now);
+  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, wait, hint, hintAlways: practising(), clearCorners: touchOver(), noTags: app.screen === 'pause' }, now);
   app.hostDrawMs = (app.hostDrawMs || 16) + (performance.now() - drawStart - (app.hostDrawMs || 16)) * 0.1;
   app.lastDrawAt = now;
 

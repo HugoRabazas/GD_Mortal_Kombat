@@ -977,10 +977,6 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     const kind = online.linkKind() === 'relayed' ? 'RELAYED' : 'DIRECT';
     if (match.rollback) {
       const st = match.rb.stats();
-      const nameOf = (i) => (match.info.slots[i]?.name || 'a player').toUpperCase().slice(0, 12);
-      const gone = match.away.findIndex((a) => a);
-      if (gone >= 0) return `${nameOf(gone)} LEFT THE APP · THE FIGHT WAITS`;
-      if (match.waitingSince && performance.now() - match.waitingSince > 300) return `WAITING FOR ${nameOf(match.waitingFor)}`;
       return `ROLLBACK${match.ping !== null ? ` · ${match.ping} MS` : ''}${st.behind > 6 ? ` · ${st.behind} AHEAD` : ''}${match.desync >= 0 ? ' · OUT OF STEP' : ''}`;
     }
     if (match.host) {
@@ -992,6 +988,17 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     const loss = m.lossPct();
     const slow = match.hostFps !== null && match.hostFps < 45 ? ` · HOST ${match.hostFps} FPS` : '';
     return `${kind}${match.ping !== null ? ` · ${match.ping} MS` : ''} · ${m.perSecond()}/S${loss ? ` · ${loss}% LOST` : ''}${slow}`;
+  };
+
+  // A rollback fight that stands still waiting for someone: why, in a few
+  // words for the middle of the screen ('' while it runs).
+  online.waiting = () => {
+    if (!match?.rollback || match.rb.world.s.phase === 'over') return '';
+    const nameOf = (i) => (match.info.slots[i]?.name || 'a player').toUpperCase().slice(0, 12);
+    const gone = match.away.findIndex((a) => a);
+    if (gone >= 0) return `${nameOf(gone)} LEFT THE APP`;
+    if (match.waitingSince && performance.now() - match.waitingSince > 300) return `WAITING FOR ${nameOf(match.waitingFor)}`;
+    return '';
   };
 
   // How the last match travelled, in a line for the result screen.
