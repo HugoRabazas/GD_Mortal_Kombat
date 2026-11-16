@@ -7,7 +7,7 @@ import { awardsFor as brawlAwards } from './awards.js';
 import { howWon } from './outcome.js';
 import { ARENA, INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
-import { LESSONS, lessonById, stepsDone, tutorPartner, drummer, comboer, jumper, partnerTape } from '../../shared/tutorial.js';
+import { LESSONS, lessonById, stepsDone, tutorPartner, drummer, comboer, jumper, floorer, partnerTape } from '../../shared/tutorial.js';
 import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
 import { createGame } from './game.js';
@@ -487,7 +487,7 @@ function rivalsCard(taken) {
 function selectScreen() {
   const levels = [['auto', `Auto · ${LEVEL_NAMES[autoLevel()]}`], ['easy', 'Easy'], ['normal', 'Normal'], ['hard', 'Hard']];
   const { mode } = app;
-  const names = mode === 'versus' ? ['Player 1', 'Player 2'] : mode === 'training' ? ['You', 'Training partner'] : ['You', 'CPU'];
+  const names = mode === 'versus' ? ['Player 1', 'Player 2'] : mode === 'training' ? ['You', 'Partner'] : ['You', 'CPU'];
   const seg = (items, current, act) => `<div class="seg" role="group">${items.map(([id, label]) => `<button type="button" class="${current === id ? 'on' : ''}" data-act="${act}" data-id="${id}" aria-pressed="${current === id}">${label}</button>`).join('')}</div>`;
   let second;
   if (mode === 'arcade') second = ladderCard();
@@ -502,11 +502,11 @@ function selectScreen() {
       </div>
       <div class="row">
         ${mode === 'quick' ? seg([...levels, ['survival', 'Survival']], app.level, 'level') : mode === 'arena' ? seg(levels, app.level === 'survival' ? 'auto' : app.level, 'level') : ''}
-        ${mode === 'training' ? seg([['still', 'Still'], ['block', 'Blocks'], ['beat', 'Kicks'], ['combo', 'Strings'], ['jump', 'Jumps in'], ['fight', 'Fights back']], app.dummy, 'dummy') : ''}
+        ${mode === 'training' ? seg([['still', 'Still'], ['block', 'Blocks'], ['beat', 'Kicks'], ['combo', 'Strings'], ['jump', 'Jumps in'], ['throw', 'Throws'], ['fight', 'Fights back']], app.dummy, 'dummy') : ''}
         ${mode === 'versus' ? seg([['duel', 'Duel'], ['brawl', 'Brawl with 2 CPU']], app.vsArena ? 'brawl' : 'duel', 'vsKind') : ''}
         ${placePicker()}
       </div>
-      ${mode === 'training' ? `<p class="note aside">No clock, and health and energy refill, so you can try every move. ${app.dummy === 'beat' ? 'Your partner walks up and kicks on a steady beat: raise your guard just before the kick lands for a perfect guard, or roll through it.' : app.dummy === 'combo' ? 'Your partner walks up and throws three-punch strings: block them, or from the second punch press block and special together to burst out.' : app.dummy === 'jump' ? 'Your partner leaps at you and kicks on the way down: block it, roll under it, or hit them as they land.' : 'Pause to leave.'}</p>` : ''}
+      ${mode === 'training' ? `<p class="note aside">No clock, and health and energy refill, so you can try every move. ${app.dummy === 'beat' ? 'Your partner walks up and kicks on a steady beat: raise your guard just before the kick lands for a perfect guard, or roll through it.' : app.dummy === 'combo' ? 'Your partner walks up and throws three-punch strings: block them, or from the second punch press block and special together to burst out.' : app.dummy === 'jump' ? 'Your partner leaps at you and kicks on the way down: block it, roll under it, or hit them as they land.' : app.dummy === 'throw' ? 'Your partner walks up and throws you, again and again: break the throw, then practise the quick rise and the rolling rise.' : 'Pause to leave.'}</p>` : ''}
       ${mode === 'versus' && app.touch ? '<p class="note">Two players need a keyboard or gamepads: the on-screen buttons control one fighter only.</p>' : ''}
       ${mode === 'arcade' ? '<p class="note aside">The ladder moves through the arenas, one after another.</p>' : ''}
       ${mode === 'quick' && app.level === 'survival' ? '<p class="note aside">Survival: duels in a row, a new rival each time, harder as you go. One defeat ends the run.</p>' : ''}
@@ -1441,7 +1441,7 @@ function startFight() {
   } else if (app.mode === 'quick') {
     controllers = [solo, cpu(cpuLevel())];
   } else if (app.mode === 'training') {
-    const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'beat' ? drummer() : app.dummy === 'combo' ? comboer() : app.dummy === 'jump' ? jumper() : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
+    const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'beat' ? drummer() : app.dummy === 'combo' ? comboer() : app.dummy === 'jump' ? jumper() : app.dummy === 'throw' ? floorer() : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
     if (app.keepTape && app.tape) app.tape.rewind();
     else app.tape = partnerTape();
     controllers = [watchButtons(app.tape.you(solo)), app.tape.partner(solo, partner)];

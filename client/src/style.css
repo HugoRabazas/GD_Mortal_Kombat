@@ -778,6 +778,19 @@ button:focus-visible {
   outline: 1px solid rgba(232, 180, 84, 0.35);
 }
 
+/* On a narrow phone a long row of choices (Training's seven partners)
+   wraps onto a second line instead of running off both sides. */
+@media (max-width: 440px) {
+  .seg {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .seg button {
+    padding-top: 5px;
+    padding-bottom: 3px;
+  }
+}
+
 .seg button {
   padding: 7px 18px 5px;
   border: 0;

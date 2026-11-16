@@ -100,7 +100,9 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   (This session: P1 2 · P2 1); Rematch carries it on, choosing fighters
   again starts afresh.
 - **Training**: a duel with no clock where health and energy refill, against a
-  partner who stands still, blocks, fights back, **jumps in** (it keeps a
+  partner who stands still, blocks, fights back, **throws you** again and
+  again (the Getting up lesson's partner: break the throw, quick-rise,
+  roll as you rise), **jumps in** (it keeps a
   jump's distance, then leaps at you with a flying kick every two or three
   seconds: block it, roll under it, or hit it as it lands), or **kicks on a steady beat**
   (one kick every 100 ticks, about 1.7 s) - the way to learn the timing of
