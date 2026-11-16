@@ -2869,3 +2869,67 @@ kbd {
     padding-bottom: 2px;
   }
 }
+
+/* An odd number of figures on the Record: the last spans both columns. */
+.recordstats > div:last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
+/* The Record on a phone held upright: the fighters two by two, so a full
+   history fits without scrolling. */
+@media (max-width: 520px) and (orientation: portrait) {
+  .record .ranking {
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    gap: 4px 6px;
+  }
+
+  .record .ranking li {
+    padding: 2px 6px 2px 4px;
+    gap: 4px;
+  }
+
+  .record .ranking .head {
+    width: 26px;
+    height: 26px;
+  }
+
+  .record .ranking .lname,
+  .record .ranking .pts {
+    font-size: 1rem;
+  }
+}
+
+/* ...and on a very short phone held sideways, every line a little slimmer. */
+@media (max-height: 340px) and (orientation: landscape) {
+  .recordstats {
+    gap: 0 18px;
+  }
+
+  .recordstats div {
+    padding: 1px 0;
+  }
+
+  .recordstats dd {
+    font-size: 1rem;
+  }
+
+  .record .ranking {
+    gap: 2px 8px;
+  }
+
+  .record .ranking li {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .record .ranking .head {
+    width: 22px;
+    height: 22px;
+  }
+
+  .screen.record > h2 {
+    margin: 0;
+    font-size: 1.2rem;
+  }
+}

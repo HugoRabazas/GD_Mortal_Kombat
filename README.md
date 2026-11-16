@@ -584,6 +584,14 @@ and the heartbeat, the crowd and the weather go quiet.
   tag now steps up a line. Floating texts, rising as they fade, stop under
   the scoreboard instead of passing behind the clock. The public site was
   checked too: it loads with the newest moves and a fight runs.
+- **Moves landed, on the Record**: the Record now counts how many of the 26
+  moves every fighter has (from the jab to the pursuit) you have landed at
+  least once - "Moves landed: 7 of 26", with the ones still to land on
+  hover - and the result card says when one lands for the first time
+  ("first Guard sweep landed"). A full Record also no longer runs off a
+  small phone (it did by 18 px upright and 7 px sideways, unseen because
+  the screen checks used an empty one): the fighters go two by two upright
+  and every line is slimmer on a very short phone held sideways.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

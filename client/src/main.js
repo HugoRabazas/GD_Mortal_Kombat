@@ -844,7 +844,7 @@ function watchLesson(s, events) {
 function tallyFight(g, events) {
   if (app.statsFor !== g) {
     app.statsFor = g;
-    app.stats = g.state.f.map(() => ({ dmg: 0, hits: 0, combo: 0, perfect: 0 }));
+    app.stats = g.state.f.map(() => ({ dmg: 0, hits: 0, combo: 0, perfect: 0, kinds: new Set() }));
   }
   for (const e of events) {
     const st = app.stats[e.by];
@@ -853,6 +853,7 @@ function tallyFight(g, events) {
       st.dmg += e.dealt ?? e.dmg;
       st.hits++;
       st.combo = Math.max(st.combo, e.combo || 1);
+      st.kinds.add(e.kind);
     } else if (e.type === 'parry') {
       st.perfect++;
     }
@@ -1320,6 +1321,16 @@ function readRecord() {
   }
   return { v: 1, fights: 0, wins: 0, streak: 0, bestStreak: 0, bestCombo: 0, perfect: 0, damage: 0, online: 0, by: {} };
 }
+// The moves every fighter has, by the name a landed blow carries: the
+// Record counts how many of them you have landed at least once.
+const MOVE_BOOK = {
+  punch: 'Jab', punch2: 'Second punch', punch3: 'Third punch', kick: 'Kick', kick2: 'Roundhouse', hook: 'Hook kick',
+  backfist: 'Spinning backfist', elbow: 'Elbow', launch: 'Launcher', riposte: 'Riposte', lunge: 'Lunging straight',
+  slide: 'Slide', sweep: 'Guard sweep', grab: 'Throw', pursuit: 'Pursuit', breaker: 'Guard-breaker',
+  airPunch: 'Diving punch', airKick: 'Flying kick', flyKnee: 'Flying knee', axeKick: 'Axe kick', hammer: 'Hammer fist',
+  stomp: 'Stomp', airThrow: 'Air throw', riseKick: 'Rising sweep', rollUpper: 'Rising uppercut', rollSpin: 'Spinning heel kick',
+};
+const MOVE_TOTAL = Object.keys(MOVE_BOOK).length;
 // Round numbers of wins worth a word when they are reached.
 const WIN_MILESTONES = [10, 25, 50, 100, 250, 500, 1000];
 
@@ -1347,6 +1358,11 @@ function noteRecord() {
     r.bestCombo = Math.max(r.bestCombo, st.combo);
     r.perfect += st.perfect;
     r.damage += st.dmg;
+    // Moves landed for the first time (those every fighter has).
+    const known = new Set(Array.isArray(r.moves) ? r.moves : []);
+    const fresh = [...(st.kinds || [])].filter((k) => MOVE_BOOK[k] && !known.has(k));
+    if (fresh.length && was.played > 0) app.newBests.push(fresh.length === 1 ? `first ${MOVE_BOOK[fresh[0]]} landed` : `${fresh.length} moves landed for the first time`);
+    r.moves = [...known, ...fresh];
   }
   const f = (r.by[char] = r.by[char] || { fights: 0, wins: 0 });
   f.fights++;
@@ -1357,6 +1373,12 @@ function noteRecord() {
     // not remembered
   }
 }
+
+// The moves still to land, for the Record's tooltip.
+const missingMoves = (r) => {
+  const left = Object.keys(MOVE_BOOK).filter((k) => !(r.moves || []).includes(k)).map((k) => MOVE_BOOK[k]);
+  return left.length ? `Still to land: ${left.join(', ')}` : 'Every move landed';
+};
 
 function recordScreen() {
   const r = readRecord();
@@ -1379,6 +1401,7 @@ function recordScreen() {
               <div><dt>Perfect guards</dt><dd>${r.perfect}</dd></div>
               <div><dt>Damage dealt</dt><dd>${points(r.damage)}</dd></div>
               <div><dt>Online fights</dt><dd>${r.online}</dd></div>
+              <div title="${esc(missingMoves(r))}"><dt>Moves landed</dt><dd>${(r.moves || []).filter((k) => MOVE_BOOK[k]).length} of ${MOVE_TOTAL}</dd></div>
               <div><dt>Favourite</dt><dd>${fav[1] ? fav[0].name : '-'}</dd></div>
             </dl>
             <ol class="ranking">${rows}</ol>`
