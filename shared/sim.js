@@ -1701,7 +1701,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
 
   if (att.state === 'attack') att.landed = (att.landed || 0) + 1; // a blow that got through
   if (m.ult && att.state === 'attack') att.ultOn = def.slot; // the finisher has its victim
-  const juggled = def.state === 'down'; // struck in the air after a launcher
+  const juggled = def.state === 'down' && !m.otg; // struck in the air after a launcher (not a pursuit on the floor)
   // Caught winding up? (Checked before the hit wipes out their move.)
   const wound = def.state === 'attack' && MOVES[def.move];
   const counter = !!wound && def.t < wound.startup;

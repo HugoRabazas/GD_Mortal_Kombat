@@ -538,11 +538,14 @@ export function createStage(glCanvas, hudCanvas) {
         ctx.restore();
       }
 
-      // Sparks, dust and damage numbers sit on the flat layer in both views.
-      drawFx(ctx, !!view.clearCorners);
+      // Sparks, dust and damage numbers sit on the flat layer in both views;
+      // floating texts keep clear of the name tags over the fighters.
+      const spots = view.demo ? [] : s.f.map((f) => project(f.x, f.h + (three ? three.headTop(f.slot) * 100 - f.h : 150), f.z));
+      const tagged = !view.demo && !view.noTags && s.phase !== 'over';
+      const avoid = tagged ? s.f.filter((f) => spots[f.slot] && f.hp > 0 && view.labels[f.slot]).map((f) => { const p = spots[f.slot]; const k = Math.min(1.25, Math.max(0.7, p.k)); return { x: p.x, y: p.y - 8 * k, w: view.labels[f.slot].length * 9 * k + 8, h: 26 * k }; }) : [];
+      drawFx(ctx, !!view.clearCorners, avoid);
 
       if (!view.demo) {
-        const spots = s.f.map((f) => project(f.x, f.h + (three ? three.headTop(f.slot) * 100 - f.h : 150), f.z));
         if (!view.noTags) drawTags(ctx, s, spots, view.labels);
         dizzyStars(ctx, s, (f, back) => project(f.x - Math.cos(f.dir) * back, three ? three.headTop(f.slot) * 100 : 150, f.z - Math.sin(f.dir) * back), now);
         finaleOverlay(ctx, s, worn);

@@ -573,6 +573,12 @@ and the heartbeat, the crowd and the weather go quiet.
   and the thrower is left open. The CPU (Normal and up) pursues about half
   of its throws, and already rises quickly; the Combos lesson teaches it;
   help, pause list and a tip explain both sides.
+- **Pursuit and quick rise on screen; texts clear of the name tags**: a
+  pursuit that lands shows PURSUIT! with dust and a dull thud (and no
+  longer counts as a juggle), a quick rise shows QUICK RISE. The pursuit
+  checked on a phone with real touches (GRAB, then K). Floating texts now
+  keep clear of the name tags over the fighters too, but are never lifted
+  into the scoreboard.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

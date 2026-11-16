@@ -5,6 +5,8 @@ import { ARENA } from '../../../shared/constants.js';
 
 const particles = [];
 const texts = [];
+// Floating texts are not lifted (clear of each other) into the scoreboard.
+const CEIL = 96;
 let banner = null;
 // The combo counter: a big count of the blows in the current combo at the
 // attacker's side of the screen, with a word for how good it is.
@@ -231,7 +233,7 @@ function drawCombo(ctx, high) {
   ctx.restore();
 }
 
-export function drawFx(ctx, high = false) {
+export function drawFx(ctx, high = false, avoid = []) {
   drawCombo(ctx, high);
   ctx.save();
   for (const p of particles) {
@@ -320,13 +322,13 @@ export function drawFx(ctx, high = false) {
   // In a crowd (a brawl) texts would land on top of each other: each one,
   // oldest first, is lifted clear of those already placed - and stays lifted
   // (`off` only grows), so nothing jitters from frame to frame.
-  const placed = [];
+  const placed = [...avoid]; // (the name tags: { x, y, w, h }, centred)
   for (const t of texts) {
     ctx.font = `italic 900 ${t.size}px Teko, Impact, "Arial Black", sans-serif`;
     const w = ctx.measureText(t.text).width + 6;
     const h = t.size * 0.85;
     let y = t.y - (t.off || 0);
-    for (let n = 0; n < 6 && placed.some((p) => Math.abs(p.x - t.x) * 2 < p.w + w && Math.abs(p.y - y) * 2 < p.h + h); n++) y -= h;
+    for (let n = 0; n < 6 && y - h > CEIL && placed.some((p) => Math.abs(p.x - t.x) * 2 < p.w + w && Math.abs(p.y - y) * 2 < p.h + h); n++) y -= h;
     t.off = Math.max(t.off || 0, t.y - y);
     placed.push({ x: t.x, y, w, h });
     ctx.globalAlpha = Math.min(1, t.life * 2);

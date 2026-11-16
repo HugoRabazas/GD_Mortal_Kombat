@@ -121,6 +121,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         // A quick rise off the floor.
         const p = project(by.x, 0, by.z);
         dust(p.x, p.y, 8);
+        floatText(p.x, p.y - 150, 'QUICK RISE', '#9fe8ff', 18);
         if (!quiet) play('jump');
         break;
       }
@@ -296,6 +297,13 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
           lightFlash(e.x, e.h, e.z, tint.glow, true);
         }
         if (e.kind === 'riposte') floatText(p.x, p.y - 58, 'RIPOSTE!', '#9fe8ff', 26);
+        if (e.kind === 'pursuit') {
+          // Knee first onto a rival on the floor: dust and a dull thud.
+          const g = project(e.x, 0, e.z);
+          dust(g.x, g.y, 10);
+          floatText(p.x, p.y - 58, 'PURSUIT!', '#ffb050', 26);
+          if (!quiet) play('thud');
+        }
         if (e.under) floatText(p.x, p.y - 58, 'UNDER THE GUARD!', '#ffb050', 24);
         if (e.kind === 'airThrow') floatText(p.x, p.y - 58, 'AIR THROW!', '#ffb050', 26);
         if (e.kind === 'launch') floatText(p.x, p.y - 58, 'LAUNCH!', '#ffb050', 26);
