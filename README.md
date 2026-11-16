@@ -482,6 +482,10 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **Names over a fighter clear their tag**: the special's name (and the
+  signature move's, and the taunt's line) floated at the height of the
+  YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
+  they now set off above it - higher over the sumo build.
 - **An EX special looks the part**: as it sets off, two rings are thrown
   out round the fighter - gold, and the fighter's own glow - with a spray
   of sparks and a flare of sound (fx.js exBurst), besides EX before its
