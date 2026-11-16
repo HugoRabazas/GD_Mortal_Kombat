@@ -284,6 +284,14 @@ export const MOVES = {
     startup: 5, active: 999, recovery: 0, dmg: 10, reach: 44, arc: Math.PI, y0: -110, y1: 30, aim: 0,
     hitstun: 0, blockstun: 14, push: 7, gain: 10, knockdown: true, heavy: true, bounce: 6.5,
   },
+  // Grab in the air with a rival in the air close by (jumping, or launched):
+  // an air throw. Seized and driven head first into the floor (`spike` is
+  // their downward speed). It takes hold of nobody standing on the ground -
+  // grab over a grounded rival is still the stomp.
+  airThrow: {
+    startup: 3, active: 7, recovery: 0, dmg: 11, reach: 72, arc: 1.4, y0: -60, y1: 130, aim: 160,
+    hitstun: 0, blockstun: 0, push: 2, gain: 12, knockdown: true, heavy: true, unblockable: true, airOnly: true, spike: -12,
+  },
   // --- specials (cost RULES.SPECIAL_COST energy) ---
   dash: {
     startup: 9, active: 13, recovery: 20, dmg: 14, speed: 13, reach: 82, arc: 1.1, y0: 10, y1: 150, aim: 340,
@@ -892,7 +900,8 @@ function control(s, f, inp) {
       }
       if (b & (INPUT.PUNCH | INPUT.KICK | INPUT.GRAB)) {
         const kick = f.runJump && !f.air2 && f.t < 16 ? 'flyKnee' : 'airKick';
-        airAttack(s, f, b & INPUT.GRAB || (b & INPUT.PUNCH && b & INPUT.KICK) ? 'stomp' : b & INPUT.KICK ? kick : 'airPunch');
+        const grab = b & INPUT.GRAB || (b & INPUT.PUNCH && b & INPUT.KICK);
+        airAttack(s, f, grab ? (airborneRival(s, f) ? 'airThrow' : 'stomp') : b & INPUT.KICK ? kick : 'airPunch');
         break;
       }
       if (f.jumpT > 0 && !f.air2 && f.t >= AIR_JUMP.from) {
@@ -911,7 +920,7 @@ function control(s, f, inp) {
     }
     case 'airAttack': {
       // The other button a beat after the first makes a stomp, as on the ground.
-      if (f.move !== 'stomp' && f.t < GRAB_WINDOW && f.buf & (f.move === 'airPunch' ? INPUT.KICK : INPUT.PUNCH)) {
+      if (f.move !== 'stomp' && f.move !== 'airThrow' && f.t < GRAB_WINDOW && f.buf & (f.move === 'airPunch' ? INPUT.KICK : INPUT.PUNCH)) {
         airAttack(s, f, 'stomp');
         break;
       }
@@ -1383,6 +1392,12 @@ function canBeHit(f) {
   return f.inv <= 0 && (f.state !== 'down' || juggled) && f.state !== 'getup' && f.state !== 'ko';
 }
 
+// A rival in the air within an air throw's grasp (jumping, or launched).
+export function airborneRival(s, f) {
+  const m = MOVES.airThrow;
+  return s.f.find((o) => o !== f && !isOut(o) && o.h > 25 && canBeHit(o) && Math.hypot(o.x - f.x, o.z - f.z) < m.reach + BODY_R && Math.abs(o.h - f.h) < 110) || null;
+}
+
 // Is `def` inside the wedge of `att`'s current attack?
 function inWedge(att, def, m) {
   const dx = def.x - att.x;
@@ -1401,6 +1416,7 @@ function activeMove(f) {
   }
   if (f.state === 'airAttack') {
     const m = MOVES[f.move];
+    if (m.airOnly && f.t >= m.startup + m.active) return null; // a grasp that closed on nothing
     return !m.reach || f.t < m.startup ? null : m;
   }
   return null;
@@ -1585,6 +1601,14 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     // A launcher opens a juggle; a stomp bounces its victim off the floor
     // for one blow more.
     def.juggle = m.launch ? JUGGLE : m.bounce ? 1 : juggled ? def.juggle - 1 : 0;
+    if (m.spike) {
+      // Seized in the air and driven into the floor, right in front.
+      def.vh = m.spike;
+      def.vx = dx * 1.5;
+      def.vz = dz * 1.5;
+      def.juggle = 0;
+      att.vh = Math.max(att.vh, 5); // the thrower springs off them
+    }
   } else {
     def.state = 'hit';
     def.t = 0;
@@ -1618,6 +1642,7 @@ function resolveHits(s) {
     if (!m) continue;
     for (const def of s.f) {
       if (def === att || att.hits.includes(def.slot) || !canBeHit(def)) continue;
+      if (m.airOnly && def.h <= 5) continue; // (an air throw takes hold of nobody on the ground)
       if (inWedge(att, def, m)) pending.push({ att, def, m, x: att.x, z: att.z, kind: m.ult ? 'super' : att.move });
     }
   }

@@ -247,9 +247,19 @@ export function aiInput(ai, s, me) {
     // A rival launched into the air: strike them before they land.
     if (o.state === 'down' && o.h > 0 && o.juggle > 0 && d < 95 && f.t >= 3 && ai.airPlan < 3) {
       ai.airPlan = 3;
-      ai.tap = rnd(ai) < 0.6 ? INPUT.PUNCH : INPUT.KICK;
+      const r = rnd(ai);
+      ai.tap = r < 0.45 ? INPUT.GRAB : r < 0.75 ? INPUT.PUNCH : INPUT.KICK; // the air throw ends a juggle too
       ai.tapT = 2;
       return ai.tap;
+    }
+    // A rival in the air alongside: an air throw, as often as it punishes.
+    if ((o.state === 'jump' || o.state === 'airAttack') && o.h > 25 && d < 90 && Math.abs(o.h - f.h) < 100 && ai.airPlan < 3) {
+      ai.airPlan = 3;
+      if (rnd(ai) < cfg.punish * 0.6) {
+        ai.tap = INPUT.GRAB;
+        ai.tapT = 2;
+        return INPUT.GRAB;
+      }
     }
     if (f.vh < 0 && d < 50 && o.h <= 0 && ai.airPlan < 2) {
       ai.airPlan = 2;

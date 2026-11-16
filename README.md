@@ -482,6 +482,16 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **Air throw**: grab in the air with a rival in the air close by (jumping,
+  or launched) seizes them and drives them head first into the floor (11,
+  unblockable, the thrower springs off them); with the rival on the ground
+  grab is still the stomp. Punch, punch, kick, jump, grab is a juggle that
+  ends in a throw. The CPU throws a rival who jumps alongside as often as it
+  punishes, and ends some juggles with it (a rare sight: about one duel in
+  twenty). Taught in the Tutorial (Combos: Air throw) with a scripted
+  player, in the pause list (Air) and the help; a pose of its own, AIR
+  THROW! on screen, a rules test (101). Duels 47-53 %, brawl wins 13-23 %,
+  ladder 100 / 72 / 61 %, boss beats Hard 93 %.
 - **A rush is stopped only by the rival it is after**: an aimed finisher (a
   rush or a leap: everyone's but Pixie's, Gleh's and Zelrith's, which rise
   first) sets out after the nearest rival, and from that moment, in a brawl,

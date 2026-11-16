@@ -89,6 +89,7 @@ export const LESSONS = [
     steps: [
       { id: 'launch', name: 'Launcher', how: (k) => `${k('p')} ${k('p')} ${k('k')}: the kick throws the partner up`, ev: hit('launch') },
       { id: 'juggle', name: 'Juggle', how: (k) => `after the launcher, hold ${k('j')} to jump after them and ${k('p')} in the air`, ev: (e) => e.type === 'hit' && e.by === 0 && e.juggle },
+      { id: 'airThrow', name: 'Air throw', how: (k) => `after the launcher, hold ${k('j')} to jump after them, then ${k('g')}: seized in the air and driven into the floor`, ev: hit('airThrow') },
       { id: 'kick2', name: 'Kick string', how: (k) => `${k('k')} ${k('k')}: a kick that lands flows into a roundhouse`, ev: hit('kick2') },
       { id: 'elbow', name: 'Kick, elbow', how: (k) => `${k('k')} ${k('p')}: a kick that lands flows into a stepping elbow - then ${k('p')} floors, ${k('k')} launches`, ev: hit('elbow') },
       { id: 'hook', name: 'Hook kick', how: (k) => `${k('p')} ${k('k')}: the kick spins the partner round`, ev: hit('hook') },

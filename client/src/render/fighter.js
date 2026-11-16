@@ -619,6 +619,11 @@ function targetPose(f, now) {
       return f.vh < -3 ? pose({ ...AIR, ffx: 14, ffy: -8, fbx: -10, fby: -2, hfy: -30, hby: -24 }) : pose(AIR);
     case 'airAttack': {
       const pre = f.t < (MOVES[f.move]?.startup ?? 0);
+      if (f.move === 'airThrow') {
+        // Both hands reaching out and seizing, then flung down across the body.
+        if (f.t < MOVES.airThrow.startup) return pose({ hipY: -64, lean: 0.3, hfx: 52, hfy: -24, hbx: 48, hby: -14, ffx: 14, ffy: -20, fbx: -16, fby: -10 });
+        return pose({ hipY: -64, lean: 0.75, tilt: 0.2, hfx: 40, hfy: 34, hbx: 30, hby: 40, ffx: -6, ffy: -34, fbx: -28, fby: -20 });
+      }
       if (f.move === 'airPunch') {
         // A fist driven down and forward at whoever is below.
         if (pre) return pose({ hipY: -62, lean: 0.2, hfx: 2, hfy: -14, hbx: -16, hby: 2, ffx: 12, ffy: -24, fbx: -14, fby: -14 });

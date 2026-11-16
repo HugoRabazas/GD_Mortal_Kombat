@@ -202,6 +202,24 @@ const BOTS = {
   },
   kick2: () => routine(80, 50, (k) => (k === 0 || k === 11 ? INPUT.KICK : 0)),
   elbow: () => routine(80, 50, (k) => (k === 0 ? INPUT.KICK : k === 11 ? INPUT.PUNCH : 0)),
+  airThrow: () => {
+    // Like the juggle, but the grab in the air once level with them.
+    let air = false;
+    const r = routine(55, 90, (k) => (k === 0 || k === 9 ? INPUT.PUNCH : k === 19 ? INPUT.KICK : 0));
+    return (s, t) => {
+      const me = s.f[0];
+      const o = s.f[1];
+      if (me.move === 'launch' && me.hits.length) {
+        air = false;
+        return INPUT.JUMP;
+      }
+      if (me.state === 'jump' && o.h > 25 && Math.abs(me.h - o.h) < 60 && !air) {
+        air = true;
+        return INPUT.GRAB;
+      }
+      return me.state === 'jump' || me.state === 'airAttack' ? 0 : r(s, t);
+    };
+  },
   backfist: () => routine(55, 60, (k) => (k === 0 ? INPUT.PUNCH : k === 9 ? INPUT.KICK : k === 20 ? INPUT.PUNCH : 0)),
   hook: () => routine(55, 50, (k) => (k === 0 ? INPUT.PUNCH : k === 9 ? INPUT.KICK : 0)),
   axeKick: () => routine(70, 60, (k, s) => (k === 0 ? INPUT.JUMP | toward(s, 0) : k === 10 ? INPUT.PUNCH : k === 16 ? INPUT.KICK : 0)),

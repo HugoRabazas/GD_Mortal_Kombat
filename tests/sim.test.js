@@ -619,6 +619,51 @@ test('kick, punch is a stepping elbow that carries on into either ender; a guard
   assert.ok(launched, 'and it lands');
 });
 
+test('grab in the air: an air throw with a rival in the air close by, the stomp with them on the ground', () => {
+  // Both jump together, face to face: grab at the top.
+  const s = startFight();
+  closeUp(s, 62);
+  step(s, [INPUT.JUMP, INPUT.JUMP]);
+  run(s, 8);
+  assert.ok(s.f[1].h > 25, 'the rival is up too');
+  step(s, [INPUT.GRAB, 0]);
+  assert.equal(s.f[0].move, 'airThrow');
+  const hp = s.f[1].hp;
+  const seen = [];
+  for (let i = 0; i < 60; i++) {
+    step(s, idle(s));
+    seen.push(...s.ev);
+  }
+  const hit = seen.find((e) => e.type === 'hit' && e.by === 0);
+  assert.equal(hit?.kind, 'airThrow');
+  assert.ok(hp - s.f[1].hp >= 10, 'it hurts');
+  assert.ok(['down', 'getup'].includes(s.f[1].state), 'driven into the floor');
+  // The rival on the ground: grab in the air is the stomp, as before.
+  const t = startFight();
+  closeUp(t, 40);
+  step(t, [INPUT.JUMP, 0]);
+  run(t, 8);
+  step(t, [INPUT.GRAB, 0]);
+  assert.equal(t.f[0].move, 'stomp');
+  // After a launcher the launched rival can be thrown out of the air.
+  const u = startFight();
+  closeUp(u, 70);
+  const presses = [INPUT.PUNCH, INPUT.PUNCH, INPUT.KICK];
+  let n = 0;
+  let thrown = false;
+  step(u, [presses[n++], 0]);
+  for (let i = 0; i < 160 && !thrown; i++) {
+    const me = u.f[0];
+    const landed = u.ev.some((e) => e.type === 'hit' && e.by === 0);
+    let b = landed && n < presses.length ? presses[n++] : 0;
+    if (me.move === 'launch' && me.hits.length) b = INPUT.JUMP;
+    if (me.state === 'jump' && u.f[1].h > 25 && Math.abs(me.h - u.f[1].h) < 60) b = INPUT.GRAB;
+    step(u, [b, 0]);
+    thrown = u.ev.some((e) => e.type === 'hit' && e.by === 0 && e.kind === 'airThrow');
+  }
+  assert.ok(thrown, 'launcher, jump, air throw');
+});
+
 test('punch, kick, punch ends the hook kick in a backfist that floors; punch, kick, kick launches', () => {
   const string = (presses) => {
     const s = startFight();
