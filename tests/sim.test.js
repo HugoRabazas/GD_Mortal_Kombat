@@ -1652,6 +1652,33 @@ test('two plain blows of the same weight meeting at once clash: no damage, both 
   assert.ok(mixed.lost.some((x) => x > 0));
 });
 
+// Every string, started near its first blow's full reach on a rival who
+// stands still, lands to its last blow (for some steady rhythm of presses):
+// the pushback of the early blows must never carry the rival out of reach.
+test('every string lands to its end from near its first blow\'s reach', () => {
+  const P = INPUT.PUNCH;
+  const K = INPUT.KICK;
+  const strings = { 'P P P': [P, P, P], 'P P K': [P, P, K], 'K K': [K, K], 'K P': [K, P], 'P K': [P, K], 'P K P': [P, K, P], 'K P P': [K, P, P], 'K P K': [K, P, K] };
+  const landed = (keys, d0, gap) => {
+    const s = createMatch(['ruko', 'shadow']);
+    while (s.phase !== 'fight') step(s, [0, 0]);
+    s.f[0].x = -d0 / 2;
+    s.f[1].x = d0 / 2;
+    s.f[0].z = s.f[1].z = 0;
+    let n = 0;
+    for (let t = 0; t < 120; t++) {
+      step(s, [t % gap === 0 && t / gap < keys.length ? keys[t / gap] : 0, 0]);
+      n += s.ev.filter((e) => e.type === 'hit' && e.by === 0).length;
+    }
+    return n;
+  };
+  for (const [name, keys] of Object.entries(strings)) {
+    const d0 = (keys[0] === P ? MOVES.punch.reach : MOVES.kick.reach) - 4;
+    const best = Math.max(...[6, 8, 10, 12, 14, 16, 18, 20].map((gap) => landed(keys, d0, gap)));
+    assert.equal(best, keys.length, `${name} from ${d0}`);
+  }
+});
+
 test('punch, punch, punch started at the jab\'s full reach lands all three', () => {
   const s = createMatch(['ruko', 'shadow']);
   while (s.phase !== 'fight') step(s, [0, 0]);
