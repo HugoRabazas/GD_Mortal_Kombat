@@ -197,6 +197,7 @@ const TIPS = [
   (c) => `Tip: <kbd>${c.g}</kbd> with the rival out of reach is your fighter's <b>signature move</b> for crossing the gap.`,
   (c) => `Tip: <kbd>${c.s}</kbd> in the air is your special's own <b>air version</b>. With <kbd>${c.p}</kbd> too, and two thirds of the bar: its <b>EX</b> version.`,
   (c) => `Tip: <kbd>${c.p}</kbd> right after a perfect guard is a <b>riposte</b> that opens a combo.`,
+  (c) => `Tip: a rival hiding behind a guard? Hold <kbd>${c.b}</kbd>, then <kbd>${c.k}</kbd>: a <b>guard sweep</b> under it.`,
   (c) => `Tip: getting up, hold <kbd>${c.b}</kbd> and a direction to <b>roll clear</b> as you rise.`,
   (c) => `Tip: new to a move? The <b>Tutorial</b> has a short lesson for it.`,
   // Only on the website, on a touch screen, when not opened from the home screen.
@@ -500,7 +501,8 @@ function helpScreen() {
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it - with punch at the same time, two thirds for its <b>EX</b> version, stronger and able to shrug off one blow as it starts; a finisher needs it full.</li>
         <li>Under a quarter of your health you are in your <b>last stand</b>: the energy bar fills half as fast again. A round is not over until it is over.</li>
         <li><b>Block</b> only stops what comes from the front. Raising it turns you to face whoever is already swinging, but a guard held too early stays put: get behind a blocking rival, or step out of the way of a projectile.</li>
-        <li><b>Jump</b> over a ground stomp or a slide - a slide is low and goes under an ordinary guard (a perfect one still stops it).</li>
+        <li><b>Jump</b> over a ground stomp, a slide or a guard sweep - those two are low and go under an ordinary guard (a perfect one still stops them).</li>
+        <li><b>Guard sweep</b>: block held, standing still, then kick - a low sweep out of your guard that floors a rival hiding behind theirs.</li>
         <li><b>Crystals</b> appear on the floor: gold gives energy, green gives health. Walk over one to take it.</li>
         <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage: knocked down into it, they bounce back off it, open to one more blow. A throw with the flames beyond the rival is a <b>fire toss</b> straight into them.</li>
         <li>Each fighter's <b>finisher</b> is their own: a chain of blows with its own scene, ending in a last blow the camera closes in on. In a brawl, once it has landed the others cannot stop it.</li>
@@ -631,8 +633,9 @@ function movesCard() {
       <dt>Air ${k(key.s)}</dt><dd><b>Air special</b>: your special's own air version. With ${k(key.p)} too: its <b>EX</b> version.</dd>`],
     defence: ['Defence', `
       <dt>${k(key.b)}</dt><dd><b>Block</b> what comes from the front. Raised just before the blow: a <b>perfect guard</b> - then ${k(key.p)} is a <b>riposte</b>, ${k(key.k)} a launcher.</dd>
+      <dt>${k(key.b)}, ${k(key.k)}</dt><dd><b>Guard sweep</b>: low, under a guard - down they go. A jump or a perfect guard beats it.</dd>
       <dt>${k(key.b)} + move</dt><dd><b>Dodge roll</b> sideways or forwards: attacks pass through you.</dd>
-      <dt>${k(key.b)} + away</dt><dd><b>Back-step</b>: a quick hop back, still facing the rival.</dd>
+      <dt>${k(key.b)} + away</dt><dd><b>Back-step</b>: a quick hop back.</dd>
       <dt>Roll, ${k(key.p)} / ${k(key.k)}</dt><dd>Late in a roll: a <b>rising uppercut</b>, or a <b>spinning heel kick</b>.</dd>
       <dt>${k(key.g)}</dt><dd>The moment you are seized: a <b>throw escape</b>.</dd>
       <dt>${k(key.b)}</dt><dd>On the floor: a <b>quick rise</b>.</dd>

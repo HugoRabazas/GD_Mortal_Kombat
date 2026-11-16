@@ -532,6 +532,14 @@ and the heartbeat, the crowd and the weather go quiet.
   phone held sideways (568x320 to 667x375) the room's four buttons (Leave
   room, Copy invite link, Exit full screen, Start fight) each broke onto
   two lines; they keep to one now, still big enough for a thumb.
+- **Guard sweep**: with the guard up and standing still, kick drops into a
+  low sweep - a hand on the floor, the leg swung at the ankles. It goes
+  under an ordinary guard and floors whoever it catches: the answer to a
+  rival who hides behind a guard (high or low now, as well as the throw and
+  the guard-breaker). A jump or a perfect guard beats it, and it is slow to
+  start and to recover. The CPU on Normal and up sweeps a guard now and
+  then and jumps a sweep it sees coming; the Guards lesson teaches it (the
+  taunt moved to Defence); help, pause list and a tip explain it.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

@@ -203,6 +203,11 @@ function attackKey(f) {
       if (phase === 'act') return pose({ hipX: -6, hipY: -22, lean: -0.62, ffx: 76, ffy: -2, fbx: 14, fby: -4, hfx: -14, hfy: -18, hbx: -34, hby: 6 });
       return pose({ hipY: -34, lean: -0.3, ffx: 40, ffy: -2, fbx: 6, hfx: -6, hfy: 10, hbx: -24, hby: 10 });
     }
+    case 'sweep': { // dropped low out of the guard, a hand on the floor, the leg swung round at the ankles
+      if (phase === 'pre') return pose({ ...CROUCH, hipY: -30, lean: 0.35, hfx: 22, hfy: 40, hbx: 16, hby: -26, ffx: 4, ffy: -4, fbx: -20 });
+      if (phase === 'act') return pose({ hipY: -24, lean: 0.3, tilt: -0.15, hfx: 10, hfy: 46, hbx: -24, hby: 8, ffx: 92, ffy: -4, fbx: -18, fby: -2 });
+      return pose({ ...CROUCH, hipY: -32, ffx: 40, ffy: -4, hfx: 14, hfy: 30 });
+    }
     case 'rollUpper': { // springing up out of the roll, the fist driven skywards
       if (phase === 'pre') return pose({ hipY: -34, lean: 0.48, hfx: 4, hfy: 30, hbx: -8, hby: 18, ffx: 20, fbx: -24 });
       if (phase === 'act') return pose({ hipX: 6, hipY: -70, lean: -0.04, hfx: 24, hfy: -62, hbx: -18, hby: 8, ffx: 12, ffy: -16, fbx: -22, fby: -4, lift: -14 });

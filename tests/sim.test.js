@@ -1491,3 +1491,28 @@ test('in the air, special and punch together is the EX air special', () => {
   assert.equal(s.f[0].ex, false);
   assert.equal(s.f[0].state, 'airAttack');
 });
+
+test('block held, then kick standing still: the guard sweep - low, it floors a guard; a perfect guard or a jump beats it', () => {
+  const sweepAt = (defend, mine = (t) => (t < 4 ? INPUT.BLOCK : t === 4 ? INPUT.BLOCK | INPUT.KICK : 0)) => {
+    const s = startFight();
+    closeUp(s, 70);
+    const seen = [];
+    let move = null;
+    for (let t = 0; t < 70; t++) {
+      step(s, [mine(t), defend(s, t)]);
+      if (s.f[0].state === 'attack' && !move) move = s.f[0].move;
+      seen.push(...s.ev);
+    }
+    return { move, hit: seen.find((e) => e.type === 'hit' && e.by === 0), down: s.f[1].state === 'down' || seen.some((e) => e.type === 'knockdown' && e.slot === 1), parried: seen.some((e) => e.type === 'parry' && e.by === 1) };
+  };
+  const held = sweepAt(() => INPUT.BLOCK);
+  assert.equal(held.move, 'sweep');
+  assert.ok(held.hit && held.hit.under, 'it goes under a guard held all along');
+  // A guard raised just before it lands: a perfect guard stops it.
+  const perfect = sweepAt((s) => (s.f[0].move === 'sweep' && s.f[0].t >= MOVES.sweep.startup - 2 ? INPUT.BLOCK : 0));
+  assert.ok(perfect.parried && !perfect.hit, 'a perfect guard stops it');
+  const jumped = sweepAt((s) => (s.f[0].move === 'sweep' && s.f[0].t < 3 ? INPUT.JUMP : 0));
+  assert.ok(!jumped.hit, 'a jump clears it');
+  // Kick without the guard is still the kick; with the stick pushed, the guard rolls.
+  assert.equal(sweepAt(() => 0, (t) => (t === 4 ? INPUT.KICK : 0)).move, 'kick');
+});

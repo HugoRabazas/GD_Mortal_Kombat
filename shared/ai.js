@@ -52,7 +52,7 @@ const STYLES = {
 };
 
 export function createAI(level = 'normal', seed = 1) {
-  return { cfg: LEVELS[level] || LEVELS.normal, seed: seed >>> 0 || 1, wait: 0, held: 0, tap: 0, tapT: 0, target: -1, retarget: 0 };
+  return { cfg: LEVELS[level] || LEVELS.normal, seed: seed >>> 0 || 1, wait: 0, held: 0, tap: 0, tapT: 0, target: -1, retarget: 0, sweep: -1 };
 }
 
 // Small deterministic random generator (mulberry32).
@@ -116,6 +116,8 @@ export function aiInput(ai, s, me) {
   const f = s.f[me];
   if (s.phase !== 'fight' || f.hp <= 0) return 0;
   const cfg = ai.cfg;
+  // A blow of ours just blocked: the rival is behind a guard (see the sweep).
+  for (const e of s.ev) if (e.type === 'block' && e.by === me) ai.walled = s.tick;
 
   // Attack buttons are tapped (held 2 ticks) so each decision is one press.
   let tap = 0;
@@ -319,6 +321,17 @@ export function aiInput(ai, s, me) {
     return bits;
   };
 
+  // A guard sweep under way: the guard is up, now the kick.
+  if (ai.sweep >= 0 && s.tick - ai.sweep < 20 && f.state === 'block' && f.stun <= 0) {
+    ai.sweep = -1;
+    return press(INPUT.KICK, INPUT.BLOCK);
+  }
+  // Already behind a guard, the rival close and not swinging: now and then
+  // the sweep straight out of it.
+  if (cfg.parry > 0 && f.state === 'block' && f.stun <= 0 && dist < 95 && o.h <= 0 && o.state !== 'attack' && o.state !== 'airAttack' && rnd(ai) < cfg.attack * 0.12) {
+    return press(INPUT.KICK, INPUT.BLOCK);
+  }
+
   // --- defence ---
   // Is it too late to guard in the ordinary way? If the blow is `due` within
   // the perfect-guard window and the guard has been down long enough to earn
@@ -332,8 +345,8 @@ export function aiInput(ai, s, me) {
     if (!threatening(e)) continue; // a move already spent is an opening, not a threat
     // A ground stomp cannot be blocked well: jump over it.
     if (e.move === 'quake' && ed < 230 && rnd(ai) < blockChance) return hold(INPUT.JUMP, 4);
-    // A slide goes under a guard: jump it.
-    if (e.move === 'slide' && ed < 200 && rnd(ai) < blockChance) return hold(INPUT.JUMP, 4);
+    // A slide or a guard sweep goes under a guard: jump it.
+    if ((e.move === 'slide' || e.move === 'sweep') && ed < 200 && rnd(ai) < blockChance) return hold(INPUT.JUMP, 4);
     const facingMe = angleDiff(Math.atan2(ez, ex), e.dir) < 0.9;
     if (ed < 190 && facingMe && rnd(ai) < blockChance) {
       // Sometimes roll round to the attacker's side instead of blocking.
@@ -442,6 +455,13 @@ export function aiInput(ai, s, me) {
   // A skirmisher likes to roll round to the rival's side before striking.
   if (style.circle && dist < 220 && rnd(ai) < style.circle) return hold(toward(-dz, dx) | INPUT.BLOCK, 3);
 
+  // A rival hiding behind a guard: the guard sweep under it - the guard
+  // first, then kick a few ticks later (from a standstill).
+  if (cfg.parry > 0 && (f.state === 'idle' || f.state === 'walk' || f.state === 'block') && (o.state === 'block' || s.tick - (ai.walled ?? -99) < 40) && o.h <= 0 && dist < 95 && rnd(ai) < cfg.attack * 0.45) {
+    ai.walled = -99;
+    ai.sweep = s.tick;
+    return hold(INPUT.BLOCK, 3);
+  }
   // A rival hiding behind a guard: now and then the charged kick that breaks it.
   if (o.state === 'block' && dist < 110 && rnd(ai) < cfg.attack * 0.3) return hold(INPUT.KICK, 18);
   // A rival hiding behind a guard gets grabbed.

@@ -178,6 +178,7 @@ const BOTS = {
   // Run in, and strike once close enough (`at` ticks after reaching `near`).
   lunge: () => runIn(150, (k, s) => (k === 0 ? toward(s, 0) | INPUT.PUNCH : 0)),
   lowSlide: () => runIn(130, (k, s) => (k === 0 ? toward(s, 0) | INPUT.KICK : 0)),
+  guardSweep: () => routine(70, 60, (k) => (k < 5 ? INPUT.BLOCK : k === 5 ? INPUT.BLOCK | INPUT.KICK : 0)),
   slide: () => runIn(130, (k, s) => (k === 0 ? toward(s, 0) | INPUT.KICK : 0)),
   flyKnee: () => runIn(210, (k, s) => (k === 0 ? toward(s, 0) | INPUT.JUMP : k === 3 ? INPUT.KICK : 0)),
   jump2: () => (s, t) => (t % 60 === 0 || t % 60 === 12 ? INPUT.JUMP : 0),

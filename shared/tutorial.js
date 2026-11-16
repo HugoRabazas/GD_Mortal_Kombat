@@ -35,6 +35,7 @@ export const LESSONS = [
       { id: 'riposte', name: 'Riposte', how: (k) => `after a perfect guard, ${k('p')} at once: a palm strike while they are still open (${k('k')}: a launcher)`, ev: hit('riposte') },
       { id: 'roll', name: 'Dodge roll', how: (k) => `${k('b')} + a direction sideways or forwards: the kick passes through you`, ev: mine('roll') },
       { id: 'backstep', name: 'Back-step', how: (k) => `${k('b')} + the stick away from the partner: a quick hop back out of reach`, ev: mine('backstep') },
+      { id: 'taunt', name: 'Taunt', how: (k) => `hold ${k('b')} and press ${k('g')}, standing still: energy, but any blow is a counter hit`, ev: swing('taunt') },
     ],
   },
   {
@@ -58,8 +59,8 @@ export const LESSONS = [
       { id: 'guarded', name: 'Punch the guard', how: (k) => `${k('p')}: a guard stops blows from the front`, ev: (e) => e.type === 'block' && e.by === 0 },
       { id: 'grab', name: 'Throw through the guard', how: (k) => `${k('g')} up close: a throw goes straight through a guard`, ev: mine('seize') },
       { id: 'signature', name: 'Your signature move', how: (k) => `${k('g')} with the partner out of reach: each fighter's own move to cross the gap`, ev: mine('signature') },
-      { id: 'taunt', name: 'Taunt', how: (k) => `hold ${k('b')} and press ${k('g')}, standing still: energy, but any blow is a counter hit`, ev: swing('taunt') },
       { id: 'lowSlide', name: 'Under the guard', how: (k) => `walk a few steps, then ${k('k')}: the slide is low and goes under a guard`, ev: (e) => e.type === 'hit' && e.by === 0 && e.kind === 'slide' && e.under },
+      { id: 'guardSweep', name: 'Guard sweep', how: (k) => `hold ${k('b')}, then ${k('k')} standing still: a low sweep out of your guard - under theirs, and down they go`, ev: (e) => e.type === 'hit' && e.by === 0 && e.kind === 'sweep' && e.under },
       { id: 'breaker', name: 'Break the guard', how: (k) => `hold ${k('k')} to charge, let go: the kick smashes the guard open`, ev: mine('guardBreak') },
     ],
   },

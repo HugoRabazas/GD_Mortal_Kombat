@@ -235,6 +235,14 @@ export const MOVES = {
     startup: 7, active: 9, recovery: 20, dmg: 6, reach: 66, arc: 0.6, y0: -20, y1: 60, aim: 220,
     hitstun: 0, blockstun: 12, push: 6, gain: 10, knockdown: true, speed: 7.5, go: [7, 16], low: true,
   },
+  // Out of the guard (block held, standing still), kick: a low sweep. It
+  // goes under an ordinary guard and floors whoever it catches - the answer
+  // to a rival who hides behind a guard - but a perfect guard or a jump
+  // beats it, and it is slow to start and slow to recover.
+  sweep: {
+    startup: 9, active: 4, recovery: 22, dmg: 7, reach: 88, arc: 0.9, y0: -20, y1: 50, aim: 180,
+    hitstun: 0, blockstun: 12, push: 5, gain: 10, knockdown: true, low: true,
+  },
   // Out of a dodge roll: punch springs up into a rising uppercut that knocks
   // down, kick whips round into a spinning heel kick with a wide arc. The
   // roll is what makes them safe to start; they are slow to recover.
@@ -796,7 +804,9 @@ function tryAttack(s, f, inp = 0) {
     // Right after a perfect guard, kick is the launcher at once.
     const rip = f.rip > 0;
     f.rip = 0;
-    startAttack(s, f, rip ? 'launch' : moving ? 'slide' : 'kick');
+    // From the guard, standing still: the guard sweep.
+    const guard = f.state === 'block' && !!(inp & INPUT.BLOCK) && !stick(inp);
+    startAttack(s, f, rip ? 'launch' : moving ? 'slide' : guard ? 'sweep' : 'kick');
     return true;
   }
   if (b & INPUT.PUNCH) {
