@@ -1071,6 +1071,19 @@ test('an air punch that lands flows into an axe kick; a jump out of a run kicks 
   assert.deepEqual(kinds, ['airPunch', 'axeKick']);
   assert.ok(s.f[1].state === 'down' || s.f[1].state === 'getup');
 
+  // A flying kick that lands flows into the hammer fist, which bounces them.
+  const h = startFight();
+  closeUp(h, 70);
+  const hk = [];
+  let bounced = false;
+  for (let t = 0; t < 70; t++) {
+    step(h, [t === 0 ? INPUT.JUMP | INPUT.RIGHT : t === 10 ? INPUT.KICK : t === 17 ? INPUT.PUNCH : 0, 0]);
+    for (const e of h.ev) if (e.type === 'hit' && e.by === 0) hk.push(e.kind);
+    if (h.f[1].state === 'down' && h.f[1].juggle > 0 && h.f[1].h > 0) bounced = true;
+  }
+  assert.deepEqual(hk.slice(0, 2), ['airKick', 'hammer']);
+  assert.ok(bounced, 'off the floor for one blow more');
+
   const knee = startFight();
   closeUp(knee, 200);
   const k2 = [];

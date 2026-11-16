@@ -482,6 +482,14 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **Hammer fist**: a flying kick that lands flows, with punch, into a hammer
+  fist - both hands brought down on the rival's head (6) - that bounces
+  them off the floor for one blow more, as the stomp does. The second air
+  string beside the air punch and axe kick. The CPU follows a flying kick
+  with it as often as it punishes (a third of a duel's worth: 0.33 a duel).
+  Tutorial step (Combos: Hammer fist) with a scripted player, the pause
+  list (Air), the help, a pose, a rules test. Duels 47-53 %, brawl wins
+  16-21 % (the closest yet), ladder 100 / 73 / 64 %, boss beats Hard 93 %.
 - **On a phone held sideways, the combo counter sits up by the timer**:
   with the on-screen controls over the bottom corners it was drawn under
   the stick or the SP button and could hardly be read (seen at 568x320).

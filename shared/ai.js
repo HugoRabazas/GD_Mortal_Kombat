@@ -207,6 +207,15 @@ export function aiInput(ai, s, me) {
       return INPUT.KICK;
     }
   }
+  // A flying kick that landed: the hammer fist after it (as often as it punishes).
+  if (f.state === 'airAttack' && f.move === 'airKick' && f.hits.length && f.t >= 3 && ai.airPlan < 4) {
+    ai.airPlan = 4;
+    if (rnd(ai) < cfg.punish) {
+      ai.tap = INPUT.PUNCH;
+      ai.tapT = 2;
+      return INPUT.PUNCH;
+    }
+  }
   if (f.state !== 'jump' && f.state !== 'airAttack') {
     ai.airPlan = 0;
     ai.airSpecial = false;

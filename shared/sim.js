@@ -261,6 +261,13 @@ export const MOVES = {
     startup: 4, active: 999, recovery: 0, dmg: 7, reach: 78, arc: 1.1, y0: -90, y1: 80, aim: 0,
     hitstun: 0, blockstun: 12, push: 6, gain: 10, knockdown: true, heavy: true,
   },
+  // And a flying kick that lands can be followed by punch: a hammer fist,
+  // both hands brought down on the rival's head, that bounces them off the
+  // floor for one blow more (like the stomp).
+  hammer: {
+    startup: 5, active: 999, recovery: 0, dmg: 6, reach: 80, arc: 1.1, y0: -90, y1: 90, aim: 0,
+    hitstun: 0, blockstun: 12, push: 3, gain: 10, knockdown: true, heavy: true, bounce: 6,
+  },
   // Jumping out of a run, kick is a flying knee: fast, far and it knocks down.
   flyKnee: {
     startup: 3, active: 999, recovery: 0, dmg: 9, reach: 80, arc: 1.0, y0: -10, y1: 140, aim: 0,
@@ -933,6 +940,11 @@ function control(s, f, inp) {
       // An air punch that landed: kick follows it with the axe kick.
       if (f.move === 'airPunch' && f.hits.length && f.t >= GRAB_WINDOW && f.buf & INPUT.KICK) {
         airAttack(s, f, 'axeKick');
+        break;
+      }
+      // A flying kick that landed: punch brings the hammer fist down.
+      if (f.move === 'airKick' && f.hits.length && f.t >= GRAB_WINDOW && f.buf & INPUT.PUNCH) {
+        airAttack(s, f, 'hammer');
         break;
       }
       const am = MOVES[f.move];

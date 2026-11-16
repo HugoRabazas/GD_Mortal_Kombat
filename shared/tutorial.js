@@ -94,6 +94,7 @@ export const LESSONS = [
       { id: 'elbow', name: 'Kick, elbow', how: (k) => `${k('k')} ${k('p')}: a kick that lands flows into a stepping elbow - then ${k('p')} floors, ${k('k')} launches`, ev: hit('elbow') },
       { id: 'hook', name: 'Hook kick', how: (k) => `${k('p')} ${k('k')}: the kick spins the partner round`, ev: hit('hook') },
       { id: 'backfist', name: 'Spinning backfist', how: (k) => `${k('p')} ${k('k')} ${k('p')}: with their back turned, a backfist floors them`, ev: hit('backfist') },
+      { id: 'hammer', name: 'Hammer fist', how: (k) => `${k('j')}, ${k('k')} in the air and, once it lands, ${k('p')}: they bounce off the floor`, ev: hit('hammer') },
       { id: 'axeKick', name: 'Air string', how: (k) => `${k('j')}, ${k('p')} in the air and, once it lands, ${k('k')}: an axe kick`, ev: hit('axeKick') },
     ],
   },

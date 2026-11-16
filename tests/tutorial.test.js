@@ -224,6 +224,7 @@ const BOTS = {
   },
   backfist: () => routine(55, 60, (k) => (k === 0 ? INPUT.PUNCH : k === 9 ? INPUT.KICK : k === 20 ? INPUT.PUNCH : 0)),
   hook: () => routine(55, 50, (k) => (k === 0 ? INPUT.PUNCH : k === 9 ? INPUT.KICK : 0)),
+  hammer: () => routine(70, 60, (k, s) => (k === 0 ? INPUT.JUMP | toward(s, 0) : k === 10 ? INPUT.KICK : k === 17 ? INPUT.PUNCH : 0)),
   axeKick: () => routine(70, 60, (k, s) => (k === 0 ? INPUT.JUMP | toward(s, 0) : k === 10 ? INPUT.PUNCH : k === 16 ? INPUT.KICK : 0)),
   counter: () => (s) => (s.f[1].state === 'attack' && s.f[1].move === 'kick' && s.f[1].t <= 2 && gap(s) < 100 ? INPUT.PUNCH : 0),
   rollUpper: () => (s, t) => (t % 50 < 2 ? INPUT.BLOCK | INPUT.UP : s.f[0].state === 'roll' && s.f[0].t >= 7 ? INPUT.PUNCH : 0),

@@ -648,6 +648,11 @@ function targetPose(f, now) {
         // A twirl in the air, arms out, the flames following them round.
         return pose({ spin: (f.t * 0.6) % (Math.PI * 2), hipY: -64, lean: 0.05, hfx: 36, hfy: -16, hbx: -36, hby: -16, ffx: 10, ffy: -20, fbx: -10, fby: -12 });
       }
+      if (f.move === 'hammer') {
+        // Both fists joined and raised over the head, then brought down.
+        if (pre) return pose({ hipY: -64, lean: -0.25, hfx: 6, hfy: -70, hbx: 2, hby: -66, ffx: 14, ffy: -24, fbx: -14, fby: -14 });
+        return pose({ hipY: -62, lean: 0.55, hfx: 40, hfy: 30, hbx: 36, hby: 32, ffx: 10, ffy: -26, fbx: -20, fby: -16 });
+      }
       if (f.move === 'axeKick') {
         // The leg thrown up over the head, then chopped straight down.
         if (pre) return pose({ hipY: -64, lean: -0.3, ffx: 26, ffy: -126, fbx: -14, fby: -20, hfx: 14, hfy: -20, hbx: -18, hby: -10 });
