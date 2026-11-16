@@ -615,7 +615,7 @@ const SUPER_NOTES = {
 };
 
 const SPECIAL_NOTES = {
-  dash: 'a lunge across the arena that knocks down',
+  dash: 'a long lunge from well beyond kick range that knocks down',
   bolt: 'a projectile that flies where you face',
   rise: 'a spinning leap that hits all around you',
   quake: 'a stomp that floors everyone near who is not in the air',

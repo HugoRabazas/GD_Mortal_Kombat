@@ -1693,3 +1693,24 @@ test('punch, punch, punch started at the jab\'s full reach lands all three', () 
   }
   assert.deepEqual(kinds, ['punch', 'punch2', 'punch3']);
 });
+
+// The move list calls the dash special 'a long lunge from well beyond kick
+// range': it lands from about two and a half kicks away, no farther.
+test('the dash special lands from well beyond a kick, but not across the arena', () => {
+  const lands = (d0) => {
+    const s = createMatch(['ruko', 'jackie']);
+    while (s.phase !== 'fight') step(s, [0, 0]);
+    s.f[0].x = -d0 / 2;
+    s.f[1].x = d0 / 2;
+    s.f[0].z = s.f[1].z = 0;
+    s.f[0].meter = RULES.METER_MAX;
+    let hit = false;
+    for (let t = 0; t < 120; t++) {
+      step(s, [t < 3 ? INPUT.SPECIAL : 0, 0]);
+      if (s.ev.some((e) => e.type === 'hit' && e.by === 0)) hit = true;
+    }
+    return hit;
+  };
+  assert.ok(lands(MOVES.kick.reach * 2.4), 'from 2.4 kicks away');
+  assert.ok(!lands(ARENA.R), 'not from half the arena away');
+});
