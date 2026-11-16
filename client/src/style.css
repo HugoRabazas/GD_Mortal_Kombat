@@ -1531,6 +1531,15 @@ kbd {
   }
 }
 
+.ranking .pts .tiebreak {
+  display: block;
+  font: 700 0.55rem var(--font-body);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gold);
+  text-align: right;
+}
+
 .ranking .pts {
   font: 700 1.3rem/1 var(--font-display);
   color: var(--bone);

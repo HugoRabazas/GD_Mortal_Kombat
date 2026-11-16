@@ -994,6 +994,8 @@ function rankingList() {
   const s = app.game.state;
   const who = labels();
   const medal = ['1st', '2nd', '3rd', '4th'];
+  // Level on points at the top: first place went to more damage dealt (sim.js standings).
+  const onDamage = s.ranking.length > 1 && s.ranking[0].points === s.ranking[1].points && s.ranking[0].rank === 1 && s.ranking[1].rank === 2;
   return `
     <ol class="ranking">
       ${s.ranking
@@ -1002,7 +1004,7 @@ function rankingList() {
             <span class="place">${medal[r.rank - 1]}</span>${head(r.char)}
             <span class="lname">${getFighter(r.char).name}${statsLine(r.slot, awardsFor(r.slot).map((n) => ` <span class="award">${n}</span>`).join(''))}</span>
             <span class="ltag">${esc(who[r.slot])}</span>
-            <span class="pts">${r.points} pts</span>
+            <span class="pts">${r.points} pts${onDamage && r.rank === 1 ? '<small class="tiebreak">more damage</small>' : ''}</span>
           </li>`,
         )
         .join('')}

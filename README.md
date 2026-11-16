@@ -49,6 +49,8 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   level on points are ranked by the damage they dealt over the match (loop
   249: a quarter of brawls used to end with no winner, now none do in
   600 simulated), and only fighters level on both share a rank.
+  When the damage decided first place, the result says so under the
+  winner's points (MORE DAMAGE).
 - **Arcade**: a ladder of five stages that get harder, ending in a
   powered-up boss, with a score and a best score remembered on the device.
   Stage three breaks the run of duels: a brawl against all three rivals at
