@@ -19,7 +19,9 @@ import { createPacker, createUnpacker } from './pack.js';
 import { createAttackPredictor } from './predict.js';
 import { createGame } from '../game.js';
 import { ARENAS, isArenaId } from '../arenas.js';
-import { createMatch } from '../../../shared/sim.js';
+import { createMatch, step as stepRules } from '../../../shared/sim.js';
+import { createRollback, createEventFilter } from './rollback.js';
+import { fingerprint } from '../../../shared/fingerprint.js';
 import { createAI, aiInput } from '../../../shared/ai.js';
 import { FIGHTERS, getFighter, isFighterId, lookCount } from '../../../shared/fighters.js';
 import { INPUT, INPUT_MASK } from '../../../shared/constants.js';
@@ -65,6 +67,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
 
   const online = {
     me,
+    rollback: false, // (beta) duels between two linked players run by rollback
     kind: bus.kind,
     lobbyPeers: [],
     chat: [], // the last few messages heard, in the lobby or in the room
@@ -231,6 +234,13 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
 
     // Losing the host in the middle of a match ends it for everyone.
     if (match && !match.host && hostBefore && hostBefore !== room.hostId) stopMatch('host_left');
+    // In a rollback match each side runs the fight: if the other player
+    // leaves, there is nobody to wait for. (The service's list of who is
+    // there can blink for a moment: gone for three seconds counts.)
+    if (match?.rollback) {
+      const gone = match.info.slots.some((sl) => sl.id && !peers.some((p) => p.id === sl.id));
+      match.goneSince = gone ? match.goneSince || performance.now() : 0;
+    }
     onChange();
   }
 
@@ -253,7 +263,8 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     });
     ch.on('chat', (m) => heard(m));
     ch.on('start', (info) => {
-      if (!room.isHost) beginClient(info);
+      if (!room.isHost && info?.rb) beginRollback(info);
+      else if (!room.isHost) beginClient(info);
     });
     ch.on('away', (m) => {
       if (match && !match.host) match.hostAway = !!m?.on;
@@ -395,6 +406,10 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       return;
     }
     if (!match) return;
+    if (match.rollback) {
+      match.take(from, msg);
+      return;
+    }
     if (match.host) {
       const slot = match.info.slots.findIndex((sl) => sl.id === from);
       if (slot >= 0 && (typeof msg.i === 'number' || Array.isArray(msg.h))) match.remote[slot].take(msg);
@@ -418,8 +433,15 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       slots.push({ cpu: true, name: 'CPU', char: spare.shift() || FIGHTERS[slots.length % FIGHTERS.length].id });
     }
     const info = { slots, mode: slots.length > 2 ? 'arena' : 'duel', arena: isArenaId(arena) ? arena : ARENAS[0].id };
+    // Rollback (beta): a duel between two players with a direct link.
+    const other = slots.find((sl) => sl.id && sl.id !== me.id);
+    if (online.rollback && slots.length === 2 && !slots.some((sl) => sl.cpu) && other && room.links.get(other.id)?.isOpen()) {
+      const ping = room.pings.get(other.id) ?? 60;
+      info.rb = { seed: (Math.random() * 0xffffffff) >>> 0 || 1, delay: ping > 140 ? 3 : 2 };
+    }
     room.ch.send('start', info);
-    beginHost(info);
+    if (info.rb) beginRollback(info);
+    else beginHost(info);
   };
 
   function beginHost(info) {
@@ -656,6 +678,161 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     onStart(clean);
   }
 
+  // Rollback (see rollback.js and README): both players run the whole fight;
+  // each sends its buttons for every tick over the direct link, the last ones
+  // not yet confirmed by the other side repeated in each message.
+  function beginRollback(raw) {
+    match?.stop?.();
+    if (room) room.again = false;
+    const slots = (raw.slots || []).slice(0, 2).map((sl) => {
+      const ch = isFighterId(sl.char) ? sl.char : FIGHTERS[0].id;
+      return { id: sl.id || null, cpu: false, name: cleanName(sl.name), char: ch, look: cleanLook(ch, sl.look) };
+    });
+    const mySlot = slots.findIndex((sl) => sl.id === me.id);
+    if (slots.length !== 2 || mySlot < 0) return;
+    const them = 1 - mySlot;
+    const themId = slots[them].id;
+    const info = { slots, mode: 'duel', arena: isArenaId(raw.arena) ? raw.arena : ARENAS[0].id, rb: raw.rb };
+    const seed = raw.rb.seed >>> 0 || 1;
+    const delay = Math.min(4, Math.max(1, Number(raw.rb.delay) || 2));
+    const rb = createRollback({
+      world: { s: createMatch(slots.map((sl) => sl.char), [], 'duel', seed) },
+      players: 2,
+      mine: [mySlot],
+      step: (w, bits) => {
+        stepRules(w.s, bits);
+        return w.s.ev;
+      },
+      copy: (w) => structuredClone(w),
+      maxBehind: 20,
+    });
+    const filter = createEventFilter();
+    const sent = new Map(); // my buttons by tick
+    for (let t = 0; t < delay; t++) {
+      rb.local(mySlot, t, 0);
+      sent.set(t, 0);
+    }
+    let theirAck = -1; // my buttons they have, every tick up to here
+    const shown = [];
+    const prints = new Map(); // tick -> [mine, theirs]
+    let lastPrint = 0;
+    let acc = 0;
+    let last = null;
+    let stalls = 0;
+    let lastPingAt = 0;
+    const send = (payload) => room?.links.get(themId)?.send(JSON.stringify(payload));
+    const take = (events) => {
+      for (const e of filter.pass(events)) shown.push(e);
+    };
+    let lastSendAt = 0;
+    // Every button of ours the other side has not confirmed (at most 40 ticks).
+    function sendButtons(now) {
+      lastSendAt = now;
+      const newest = rb.tick - 1 + delay;
+      const from = Math.max(theirAck + 1, newest - 40);
+      const b = [];
+      for (let u = from; u <= newest; u++) b.push(sent.get(u) ?? 0);
+      send({ rb: from, b, a: rb.heard(them) });
+      for (const u of sent.keys()) if (u < theirAck - 60) sent.delete(u);
+    }
+    function run(now) {
+      if (last === null) last = now;
+      acc += Math.min(now - last, 100);
+      last = now;
+      while (acc >= 1000 / 60) {
+        // Running ahead of the other player (their newest buttons are for a
+        // tick well behind ours, more than the trip explains): hold back a
+        // little now and then, so neither side does all the guessing.
+        const theirs = rb.lastHeard(them) - delay;
+        const trip = Math.round((match?.ping ?? 60) / 2 / (1000 / 60));
+        if (rb.tick - theirs > trip + 3 && rb.tick % 6 === 0 && acc < 2000 / 60) break;
+        if (!rb.canAdvance()) {
+          stalls++;
+          take(rb.settle());
+          // Waiting for them: our buttons again (they may be waiting too, and
+          // the last messages may have been lost).
+          if (now - lastSendAt > 50) sendButtons(now);
+          acc = Math.min(acc, 1000 / 60);
+          break;
+        }
+        acc -= 1000 / 60;
+        const t = rb.tick + delay;
+        const bits = readInput();
+        rb.local(mySlot, t, bits);
+        sent.set(t, bits);
+        take(rb.advance());
+        sendButtons(now);
+        // A fingerprint of a tick both sides are sure of, every two seconds.
+        const sure = rb.sureUpTo();
+        const k = Math.floor(sure / 120) * 120;
+        if (k > lastPrint && rb.savedAt(k)) {
+          lastPrint = k;
+          const h = fingerprint(rb.savedAt(k).s);
+          prints.set(k, [h, prints.get(k)?.[1]]);
+          send({ fp: k, h });
+          check(k);
+        }
+      }
+      if (now - lastPingAt > 1000) {
+        lastPingAt = now;
+        send({ ping: performance.now() });
+      }
+      if (match?.goneSince && now - match.goneSince > 3000 && rb.world.s.phase !== 'over') stopMatch(match.host ? 'player_left' : 'host_left');
+    }
+    function check(k) {
+      const [a, b] = prints.get(k) || [];
+      if (a === undefined || b === undefined) return;
+      if (match) match.checked = (match.checked || 0) + 1;
+      if (a !== b && match) match.desync = k; // (step 6 of the plan: the host's fight to put it right)
+      for (const t of prints.keys()) if (t < k - 600) prints.delete(t);
+    }
+    const game = {
+      get state() {
+        return rb.world.s;
+      },
+      paused: false,
+      update(now) {
+        run(now);
+      },
+      drain: () => shown.splice(0),
+    };
+    const clock = setInterval(() => {
+      if (typeof document === 'undefined' || !document.hidden) run(performance.now());
+    }, 8);
+    match = {
+      info,
+      game,
+      rollback: true,
+      host: !!room?.isHost,
+      mySlot,
+      ping: null,
+      pings: [null, null],
+      desync: -1,
+      fps: () => 60,
+      rb,
+      stalls: () => stalls,
+      take(from, msg) {
+        if (from !== themId) return;
+        if (typeof msg.rb === 'number' && Array.isArray(msg.b) && msg.b.length <= 64) {
+          msg.b.forEach((bits, i) => typeof bits === 'number' && rb.remote(them, msg.rb + i, bits & INPUT_MASK));
+          if (typeof msg.a === 'number' && msg.a > theirAck) theirAck = msg.a;
+        }
+        if (typeof msg.ping === 'number') send({ pong: msg.ping });
+        if (typeof msg.pong === 'number') {
+          match.ping = Math.round(performance.now() - msg.pong);
+          match.pings[them] = match.ping;
+        }
+        if (typeof msg.fp === 'number' && typeof msg.h === 'number') {
+          prints.set(msg.fp, [prints.get(msg.fp)?.[0], msg.h]);
+          check(msg.fp);
+        }
+      },
+      stop: () => clearInterval(clock),
+    };
+    lobby?.track(lobbyState());
+    onStart(info);
+  }
+
   function stopMatch(reason, silent) {
     if (!match) return;
     const wasHost = match.host;
@@ -693,6 +870,10 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
   online.status = () => {
     if (!match) return '';
     const kind = online.linkKind() === 'relayed' ? 'RELAYED' : 'DIRECT';
+    if (match.rollback) {
+      const st = match.rb.stats();
+      return `ROLLBACK${match.ping !== null ? ` · ${match.ping} MS` : ''}${st.behind > 6 ? ` · ${st.behind} AHEAD` : ''}${match.desync >= 0 ? ' · OUT OF STEP' : ''}`;
+    }
     if (match.host) {
       const pings = match.pings.filter((x, i) => x !== null && i !== match.mySlot);
       return `HOST · ${kind} · ${match.fps()} FPS${pings.length ? ` · PINGS ${pings.join('/')} MS` : ''}`;
@@ -709,6 +890,10 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
   function report(m) {
     if (!m) return '';
     const kind = online.linkKind() === 'relayed' ? 'relayed through the server' : 'direct';
+    if (m.rollback) {
+      const st = m.rb.stats();
+      return `Rollback: ping ${m.ping ?? '?'} ms, ${st.rollbacks} corrections (${st.replayed} ticks replayed), ${m.stalls()} waits${m.desync >= 0 ? `, out of step at tick ${m.desync}` : ''}.`;
+    }
     if (m.host) {
       const pings = m.pings.filter((x, i) => x !== null && i !== m.mySlot);
       return `You hosted: ${kind}, ${m.fps()} fps${pings.length ? `, guests' pings ${pings.join(', ')} ms` : ''}.`;
@@ -719,6 +904,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
   online.netReport = () => (match ? report(match) : lastReport);
 
   online.isHosting = () => !!match?.host;
+  online.debugMatch = () => match; // (for the automated checks)
 
   // How this player's game data is travelling right now.
   online.linkKind = () => {

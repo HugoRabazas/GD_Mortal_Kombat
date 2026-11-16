@@ -113,6 +113,45 @@ export function createRollback({ world, players, mine, step, copy, maxBehind = 1
     // Every tick before this one is final (no guess left in it).
     sureUpTo,
     heard: (p) => heardUpTo[p],
+    // The world as it was just before tick t (while it is still kept).
+    savedAt: (t) => saved.get(t) ?? null,
+    lastHeard: (p) => lastKnown[p].tick,
     stats: () => ({ tick, rollbacks, replayed, behind: tick - 1 - sureUpTo() }),
+  };
+}
+
+// Sounds and sparks, once. A replayed tick gives its events again - mostly
+// the same ones (a punch thrown is still thrown), sometimes new (the guess
+// was wrong: now the blow lands). The same event within a couple of ticks of
+// one already played is that one again, and is let through only the first
+// time; one already played cannot be taken back.
+const eventKey = (e) => [e.type, e.by ?? '', e.to ?? e.def ?? e.slot ?? '', e.move ?? e.kind ?? ''].join('|');
+export function createEventFilter(near = 2) {
+  const played = new Map(); // tick -> keys played at that tick
+  return {
+    // entries from advance()/settle(): [{ tick, events, replay }] -> events to show
+    pass(entries) {
+      const out = [];
+      for (const { tick, events, replay } of entries) {
+        for (const e of events) {
+          const key = eventKey(e);
+          if (replay) {
+            let seen = false;
+            for (let t = tick - near; t <= tick + near && !seen; t++) seen = !!played.get(t)?.delete(key);
+            if (seen) {
+              // (kept as played at this tick from now on)
+              if (!played.has(tick)) played.set(tick, new Set());
+              played.get(tick).add(key);
+              continue;
+            }
+          }
+          if (!played.has(tick)) played.set(tick, new Set());
+          played.get(tick).add(key);
+          out.push(e);
+        }
+        for (const t of played.keys()) if (t < tick - 90) played.delete(t);
+      }
+      return out;
+    },
   };
 }

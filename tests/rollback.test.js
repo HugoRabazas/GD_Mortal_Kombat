@@ -98,3 +98,21 @@ for (const [name, chars, humans, opts] of [
     if (opts.maxLate > 4) assert.ok(got.some((g) => g.stats.rollbacks > 10), 'guesses were made and corrected');
   });
 }
+
+test('a replayed tick plays only the events that are new', async () => {
+  const { createEventFilter } = await import('../client/src/net/rollback.js');
+  const f = createEventFilter();
+  const swing = { type: 'swing', by: 0, move: 'punch', id: 1 };
+  const hit = { type: 'hit', by: 0, to: 1, kind: 'punch', id: 2 };
+  assert.deepEqual(f.pass([{ tick: 10, events: [swing], replay: false }]), [swing]);
+  // The guess was wrong: replayed, the same swing comes a tick later (not
+  // played again) and now it lands (played).
+  const again = f.pass([
+    { tick: 10, events: [], replay: true },
+    { tick: 11, events: [{ ...swing, id: 7 }], replay: true },
+    { tick: 14, events: [{ ...hit, id: 8 }], replay: false },
+  ]);
+  assert.deepEqual(again.map((e) => e.type), ['hit']);
+  // A second replay of the same ticks plays nothing new.
+  assert.deepEqual(f.pass([{ tick: 11, events: [swing], replay: true }, { tick: 14, events: [hit], replay: true }]), []);
+});

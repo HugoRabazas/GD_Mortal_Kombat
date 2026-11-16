@@ -1788,13 +1788,15 @@ async function goOnline(name) {
     },
     onEnd(reason) {
       app.game = null;
-      app.notice = reason === 'host_left' ? 'The host left, so the fight ended.' : '';
+      app.notice = reason === 'host_left' ? 'The host left, so the fight ended.' : reason === 'player_left' ? 'The other player left, so the fight ended.' : '';
       stage.reset();
       show(online.room ? 'room' : 'lobby');
     },
   });
   try {
     await online.connect();
+    // (beta) ?rollback in the address: a host's duels run by rollback.
+    online.rollback = new URLSearchParams(location.search).has('rollback');
     app.online = online;
     app.notice = '';
     const code = invited();

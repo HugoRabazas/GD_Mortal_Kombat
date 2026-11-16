@@ -1108,6 +1108,29 @@ world hide that wait:
     the fight played with every button on time (same fingerprint), after
     55-349 corrections each; with the replay switched off all four fail.
 
+  - *Steps 3-5 done, as a beta (loop 161).* A host who opens the site with
+    `?rollback` at the end of the address runs their duels by rollback
+    when both players are human and linked directly (else as before).
+    Each side runs the fight (`beginRollback` in online.js); every tick
+    it sends its buttons (2 ticks ahead, 3 on a ping over 140 ms) with
+    every earlier one the other side has not confirmed, and the other
+    side's confirmation back; a side that waits resends. A side that runs
+    ahead of the other holds back a tick now and then. Sounds and sparks
+    of replayed ticks play once (`createEventFilter`: the same event
+    within two ticks of one already played is that one). Every two
+    seconds each side sends a fingerprint of a tick both are sure of; the
+    line under the clock says ROLLBACK and the ping (and OUT OF STEP if
+    two fingerprints ever differ); the result screen says how many
+    guesses were corrected. A player gone for three seconds ends the
+    fight for the other (the service's list blinks).
+    Checked in two browsers with every direct message held back 80-150 ms
+    (pings 180-340 ms) and 5-10 % of them lost, both mashing random
+    buttons: up to 48 fingerprint comparisons in a whole three-round
+    match, all identical; never a wait; 220-1,350 corrections; both
+    result screens the same (2-1); your own punch on your own screen
+    50-67 ms after the press, at any ping, and your blows land on your
+    screen as soon - where before every hit came after the whole trip.
+    The same on the live service.
 - **Steps.** 1) the cross-browser fingerprint test and our own trigonometry
   (offline play unchanged, all tests and balance figures checked);
   2) the ring of past ticks and the replay, tested in Node with two
