@@ -25,20 +25,19 @@ import { heads } from '../assets.js';
 import clothNorUrl from './tex/cloth_nor.jpg';
 import clothRoughUrl from './tex/cloth_rough.jpg';
 
-// The realistic body (a prototype, see README): ?realbody in the address
-// gives it to Ruko, ?realbody=all to everyone, ?realbody=<id> to one fighter.
-// Settings can also turn it on for everyone (kept on the device; read at
-// each new fight).
+// The realistic body is the default (the alliance approved it, loop 239);
+// Settings can switch to the classic body (kept on the device; read at each
+// new fight). ?realbody=none in the address shows the classic body.
 const REAL = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('realbody') : null;
 export const BODY_KEY = 'gd-arena-body';
 const realChosen = () => {
   try {
-    return localStorage.getItem(BODY_KEY) === 'real';
+    return localStorage.getItem(BODY_KEY) !== 'classic'; // realistic unless classic was chosen
   } catch {
-    return false;
+    return true;
   }
 };
-const realFor = (id) => realChosen() || (REAL !== null && (REAL === 'all' || REAL === id || (REAL === '' && id === 'ruko')));
+const realFor = (id) => (REAL === 'none' ? false : realChosen() || (REAL !== null && (REAL === 'all' || REAL === id)));
 
 const S = 0.01; // world units per arena pixel
 // Moves drawn glowing in the fighter's colour: the specials and the finisher.

@@ -231,8 +231,8 @@ function menuTip() {
 // on the first few visits to the menu after it changes (never to newcomers,
 // who get the Tutorial note). Change NEWS.id with the text.
 const NEWS = {
-  id: 'real-arenas-bodies',
-  text: () => `New: arenas of <b>real stone, cloth and light</b> - and try the <b>realistic bodies</b> in Settings (beta).`,
+  id: 'realistic-bodies-default',
+  text: () => `New: every fighter now has a <b>realistic body</b>. Prefer the old look? Settings › Bodies: classic.`,
 };
 function newsLine() {
   try {
@@ -795,15 +795,15 @@ const vibrateOn = () => {
   return vibOn;
 };
 const vibrateLabel = () => `Vibration: ${vibrateOn() ? 'on' : 'off'}`;
-// The realistic body (a beta, see rig3d.js): from the next fight, in 3D.
+// The body (see rig3d.js): realistic unless classic was chosen; from the next fight, in 3D.
 const bodyReal = () => {
   try {
-    return localStorage.getItem('gd-arena-body') === 'real';
+    return localStorage.getItem('gd-arena-body') !== 'classic';
   } catch {
-    return false;
+    return true;
   }
 };
-const bodyLabel = () => `Bodies: ${bodyReal() ? 'realistic (beta)' : 'classic'}`;
+const bodyLabel = () => `Bodies: ${bodyReal() ? 'realistic' : 'classic'}`;
 
 // -------------------------------------------------------------- tutorial ---
 // Lessons of a few steps each (shared/tutorial.js), against a partner who

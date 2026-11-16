@@ -865,6 +865,12 @@ and the heartbeat, the crowd and the weather go quiet.
   menu's news line for returning players now says "New: arenas of real
   stone, cloth and light - and try the realistic bodies in Settings
   (beta)" (a new NEWS id, so everyone sees it three times again).
+  Loop 239: the alliance approved the realistic body, so it is now the
+  **default** for everyone; Settings › Bodies: classic brings the old look
+  back (kept on the device), and `?realbody=none` shows it once. It is
+  also the lighter of the two: a four-fighter brawl at 844x390 draws 240
+  calls a frame against 305 with the classic body. The menu's news line
+  says so ("every fighter now has a realistic body").
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the
