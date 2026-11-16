@@ -330,6 +330,8 @@ export function aiInput(ai, s, me) {
     if (!threatening(e)) continue; // a move already spent is an opening, not a threat
     // A ground stomp cannot be blocked well: jump over it.
     if (e.move === 'quake' && ed < 230 && rnd(ai) < blockChance) return hold(INPUT.JUMP, 4);
+    // A slide goes under a guard: jump it.
+    if (e.move === 'slide' && ed < 200 && rnd(ai) < blockChance) return hold(INPUT.JUMP, 4);
     const facingMe = angleDiff(Math.atan2(ez, ex), e.dir) < 0.9;
     if (ed < 190 && facingMe && rnd(ai) < blockChance) {
       // Sometimes roll round to the attacker's side instead of blocking.

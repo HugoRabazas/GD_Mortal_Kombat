@@ -482,6 +482,15 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **High and low: the slide goes under a guard**: the slide is a low blow
+  (`low`): an ordinary guard does not stop it (UNDER THE GUARD!), a
+  perfect guard still does, and a jump or a roll gets out of its way. The
+  CPU jumps a slide coming at it as often as it guards (no slide is guarded
+  between CPUs any more; 0.46 still land a duel). Taught in the Tutorial
+  (Guards: Under the guard, against the partner who keeps a guard up), in
+  the pause list (On the run) and the help; a rules test (109). Duels
+  45-53 %, brawl wins 16-23 %, boss beats Hard 93 %. The EX special was
+  also seen on screen in 3D (EX IRON CHARGE, 19 against the plain 14).
 - **EX special**: special and punch together (or a tick apart, either way
   round) with two thirds of the energy bar is the EX version of the
   fighter's special: it costs 70 instead of 35, hits 45 % harder (a shot

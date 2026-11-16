@@ -226,11 +226,13 @@ export const MOVES = {
     hitstun: 21, blockstun: 10, push: 7, gain: 9, heavy: true, speed: 6, go: [0, 5],
   },
   // Kick on the move: a slide along the floor, feet first. Low, so a rival
-  // in the air is over it; it sweeps whoever it catches off their feet, but
-  // a slide that misses leaves the slider lying open.
+  // in the air is over it - and so is a standing guard: it goes under it
+  // (`low`); only a perfect guard, a jump or a roll beats it. It sweeps
+  // whoever it catches off their feet, but a slide that misses leaves the
+  // slider lying open.
   slide: {
     startup: 7, active: 9, recovery: 20, dmg: 6, reach: 66, arc: 0.6, y0: -20, y1: 60, aim: 220,
-    hitstun: 0, blockstun: 12, push: 6, gain: 10, knockdown: true, speed: 7.5, go: [7, 16],
+    hitstun: 0, blockstun: 12, push: 6, gain: 10, knockdown: true, speed: 7.5, go: [7, 16], low: true,
   },
   // Out of a dodge roll: punch springs up into a rising uppercut that knocks
   // down, kick whips round into a spinning heel kick with a wide arc. The
@@ -1508,7 +1510,10 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     dx /= d;
     dz /= d;
   }
-  const blocked = !m.unblockable && def.state === 'block' && angleDiff(def.dir, Math.atan2(-dz, -dx)) <= BLOCK_ARC;
+  const guarding = def.state === 'block' && angleDiff(def.dir, Math.atan2(-dz, -dx)) <= BLOCK_ARC;
+  // A low blow goes under an ordinary guard; a perfect one still stops it.
+  const under = guarding && !!m.low && !(def.guard > 0);
+  const blocked = !m.unblockable && guarding && !under;
   const power = getFighter(att.char).stats.power * att.pw;
   const at = { x: def.x - dx * 14, z: def.z - dz * 14, h: def.h + (m.y1 < 60 ? 30 : 105) };
 
@@ -1711,7 +1716,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     s.finale = FINALE.ticks;
     s.finaleOn = def.slot;
   }
-  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken, counter, juggle: juggled, light: !!m.light, stage: m.ult ? att.move : undefined, final: !!m.final });
+  emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken, counter, juggle: juggled, light: !!m.light, stage: m.ult ? att.move : undefined, final: !!m.final, under });
 }
 
 function resolveHits(s) {

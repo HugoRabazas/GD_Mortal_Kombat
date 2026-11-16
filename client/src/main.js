@@ -500,7 +500,7 @@ function helpScreen() {
         <li>Hits fill your <b>energy</b> bar. A special costs about a third of it - with punch at the same time, two thirds for its <b>EX</b> version, stronger and able to shrug off one blow as it starts; a finisher needs it full.</li>
         <li>Under a quarter of your health you are in your <b>last stand</b>: the energy bar fills half as fast again. A round is not over until it is over.</li>
         <li><b>Block</b> only stops what comes from the front. Raising it turns you to face whoever is already swinging, but a guard held too early stays put: get behind a blocking rival, or step out of the way of a projectile.</li>
-        <li><b>Jump</b> over a ground stomp or a slide.</li>
+        <li><b>Jump</b> over a ground stomp or a slide - a slide is low and goes under an ordinary guard (a perfect one still stops it).</li>
         <li><b>Crystals</b> appear on the floor: gold gives energy, green gives health. Walk over one to take it.</li>
         <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage: knocked down into it, they bounce back off it, open to one more blow. A throw with the flames beyond the rival is a <b>fire toss</b> straight into them.</li>
         <li>Each fighter's <b>finisher</b> is their own: a chain of blows with its own scene, ending in a last blow the camera closes in on. In a brawl, once it has landed the others cannot stop it.</li>
@@ -621,7 +621,7 @@ function movesCard() {
       <dt>${k(key.p)}, ${k(key.s)}</dt><dd><b>Special cancel</b>: a blow that lands, cut short by the special - it staggers, and hits softer.</dd>`],
     run: ['On the run', `
       <dt>Run + ${k(key.p)}</dt><dd><b>Lunging straight</b>: punch with the stick held after a few steps. Opens the punch string or the hook kick.</dd>
-      <dt>Run + ${k(key.k)}</dt><dd><b>Slide</b>: feet first, sweeps the rival off their feet. Low: jump it.</dd>
+      <dt>Run + ${k(key.k)}</dt><dd><b>Slide</b>: feet first, sweeps the rival off their feet. Low: it goes <b>under a guard</b> - jump it, roll, or guard perfectly.</dd>
       <dt>Run, ${k(key.j)}, ${k(key.k)}</dt><dd><b>Flying knee</b>: jump out of a run and kick - far, fast, knocks down.</dd>`],
     air: ['Air', `
       <dt>${k(key.j)}, ${k(key.j)}</dt><dd><b>Double jump</b>: press again in the air, with a somersault.</dd>

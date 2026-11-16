@@ -545,6 +545,30 @@ test('in a brawl a hit freezes only the two fighters involved', () => {
   assert.equal(s.hitstop, 0, 'the world did not stop');
 });
 
+test('the slide is low: it goes under an ordinary guard, not a perfect one, and not a jump', () => {
+  const slideAt = (defend) => {
+    const s = startFight();
+    Object.assign(s.f[0], { x: -150, z: 0, dir: 0 });
+    Object.assign(s.f[1], { x: 0, z: 0, dir: Math.PI });
+    const seen = [];
+    for (let t = 0; t < 70; t++) {
+      // Run a few steps, then kick with the stick still held: the slide.
+      const me = t < 12 ? INPUT.RIGHT : t === 12 ? INPUT.RIGHT | INPUT.KICK : 0;
+      step(s, [me, defend(s, t)]);
+      seen.push(...s.ev);
+    }
+    return { hit: seen.find((e) => e.type === 'hit' && e.by === 0 && e.kind === 'slide'), parried: seen.some((e) => e.type === 'parry' && e.by === 1) };
+  };
+  const held = slideAt(() => INPUT.BLOCK);
+  assert.ok(held.hit, 'it lands on a guard held all along');
+  assert.ok(held.hit.under, 'under the guard');
+  // A guard raised just before it lands: a perfect guard stops it.
+  const perfect = slideAt((s) => (s.f[0].state === 'attack' && s.f[0].move === 'slide' && s.f[0].t >= MOVES.slide.startup && Math.hypot(s.f[1].x - s.f[0].x, s.f[1].z - s.f[0].z) < 110 ? INPUT.BLOCK : 0));
+  assert.ok(perfect.parried && !perfect.hit, 'a perfect guard stops it');
+  const jumped = slideAt((s) => (s.f[0].state === 'attack' && s.f[0].move === 'slide' && s.f[0].t < 4 ? INPUT.JUMP : 0));
+  assert.ok(!jumped.hit, 'a jump clears it');
+});
+
 test('special and punch together is the EX special: twice the energy, more damage, a blow shrugged off', () => {
   const special = (bits, first = 0) => {
     const s = startFight(['jackie', 'shadow']); // Jackie's special is the stomp: it reaches all round
