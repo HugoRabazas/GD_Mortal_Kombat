@@ -1217,7 +1217,7 @@ export function create3D(canvas) {
         r.x += (wind + Math.sin(now / 900 + r.sway) * (petals ? 1.2 : 0.5)) * dt * 0.001;
         if (r.y < 0) {
           r.y += 12;
-          if (petals && r.x * r.x + r.z * r.z < 6.3 * 6.3 && d % 3 === 0) {
+          if (quality < 1 && petals && r.x * r.x + r.z * r.z < 6.3 * 6.3 && d % 3 === 0) {
             const pf = fallen[nextFallen++ % fallen.length];
             pf.m.position.set(r.x, 0.018, r.z);
             pf.m.rotation.set(-Math.PI / 2, 0, r.sway * 7);
@@ -1236,7 +1236,7 @@ export function create3D(canvas) {
     }
 
     // Sand streaks: only in a sandstorm.
-    const gusting = sand && rainNow > 0.3;
+    const gusting = quality < 1 && sand && rainNow > 0.3;
     for (const dr of drifts) {
       dr.m.visible = gusting;
       if (!gusting) continue;
@@ -1265,7 +1265,7 @@ export function create3D(canvas) {
         if (r.y < 0) {
           r.y += 12;
           // (on the dais only: the ground around lies lower)
-          if (r.x * r.x + r.z * r.z < 6.3 * 6.3 && Math.random() < 0.6) {
+          if (quality < 1 && r.x * r.x + r.z * r.z < 6.3 * 6.3 && Math.random() < 0.6) {
             const sp = splashes[nextSplash++ % splashes.length];
             sp.m.position.set(r.x, 0.02, r.z);
             sp.life = 1;
@@ -1452,7 +1452,7 @@ export function create3D(canvas) {
   // and `ky` are how many times wider and taller it is than the stage.
   const bleed = { kx: 1, ky: 1 };
   const FOV = 38;
-  let quality = 0; // 0 = full, 1 = no cast shadows, 2 = reduced resolution
+  let quality = 0; // 0 = full, 1 = no cast shadows and no floor details (splashes, petals, footprints, breath, sand streaks), 2 = reduced resolution
   // The player's choice in Settings: 'auto' adapts as above; 'sharp' keeps
   // full quality whatever happens; 'fast' starts at the lightest level and
   // also thins the weather and the crowd's movement, for slower phones.
@@ -1780,7 +1780,7 @@ export function create3D(canvas) {
         }
       }
       // Breath, where it is cold enough to see it.
-      if (theme?.th.snow && s.phase !== 'intro') {
+      if (theme?.th.snow && s.phase !== 'intro' && quality < 1) {
         for (const f of s.f) {
           const rig = rigs[f.slot];
           if (!rig || f.hp <= 0) continue;
@@ -1819,7 +1819,7 @@ export function create3D(canvas) {
       }
       // Footprints, in the arenas whose floor keeps them.
       const look = PRINTS[theme?.name];
-      if (look && s.phase !== 'intro') {
+      if (look && s.phase !== 'intro' && quality < 1) {
         for (const f of s.f) {
           const up = f.h > 0;
           if (f.state === 'walk' && !up) {

@@ -1650,8 +1650,9 @@ missed. How often it sees an opening grows with the level (about 1, 4, 8 and
 - **HUD and effects** (`hud.js`, `fx.js`): health, energy, points, timer,
   floating name tags, sparks, damage numbers and banners on a flat layer over
   the 3D view.
-- **Adaptive quality**: on a slow device the game drops cast shadows, then
-  resolution. With no WebGL at all it draws the same fight flat in 2D.
+- **Adaptive quality**: on a slow device the game drops cast shadows and the
+  floor details (rain splashes, settled petals, footprints, breath, sand
+  streaks - up to about 40 draws in a storm round), then resolution. With no WebGL at all it draws the same fight flat in 2D.
 
 ### 3. The shell (`client/src/`)
 
