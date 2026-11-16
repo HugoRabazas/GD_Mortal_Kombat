@@ -525,6 +525,13 @@ and the heartbeat, the crowd and the weather go quiet.
   to the fighter screens, and the chat keeps to a few lines. And a message
   sent stayed in the box: sending redraws the room at once and the redraw
   carried the box's text over - it is now emptied before it is sent.
+- **Chat checked on the live service, and a room's buttons on a small phone
+  held sideways**: two players in their own room each sent messages on the
+  real online service: every box emptied, both saw every line, and half a
+  message typed while the other spoke was kept. After a fight on a small
+  phone held sideways (568x320 to 667x375) the room's four buttons (Leave
+  room, Copy invite link, Exit full screen, Start fight) each broke onto
+  two lines; they keep to one now, still big enough for a thumb.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

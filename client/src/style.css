@@ -2822,3 +2822,14 @@ kbd {
     font-size: 0.75rem;
   }
 }
+
+/* A small phone held sideways: a room's four buttons after a fight (with
+   "Exit full screen") keep each label on one line. */
+@media (max-height: 480px) and (max-width: 680px) and (orientation: landscape) {
+  .screen.room > .acts .btn {
+    white-space: nowrap;
+    min-height: 32px;
+    padding: 7px 9px 5px;
+    font-size: 0.92rem;
+  }
+}
