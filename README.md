@@ -800,7 +800,10 @@ and the heartbeat, the crowd and the weather go quiet.
   dusk. (A first try used setTransform for the wall and painted a band of
   bricks across the sky: the canvas has a scale of its own.) Live checks
   after the rendering loops: a three-player rollback brawl identical on
-  every screen, a whole match on the public site, chat.
+  every screen, a whole match on the public site, chat. Loop 197: the
+  menu's news line for returning players now says "New: arenas of real
+  stone, cloth and light - and try the realistic bodies in Settings
+  (beta)" (a new NEWS id, so everyone sees it three times again).
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the

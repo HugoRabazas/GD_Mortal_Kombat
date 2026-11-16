@@ -226,8 +226,8 @@ function menuTip() {
 // on the first few visits to the menu after it changes (never to newcomers,
 // who get the Tutorial note). Change NEWS.id with the text.
 const NEWS = {
-  id: 'burst-clash-rollback',
-  text: (c) => `New: <b>burst</b> out of a combo (<kbd>${c.b}</kbd> + <kbd>${c.s}</kbd>), blows that <b>clash</b>, and online fights that answer at once.`,
+  id: 'real-arenas-bodies',
+  text: () => `New: arenas of <b>real stone, cloth and light</b> - and try the <b>realistic bodies</b> in Settings (beta).`,
 };
 function newsLine() {
   try {
