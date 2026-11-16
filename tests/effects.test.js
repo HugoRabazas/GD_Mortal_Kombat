@@ -90,3 +90,27 @@ test('training button chips: each new button, with the direction held', async ()
   assert.deepEqual(buttonChips(INPUT.KICK, INPUT.KICK | INPUT.DOWN | INPUT.RIGHT), [{ dir: '↘', name: 'K' }]);
   assert.deepEqual(buttonChips(INPUT.PUNCH | INPUT.KICK, INPUT.PUNCH | INPUT.KICK | INPUT.LEFT).map((c) => c.dir + c.name), ['←P', '←K']);
 });
+
+test('training partner tape: records your buttons, then plays them back in a loop', async () => {
+  const { partnerTape } = await import('../shared/tutorial.js');
+  const tape = partnerTape({ length: 3, gap: 2 });
+  let pressed = 0;
+  const yours = () => pressed;
+  const you = tape.you(yours);
+  const partner = tape.partner(yours, () => 99);
+  assert.equal(partner(), 99); // off: the chosen partner
+  tape.record();
+  const got = [];
+  for (const b of [1, 2, 4]) {
+    pressed = b;
+    assert.equal(you(), 0); // you stand still while recording
+    got.push(partner());
+  }
+  assert.deepEqual(got, [1, 2, 4]);
+  assert.equal(tape.mode, 'play');
+  pressed = 8;
+  assert.equal(you(), 8);
+  assert.deepEqual(Array.from({ length: 7 }, () => partner()), [1, 2, 4, 0, 0, 1, 2]);
+  tape.stop();
+  assert.equal(partner(), 99);
+});

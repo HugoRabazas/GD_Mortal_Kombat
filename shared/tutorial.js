@@ -320,3 +320,41 @@ export function tutorPartner(kind) {
   if (kind === 'blocker') return () => INPUT.BLOCK;
   return () => 0;
 }
+
+// Training's recorded partner. For a few seconds (`length` ticks) your
+// buttons move the partner while your own fighter stands still; from then on
+// the partner plays the recording back, again and again with a short pause
+// (`gap` ticks) between, so you can practise against exactly that.
+export function partnerTape({ length = 300, gap = 45 } = {}) {
+  let mode = 'off'; // 'rec' | 'play'
+  let tape = [];
+  let at = 0;
+  return {
+    get mode() {
+      return mode;
+    },
+    record() {
+      mode = 'rec';
+      tape = [];
+      at = 0;
+    },
+    stop() {
+      mode = 'off';
+      tape = [];
+    },
+    // Your own fighter: still while you are moving the partner.
+    you: (read) => (s, slot) => (mode === 'rec' ? 0 : read(s, slot)),
+    // The partner: your buttons while recording, then the tape; otherwise
+    // `other` (the partner chosen on the select screen).
+    partner: (yours, other) => (s, slot) => {
+      if (mode === 'rec') {
+        const b = yours(s, slot);
+        tape.push(b);
+        if (tape.length >= length) mode = 'play';
+        return b;
+      }
+      if (mode === 'play') return tape[at++ % (tape.length + gap)] ?? 0;
+      return other(s, slot);
+    },
+  };
+}

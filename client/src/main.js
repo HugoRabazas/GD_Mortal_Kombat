@@ -7,7 +7,7 @@ import { awardsFor as brawlAwards } from './awards.js';
 import { howWon } from './outcome.js';
 import { ARENA, INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
-import { LESSONS, lessonById, stepsDone, tutorPartner, drummer, comboer } from '../../shared/tutorial.js';
+import { LESSONS, lessonById, stepsDone, tutorPartner, drummer, comboer, partnerTape } from '../../shared/tutorial.js';
 import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
 import { createGame } from './game.js';
@@ -15,7 +15,7 @@ import { handleEvents, setBuzz } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, padStyle, hasPad, setCapture, setTouchLive, lastDevice, buttonChips } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, setAmbience, getVolume, setVolume, STEP_SOUND } from './audio.js';
-import { setFloor } from './render/fx.js';
+import { setFloor, showBanner } from './render/fx.js';
 import { THEMES } from './render/themes.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
@@ -708,6 +708,8 @@ function pauseScreen() {
         <div class="stack">
           <button type="button" class="btn primary" data-act="resume">Resume</button>
           ${app.mode === 'online' ? '' : '<button type="button" class="btn" data-act="rematch">Restart fight</button>'}
+          ${app.mode === 'training' ? `<button type="button" class="btn" data-act="recordPartner">${app.tape?.mode === 'play' ? 'Record again' : 'Record partner'}</button>` : ''}
+          ${app.mode === 'training' && app.tape?.mode === 'play' ? '<button type="button" class="btn" data-act="stopReplay">Stop replay</button>' : ''}
           <button type="button" class="btn" data-act="settings">Settings</button>
           ${app.mode === 'online' ? '' : '<button type="button" class="btn" data-act="photo">Photo</button>'}
           ${fullscreenButton('btn')}
@@ -1350,7 +1352,8 @@ function startFight() {
     controllers = [solo, cpu(cpuLevel())];
   } else if (app.mode === 'training') {
     const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'beat' ? drummer() : app.dummy === 'combo' ? comboer() : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
-    controllers = [watchButtons(solo), partner];
+    app.tape = partnerTape();
+    controllers = [watchButtons(app.tape.you(solo)), app.tape.partner(solo, partner)];
   } else if (app.mode === 'tutorial') {
     // The lesson's partner: a fighter other than your own.
     chars = [app.picks[0], FIGHTERS.find((f) => f.id !== app.picks[0]).id];
@@ -1807,6 +1810,16 @@ const ACTIONS = {
     startFight();
   },
   resume: togglePause,
+  // Training: for five seconds you move the partner, then it plays that back.
+  recordPartner() {
+    app.tape?.record();
+    togglePause();
+    showBanner('RECORDING', 'YOU MOVE YOUR PARTNER · 5 S', '#ff5a36', 1300);
+  },
+  stopReplay() {
+    app.tape?.stop();
+    togglePause();
+  },
   arrange() {
     app.arrangeFrom = app.game ? 'pause' : 'menu';
     show('arrange');
@@ -2214,6 +2227,11 @@ function frame(now) {
   // Footsteps of the walking fighters, by what the floor is made of (one
   // step every 14 ticks of a walk; brawls only the player's own, so four
   // pairs of feet do not patter).
+  // The recording is over: the partner plays it back from now on.
+  if (app.tape && app.tape.mode !== app.tapeWas) {
+    if (app.tapeWas === 'rec' && app.tape.mode === 'play') showBanner('REPLAY', 'YOUR PARTNER REPEATS IT · PAUSE TO STOP', '#7fe0ff', 1300);
+    app.tapeWas = app.tape.mode;
+  }
   if (playing && app.screen === 'fight' && g.state.phase === 'fight') {
     const sound = STEP_SOUND[app.fightPlace] || 'stepStone';
     g.state.f.forEach((f, i) => {

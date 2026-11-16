@@ -68,6 +68,11 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   to check the order and rhythm of a string.
   The combo counter (in every mode) also adds up what the combo has taken
   off so far: 3 HITS, NICE, 18 DAMAGE.
+  **Record partner** (in Training's pause menu): for five seconds your
+  buttons move the partner while your own fighter stands still; then the
+  partner plays that back over and over (with a short breath between), so
+  you can practise against exactly the attack that gives you trouble.
+  Record again, or Stop replay, from the same menu.
 - **Tutorial**: nine short lessons (Basics, Defence, Getting up, Throws, On
   the run, In the air, Combos, Counters, Specials), each against a partner
   scripted for it: one stands still, one kicks on the beat (to block, perfect
