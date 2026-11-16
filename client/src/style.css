@@ -110,6 +110,12 @@ body {
   .screen.result:has(.news) .ranking small {
     display: none;
   }
+
+  /* Two lines under the numbers (Today's challenge and what is new on the
+     Record) sit close together. */
+  .result .note + .note {
+    margin-top: 0;
+  }
 }
 
 #toast {

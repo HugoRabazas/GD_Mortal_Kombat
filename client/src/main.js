@@ -1045,7 +1045,7 @@ function arcadeHeading() {
 
 const dailyNote = () =>
   app.daily.won
-    ? `<p class="note">Today's challenge: <b>beaten</b>. ${app.daily.total === 1 ? 'Your first day.' : `${app.daily.total} days beaten.`} <button type="button" class="linkish" data-act="copyDaily">${app.daily.copied ? 'Copied ✓' : 'Copy result'}</button></p>`
+    ? `<p class="note">Challenge <b>beaten</b> · ${app.daily.total === 1 ? 'your first day' : app.daily.run > 1 ? `${app.daily.run} days in a row` : `${app.daily.total} days in all`} · <button type="button" class="linkish" data-act="copyDaily">${app.daily.copied ? 'Copied ✓' : 'Copy result'}</button></p>`
     : `<p class="note">Today's challenge: not yet - Rematch to try again.</p>`;
 
 const survivalNote = () => {
@@ -1570,10 +1570,14 @@ function noteRecord() {
   if (app.daily && app.mode === 'quick') {
     app.daily.won = won;
     if (won && r.dailyLast !== app.daily.key) {
+      // Days in a row: yesterday's beaten too carries the run on.
+      const yesterday = dayKey(Date.parse(app.daily.key + 'T12:00:00Z') - 864e5);
+      r.dailyRun = r.dailyLast === yesterday ? (r.dailyRun || 1) + 1 : 1;
       r.dailyLast = app.daily.key;
       r.dailyWins = (r.dailyWins || 0) + 1;
     }
     app.daily.total = r.dailyWins || 0;
+    app.daily.run = r.dailyRun || 1;
   }
   if (surviving()) {
     // The best as it stood when this run began (the Record is updated on
