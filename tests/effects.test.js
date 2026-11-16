@@ -35,3 +35,15 @@ test('the announcer says "takes it" in a brawl and "Final round" when a duel is 
   handleEvents([{ type: 'round', round: 3 }], duel, { quiet: false, project });
   assert.deepEqual(said, ['Final round']);
 });
+
+test('every sound a ritual asks for exists (a wrong name would be silent)', async () => {
+  const { hasSound } = await import('../client/src/audio.js');
+  const { readFileSync } = await import('node:fs');
+  // (fighter.js cannot be loaded outside the browser build: read its table.)
+  const src = readFileSync(new URL('../client/src/render/fighter.js', import.meta.url), 'utf8');
+  const table = src.slice(src.indexOf('const RITUAL_BEATS = {'), src.indexOf('};', src.indexOf('const RITUAL_BEATS = {')));
+  const names = [...table.matchAll(/\[\d+, '(\w+)'\]/g)].map((m) => m[1]);
+  assert.ok(names.length >= 11, `found ${names.length}`);
+  for (const name of names) assert.ok(hasSound(name), name);
+  for (const name of ['oathRing', 'twang', 'slice', 'whirl', 'bowOut']) assert.ok(names.includes(name), `${name} is used`);
+});

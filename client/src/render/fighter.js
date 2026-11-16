@@ -393,7 +393,7 @@ const mix = (a, b, k) => {
 // Zelrith's spin.
 const RITUAL_BEATS = {
   clap: [[8, 'clap'], [26, 'clap']], bow: [[44, 'palm']], swirl: [[2, 'flame']],
-  oath: [[43, 'thud']], draw: [[36, 'bolt']], flourish: [[8, 'swing'], [22, 'swing']], twirl: [[2, 'swing'], [15, 'swing'], [31, 'clap']],
+  oath: [[43, 'oathRing']], draw: [[36, 'twang']], flourish: [[8, 'slice'], [22, 'slice']], twirl: [[2, 'whirl'], [15, 'whirl'], [36, 'bowOut']],
 };
 
 // The sounds due in a ritual between two moments of the announcement.

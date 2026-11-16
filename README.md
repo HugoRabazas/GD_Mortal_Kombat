@@ -482,6 +482,21 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **The newer four's rituals sound their own**: Meru's fist rings on an
+  iron breastplate, Gleh's bowstring twangs, Kichta's blade hand hisses
+  through the air twice, Zelrith's spins whistle and the bow ends on two
+  bright notes (they borrowed a thud, the bolt, the swing and the clap). A
+  test checks that every sound a ritual asks for exists - an unknown name
+  would only be silent.
+- **Online rooms survive a dropped connection**: checked against the live
+  service, a guest cut off for 15 s or for 65 s comes back into the room on
+  their own, and what they pick afterwards reaches the host.
+- **Ruko in brawls, looked into**: Ruko is no more crowded than anyone
+  (about one rival within reach on average, as everyone), the dash and the
+  Wolf Leap do not leave Ruko in the middle of the pack, Ruko goes out
+  first in a round as often as the others (24 %) and scores as many points
+  a brawl; the 13-16 % of brawl wins is about two standard errors from an
+  even share. No change made.
 - **Air throw**: grab in the air with a rival in the air close by (jumping,
   or launched) seizes them and drives them head first into the floor (11,
   unblockable, the thrower springs off them); with the rival on the ground

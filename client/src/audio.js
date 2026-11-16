@@ -332,6 +332,25 @@ const SOUNDS = {
     tone('sine', 170, 90, 0.09, 0.3);
   },
   flame: () => sweep(0.75, 0.4, 260, 1700, 1.1),
+  // The newer four: Meru's fist on an iron breastplate (a dull ring), the
+  // twang of Gleh's bowstring, the hiss of Kichta's blade hand, the whistle
+  // of Zelrith's spin and the flourish of the bow that ends it.
+  oathRing: () => {
+    burst(0.06, 0.6, 400, 0.9, 0, 'lowpass');
+    tone('triangle', 220, 216, 0.7, 0.16);
+    tone('sine', 523, 515, 0.5, 0.06, 0.01);
+  },
+  twang: () => {
+    tone('triangle', 330, 196, 0.22, 0.3);
+    tone('sine', 660, 392, 0.12, 0.08);
+    sweep(0.35, 0.18, 2400, 900, 2.5, 0.03);
+  },
+  slice: () => sweep(0.16, 0.35, 5200, 1900, 3),
+  whirl: () => sweep(0.45, 0.22, 700, 2600, 4),
+  bowOut: () => {
+    tone('triangle', 659, 659, 0.08, 0.12);
+    tone('triangle', 988, 988, 0.22, 0.12, 0.08);
+  },
   // A match lost at this screen: the fanfare's notes turned downwards, in a
   // minor key, ending on a long note that sags a semitone.
   defeat: () => {
@@ -683,6 +702,9 @@ export function setWeather(kind, level) {
     // the weather stays silent
   }
 }
+
+// Is there a sound by this name? (play() ignores unknown names quietly.)
+export const hasSound = (name) => Object.hasOwn(SOUNDS, name);
 
 export function play(name) {
   if (!ctx || muted || ctx.state !== 'running') return;
