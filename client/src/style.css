@@ -272,10 +272,15 @@ body {
   }
 
   .lessons .lesson-list .btn {
-    padding-top: 3px;
-    padding-bottom: 3px;
+    padding: 3px 6px;
     font-size: 1rem;
     line-height: 1.1;
+    white-space: nowrap; /* a done lesson's tick and count keep to its line */
+    gap: 5px;
+  }
+
+  .lessons .lesson-list small {
+    font-size: 0.62rem;
   }
 }
 
@@ -2931,5 +2936,26 @@ kbd {
   .screen.record > h2 {
     margin: 0;
     font-size: 1.2rem;
+  }
+}
+
+/* The lobby upright with many online and many rooms: each list keeps to a
+   few rows and scrolls for the rest, so the chat and the buttons stay on
+   screen. */
+@media (max-width: 520px) and (orientation: portrait) {
+  .screen.lobby .people {
+    max-height: 18vh;
+  }
+
+  /* Quick match and New room side by side. */
+  .screen.lobby .ladder .row {
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+
+  .screen.lobby .ladder .row .btn {
+    min-width: 0;
+    padding: 6px 12px 5px;
+    font-size: 1.1rem;
   }
 }

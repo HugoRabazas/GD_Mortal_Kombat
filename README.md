@@ -592,6 +592,15 @@ and the heartbeat, the crowd and the weather go quiet.
   small phone (it did by 18 px upright and 7 px sideways, unseen because
   the screen checks used an empty one): the fighters go two by two upright
   and every line is slimmer on a very short phone held sideways.
+- **Screens checked full, not empty**: with a long history (every lesson
+  done, a best score, a full Record) and with the lobby busy (six rooms
+  open, seven people online). Two faults, unseen with empty screens: on a
+  small phone held sideways the done lessons' ticks and counts wrapped
+  their names onto two lines (10 px too tall) - they keep to one line now;
+  and upright the busy lobby's two lists grew without end and pushed the
+  chat and the buttons 140 to 320 px off the screen - each list now shows a
+  few rows and scrolls for the rest, with Quick match and New room side by
+  side. The overlap check now ignores the clipped part of a scrolling list.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
