@@ -117,3 +117,12 @@ test('training partner tape: records your buttons, then plays them back in a loo
   tape.stop();
   assert.equal(partner(), 99);
 });
+
+test('a run\'s heading replaces the first round\'s banner and call (Survival: RIVAL 4)', () => {
+  said.length = 0;
+  const s = createMatch(['ruko', 'shadow']);
+  handleEvents([{ type: 'round', round: 1 }], s, { quiet: false, project: () => ({ x: 0, y: 0 }), heading: ['RIVAL 4', 'ROUND 1 · CPU ON HARD'] });
+  assert.equal(said.at(-1), 'Rival 4');
+  handleEvents([{ type: 'round', round: 2 }], s, { quiet: false, project: () => ({ x: 0, y: 0 }), heading: ['RIVAL 4', 'ROUND 1 · CPU ON HARD'] });
+  assert.equal(said.at(-1), 'Round two');
+});

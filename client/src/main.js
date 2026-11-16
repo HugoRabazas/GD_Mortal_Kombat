@@ -2345,7 +2345,8 @@ function frame(now) {
   duckMusic(playing && (app.screen === 'pause' ? 0.6 : st.freeze > 0 ? 1 : st.phase === 'ko' && st.koKind === 'ko' && st.pt < 60 ? 0.7 : 0));
   // (How the match was won, for the banner and the announcer at its end.)
   const how = playing && events.some((e) => e.type === 'matchEnd') ? howWon(g.state, app.roundEnds || []) : '';
-  handleEvents(events, g.state, { quiet: !playing, project: stage.project, me: self, colors: worn, how });
+  const heading = playing && surviving() ? [`RIVAL ${app.surv.wins + 1}`, `ROUND 1 · CPU ON ${LEVEL_NAMES[survivalLevel()].toUpperCase()}`] : null;
+  handleEvents(events, g.state, { quiet: !playing, project: stage.project, me: self, colors: worn, how, heading });
   // The sounds of each fighter's ritual while a round is announced.
   if (playing && st.phase === 'intro') {
     for (const f of st.f) for (const name of ritualSounds(getFighter(f.char).entrance, app.lastIntroPt, st.pt)) play(name);

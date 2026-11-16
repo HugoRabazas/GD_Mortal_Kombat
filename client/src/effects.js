@@ -75,7 +75,7 @@ const OVER = { rise: 0.35, top: 104 };
 
 const comboDamage = []; // per fighter hit: the damage of the combo they are in
 
-export function handleEvents(events, state, { quiet, project, me = -1, colors = null, how = '' }) {
+export function handleEvents(events, state, { quiet, project, me = -1, colors = null, how = '', heading = null }) {
   // Behind the menus (quiet) the fight keeps its sparks and flashes but not
   // its words, which would sit on top of the menu's own text.
   const floatText = quiet ? () => {} : showText;
@@ -90,10 +90,12 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
     switch (e.type) {
       case 'round':
         if (quiet) break;
-        if (arena) showBanner(`ROUND ${e.round}`, 'OF 3 · EVERYONE FOR THEMSELVES', '#e8b454', 1100);
+        // (A run's own heading over its first round: Survival's RIVAL 4.)
+        if (heading && e.round === 1) showBanner(heading[0], heading[1], '#e8b454', 1300);
+        else if (arena) showBanner(`ROUND ${e.round}`, 'OF 3 · EVERYONE FOR THEMSELVES', '#e8b454', 1100);
         else showBanner(state.pts[0] === 1 && state.pts[1] === 1 ? 'FINAL ROUND' : `ROUND ${e.round}`, null, '#e8b454', 1100);
         play('round');
-        announce(!arena && state.pts[0] === 1 && state.pts[1] === 1 ? 'Final round' : `Round ${['one', 'two', 'three'][e.round - 1] || e.round}`);
+        announce(heading && e.round === 1 ? heading[0].charAt(0) + heading[0].slice(1).toLowerCase() : !arena && state.pts[0] === 1 && state.pts[1] === 1 ? 'Final round' : `Round ${['one', 'two', 'three'][e.round - 1] || e.round}`);
         break;
       case 'fight':
         if (quiet) break;

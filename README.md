@@ -60,7 +60,9 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   mind from the sixth. The first defeat ends the run; Next rival / Try again
   on the result screen, and the best run is kept on the Record (next to
   the best run of wins). The rival's tag says how far the run has come
-  (RIVAL 4), and when the run ends the result shows the faces of the
+  (RIVAL 4) - and each rival's first round opens with that heading
+  instead of ROUND 1 (RIVAL 4 · ROUND 1 · CPU ON HARD, and the announcer
+  calls the rival) - and when the run ends the result shows the faces of the
   rivals it beat (the last eight of a long one). The rivals get no extra health or power, unlike the arcade
   boss: measured, a strong player beats Hard about a third of the time and
   the boss's mind about a fifth, so six in a row is already rare.
