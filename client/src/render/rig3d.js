@@ -195,8 +195,9 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
   // slim and wears neither.)
   const worn = char.gear || [];
   const skirt = worn.includes('skirt') ? seg(0.27, mats.accent, 0.3, g.cone) : null;
-  const tail = worn.includes('ponytail') ? [ball(0.1, 0.1, 0.1, mats.hair), ball(0.085, 0.085, 0.085, mats.hair), ball(0.065, 0.065, 0.065, mats.hair)] : [];
-  const knot = sumo ? ball(0.09, 0.07, 0.09, mats.secondary) : null; // topknot
+  const hk = real ? 0.75 : 1; // (hair scaled with the realistic body's smaller head)
+  const tail = worn.includes('ponytail') ? [ball(0.1 * hk, 0.1 * hk, 0.1 * hk, mats.hair), ball(0.085 * hk, 0.085 * hk, 0.085 * hk, mats.hair), ball(0.065 * hk, 0.065 * hk, 0.065 * hk, mats.hair)] : [];
+  const knot = sumo ? ball(0.09 * hk, 0.07 * hk, 0.09 * hk, mats.secondary) : null; // topknot
   // The parts whose shadows show: body, limbs and the feet that ground it.
   const casters = [pelvis, torso, chest, belly, left.upper, right.upper, left.fore, right.fore, left.thigh, right.thigh, left.shin, right.shin, left.foot, right.foot];
   for (const m of casters) if (m) m.castShadow = true;
@@ -285,6 +286,10 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
       const nx = sx + Math.sin(p.lean + p.tilt) * LEN.neck;
       const ny = sy - Math.cos(p.lean + p.tilt) * LEN.neck;
 
+      // The head's centre (a smaller head sits lower, its chin on the neck);
+      // the topknot and the ponytail follow it, scaled with it.
+      const hcx = nx - Math.sin(p.lean + p.tilt) * LEN.head * (1 - HEAD_K) * 0.9;
+      const hcy = ny + Math.cos(p.lean + p.tilt) * LEN.head * (1 - HEAD_K) * 0.9;
       put(pelvis, hx, hy, 0);
       stretch(torso, hx, hy - 2, 0, sx, sy + 6, 0);
       stretch(belt, hx, hy - 3, 0, hx + (sx - hx) * 0.16, hy + (sy - hy) * 0.16, 0);
@@ -294,13 +299,13 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
       if (belly) {
         put(belly, hx + (sx - hx) * 0.42 + 9, hy + (sy - hy) * 0.42, 0);
         put(apron, hx + 24, hy + 8, 0);
-        put(knot, nx - 4, ny - LEN.head - 3, 0);
+        put(knot, hcx - 4 * HEAD_K, hcy - (LEN.head + 3) * HEAD_K, 0);
       }
       if (skirt) stretch(skirt, hx, hy + 14, 0, hx + (sx - hx) * 0.12, hy + (sy - hy) * 0.12 - 2, 0);
       // The ponytail trails behind the head and swings with movement.
       for (let i = 0; i < tail.length; i++) {
         const sway = Math.sin(now / 170 + i) * 2 + (f.state === 'walk' ? 5 : 0) * i;
-        put(tail[i], nx - 30 - i * 9 - sway, ny - 8 + i * 13, 0);
+        put(tail[i], hcx - (30 + i * 9) * HEAD_K - sway, hcy + (-8 + i * 13) * HEAD_K, 0);
       }
 
       if (scarf) {
@@ -341,8 +346,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
 
       // The head looks at the camera whatever the body is doing, and rolls
       // with the body when the fighter is knocked over.
-      // (A smaller head sits lower, its chin on the neck.)
-      put(head, nx + Math.sin(p.lean + p.tilt) * LEN.head * (1 - HEAD_K) * -0.9, ny + Math.cos(p.lean + p.tilt) * LEN.head * (1 - HEAD_K) * 0.9, 0);
+      put(head, hcx, hcy, 0);
       turn.updateMatrixWorld(true);
       lean.getWorldQuaternion(q).invert();
       want.setFromAxisAngle(UP, Math.atan2(camera.position.x - turn.position.x, camera.position.z - turn.position.z));

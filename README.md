@@ -763,6 +763,12 @@ and the heartbeat, the crowd and the weather go quiet.
   head 70 % the size, no cartoon outline, and cloth with Poly Haven's
   "Denim Fabric" relief (Rob Tuytel, CC0, 256 px). Try it on the website
   with `?realbody` (Ruko), `?realbody=all` or `?realbody=<fighter id>`.
+  Loop 187: checked with every build and in several poses (standing,
+  punch, kick, jump; Jackie's sumo build, Pixie's skirt and ponytail):
+  the topknot and the ponytail were placed for the big head and floated
+  above the small one - they now follow the head and shrink with it. With
+  everyone on the realistic body a four-fighter brawl takes ~208 draw
+  calls instead of ~298 (no outline pass).
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the
