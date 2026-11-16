@@ -32,6 +32,12 @@ const LEAD_MAX = 14; // never draw a guest's own fighter more than this many tic
 const newId = () => Math.random().toString(36).slice(2, 12);
 const newCode = () => Array.from({ length: 4 }, () => 'ABCDEFGHJKLMNPQRSTUVWXYZ'[(Math.random() * 24) | 0]).join('');
 const cleanText = (v) => String(v ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, 140);
+// Pings someone published: { memberId: ms }, a few at most, sane numbers.
+const cleanPings = (v) => {
+  const out = {};
+  if (v && typeof v === 'object') for (const [k, ms] of Object.entries(v).slice(0, 12)) if (typeof k === 'string' && k.length <= 16 && Number.isFinite(ms) && ms > 0 && ms < 10000) out[k] = Math.round(ms);
+  return out;
+};
 const cleanName = (v) => String(v ?? '').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 14) || 'Fighter';
 // Shorten floats so snapshots stay small on the wire.
 const compact = (key, value) => (typeof value === 'number' && !Number.isInteger(value) ? Math.round(value * 10) / 10 : value);
@@ -136,7 +142,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
 
   // ----------------------------------------------------------------- room ---
 
-  const roomState = () => ({ name: me.name, char: room.char, look: room.look, ready: room.ready, at: room.at, v: version, arena: room.arena });
+  const roomState = () => ({ name: me.name, char: room.char, look: room.look, ready: room.ready, at: room.at, v: version, arena: room.arena, pg: room.shared || {} });
 
   // Send game data to one member: directly when the link is up, otherwise
   // through the bus (and then only now and again, to stay within its limits).
@@ -191,7 +197,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
 
   function onPeers(list) {
     const peers = list
-      .map((p) => ({ id: p.id, name: cleanName(p.name), char: isFighterId(p.char) ? p.char : FIGHTERS[0].id, ready: !!p.ready, at: Number(p.at) || 0, same: p.v === version, arena: isArenaId(p.arena) ? p.arena : ARENAS[0].id, look: cleanLook(isFighterId(p.char) ? p.char : FIGHTERS[0].id, p.look) }))
+      .map((p) => ({ id: p.id, name: cleanName(p.name), char: isFighterId(p.char) ? p.char : FIGHTERS[0].id, ready: !!p.ready, at: Number(p.at) || 0, same: p.v === version, arena: isArenaId(p.arena) ? p.arena : ARENAS[0].id, look: cleanLook(isFighterId(p.char) ? p.char : FIGHTERS[0].id, p.look), pg: cleanPings(p.pg) }))
       .sort((a, b) => a.at - b.at || (a.id < b.id ? -1 : 1));
     const hostBefore = room.hostId;
     room.peers = peers;
@@ -203,19 +209,20 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       lobby.track(lobbyState());
     }
 
-    // Drop links to people who left; if the host changed, start over.
+    // Drop links to people who left.
     for (const [id, link] of room.links) {
-      if (!peers.some((p) => p.id === id) || (hostBefore && hostBefore !== room.hostId)) {
+      if (!peers.some((p) => p.id === id)) {
         link.close();
         room.links.delete(id);
       }
     }
-    // The host opens a direct link to every other member (and the pipe for
-    // when that link fails); pipes to members who left are closed.
-    if (room.isHost) for (const p of peers) if (p.id !== me.id) {
-      linkTo(p.id, true);
-      pipeWith(p.id);
-    }
+    // Every member has a direct link to every other (the one with the lower
+    // id opens it): the host's links carry the fight, and all of them carry
+    // the pings that show who would make the best host. The host also opens
+    // the pipe to each guest for when a link fails; pipes to members who left
+    // are closed.
+    for (const p of peers) if (p.id !== me.id && me.id < p.id) linkTo(p.id, true);
+    if (room.isHost) for (const p of peers) if (p.id !== me.id) pipeWith(p.id);
     for (const [id, pipe] of room.pipes) if (id !== me.id && !peers.some((p) => p.id === id)) {
       pipe.leave();
       room.pipes.delete(id);
@@ -229,15 +236,15 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
   online.joinRoom = async (code) => {
     if (room) await online.leaveRoom();
     code = String(code).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || newCode();
-    room = { code, ch: null, peers: [], hostId: null, isHost: false, links: new Map(), pipes: new Map(), at: Date.now(), char: char(), look: look(), ready: false, arena: arena() };
+    room = { code, ch: null, peers: [], hostId: null, isHost: false, links: new Map(), pipes: new Map(), pings: new Map(), shared: {}, at: Date.now(), char: char(), look: look(), ready: false, arena: arena() };
     online.chat = []; // a room starts with a clean slate
     const ch = bus.channel(`room-${code}`, me.id, roomState());
     room.ch = ch;
     pipeWith(me.id); // our own pipe to the host (used when no direct link opens)
+    room.pingTimer = setInterval(pingRoom, 3000);
     ch.on('sig', (m) => {
       if (m.to !== me.id || !room) return;
-      // Only the host opens links, so a signal is either from the host or for it.
-      if (!room.isHost && m.from !== room.hostId) return;
+      if (!room.peers.some((p) => p.id === m.from)) return; // (only from members of this room)
       linkTo(m.from, false)?.handle(m.d);
     });
     ch.on('relay', (m) => {
@@ -252,6 +259,13 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     });
     ch.on('end', () => {
       if (match && !match.host) stopMatch('finished');
+    });
+    // The host hands the role over: the new host takes the earliest place in
+    // the room's order, and everyone's list (and the links) follow.
+    ch.on('handover', (m) => {
+      if (!room || match || m?.to !== me.id || m.from !== room.hostId) return;
+      room.at = Math.min(...room.peers.map((p) => p.at)) - 1;
+      room.ch.track(roomState());
     });
     ch.onPeers(onPeers);
     await ch.ready;
@@ -274,6 +288,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     if (match) stopMatch('left', true);
     for (const link of room.links.values()) link.close();
     for (const pipe of room.pipes.values()) pipe.leave();
+    clearInterval(room.pingTimer);
     room.ch.leave();
     room = null;
     online.chat = [];
@@ -316,18 +331,69 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
 
   // The first four members are the players; anyone after that watches.
   online.players = () => (room ? room.peers.slice(0, MAX_PLAYERS) : []);
+
+  // ----------------------------------------------------------- best host ---
+  // While waiting in a room, every few seconds each member pings the others
+  // over the direct links; each publishes its pings (rounded, only when they
+  // move) so everyone can see who sits best in the middle of the group.
+  function pingRoom() {
+    if (!room || match) return;
+    for (const p of room.peers) if (p.id !== me.id) room.links.get(p.id)?.send(JSON.stringify({ rp: performance.now() }));
+  }
+  function sharePings() {
+    const next = {};
+    for (const [id, ms] of room.pings) if (room.peers.some((p) => p.id === id)) next[id] = Math.max(1, Math.round(ms / 5) * 5);
+    const moved = Object.keys(next).some((id) => Math.abs((room.shared[id] ?? -999) - next[id]) >= 15) || Object.keys(next).length !== Object.keys(room.shared).length;
+    if (!moved) return;
+    room.shared = next;
+    room.ch.track(roomState());
+  }
+  // The trip between two members as either of them measured it.
+  const pingBetween = (a, b) => room.peers.find((p) => p.id === a)?.pg[b] ?? room.peers.find((p) => p.id === b)?.pg[a] ?? null;
+  // Each player's worst trip to the other players (null until measured),
+  // and the player whose worst trip is shortest: the best host.
+  online.worstPing = (id) => {
+    if (!room) return null;
+    const others = online.players().filter((p) => p.id !== id);
+    const trips = others.map((p) => pingBetween(id, p.id));
+    return others.length && trips.every((t) => t !== null) ? Math.max(...trips) : null;
+  };
+  online.bestHost = () => {
+    const list = online.players().map((p) => ({ p, w: online.worstPing(p.id) })).filter((x) => x.w !== null);
+    if (list.length < online.players().length || list.length < 2) return null;
+    return list.sort((a, b) => a.w - b.w)[0];
+  };
+  // Host: hand the role to another member (between fights).
+  online.handHost = (id) => {
+    if (!room || !room.isHost || match || id === me.id || !room.peers.some((p) => p.id === id)) return;
+    room.ch.send('handover', { to: id, from: me.id });
+  };
   online.canStart = () => !!room && room.isHost && !match && !room.mixed && online.players().every((p) => p.ready || p.id === me.id);
 
   // ---------------------------------------------------------------- match ---
 
   function onData(from, text) {
-    if (!match || typeof text !== 'string' || text.length > 20000) return;
+    if (typeof text !== 'string' || text.length > 20000) return;
     let msg;
     try {
       msg = JSON.parse(text);
     } catch {
       return;
     }
+    // Room pings between members, over the direct links (they cost the
+    // service nothing): answered at once, the trip remembered.
+    if (room && typeof msg.rp === 'number') {
+      room.links.get(from)?.send(JSON.stringify({ ra: msg.rp }));
+      return;
+    }
+    if (room && typeof msg.ra === 'number') {
+      const ms = performance.now() - msg.ra;
+      const old = room.pings.get(from);
+      room.pings.set(from, old === undefined ? ms : old + (ms - old) * 0.3);
+      sharePings();
+      return;
+    }
+    if (!match) return;
     if (match.host) {
       const slot = match.info.slots.findIndex((sl) => sl.id === from);
       if (slot >= 0 && (typeof msg.i === 'number' || Array.isArray(msg.h))) match.remote[slot].take(msg);

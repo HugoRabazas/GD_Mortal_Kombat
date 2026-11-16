@@ -1084,6 +1084,17 @@ function roomScoreNote() {
   return `<p class="note">In this room: ${people.map((sl) => `${esc(sl.name)} <b>${app.roomWins.wins[sl.id]}</b>`).join(' · ')}</p>`;
 }
 
+// Who would make the best host: the player whose worst trip to the others is
+// shortest (each ping in the list is that player's worst). Said only when it
+// beats the present host by a clear margin; the host can hand over the role.
+function bestHostNote(on, room) {
+  const best = on.bestHost();
+  const now = on.worstPing(room.hostId);
+  if (!best || now === null || best.p.id === room.hostId || now - best.w < 30) return '';
+  const button = room.isHost ? ` <button type="button" class="linkish" data-act="handHost" data-id="${esc(best.p.id)}">Make host</button>` : '';
+  return `<p class="rules best">Best host: <b>${esc(best.p.name)}</b> · ${best.w} vs ${now} ms.${button}</p>`;
+}
+
 function roomScreen() {
   const on = app.online;
   const room = on.room;
@@ -1102,13 +1113,13 @@ function roomScreen() {
             ${players
               .map(
                 (p) => `<li>${head(p.char)}<span class="lname pname"><span class="nm" title="${esc(p.name)}">${esc(p.name)}</span>${p.id === on.me.id ? '<span class="you">(you)</span>' : ''}${wins[p.id] ? ` <span class="wins" title="Fights won in this room">${wins[p.id]} ${wins[p.id] === 1 ? 'win' : 'wins'}</span>` : ''}</span>
-                  <span class="ltag ${p.ready || p.id === room.hostId ? 'ok' : ''}">${p.id === room.hostId ? 'host' : p.ready ? 'ready' : 'choosing'}</span></li>`,
+                  <span class="ltag ${p.ready || p.id === room.hostId ? 'ok' : ''}">${p.id === room.hostId ? 'host' : p.ready ? 'ready' : 'choosing'}${on.worstPing(p.id) !== null ? ` <span class="ping" title="Worst ping to the other players">${on.worstPing(p.id)}ms</span>` : ''}</span></li>`,
               )
               .join('')}
           </ol>
           ${watching.length ? `<p class="rules">Watching: ${esc(watching.map((p) => p.name).join(', '))}</p>` : ''}
           ${room.isHost ? '' : `<p class="rules">Arena: <b>${ARENAS.find((a) => a.id === on.arena())?.name ?? ''}</b> (the host chooses)</p>`}
-          <p class="rules">${link === 'direct' ? 'Connected directly.' : link === 'relayed' ? (on.canLink ? 'Connecting… (relayed for now)' : 'Connected through the server: this browser does not allow direct links, so moves may arrive a little later.') : 'Waiting for others. Share the room name, or start with CPU rivals.'}</p>
+          ${bestHostNote(on, room) || `<p class="rules">${link === 'direct' ? 'Connected directly.' : link === 'relayed' ? (on.canLink ? 'Connecting… (relayed for now)' : 'Connected through the server: this browser does not allow direct links, so moves may arrive a little later.') : 'Waiting for others. Share the room name, or start with CPU rivals.'}</p>`}
         </div>
         <div class="slot" style="--tint:${lookColors(room.char, room.look ?? 0).primary};--ring:${lookColors(room.char, room.look ?? 0).accent}">
           <span class="who">Your fighter</span>
@@ -1587,6 +1598,9 @@ const ACTIONS = {
   // The Record's moves still to land (a tooltip never shows on a phone).
   movesLeft() {
     toast(missingMoves(readRecord()), 9000);
+  },
+  handHost(el) {
+    app.online?.handHost(el.dataset.id);
   },
   onBack() {
     if (app.online?.game) app.online.endMatch();

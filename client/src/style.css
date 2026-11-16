@@ -2995,3 +2995,16 @@ kbd {
   font-size: 0.68rem;
   color: var(--ash);
 }
+
+/* A player's worst ping in a room's list, beside the host / ready tag. */
+.people .ltag .ping {
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.75;
+}
+
+@media (max-width: 520px) and (orientation: portrait) {
+  .screen.room .people .ltag {
+    white-space: nowrap;
+  }
+}

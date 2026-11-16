@@ -695,6 +695,15 @@ and the heartbeat, the crowd and the weather go quiet.
   second instead of 7.5 (~79 messages a second with all four tapping, under
   the 100 allowed). One relayed four-player match fits the free plan; two at
   the same moment would go past it (direct links cost nothing).
+- **The best host**: the whole fight runs on the host's device, and every
+  guest's trip goes to it - so with friends in several countries, who hosts
+  matters most. While a room waits, every member now has a direct link to
+  every other and pings them over it (free of the service's quota); each
+  player's worst ping shows in the room's list, and when another player
+  would serve everyone clearly better (30 ms or more) the room says so -
+  "Best host: Ana · 60 vs 140 ms" - and the host can hand the role over
+  with one tap. Checked on the live service: the hand-over moves the role,
+  and the new host starts a fight with everyone linked directly.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
