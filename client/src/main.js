@@ -11,7 +11,7 @@ import { LESSONS, lessonById, stepsDone, tutorPartner, drummer } from '../../sha
 import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
 import { createGame } from './game.js';
-import { handleEvents } from './effects.js';
+import { handleEvents, setBuzz } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, padStyle, hasPad, setCapture, setTouchLive, lastDevice } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, setAmbience, getVolume, setVolume } from './audio.js';
@@ -705,6 +705,7 @@ function settingsScreen() {
         <button type="button" class="btn small" data-act="mute" aria-pressed="${!isMuted()}">${soundLabel()}</button>
         <button type="button" class="btn small" data-act="announcer" aria-pressed="${isAnnouncer()}">${announcerLabel()}</button>
         <button type="button" class="btn small" data-act="touch" aria-pressed="${app.touch}">${touchLabel()}</button>
+        ${canVibrate() ? `<button type="button" class="btn small" data-act="vibrate" aria-pressed="${vibrateOn()}">${vibrateLabel()}</button>` : ''}
         <button type="button" class="btn small" data-act="arrange">Arrange buttons</button>
       </div>
       <div class="row"><button type="button" class="btn primary" data-act="settingsDone">Done</button></div>
@@ -726,6 +727,25 @@ function arrangeScreen() {
 
 // Training and the tutorial: no clock, health refills, no record kept.
 const practising = () => app.mode === 'training' || app.mode === 'tutorial';
+
+// Vibration: the phone buzzes (and a gamepad rumbles) on the blows that
+// matter (effects.js buzz). Settings offers to turn it off where the device
+// can buzz and has a touch screen; on unless turned off.
+// (Both read once and kept: the fight asks every frame.)
+let canVib = null;
+const canVibrate = () => (canVib ??= typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function' && typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches);
+let vibOn = null;
+const vibrateOn = () => {
+  if (vibOn === null) {
+    try {
+      vibOn = localStorage.getItem('gd-arena-vibrate') !== '0';
+    } catch {
+      vibOn = true;
+    }
+  }
+  return vibOn;
+};
+const vibrateLabel = () => `Vibration: ${vibrateOn() ? 'on' : 'off'}`;
 
 // -------------------------------------------------------------- tutorial ---
 // Lessons of a few steps each (shared/tutorial.js), against a partner who
@@ -1737,6 +1757,18 @@ const ACTIONS = {
   smaller: () => touchLayout.resize(-0.1),
   bigger: () => touchLayout.resize(0.1),
   resetLayout: () => touchLayout.reset(),
+  vibrate(el) {
+    vibOn = !vibrateOn();
+    setBuzz(vibOn);
+    try {
+      localStorage.setItem('gd-arena-vibrate', vibOn ? '1' : '0');
+    } catch {
+      // not remembered
+    }
+    el.textContent = vibrateLabel();
+    el.setAttribute('aria-pressed', String(vibrateOn()));
+    if (vibrateOn()) navigator.vibrate?.(30); // so you feel what it is
+  },
   announcer(el) {
     setAnnouncer(!isAnnouncer());
     el.textContent = announcerLabel();
@@ -2110,6 +2142,7 @@ function frame(now) {
 }
 
 async function boot() {
+  setBuzz(vibrateOn()); // (the vibration setting, as last left)
   ui.innerHTML = '<p class="loading">Entering the arena…</p>';
   layout();
   // Text painted on canvases needs the fonts ready first; never wait long.

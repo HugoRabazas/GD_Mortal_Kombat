@@ -722,6 +722,13 @@ and the heartbeat, the crowd and the weather go quiet.
   Its whoosh plays at once too (1-13 ms after the press instead of
   180-290 ms relayed), and the host's own word of that swing is then not
   played again - checked on ten presses, each heard once.
+- **Vibration can be turned off** (loop 174): the phone already buzzed
+  (and a gamepad rumbled) on the blows that matter - hits on you, throws,
+  finishers. Settings now has **Vibration: on/off**, shown where the device
+  can vibrate and has a touch screen (not iPhones, which cannot), kept on
+  the device. Checked with a phone emulated and its vibration recorded:
+  21-25 buzzes in 25 s of a fight with it on, none with it off; Settings
+  fits at the seven sizes.
 - **Burst** (loop 172): caught in a combo, there was nothing to do but
   wait it out. Now, from a combo's second blow on, **block and special
   together** break out of it for half the energy bar: a shockwave pushes

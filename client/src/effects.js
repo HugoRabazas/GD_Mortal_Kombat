@@ -23,7 +23,13 @@ function showRoundPoints(state, project) {
 // sound no.
 // A short buzz on phones that support it, and a rumble on the first gamepad
 // if it has motors. Some browsers refuse either; that is fine.
+// (Settings can turn it off: setBuzz.)
+let buzzOn = true;
+export function setBuzz(on) {
+  buzzOn = !!on;
+}
 function buzz(ms) {
+  if (!buzzOn) return;
   try {
     navigator.vibrate?.(ms);
   } catch {
