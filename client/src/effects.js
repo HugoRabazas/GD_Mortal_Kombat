@@ -5,6 +5,7 @@
 // Events carry positions on the arena floor; `project` converts them to
 // points on the flat effects layer for whichever view is showing the fight.
 
+import { HOW_SAID } from './outcome.js';
 import { ARENA } from '../../shared/constants.js';
 import { getFighter } from '../../shared/fighters.js';
 import { play, announce } from './audio.js';
@@ -66,7 +67,7 @@ const aboveTag = (char) => (char.build === 'sumo' ? 285 : 265);
 // They drift up only a little, and never into the scoreboard across the top.
 const OVER = { rise: 0.35, top: 104 };
 
-export function handleEvents(events, state, { quiet, project, me = -1, colors = null }) {
+export function handleEvents(events, state, { quiet, project, me = -1, colors = null, how = '' }) {
   // Behind the menus (quiet) the fight keeps its sparks and flashes but not
   // its words, which would sit on top of the menu's own text.
   const floatText = quiet ? () => {} : showText;
@@ -459,14 +460,14 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         cheerFor(e.winner, 1);
         if (quiet) break;
         if (e.winner < 0) showBanner('DRAW', arena ? 'THE TOP SPOT IS SHARED' : null, '#e8b454', 2600);
-        else showBanner(`${nameOf(e.winner)} WINS`, arena ? 'ARENA CHAMPION' : getFighter(state.f[e.winner].char).title.toUpperCase(), '#e8b454', 2600);
+        else showBanner(`${nameOf(e.winner)} WINS`, how ? HOW_SAID[how].toUpperCase() : arena ? 'ARENA CHAMPION' : getFighter(state.f[e.winner].char).title.toUpperCase(), '#e8b454', 2600);
         if (e.winner >= 0) {
           const c = colors?.[e.winner] ?? getFighter(state.f[e.winner].char).colors;
           confetti(ARENA.W, [c.primary, c.accent, c.glow, '#f6ead8']);
         }
         // The fanfare is for winners: whoever lost at this screen hears the fall.
         play(me >= 0 && e.winner >= 0 && e.winner !== me ? 'defeat' : 'win');
-        announce(e.winner < 0 ? 'Draw' : `${spoken(e.winner)} wins!`);
+        announce(e.winner < 0 ? 'Draw' : `${spoken(e.winner)} wins!${how ? ` ${HOW_SAID[how]}!` : ''}`);
         break;
       default:
         break;

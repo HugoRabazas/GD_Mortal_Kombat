@@ -20,3 +20,11 @@ test('the way a duel was won', () => {
 test('every fighter has a line for each way of winning', () => {
   for (const f of FIGHTERS) for (const how of ['perfect', 'comeback', 'close']) assert.ok(f.quotes?.[how]?.length > 5, `${f.id} ${how}`);
 });
+
+test('the way a brawl was won', () => {
+  const brawl = (pts) => ({ mode: 'arena', matchWinner: 0, pts, f: pts.map(() => ({ hp: 50, maxHp: 120 })) });
+  assert.equal(howWon(brawl([9, 3, 2, 0]), [{ winner: 0 }, { winner: 0 }, { winner: 0, perfect: true }]), 'perfect');
+  assert.equal(howWon(brawl([7, 6, 2, 0]), [{ winner: 1 }, { winner: 0 }, { winner: 0 }]), 'comeback');
+  assert.equal(howWon(brawl([7, 6, 2, 0]), [{ winner: 0 }, { winner: 1 }, { winner: 0 }]), 'close');
+  assert.equal(howWon(brawl([8, 4, 2, 0]), [{ winner: 0 }, { winner: 1 }, { winner: 0 }]), '');
+});

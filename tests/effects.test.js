@@ -60,3 +60,13 @@ test("the boss's second wind is called out", () => {
   handleEvents([{ type: 'enrage', slot: 1, x: 0, z: 0 }], s, { quiet: false, project });
   assert.deepEqual(said, ['Second wind!']);
 });
+
+test('the end of a match says how it was won', () => {
+  const s = createMatch(['ruko', 'jackie']);
+  said.length = 0;
+  handleEvents([{ type: 'matchEnd', winner: 0 }], s, { quiet: false, project, how: 'comeback' });
+  handleEvents([{ type: 'matchEnd', winner: 1 }], s, { quiet: false, project });
+  assert.equal(said.length, 2);
+  assert.match(said[0], /wins! What a comeback!$/);
+  assert.match(said[1], /wins!$/);
+});

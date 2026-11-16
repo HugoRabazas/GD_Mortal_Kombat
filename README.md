@@ -728,8 +728,12 @@ and the heartbeat, the crowd and the weather go quiet.
   win (it went to the deciding round, or the winner ended under a quarter
   of their health) - Zelrith's comeback: "Ha! Thought I was done? Again!".
   Picked from the rounds' ends (outcome.js, with tests; every fighter has
-  all three); brawls keep the usual line. The longest fits the result card
-  at 360x640, 568x320, 640x360 and 740x340.
+  all three). The longest fits the result card at 360x640, 568x320,
+  640x360 and 740x340. Brawls too (loop 170): every round taken and the
+  last flawless; the first round someone else's; or first place by a
+  single point. And the banner at the end of the match says it under the
+  winner's name - FLAWLESS, WHAT A COMEBACK, BY A WHISKER - and the
+  announcer after "X wins!" (seen: SHADOW WINS · FLAWLESS).
 - **Replay KO**: the result screen of a fight that ended on a knockout
   offers Replay KO - the last 1.7 seconds before the final blow and the
   fall after it, again at half speed (the knockout's own slow motion
