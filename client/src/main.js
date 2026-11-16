@@ -1191,6 +1191,11 @@ function lobbyScreen() {
             <button type="button" class="btn" data-act="createRoom">New room</button>
           </div>
           <p class="rules aside">Quick match joins the open room with the most people, or opens one.</p>
+          ${(() => {
+            // The day's challenge is the same for everyone: something to talk about here.
+            const d = dailyChallenge();
+            return `<p class="rules aside">Today's challenge, the same for everyone: ${getFighter(d.you).name} against ${getFighter(d.rival).name} on ${LEVEL_NAMES[d.level]}${dailyDone() ? ' - you beat it' : ''}.</p>`;
+          })()}
         </div>
       </div>
       ${chatBox()}

@@ -79,6 +79,8 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   whose menu has no room for the tip line get it as a button on Quick
   fight's select screen (Back · Today's challenge · Fight). The Record
   counts the days beaten on its Won line (99 · 71% · 6 daily).
+  The Online lobby names the day's challenge too, where it has room (a
+  phone held upright, a larger screen), so the alliance can talk about it.
 - **2 Players**: a duel on one device, or a brawl with two CPU fighters added.
   From the second fight in a row the result keeps score between the two
   (This session: P1 2 · P2 1); Rematch carries it on, choosing fighters
