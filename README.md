@@ -482,6 +482,14 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **Combos split in two**: the Combos lesson had grown to nine steps, so it
+  keeps the ground strings (launcher, kick string, kick-elbow, hook kick,
+  backfist) and a new **Air combos** lesson takes the juggle, the air
+  throw, the hammer fist and the air string. Eleven lessons, none over six
+  steps (a test). Progress already saved is kept: a step is found by its own
+  id wherever it was saved (ids are unique across lessons, also tested), so
+  a juggle done under the old Combos shows as done in Air combos. The list
+  of eleven fits at the seven phone sizes.
 - **Hammer fist**: a flying kick that lands flows, with punch, into a hammer
   fist - both hands brought down on the rival's head (6) - that bounces
   them off the floor for one blow more, as the stomp does. The second air

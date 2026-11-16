@@ -713,7 +713,10 @@ function lessonsDone() {
     lessonMemo = {};
     try {
       const saved = JSON.parse(localStorage.getItem('gd-arena-lessons') || '{}');
-      for (const l of LESSONS) lessonMemo[l.id] = new Set(Array.isArray(saved[l.id]) ? saved[l.id] : []);
+      // Steps are found by their own id wherever they were saved, so a step
+      // that moved to another lesson (Combos split in two) stays done.
+      const all = new Set(Object.values(saved).flatMap((ids) => (Array.isArray(ids) ? ids : [])));
+      for (const l of LESSONS) lessonMemo[l.id] = new Set(l.steps.map((st) => st.id).filter((id) => all.has(id)));
     } catch {
       // nothing remembered
     }

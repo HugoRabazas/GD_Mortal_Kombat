@@ -78,8 +78,9 @@ test('the guarding partner shows a punch stopped and a throw going through', () 
   assert.ok(done.has('guarded') && done.has('grab'), [...done].join());
 });
 
-test('the combo lesson ticks a launcher and a juggle', () => {
-  const lesson = LESSONS.find((l) => l.id === 'combos');
+test('the combo lessons tick a launcher (Combos) and a juggle (Air combos)', () => {
+  const both = ['combos', 'aircombos'].map((id) => LESSONS.find((l) => l.id === id));
+  const lesson = { ...both[0], steps: both.flatMap((l) => l.steps) };
   const seq = { 0: INPUT.PUNCH, 9: INPUT.PUNCH, 19: INPUT.KICK };
   let pressedAir = false;
   const done = play(lesson, (s, t) => {
@@ -257,3 +258,9 @@ for (const lesson of LESSONS) {
     }
   });
 }
+
+test('step ids are unique across lessons (saved progress finds a step that moved lesson)', () => {
+  const ids = LESSONS.flatMap((l) => l.steps.map((st) => st.id));
+  assert.equal(new Set(ids).size, ids.length);
+  assert.ok(LESSONS.every((l) => l.steps.length <= 6), 'every lesson stays short');
+});
