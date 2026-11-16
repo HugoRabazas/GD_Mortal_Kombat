@@ -1675,7 +1675,10 @@ const ACTIONS = {
   rematch: startFight,
   replay() {
     if (!app.koClip) return;
-    app.replay = { clip: app.koClip, t0: performance.now(), last: -1 };
+    // Who goes down at the end of it (the camera stays on them).
+    const end = app.koClip[app.koClip.length - 1].state;
+    const out = end.f.filter((f) => f.state === 'ko' || f.hp <= 0).sort((a, b) => (b.outAt ?? 0) - (a.outAt ?? 0))[0];
+    app.replay = { clip: app.koClip, t0: performance.now(), last: -1, on: out ? out.slot : -1 };
     stage.reset();
     show('replay');
   },
@@ -1923,7 +1926,7 @@ function replayFrame(now) {
   r.last = i;
   const tags = labels();
   const humans = app.mode === 'online' ? tags.map((_, i) => i === mine) : tags.map((t) => t === 'YOU' || t === 'P1' || t === 'P2');
-  stage.render({ state: st, theme: app.fightPlace, looks: fightLooks(), demo: false, labels: tags, boss: null, humans, me: mine, net: '', hint: '', clearCorners: touchOver(), noTags: false }, now);
+  stage.render({ state: st, theme: app.fightPlace, looks: fightLooks(), demo: false, labels: tags, boss: null, humans, me: mine, net: '', hint: '', clearCorners: touchOver(), noTags: false, replay: { on: r.on } }, now);
 }
 
 function endReplay() {

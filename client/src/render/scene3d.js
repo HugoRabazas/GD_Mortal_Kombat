@@ -990,6 +990,20 @@ export function create3D(canvas) {
     if (view.demo) {
       shot.yaw = Math.sin(now / 6000) * 0.5;
       shot.dist += 1.5;
+    } else if (view.replay && s.phase === 'fight' && !(s.freeze > 0) && s.f[view.replay.on]) {
+      // The knockout's replay, before the blow: in close and low on the one
+      // about to go down and the rival nearest them, from the side and turning
+      // slowly - another angle than the fight was seen from.
+      const d = s.f[view.replay.on];
+      const o = s.f.filter((x) => x !== d && x.hp > 0).sort((a, b) => Math.hypot(a.x - d.x, a.z - d.z) - Math.hypot(b.x - d.x, b.z - d.z))[0] || d;
+      const gap = Math.hypot(o.x - d.x, o.z - d.z) * S;
+      shot.x = ((d.x + o.x) / 2) * S;
+      shot.z = ((d.z + o.z) / 2) * S;
+      shot.y = 0.9 + Math.max(d.h, o.h) * S * 0.5;
+      shot.dist = Math.min(8, 5.6 + gap * 0.7);
+      shot.yaw = 0.85 + Math.sin(now / 2600) * 0.25;
+      shot.rise = 0.3;
+      shot.ease = 0.1;
     } else if (s.freeze > 0 && s.freezeBy >= 0) {
       // Finisher: push in on the attacker.
       const f = s.f[s.freezeBy];

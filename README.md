@@ -725,7 +725,9 @@ and the heartbeat, the crowd and the weather go quiet.
 - **Replay KO**: the result screen of a fight that ended on a knockout
   offers Replay KO - the last 1.7 seconds before the final blow and the
   fall after it, again at half speed (the knockout's own slow motion
-  slows it further), with its sounds, sparks and the K.O. banner, a red
+  slows it further) - in 3D from its own camera, in close and low from the
+  side on the one about to go down and their nearest rival, turning slowly
+  (loop 168) - with its sounds, sparks and the K.O. banner, a red
   REPLAY mark and Skip at the bottom; at the end it hands back to the
   result screen. While a fight is drawn, a copy of each frame goes on a
   four-and-a-half-second tape (replay.js; ~0.02 ms a frame), which stops
