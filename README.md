@@ -485,7 +485,10 @@ and the heartbeat, the crowd and the weather go quiet.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
-  they now set off above it - higher over the sumo build.
+  they now set off above it - higher over the sumo build - and drift up
+  only a little (0.35 px a frame instead of 0.9), never above y 104, so
+  they stay under the scoreboard too (floatText takes `rise` and `top`).
+  Seen in 3D with Gleh, Kichta and Jackie.
 - **An EX special looks the part**: as it sets off, two rings are thrown
   out round the fighter - gold, and the fighter's own glow - with a spray
   of sparks and a flare of sound (fx.js exBurst), besides EX before its

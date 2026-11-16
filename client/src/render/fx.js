@@ -137,8 +137,9 @@ export function comboCount(side, n, color) {
   else combo = { side, n, color, born: now, at: now };
 }
 
-export function floatText(x, y, text, color, size = 22) {
-  texts.push({ x, y, text, color, size, life: 1 });
+// `rise`: how fast it drifts up (px a frame); `top`: the highest it may go.
+export function floatText(x, y, text, color, size = 22, { rise = 0.9, top = -Infinity } = {}) {
+  texts.push({ x, y: Math.max(y, top), text, color, size, life: 1, rise, top });
 }
 
 export function showBanner(text, sub, color, ms = 1400) {
@@ -176,7 +177,7 @@ export function updateFx(dt = 1000 / 60) {
   for (let i = texts.length - 1; i >= 0; i--) {
     const t = texts[i];
     t.life -= 0.022 * k;
-    t.y -= 0.9 * k;
+    t.y = Math.max(t.top, t.y - t.rise * k);
     if (t.life <= 0) texts.splice(i, 1);
   }
   const s = shake;

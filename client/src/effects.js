@@ -60,7 +60,9 @@ function sparkStyle(e) {
 
 // Where a name floats over a fighter: above their name tag, which sits on
 // top of the head - higher over the big sumo build.
-const aboveTag = (char) => (char.build === 'sumo' ? 285 : 250);
+const aboveTag = (char) => (char.build === 'sumo' ? 285 : 265);
+// They drift up only a little, and never into the scoreboard across the top.
+const OVER = { rise: 0.35, top: 104 };
 
 export function handleEvents(events, state, { quiet, project, me = -1, colors = null }) {
   // Behind the menus (quiet) the fight keeps its sparks and flashes but not
@@ -148,14 +150,14 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
       case 'signature': {
         // The fighter's own move: its name above them.
         const p = project(by.x, aboveTag(char), by.z);
-        floatText(p.x, p.y, char.signature.name.toUpperCase(), tint.accent, 22);
+        floatText(p.x, p.y, char.signature.name.toUpperCase(), tint.accent, 22, OVER);
         if (!quiet) play('swing');
         break;
       }
       case 'taunt': {
         // Each fighter's own line, and the energy it earned.
         const p = project(by.x, aboveTag(char), by.z);
-        floatText(p.x, p.y, TAUNTS[by.char] || 'Come on!', tint.accent, 22);
+        floatText(p.x, p.y, TAUNTS[by.char] || 'Come on!', tint.accent, 22, OVER);
         if (!quiet) play('pickup');
         break;
       }
@@ -340,7 +342,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         // (Names over a fighter float above their name tag, at 250: the tag
         // sits on top of the head.)
         const p = project(by.x, aboveTag(char), by.z);
-        floatText(p.x, p.y, (e.ex ? 'EX ' : '') + char.special.name.toUpperCase(), e.ex ? '#ffe37a' : tint.accent, e.ex ? 26 : 22);
+        floatText(p.x, p.y, (e.ex ? 'EX ' : '') + char.special.name.toUpperCase(), e.ex ? '#ffe37a' : tint.accent, e.ex ? 26 : 22, OVER);
         if (e.ex) {
           // The EX version: golden rings thrown out round them, a brighter
           // flash and a stronger light.
