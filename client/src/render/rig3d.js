@@ -268,10 +268,17 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
     mesh.scale.set(mesh.userData.r, len, mesh.userData.rz);
   };
   const put = (mesh, x, y, z) => mesh.position.set(x * S, -y * S, z);
+  const scaleOut = new THREE.Vector3();
 
   return {
     // Where the top of the head is, in world units (for name tags).
     top: () => turn.position.y + 2.05 * turn.scale.y,
+    // The middle of the head, in world units (for the breath in the cold).
+    // Returns the head's radius.
+    face: (out) => {
+      head.getWorldPosition(out);
+      return head.getWorldScale(scaleOut).x;
+    },
 
     update(f, now, camera) {
       const p = currentPose(f, now);

@@ -1491,6 +1491,9 @@ a fighter pushes off for a jump, not only where they land.
 Snow and sand also keep footprints: each step presses a foot into the
 floor of the Summit and the Ruins (a pair where someone lands), and the
 marks fade after a few seconds. Stone and tiles keep none.
+On the frozen Summit the fighters' breath shows: a small cloud of mist
+leaves each mouth every couple of seconds (quicker while they move or
+fight), drifts the way they face, rises and is gone.
 
 - **Ember Courtyard**: round one at dusk, round two under a cold night sky,
   round three in a storm with rain, lightning and thunder.

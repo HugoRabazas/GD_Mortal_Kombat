@@ -851,6 +851,29 @@ export function create3D(canvas) {
     pr.life = 1;
     pr.m.visible = true;
   };
+  // Breath in the cold: on the frozen summit a small cloud of mist leaves
+  // each fighter's mouth every couple of seconds (quicker when they move
+  // or fight), rises, spreads and is gone.
+  const mistTex = (() => {
+    const c = makeCanvas(64, 64);
+    const g = c.getContext('2d');
+    const r = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    r.addColorStop(0, 'rgba(255,255,255,0.95)');
+    r.addColorStop(0.45, 'rgba(255,255,255,0.55)');
+    r.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = r;
+    g.fillRect(0, 0, 64, 64);
+    return new THREE.CanvasTexture(c);
+  })();
+  const breaths = Array.from({ length: 16 }, () => {
+    const m = new THREE.Sprite(new THREE.SpriteMaterial({ map: mistTex, transparent: true, depthWrite: false, opacity: 0, color: 0xeef4ff }));
+    m.visible = false;
+    scene.add(m);
+    return { m, life: 0, vx: 0, vz: 0 };
+  });
+  let nextBreath = 0;
+  const nextExhale = []; // per slot: when the next breath comes
+  const facePos = new THREE.Vector3();
   const shardGeo = new THREE.TetrahedronGeometry(0.09);
   const shards = Array.from({ length: 16 }, () => {
     const m = new THREE.Mesh(shardGeo, new THREE.MeshLambertMaterial({ color: 0x7a6a5e }));
@@ -1660,6 +1683,44 @@ export function create3D(canvas) {
             sl.material.opacity = 0.7;
           }
         }
+      }
+      // Breath, where it is cold enough to see it.
+      if (theme?.th.snow && s.phase !== 'intro') {
+        for (const f of s.f) {
+          const rig = rigs[f.slot];
+          if (!rig || f.hp <= 0) continue;
+          const due = nextExhale[f.slot] ?? now + 400 + f.slot * 530;
+          if (now < due) {
+            nextExhale[f.slot] = due;
+            continue;
+          }
+          const busy = f.state === 'walk' || f.state === 'attack' || f.state === 'jump';
+          nextExhale[f.slot] = now + (busy ? 1000 : 1800) + Math.random() * 400;
+          const b = breaths[nextBreath++ % breaths.length];
+          // The face always looks at the camera: the mouth is on that side
+          // of the head, a little below its middle, just outside it.
+          const r = rig.face(facePos) * 1.15;
+          const tx = camera.position.x - facePos.x;
+          const tz = camera.position.z - facePos.z;
+          const tl = Math.hypot(tx, tz) || 1;
+          b.m.position.set(facePos.x + (tx / tl) * r + Math.cos(f.dir) * r * 0.5, facePos.y - r * 0.35, facePos.z + (tz / tl) * r + Math.sin(f.dir) * r * 0.5);
+          b.vx = Math.cos(f.dir) * 0.004;
+          b.vz = Math.sin(f.dir) * 0.004;
+          b.life = 1;
+          b.m.visible = true;
+        }
+      }
+      for (const b of breaths) {
+        if (b.life <= 0) continue;
+        const k = dt / 16.7;
+        b.life -= dt / 1300;
+        b.m.position.x += b.vx * k;
+        b.m.position.z += b.vz * k;
+        b.m.position.y += 0.0022 * k;
+        const sz = 0.3 + (1 - b.life) * 0.7;
+        b.m.scale.set(sz, sz, 1);
+        b.m.material.opacity = Math.max(0, Math.min(1, b.life * 3) * Math.min(1, (1 - b.life) * 6)) * 0.8;
+        b.m.visible = b.life > 0 && !!theme?.th.snow;
       }
       // Footprints, in the arenas whose floor keeps them.
       const look = PRINTS[theme?.name];
