@@ -608,6 +608,9 @@ and the heartbeat, the crowd and the weather go quiet.
   A watcher's room on a very short phone held sideways ran 10 px over: its
   status lines (who is watching, the arena, the link) are in smaller print
   there. Chat checked on the live service again.
+- **The moves still to land, on a phone**: the Record's list of moves still
+  to land was only a tooltip, which a phone never shows. "Moves landed" is
+  now a link: a tap lists them in a notice at the top for a few seconds.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

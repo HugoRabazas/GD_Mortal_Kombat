@@ -2976,3 +2976,15 @@ kbd {
     max-height: 2.3em;
   }
 }
+
+/* A figure on the Record that opens more when tapped. */
+.linkish {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--gold);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted rgba(232, 180, 84, 0.6);
+  text-underline-offset: 3px;
+}

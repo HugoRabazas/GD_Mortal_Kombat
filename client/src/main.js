@@ -1404,7 +1404,7 @@ function recordScreen() {
               <div><dt>Perfect guards</dt><dd>${r.perfect}</dd></div>
               <div><dt>Damage dealt</dt><dd>${points(r.damage)}</dd></div>
               <div><dt>Online fights</dt><dd>${r.online}</dd></div>
-              <div title="${esc(missingMoves(r))}"><dt>Moves landed</dt><dd>${(r.moves || []).filter((k) => MOVE_BOOK[k]).length} of ${MOVE_TOTAL}</dd></div>
+              <div title="${esc(missingMoves(r))}"><dt>Moves landed</dt><dd><button type="button" class="linkish" data-act="movesLeft" aria-label="Moves still to land">${(r.moves || []).filter((k) => MOVE_BOOK[k]).length} of ${MOVE_TOTAL} ›</button></dd></div>
               <div><dt>Favourite</dt><dd>${fav[1] ? fav[0].name : '-'}</dd></div>
             </dl>
             <ol class="ranking">${rows}</ol>`
@@ -1580,6 +1580,10 @@ const ACTIONS = {
   onStart: () => {
     fullscreenForFight();
     app.online.start({ fill: app.fill, arena: app.place });
+  },
+  // The Record's moves still to land (a tooltip never shows on a phone).
+  movesLeft() {
+    toast(missingMoves(readRecord()), 9000);
   },
   onBack() {
     if (app.online?.game) app.online.endMatch();
