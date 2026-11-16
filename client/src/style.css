@@ -78,6 +78,18 @@ body {
 
 /* The training checklist, top left under the scoreboard. */
 /* A passing notice (a controller arriving or leaving), above everything. */
+/* Beside a result card, not over its title: the bottom left corner, small. */
+#toast.aside {
+  top: auto;
+  bottom: max(10px, env(safe-area-inset-bottom, 0px));
+  left: max(12px, env(safe-area-inset-left, 0px));
+  transform: none;
+  max-width: min(34%, 260px);
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  text-align: left;
+}
+
 #toast {
   position: absolute;
   z-index: 20;
@@ -2421,9 +2433,26 @@ kbd {
     font-size: 0.62rem;
   }
 
+  .result .ranking .head {
+    width: 30px;
+    height: 30px;
+  }
+
   .screen.result {
-    padding-top: 4px;
-    padding-bottom: 6px;
+    padding-top: 2px;
+    padding-bottom: 4px;
+  }
+
+  .screen.result .sub.next {
+    margin: 0;
+  }
+
+  .screen.result .headline {
+    font-size: 1.5rem;
+  }
+
+  .result .ranking {
+    gap: 3px;
   }
 
   .screen.result .row .btn {

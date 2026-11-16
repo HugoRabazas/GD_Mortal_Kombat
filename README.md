@@ -482,6 +482,13 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **The arcade on a phone, played through**: every stage won in turn at
+  568x320, 360x640, 740x340 and 844x390, with each result card measured.
+  Two fixes: the "New on your Record" notice sat over the result card's
+  title (STAGE 3 CLEARED was hidden for five seconds) - over a result card
+  it now goes small to the bottom left corner; and the brawl stage's
+  standings overflowed a 568x320 screen by a few pixels (smaller faces, a
+  smaller headline and tighter rows below 345 px of height).
 - **Touch controls, two fingers at once, checked**: with real multi-touch
   events (two fingers down together) on the on-screen buttons at 844x390,
   568x320 and 390x844: block held and grab tapped is the taunt, the stick

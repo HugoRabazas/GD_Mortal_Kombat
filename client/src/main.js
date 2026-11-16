@@ -76,6 +76,8 @@ const toastEl = $('#toast');
 let toastTimer = 0;
 function toast(text, ms = 3600) {
   toastEl.textContent = text;
+  // Over a result card it would hide the card's title: it goes to a corner.
+  toastEl.classList.toggle('aside', app.screen === 'result');
   toastEl.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => (toastEl.hidden = true), ms);
