@@ -722,6 +722,14 @@ and the heartbeat, the crowd and the weather go quiet.
   Its whoosh plays at once too (1-13 ms after the press instead of
   180-290 ms relayed), and the host's own word of that swing is then not
   played again - checked on ten presses, each heard once.
+- **Photo mode** (loop 198): the pause screen has **Photo** (not online,
+  where the fight goes on): the scene alone, without bars, tags or
+  captions; in 3D the camera turns round the fighters by dragging, with
+  the ◀ ▶ buttons or the arrow keys (up and down move it in and out); **Save
+  picture** downloads it as a PNG (the 3D scene and the effects layer,
+  read straight after drawing). Checked: the turned view and the saved
+  picture in 3D; the pause and photo screens fit at the seven sizes (the
+  buttons more compact on narrow phones: they ran 2 px over at 360x640).
 - **Towards a realistic look - the floor** (loop 182): the first step of a
   realism pass on the arenas (the fighters later; the user chose to keep
   each member's avatar on the head). The floor and the dais are now

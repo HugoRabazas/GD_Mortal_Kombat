@@ -572,14 +572,15 @@ export function createStage(glCanvas, hudCanvas) {
         }
         settled.push(tagBox(f));
       }
-      const tagged = !view.demo && !view.noTags && s.phase !== 'over';
+      const tagged = !view.demo && !view.photo && !view.noTags && s.phase !== 'over';
       const avoid = tagged ? settled : [];
       // ...and the YOU ARE OUT line of a brawl (drawn below).
       const out = view.me >= 0 && s.f.length > 2 && s.phase === 'fight' && s.f[view.me]?.hp <= 0;
       if (out) avoid.push({ x: W / 2, y: view.clearCorners ? 128 : H - 78, w: 440, h: 36 });
       drawFx(ctx, !!view.clearCorners, avoid);
 
-      if (!view.demo) {
+      // (A photo shows the scene alone: no bars, tags or captions.)
+      if (!view.demo && !view.photo) {
         if (!view.noTags) drawTags(ctx, s, spots, view.labels);
         dizzyStars(ctx, s, (f, back) => project(f.x - Math.cos(f.dir) * back, three ? three.headTop(f.slot) * 100 : 150, f.z - Math.sin(f.dir) * back), now);
         finaleOverlay(ctx, s, worn);

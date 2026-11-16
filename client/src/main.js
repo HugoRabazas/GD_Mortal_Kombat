@@ -706,6 +706,7 @@ function pauseScreen() {
           <button type="button" class="btn primary" data-act="resume">Resume</button>
           ${app.mode === 'online' ? '' : '<button type="button" class="btn" data-act="rematch">Restart fight</button>'}
           <button type="button" class="btn" data-act="settings">Settings</button>
+          ${app.mode === 'online' ? '' : '<button type="button" class="btn" data-act="photo">Photo</button>'}
           ${fullscreenButton('btn')}
           ${app.mode === 'online' ? '<button type="button" class="btn quiet" data-act="onBack">Back to the room</button>' : '<button type="button" class="btn quiet" data-act="menu">Quit to menu</button>'}
         </div>
@@ -1005,6 +1006,9 @@ const recordNews = () => (app.newBests?.length ? `<p class="note news">New on yo
 
 // The knockout again, slowed (replay.js): offered when the fight ended on one.
 const replayBtn = () => (app.koClip ? '<button type="button" class="btn quiet" data-act="replay">Replay KO</button>' : '');
+// Photo mode (from the pause screen): the scene alone, the camera turned by
+// dragging, the arrow keys or the buttons, and saved as a picture.
+const photoScreen = () => `<section class="screen replay photo"><button type="button" class="btn quiet" data-act="photoTurn" data-id="-1" aria-label="Turn left">◀</button><button type="button" class="btn primary" data-act="photoSave">Save picture</button><button type="button" class="btn quiet" data-act="photoTurn" data-id="1" aria-label="Turn right">▶</button><button type="button" class="btn quiet" data-act="photoDone">Back</button></section>`;
 const replayScreen = () => '<section class="screen replay"><p class="rtag">REPLAY</p><button type="button" class="btn quiet" data-act="endReplay">Skip</button></section>';
 
 function resultScreen() {
@@ -1230,7 +1234,7 @@ function roomScreen() {
     </section>`;
 }
 
-const SCREENS = { lessons: lessonsScreen, lessonDone: lessonDoneScreen, record: recordScreen, settings: settingsScreen, menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, replay: replayScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
+const SCREENS = { lessons: lessonsScreen, lessonDone: lessonDoneScreen, record: recordScreen, settings: settingsScreen, menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, replay: replayScreen, photo: photoScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
 
 // Keep a phone's screen from dimming or locking in the middle of a fight.
 let wakeLock = null;
@@ -1268,7 +1272,7 @@ function show(screen) {
   const draft = ui.querySelector('#chat');
   const kept = draft ? { value: draft.value, focus: document.activeElement === draft } : null;
   app.screen = screen;
-  const inFight = screen === 'fight' || screen === 'pause' || screen === 'result' || screen === 'replay' || ((screen === 'arrange' || screen === 'settings') && app.game);
+  const inFight = screen === 'fight' || screen === 'pause' || screen === 'result' || screen === 'replay' || screen === 'photo' || ((screen === 'arrange' || screen === 'settings') && app.game);
   ui.innerHTML = SCREENS[screen] ? SCREENS[screen]() : '';
   ui.dataset.screen = screen;
   pauseBtn.hidden = screen !== 'fight';
@@ -1747,6 +1751,20 @@ const ACTIONS = {
     else startFight();
   },
   rematch: startFight,
+  photo() {
+    app.photo = { yaw: 0.3, zoom: 0.8 };
+    show('photo');
+  },
+  photoTurn(el) {
+    if (app.photo) app.photo.yaw += Number(el.dataset.id) * 0.35;
+  },
+  photoSave() {
+    app.photoSave = true; // taken right after the next frame is drawn
+  },
+  photoDone() {
+    app.photo = null;
+    show('pause');
+  },
   replay() {
     if (!app.koClip) return;
     // Who goes down at the end of it (the camera stays on them).
@@ -2003,7 +2021,7 @@ function padMenus() {
   }
   if (nav.ok && items.includes(document.activeElement)) document.activeElement.click();
   if (nav.back) {
-    const back = ['endReplay', 'resume', 'settingsDone', 'arrangeDone', 'leaveRoom', 'offline', 'menu'].map((a) => ui.querySelector(`[data-act=${a}]`)).find(Boolean);
+    const back = ['photoDone', 'endReplay', 'resume', 'settingsDone', 'arrangeDone', 'leaveRoom', 'offline', 'menu'].map((a) => ui.querySelector(`[data-act=${a}]`)).find(Boolean);
     back?.click();
   }
 }
@@ -2028,6 +2046,52 @@ function endReplay() {
   app.replay = null;
   stage.reset();
   if (app.screen === 'replay') show('result');
+}
+
+// The picture: the 3D scene and the effects layer over it, as one PNG
+// (read straight after drawing, while the 3D canvas still holds the frame).
+function savePicture() {
+  const gl = $('#gl');
+  const hud = $('#hud');
+  const c = document.createElement('canvas');
+  const src = gl && !gl.hidden && gl.width ? gl : hud;
+  c.width = src.width;
+  c.height = src.height;
+  const g = c.getContext('2d');
+  if (src === gl) g.drawImage(gl, 0, 0, c.width, c.height);
+  g.drawImage(hud, 0, 0, c.width, c.height);
+  c.toBlob((blob) => {
+    if (!blob) return;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `gd-arena-${app.fightPlace || 'arena'}.png`;
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }, 'image/png');
+}
+
+// Photo mode: drag anywhere off the buttons, or the arrow keys, to turn
+// the camera; up and down move it in and out.
+if (typeof window !== 'undefined') {
+  let dragX = null;
+  window.addEventListener('pointerdown', (e) => {
+    if (app.screen === 'photo' && !e.target.closest?.('button')) dragX = e.clientX;
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (dragX === null || !app.photo) return;
+    app.photo.yaw += (e.clientX - dragX) * 0.008;
+    dragX = e.clientX;
+  });
+  window.addEventListener('pointerup', () => (dragX = null));
+  window.addEventListener('keydown', (e) => {
+    if (app.screen !== 'photo' || !app.photo) return;
+    if (e.key === 'ArrowLeft') app.photo.yaw -= 0.2;
+    else if (e.key === 'ArrowRight') app.photo.yaw += 0.2;
+    else if (e.key === 'ArrowUp') app.photo.zoom = Math.max(0.45, app.photo.zoom - 0.08);
+    else if (e.key === 'ArrowDown') app.photo.zoom = Math.min(1.6, app.photo.zoom + 0.08);
+  });
 }
 
 let lastFrameAt = 0;
@@ -2157,7 +2221,11 @@ function frame(now) {
   // guests: they see the fight through the host's updates, not its screen.
   if (app.mode === 'online' && playing && app.online?.isHosting?.() && app.hostDrawMs > 30 && now - (app.lastDrawAt || 0) < 90) return;
   const drawStart = performance.now();
-  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, wait, hint, hintAlways: practising(), clearCorners: touchOver(), noTags: app.screen === 'pause' }, now);
+  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, photo: app.screen === 'photo' ? app.photo : null, labels: tags, boss, humans, me: mine, net, wait, hint, hintAlways: practising(), clearCorners: touchOver(), noTags: app.screen === 'pause' }, now);
+  if (app.photoSave) {
+    app.photoSave = false;
+    savePicture();
+  }
   app.hostDrawMs = (app.hostDrawMs || 16) + (performance.now() - drawStart - (app.hostDrawMs || 16)) * 0.1;
   app.lastDrawAt = now;
 

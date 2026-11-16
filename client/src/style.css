@@ -3063,3 +3063,17 @@ kbd {
     padding: 2px 0;
   }
 }
+
+/* Photo mode: four buttons in a row, compact on a narrow phone. */
+.screen.photo {
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+@media (max-width: 520px) {
+  .screen.photo .btn {
+    min-height: 38px;
+    padding: 6px 12px 4px;
+    font-size: 1.15rem;
+  }
+}

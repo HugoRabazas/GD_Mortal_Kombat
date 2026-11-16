@@ -1182,7 +1182,13 @@ export function create3D(canvas) {
       look: 0, // how far above the fighters it aims
       ease: 0.08,
     };
-    if (view.demo) {
+    if (view.photo) {
+      // Photo mode: the player turns the camera round the fighters.
+      shot.yaw = view.photo.yaw;
+      shot.dist = Math.max(4.5, Math.min(16, shot.dist * view.photo.zoom));
+      shot.rise = 0.3;
+      shot.ease = 0.2;
+    } else if (view.demo) {
       shot.yaw = Math.sin(now / 6000) * 0.5;
       shot.dist += 1.5;
     } else if (view.replay && s.phase === 'fight' && !(s.freeze > 0) && s.f[view.replay.on]) {
