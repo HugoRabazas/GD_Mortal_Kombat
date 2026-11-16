@@ -15,6 +15,7 @@
 import { createBus } from './bus.js';
 import { createLink } from './link.js';
 import { createInputSender, createInputReceiver, createSnapshotMeter } from './inputs.js';
+import { createPacker, createUnpacker } from './pack.js';
 import { createGame } from '../game.js';
 import { ARENAS, isArenaId } from '../arenas.js';
 import { createMatch } from '../../../shared/sim.js';
@@ -142,7 +143,27 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
   function sendTo(peerId, payload, relayNow) {
     const text = JSON.stringify(payload, compact);
     if (room.links.get(peerId)?.send(text)) return;
-    if (relayNow) room.ch.send('relay', { to: peerId, from: me.id, d: text });
+    if (!relayNow) return;
+    // Relayed between a guest and the host: through the pipe the two share,
+    // so only the other one receives it (the room would copy it to everyone,
+    // and the free service allows 100 messages a second in all).
+    const pipe = pipeWith(room.isHost ? peerId : me.id);
+    if (pipe) pipe.send('relay', { to: peerId, from: me.id, d: text });
+    else room.ch.send('relay', { to: peerId, from: me.id, d: text });
+  }
+
+  // The pipe between the host and one guest, named after the guest.
+  function pipeWith(guestId) {
+    if (!room || !bus.pipe) return null;
+    let pipe = room.pipes.get(guestId);
+    if (!pipe) {
+      pipe = bus.pipe(`room-${room.code}-pipe-${guestId}`);
+      pipe.on('relay', (m) => {
+        if (room && m.to === me.id) onData(m.from, m.d);
+      });
+      room.pipes.set(guestId, pipe);
+    }
+    return pipe;
   }
 
   // A direct link to one member, opened on first use. Where the browser has
@@ -189,8 +210,16 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         room.links.delete(id);
       }
     }
-    // The host opens a direct link to every other member.
-    if (room.isHost) for (const p of peers) if (p.id !== me.id) linkTo(p.id, true);
+    // The host opens a direct link to every other member (and the pipe for
+    // when that link fails); pipes to members who left are closed.
+    if (room.isHost) for (const p of peers) if (p.id !== me.id) {
+      linkTo(p.id, true);
+      pipeWith(p.id);
+    }
+    for (const [id, pipe] of room.pipes) if (id !== me.id && !peers.some((p) => p.id === id)) {
+      pipe.leave();
+      room.pipes.delete(id);
+    }
 
     // Losing the host in the middle of a match ends it for everyone.
     if (match && !match.host && hostBefore && hostBefore !== room.hostId) stopMatch('host_left');
@@ -200,10 +229,11 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
   online.joinRoom = async (code) => {
     if (room) await online.leaveRoom();
     code = String(code).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8) || newCode();
-    room = { code, ch: null, peers: [], hostId: null, isHost: false, links: new Map(), at: Date.now(), char: char(), look: look(), ready: false, arena: arena() };
+    room = { code, ch: null, peers: [], hostId: null, isHost: false, links: new Map(), pipes: new Map(), at: Date.now(), char: char(), look: look(), ready: false, arena: arena() };
     online.chat = []; // a room starts with a clean slate
     const ch = bus.channel(`room-${code}`, me.id, roomState());
     room.ch = ch;
+    pipeWith(me.id); // our own pipe to the host (used when no direct link opens)
     ch.on('sig', (m) => {
       if (m.to !== me.id || !room) return;
       // Only the host opens links, so a signal is either from the host or for it.
@@ -243,6 +273,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     if (!room) return;
     if (match) stopMatch('left', true);
     for (const link of room.links.values()) link.close();
+    for (const pipe of room.pipes.values()) pipe.leave();
     room.ch.leave();
     room = null;
     online.chat = [];
@@ -341,6 +372,10 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     let recent = []; // events of the last moments, resent in case a snapshot is lost
     let lastSent = 0;
     let sends = 0;
+    // Pictures packed small (see pack.js): one packer for the direct links, one
+    // for the relayed copy, which carries only every few pictures.
+    const packer = createPacker();
+    const relayPacker = createPacker(3);
     let lastFrame = 0;
     let frameMs = 16.7; // a smoothed measure of this device's frame time
     // Gone to another app: the fight stops here (the browser stops drawing),
@@ -379,14 +414,13 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         lastSent = s.tick;
         sends++;
         recent = recent.filter((e) => e.id > s.evSeq - 40);
-        const { ev, ...state } = s;
-        const snap = { state, ev: recent, hf: Math.round(1000 / frameMs), n: sends };
+        const extra = { ev: recent, hf: Math.round(1000 / frameMs), n: sends };
         // Straight to everyone with a direct link; for the rest, one relayed
         // copy for all of them, less often.
-        const text = JSON.stringify({ s: snap }, compact);
+        const text = JSON.stringify({ s: { p: packer.pack(s), ...extra } }, compact);
         let unreached = 0;
         for (const p of room.peers) if (p.id !== me.id && !room.links.get(p.id)?.send(text)) unreached++;
-        if (unreached && sends % Math.round(RELAY_EVERY / SNAP_EVERY) === 0) room.ch.send('relay', { to: '*', from: me.id, d: text });
+        if (unreached && sends % Math.round(RELAY_EVERY / SNAP_EVERY) === 0) room.ch.send('relay', { to: '*', from: me.id, d: JSON.stringify({ s: { p: relayPacker.pack(s), ...extra, via: 'relay' } }, compact) });
     }
     match = {
       info,
@@ -424,6 +458,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     const sender = createInputSender();
     const meter = createSnapshotMeter(SNAP_EVERY);
     let lastSendAt = 0;
+    let dirty = false;
     let lastPingAt = 0;
     const lead = { x: 0, z: 0 }; // how far ahead of the host's word our own fighter is drawn
     const lerp = (a, b, k) => a + (b - a) * k;
@@ -451,7 +486,8 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         }
         // Tell the host which buttons are down: at once when they change, and
         // a few times a second regardless in case a message was lost.
-        if (now - lastPingAt > 2000) {
+        const relayed = !room.links.get(room.hostId)?.isOpen();
+        if (now - lastPingAt > (relayed ? 4000 : 2000)) {
           lastPingAt = now;
           sendTo(room.hostId, { ping: performance.now() }, true);
         }
@@ -496,18 +532,25 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         if (mySlot >= 0) {
           // The buttons now down and the last few changes (see inputs.js), with
           // our measure of the trip for the host's own panel.
-          const changed = sender.note(bits);
-          if (changed || now - lastSendAt > 100) {
-            sendTo(room.hostId, { ...sender.message(), p: match?.ping ?? undefined }, changed || now - lastSendAt > 250);
+          // Relayed through the service (100 messages a second for everyone),
+          // changes go out at most about six times a second - none is lost,
+          // each message carries the last few - and the reminder less often.
+          dirty = sender.note(bits) || dirty;
+          const due = relayed ? (dirty ? now - lastSendAt >= 160 : now - lastSendAt > 400) : dirty || now - lastSendAt > 100;
+          if (due) {
+            sendTo(room.hostId, { ...sender.message(), p: match?.ping ?? undefined }, relayed || dirty || now - lastSendAt > 250);
             lastSendAt = now;
+            dirty = false;
           }
         }
       },
       drain: () => queue.splice(0),
     };
 
+    // Direct and relayed pictures are packed apart (see beginHost).
+    const unpackers = { direct: createUnpacker(), relay: createUnpacker() };
     const receive = (snap) => {
-      const s = snap.state;
+      const s = snap.p ? unpackers[snap.via === 'relay' ? 'relay' : 'direct'].unpack(snap.p) : snap.state;
       if (!s || !Array.isArray(s.f) || s.f.length !== slots.length) return;
       if (cur && s.tick <= cur.tick) return; // out of date
       prev = cur;

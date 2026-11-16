@@ -15,6 +15,10 @@
 //   peers()                  everyone present: [{ id, ...state }], you included
 //   onPeers(fn)              called whenever that list changes
 //   leave()
+//
+// and a pipe (bus.pipe(name)): a bare channel with no presence, for two
+// members only - each message reaches just the other one, which counts once
+// against the service's quota instead of once per member of a room.
 
 import { createClient } from '@supabase/supabase-js';
 import { createRoster, BEAT } from './roster.js';
@@ -36,6 +40,13 @@ function supabaseBus({ url, key }) {
   const client = createClient(url, key, { auth: { persistSession: false }, realtime: { params: { eventsPerSecond: 40 } } });
   return {
     kind: 'internet',
+    pipe(name) {
+      const events = emitter();
+      const ch = client.channel(name, { config: { broadcast: { self: false } } });
+      ch.on('broadcast', { event: 'm' }, ({ payload }) => events.emit(payload.t, payload.d));
+      const ready = new Promise((resolve) => ch.subscribe((status) => status === 'SUBSCRIBED' && resolve()));
+      return { ready, send: (t, d) => ch.send({ type: 'broadcast', event: 'm', payload: { t, d } }), on: events.on, leave: () => client.removeChannel(ch) };
+    },
     channel(name, id, state) {
       // Presence says who is here and is published once, on joining; each
       // member's state travels as messages (see roster.js for why and how).
@@ -96,6 +107,12 @@ function supabaseBus({ url, key }) {
 function localBus() {
   return {
     kind: 'this browser only',
+    pipe(name) {
+      const events = emitter();
+      const bc = new BroadcastChannel(`gd-arena-pipe:${name}`);
+      bc.onmessage = ({ data }) => events.emit(data.t, data.d);
+      return { ready: Promise.resolve(), send: (t, d) => bc.postMessage({ t, d }), on: events.on, leave: () => bc.close() };
+    },
     channel(name, id, state) {
       const events = emitter();
       const bc = new BroadcastChannel(`gd-arena:${name}`);

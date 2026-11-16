@@ -679,6 +679,18 @@ and the heartbeat, the crowd and the weather go quiet.
   second) and the guests walk their full distance. A host whose drawing is
   slow also draws less often. The lost-updates count now counts pictures
   numbered by the host, so a slow host is no longer shown as losses.
+- **Online: smaller pictures, and the free service's limit**: the pictures
+  of the fight are packed (pack.js): a key picture with each fighter's values
+  in a fixed order a few times a second, and between them only what changed -
+  for four players ~700 bytes on average instead of 2,700 (one network packet
+  instead of three; the host uploads 41 KB/s instead of 157). And measured on
+  the live service: a four-player fight on the relayed route sent ~195
+  messages a second, nearly twice the free plan's 100 a second for the whole
+  project - past which the service disconnects players. Now relayed button
+  messages travel on a pipe between that guest and the host only (not copied
+  to the whole room), go out at most ~6 times a second (none is lost: each
+  carries the last few changes), and pings less often: ~66 messages a second
+  with all four tapping, ~46 walking, every punch still arriving.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
