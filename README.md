@@ -649,6 +649,11 @@ and the heartbeat, the crowd and the weather go quiet.
   glows hot red, pulsing, for the rest of the round.
   In the flat 2D view (no WebGL) the boss now has the same lasting look: a
   hot red aura behind them, pulsing, for the rest of the round.
+- **Loop 150: the public site checked end to end**: the GitHub Pages site
+  loads with every move of the last cycles; two players on separate
+  "devices" meet in their own room over the live online service, link
+  directly, and play a whole match to the end - both result screens show
+  the same numbers.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
