@@ -779,6 +779,10 @@ and the heartbeat, the crowd and the weather go quiet.
   wears cloaks - each fan a robe widening to the hem with sloping
   shoulders and a hood (a lathe shape) in matt cloth with the same
   relief, instead of a plain shiny cylinder; still one instanced draw.
+  Loop 191: each torch has a soft glow round its flame in the arena's
+  torch colour (warm in the courtyard, blue on the summit), flickering
+  with it - four more draws. Every screen re-checked at the seven sizes
+  after the art loops (walk.js, the flat fallback): all fit, no errors.
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the

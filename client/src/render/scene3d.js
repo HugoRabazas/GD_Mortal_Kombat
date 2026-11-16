@@ -566,6 +566,18 @@ export function create3D(canvas) {
   const flameTex = paintFlame(THEMES.courtyard.flame);
   const torchFlameMat = new THREE.SpriteMaterial({ blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false });
   const postMat = new THREE.MeshStandardMaterial({ color: lin(0x2a1a22), roughness: 0.6, metalness: 0.4 });
+  const glowTex = (() => {
+    const c = makeCanvas(128, 128);
+    const g = c.getContext('2d');
+    const r = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    r.addColorStop(0, 'rgba(255,255,255,0.55)');
+    r.addColorStop(0.25, 'rgba(255,255,255,0.22)');
+    r.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = r;
+    g.fillRect(0, 0, 128, 128);
+    return texture(c);
+  })();
+  const glowMat = new THREE.SpriteMaterial({ map: glowTex, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, fog: false, opacity: 0.5 });
   const torches = [];
   for (const [x, z] of [[-7.6, -4.6], [7.6, -4.6], [-10.5, 0.8], [10.5, 0.8]]) {
     const post = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.11, 2.5, 10), postMat);
@@ -580,7 +592,11 @@ export function create3D(canvas) {
     const flame = new THREE.Sprite(torchFlameMat);
     flame.position.set(x, 2.85, z);
     scene.add(flame);
-    torches.push({ light, flame, phase: x * 3 + z });
+    // A soft glow round the flame, as a camera sees a bright light in the dark.
+    const glow = new THREE.Sprite(glowMat);
+    glow.position.set(x, 2.8, z);
+    scene.add(glow);
+    torches.push({ light, flame, glow, phase: x * 3 + z });
   }
 
   // Embers rising from the torches.
@@ -945,6 +961,7 @@ export function create3D(canvas) {
     emberMat.map = theme.flame;
     emberMat.color.set(th.ember);
     for (const t of torches) t.light.color.copy(lin(th.torch));
+    glowMat.color.copy(lin(th.torch));
     for (const m of [skyMat, groundMat, daisMat, bannerMat, torchFlameMat, emberMat]) m.needsUpdate = true;
     snowCaps.visible = th.snow;
     if (pmremReady) lightFromSky(name);
@@ -1056,6 +1073,7 @@ export function create3D(canvas) {
       const flick = Math.sin(now / 83 + t.phase) * 0.5 + Math.sin(now / 37 + t.phase * 2) * 0.5;
       t.light.intensity = torchBase * (1 + flick * 0.22);
       t.flame.scale.set(1.25 + flick * 0.12 + closing * 0.4, 1.75 + flick * 0.28 + closing * 0.7, 1);
+      t.glow.scale.setScalar(3.2 + flick * 0.25 + closing * 0.8);
     }
 
     // Banners in the wind.
