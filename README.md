@@ -79,6 +79,10 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   whose menu has no room for the tip line get it as a button on Quick
   fight's select screen (Back · Today's challenge · Fight). The Record
   counts the days beaten on its Won line (99 · 71% · 6 daily).
+  Once beaten, the result offers **Copy result**: a line to paste in the
+  alliance's chat (GD Arena · Today's challenge 2026-11-16: beaten as
+  SHADOW against KICHTA on Hard - 214 damage, best combo 7). Where the
+  clipboard is not allowed, the line is shown to copy by hand.
   The Online lobby names the day's challenge too, where it has room (a
   phone held upright, a larger screen), so the alliance can talk about it.
 - **2 Players**: a duel on one device, or a brawl with two CPU fighters added.

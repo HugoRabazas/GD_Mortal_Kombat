@@ -1045,7 +1045,7 @@ function arcadeHeading() {
 
 const dailyNote = () =>
   app.daily.won
-    ? `<p class="note">Today's challenge: <b>beaten</b>. ${app.daily.total === 1 ? 'Your first day.' : `${app.daily.total} days beaten.`} A new one tomorrow.</p>`
+    ? `<p class="note">Today's challenge: <b>beaten</b>. ${app.daily.total === 1 ? 'Your first day.' : `${app.daily.total} days beaten.`} <button type="button" class="linkish" data-act="copyDaily">${app.daily.copied ? 'Copied ✓' : 'Copy result'}</button></p>`
     : `<p class="note">Today's challenge: not yet - Rematch to try again.</p>`;
 
 const survivalNote = () => {
@@ -1703,6 +1703,22 @@ const ACTIONS = {
   quick() {
     app.mode = 'quick';
     show('select');
+  },
+  // A line to paste in the alliance's chat: the day, the fight, how it went.
+  copyDaily() {
+    const d = app.daily;
+    if (!d) return;
+    const st = app.statsFor === app.game ? app.stats?.[0] : null;
+    const text = `GD Arena · Today's challenge ${d.key}: beaten as ${getFighter(d.you).name} against ${getFighter(d.rival).name} on ${LEVEL_NAMES[d.level]}${st ? ` - ${st.dmg} damage, best combo ${st.combo}` : ''}.`;
+    const done = () => {
+      d.copied = true;
+      show('result');
+    };
+    try {
+      navigator.clipboard.writeText(text).then(done, () => window.prompt('Copy this:', text));
+    } catch {
+      window.prompt('Copy this:', text);
+    }
   },
   // The day's challenge: a Quick fight set up from the date (its level and
   // arena for this fight only).
