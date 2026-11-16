@@ -736,6 +736,10 @@ and the heartbeat, the crowd and the weather go quiet.
   199). Loop 200: two fingers pinch to move the camera in and out, and a
   gamepad's stick turns it (left/right) and moves it (up/down), A pressing
   the focused button (checked with real multi-touch and a simulated pad).
+  Loop 201: How to play and a menu tip tell of it; the 22 tips, the help and
+  every screen fit at the seven sizes (the tips check had been fooled
+  since loop 181 by the news line, which stands in for the tips on the
+  first openings).
 - **Towards a realistic look - the floor** (loop 182): the first step of a
   realism pass on the arenas (the fighters later; the user chose to keep
   each member's avatar on the head). The floor and the dais are now

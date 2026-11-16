@@ -207,6 +207,7 @@ const TIPS = [
   (c) => `Tip: getting up, hold <kbd>${c.b}</kbd> and a direction to <b>roll clear</b> as you rise.`,
   (c) => `Tip: caught in a combo? <kbd>${c.b}</kbd> + <kbd>${c.s}</kbd> from its second blow <b>bursts</b> out of it, for half your energy.`,
   (c) => `Tip: new to a move? The <b>Tutorial</b> has a short lesson for it.`,
+  () => `Tip: pause and press <b>Photo</b> to turn the camera round the fight and save a picture.`,
   // Only on the website, on a touch screen, when not opened from the home screen.
   () => (NET && app.touch && !installed ? `Tip: add GD Arena to your <b>home screen</b> to play full screen.` : ''),
 ];
@@ -553,6 +554,7 @@ function helpScreen() {
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
         <li>The <b>Tutorial</b> teaches every move in short lessons, each against a partner who does what the lesson needs (one even throws you down so you can practise getting up).</li>
         <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks, kicks on a beat, throws punch strings at you (to burst out of) or fights back. Free practice, with nothing else on screen.</li>
+        <li><b>Photo</b> on the pause screen shows the scene alone: drag (or two fingers, the arrow keys, a gamepad's stick) to turn the camera round the fighters, and <b>Save picture</b>.</li>
         ${NET ? '<li><b>Online</b>: pick a name, then make a room or join one in the lobby; <b>Copy invite link</b> brings friends straight in. The room keeps score of who has won, and a reload brings you back to it.</li>' : ''}
         <li><b>Record</b> at the foot of the menu keeps your lifetime tally on this device: wins, best run, best combo and how you do with each fighter.</li>
         <li>A <b>heartbeat</b> means your fighter is nearly out.</li>
