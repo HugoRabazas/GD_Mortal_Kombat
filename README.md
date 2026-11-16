@@ -72,7 +72,9 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   buttons move the partner while your own fighter stands still; then the
   partner plays that back over and over (with a short breath between), so
   you can practise against exactly the attack that gives you trouble.
-  Record again, or Stop replay, from the same menu.
+  Record again, or Stop replay, from the same menu; Restart fight puts
+  both fighters back in place and keeps the recording, which plays from
+  its start as the fight begins.
   A menu tip points to it.
 - **Tutorial**: nine short lessons (Basics, Defence, Getting up, Throws, On
   the run, In the air, Combos, Counters, Specials), each against a partner

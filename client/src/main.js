@@ -1353,7 +1353,8 @@ function startFight() {
     controllers = [solo, cpu(cpuLevel())];
   } else if (app.mode === 'training') {
     const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'beat' ? drummer() : app.dummy === 'combo' ? comboer() : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
-    app.tape = partnerTape();
+    if (app.keepTape && app.tape) app.tape.rewind();
+    else app.tape = partnerTape();
     controllers = [watchButtons(app.tape.you(solo)), app.tape.partner(solo, partner)];
   } else if (app.mode === 'tutorial') {
     // The lesson's partner: a fighter other than your own.
@@ -1775,7 +1776,12 @@ const ACTIONS = {
     if (app.mode === 'arcade') startArcade();
     else startFight();
   },
-  rematch: startFight,
+  rematch() {
+    // (Training keeps a recorded partner through a restart.)
+    app.keepTape = true;
+    startFight();
+    app.keepTape = false;
+  },
   photo() {
     app.photo = { yaw: 0.3, zoom: 0.8 };
     show('photo');

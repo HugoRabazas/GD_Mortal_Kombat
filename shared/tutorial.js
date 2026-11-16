@@ -342,11 +342,20 @@ export function partnerTape({ length = 300, gap = 45 } = {}) {
       mode = 'off';
       tape = [];
     },
+    // The fight starts again: a recording plays from its start (one being
+    // made is dropped).
+    rewind() {
+      at = 0;
+      if (mode === 'rec') this.stop();
+    },
     // Your own fighter: still while you are moving the partner.
     you: (read) => (s, slot) => (mode === 'rec' ? 0 : read(s, slot)),
     // The partner: your buttons while recording, then the tape; otherwise
     // `other` (the partner chosen on the select screen).
     partner: (yours, other) => (s, slot) => {
+      // (Only while the fight is on: during a round's opening nobody moves,
+      // and a recording played there would be half over at FIGHT!)
+      if (mode !== 'off' && s && s.phase !== 'fight') return 0;
       if (mode === 'rec') {
         const b = yours(s, slot);
         tape.push(b);

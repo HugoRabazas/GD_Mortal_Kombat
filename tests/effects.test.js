@@ -111,6 +111,9 @@ test('training partner tape: records your buttons, then plays them back in a loo
   pressed = 8;
   assert.equal(you(), 8);
   assert.deepEqual(Array.from({ length: 7 }, () => partner()), [1, 2, 4, 0, 0, 1, 2]);
+  tape.rewind(); // Restart fight: from the top again
+  assert.equal(partner({ phase: 'intro' }), 0); // the round's opening does not use it up
+  assert.deepEqual([partner({ phase: 'fight' }), partner()], [1, 2]);
   tape.stop();
   assert.equal(partner(), 99);
 });
