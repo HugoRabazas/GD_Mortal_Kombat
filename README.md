@@ -647,6 +647,8 @@ and the heartbeat, the crowd and the weather go quiet.
   attacking: the moment is now a banner across the screen ("<NAME> POWERS
   UP - SECOND WIND"), the announcer calls "Second wind!", and the boss
   glows hot red, pulsing, for the rest of the round.
+  In the flat 2D view (no WebGL) the boss now has the same lasting look: a
+  hot red aura behind them, pulsing, for the rest of the round.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

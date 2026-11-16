@@ -913,6 +913,24 @@ export function drawFighter(ctx, f, char, now, { sx, sy, facing, lift = 0, scale
   ctx.ellipse(sx, sy + 4, 40 * scale * wide, 9 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
 
+  // A boss's second wind: a hot red aura behind them, pulsing, for the round
+  // (as the 3D rig glows; see secondWind in sim.js).
+  if (f.enraged && f.hp > 0) {
+    const cy = sy - lift - 80 * scale;
+    const r = 92 * scale * wide;
+    const g = ctx.createRadialGradient(sx, cy, r * 0.15, sx, cy, r);
+    g.addColorStop(0, `rgba(255,70,40,${0.7 + 0.2 * Math.sin(now / 90)})`);
+    g.addColorStop(0.55, `rgba(255,90,54,${0.32 + 0.1 * Math.sin(now / 90)})`);
+    g.addColorStop(1, 'rgba(255,90,54,0)');
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.fillStyle = g;
+    ctx.beginPath();
+    ctx.ellipse(sx, cy, r * 0.75, r * 1.25, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   ctx.save();
   ctx.translate(sx, sy - lift + p.lift * scale);
   ctx.scale(scale, scale);
