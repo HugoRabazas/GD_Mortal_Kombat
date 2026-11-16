@@ -54,6 +54,9 @@ const ESCAPE = { window: 9, stun: 12, edge: 6 };
 // The burst: caught in a combo (the second blow on), special and block
 // together spend half the energy to break out - a shockwave that pushes
 // back and staggers whoever is close (no damage), and a moment untouchable.
+// Plain blows that clash when two of the same weight meet (see resolveHits).
+const CLASHES = new Set(['punch', 'punch2', 'punch3', 'kick', 'kick2', 'hook', 'backfist', 'elbow', 'lunge', 'launch', 'riposte']);
+const CLASH = { push: 24, stun: 6 };
 export const BURST = { cost: 50, from: 2, reach: 130, push: 46, stun: 18, inv: 14 };
 // A taunt (block held, grab pressed, standing still): each fighter's own
 // gesture for `ticks`; energy is gained at tick `at`, and until it ends any
@@ -1865,7 +1868,28 @@ function resolveHits(s) {
     }
   }
   for (const p of pending) p.att.hits.push(p.def.slot);
-  for (const p of pending) if (canBeHit(p.def) || p.def.state === 'ko' || (p.m.otg && floored(p.def))) applyHitOnce(s, p);
+  // Two plain blows of the same weight meeting on the same tick clash: no
+  // damage to either, the two knocked apart and recoiling for a moment.
+  for (const p of pending) {
+    if (p.clash || !CLASHES.has(p.att.move)) continue;
+    const q = pending.find((o) => o.att === p.def && o.def === p.att && !o.clash);
+    if (!q || !CLASHES.has(q.att.move) || !!p.m.heavy !== !!q.m.heavy) continue;
+    p.clash = q.clash = true;
+    const dx = p.def.x - p.att.x;
+    const dz = p.def.z - p.att.z;
+    const d = hypot(dx, dz) || 1;
+    for (const [f, k] of [[p.att, -1], [p.def, 1]]) {
+      f.x += (dx / d) * CLASH.push * k;
+      f.z += (dz / d) * CLASH.push * k;
+      keepInside(s, f);
+      f.move = null;
+      f.buf = 0;
+      setState(f, 'land');
+      f.stun = CLASH.stun;
+    }
+    emit(s, 'clash', { x: (p.att.x + p.def.x) / 2, z: (p.att.z + p.def.z) / 2, h: 110, by: p.att.slot, on: p.def.slot, melee: true });
+  }
+  for (const p of pending) if (!p.clash && (canBeHit(p.def) || p.def.state === 'ko' || (p.m.otg && floored(p.def)))) applyHitOnce(s, p);
 
   // Projectiles.
   for (const p of s.proj) {

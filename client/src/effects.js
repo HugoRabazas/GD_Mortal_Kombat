@@ -430,6 +430,12 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
       case 'clash': {
         const p = project(e.x, e.h, e.z);
         hitSpark(p.x, p.y, '#ffffff', true);
+        if (e.melee) {
+          // Two blows meeting: a bigger flash, a jolt and its name.
+          exBurst(p.x, p.y, '#ffffff');
+          addShake(5);
+          floatText(p.x, p.y - 60, 'CLASH!', '#ffffff', 22);
+        }
         if (!quiet) play('block');
         break;
       }

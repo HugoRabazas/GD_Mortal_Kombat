@@ -1626,3 +1626,28 @@ test('caught in a combo, special and block together burst out: half the energy, 
   assert.equal(tryBurst(5, 2).burstAt, -1, 'needs half the bar');
   assert.equal(tryBurst(60, 0).seen.filter((e) => e.type === 'burst').length <= 1, true);
 });
+
+test('two plain blows of the same weight meeting at once clash: no damage, both knocked apart', () => {
+  const meet = (a, b) => {
+    const s = startFight(['ruko', 'ruko']);
+    closeUp(s, 70);
+    const hp = s.f.map((f) => f.hp);
+    const gap0 = s.f[1].x - s.f[0].x;
+    const seen = [];
+    step(s, [a, b]);
+    seen.push(...s.ev);
+    for (let i = 0; i < 30; i++) {
+      step(s, idle(s));
+      seen.push(...s.ev);
+    }
+    return { s, seen, lost: s.f.map((f, i) => hp[i] - f.hp), gap: s.f[1].x - s.f[0].x - gap0 };
+  };
+  const same = meet(INPUT.PUNCH, INPUT.PUNCH);
+  assert.ok(same.seen.some((e) => e.type === 'clash' && e.melee), 'a clash');
+  assert.deepEqual(same.lost, [0, 0], 'no damage');
+  assert.ok(same.gap > 30, 'knocked apart');
+  // A jab against a kick (light against heavy): no clash, they trade or the faster one lands.
+  const mixed = meet(INPUT.PUNCH, INPUT.KICK);
+  assert.ok(!mixed.seen.some((e) => e.type === 'clash'));
+  assert.ok(mixed.lost.some((x) => x > 0));
+});

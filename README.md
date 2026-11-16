@@ -722,6 +722,15 @@ and the heartbeat, the crowd and the weather go quiet.
   Its whoosh plays at once too (1-13 ms after the press instead of
   180-290 ms relayed), and the host's own word of that swing is then not
   played again - checked on ten presses, each heard once.
+- **Clash** (loop 180): two plain blows of the same weight meeting on the
+  same tick (punch against punch, kick against kick, and the blows of their
+  strings) no longer trade damage: they clash - a white flash, CLASH!, a
+  jolt - and both fighters are knocked 24 px apart and recoil for a moment.
+  Specials, throws and finishers still trade. About 0.7 clashes in a duel
+  between Hard CPUs (of ~58 hits). A first version with a 12-tick recoil
+  lifted Gleh, the zoner, to 24 % of brawls won (two rivals recoiling,
+  the bolt finding them); at 6 ticks it is back to 23 %, duels 48-54 %.
+  Rules test; seen in a two-player match; in the help.
 - **A challenge before the bell** (loop 177): as a duel's first round is
   announced, the line-up of the two fighters now shows each one's
   challenge above their portrait - Jackie's "Go on. Try to move me.",
