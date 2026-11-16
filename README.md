@@ -671,6 +671,14 @@ and the heartbeat, the crowd and the weather go quiet.
     host left the app; the host sees its frame rate and the guests' pings;
   - the result screen says how the match travelled, and the last ten such
     lines are kept on the device to look into a laggy match.
+- **A slow host no longer slows the fight**: measured with the host's
+  processor slowed sixty-fold (5 frames a second), the whole fight ran at 41 %
+  speed for everyone and the guests barely moved. The online host's fight
+  now runs on its own clock, apart from the drawing (with up to 0.4 s caught
+  up at a time): at 5 frames a second the fight keeps real time (60 ticks a
+  second) and the guests walk their full distance. A host whose drawing is
+  slow also draws less often. The lost-updates count now counts pictures
+  numbered by the host, so a slow host is no longer shown as losses.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

@@ -1974,7 +1974,14 @@ function frame(now) {
     app.demoSkip = !app.demoSkip;
     if (app.demoSkip) return;
   }
+  // An online host whose drawing is slow draws less often (about ten times a
+  // second), so its device has time left to run the fight and send it to the
+  // guests: they see the fight through the host's updates, not its screen.
+  if (app.mode === 'online' && playing && app.online?.isHosting?.() && app.hostDrawMs > 30 && now - (app.lastDrawAt || 0) < 90) return;
+  const drawStart = performance.now();
   stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: practising(), clearCorners: touchOver(), noTags: app.screen === 'pause' }, now);
+  app.hostDrawMs = (app.hostDrawMs || 16) + (performance.now() - drawStart - (app.hostDrawMs || 16)) * 0.1;
+  app.lastDrawAt = now;
 
   const s = g.state;
   if (playing && !touchEl.hidden) {

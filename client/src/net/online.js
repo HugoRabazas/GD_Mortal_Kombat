@@ -325,6 +325,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
   };
 
   function beginHost(info) {
+    match?.stop?.(); // (a fight still running here would keep its clock)
     if (room) room.again = false;
     // Each guest's buttons, kept so a lost message never swallows a press.
     const remote = info.slots.map(() => createInputReceiver(INPUT_MASK));
@@ -335,7 +336,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       }
       return sl.id === me.id ? () => readInput() : () => remote[i].next();
     });
-    const inner = createGame(info.slots.map((sl) => sl.char), controllers, [], info.mode);
+    const inner = createGame(info.slots.map((sl) => sl.char), controllers, [], info.mode, 400);
     const local = [];
     let recent = []; // events of the last moments, resent in case a snapshot is lost
     let lastSent = 0;
@@ -351,9 +352,22 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         return inner.state;
       },
       paused: false,
+      // Drawing calls this each frame; the clock below calls `advance` too, so
+      // the fight keeps real time however slowly this device draws.
       update(now) {
         if (lastFrame) frameMs += (Math.min(1000, now - lastFrame) - frameMs) * 0.05;
         lastFrame = now;
+        advance(now);
+      },
+      drain: () => local.splice(0),
+    };
+    // The fight runs on its own clock, not on the drawing: on a slow phone the
+    // host draws fewer frames, but the fight (and the updates the guests get)
+    // keep real time. While the host is away in another app it waits.
+    const clock = setInterval(() => {
+      if (typeof document === 'undefined' || !document.hidden) advance(performance.now());
+    }, 8);
+    function advance(now) {
         inner.update(now);
         const events = inner.drain();
         if (events.length) {
@@ -366,16 +380,14 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         sends++;
         recent = recent.filter((e) => e.id > s.evSeq - 40);
         const { ev, ...state } = s;
-        const snap = { state, ev: recent, hf: Math.round(1000 / frameMs) };
+        const snap = { state, ev: recent, hf: Math.round(1000 / frameMs), n: sends };
         // Straight to everyone with a direct link; for the rest, one relayed
         // copy for all of them, less often.
         const text = JSON.stringify({ s: snap }, compact);
         let unreached = 0;
         for (const p of room.peers) if (p.id !== me.id && !room.links.get(p.id)?.send(text)) unreached++;
         if (unreached && sends % Math.round(RELAY_EVERY / SNAP_EVERY) === 0) room.ch.send('relay', { to: '*', from: me.id, d: text });
-      },
-      drain: () => local.splice(0),
-    };
+    }
     match = {
       info,
       game,
@@ -384,7 +396,10 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       pings: info.slots.map(() => null),
       fps: () => Math.round(1000 / frameMs),
       mySlot: info.slots.findIndex((sl) => sl.id === me.id),
-      stop: () => typeof document !== 'undefined' && document.removeEventListener('visibilitychange', away),
+      stop: () => {
+        clearInterval(clock);
+        if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', away);
+      },
     };
     lobby?.track(lobbyState());
     onStart(info);
@@ -499,7 +514,8 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       prevAt = curAt;
       cur = s;
       curAt = performance.now();
-      meter.got(s.tick, curAt, online.linkKind() === 'direct' ? SNAP_EVERY : SNAP_EVERY * Math.round(RELAY_EVERY / SNAP_EVERY));
+      // (Pictures are numbered by the host; relayed, only every few go out.)
+      if (typeof snap.n === 'number') meter.got(snap.n, curAt, online.linkKind() === 'direct' ? 1 : Math.round(RELAY_EVERY / SNAP_EVERY));
       if (typeof snap.hf === 'number') match.hostFps = snap.hf;
       for (const e of snap.ev || []) {
         if (e.id > seen) {
@@ -575,6 +591,8 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     return `Your link: ${kind}${r.pingAvg !== null ? `, ping ${r.pingAvg} ms (worst ${r.pingMax})` : ''}, ${r.lossPct}% of updates lost${m.hostFps !== null && m.hostFps < 45 ? `, host at ${m.hostFps} fps` : ''}.`;
   }
   online.netReport = () => (match ? report(match) : lastReport);
+
+  online.isHosting = () => !!match?.host;
 
   // How this player's game data is travelling right now.
   online.linkKind = () => {

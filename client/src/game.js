@@ -10,7 +10,9 @@ const TICK_MS = 1000 / TICK_RATE;
 // `controllers` holds one function per fighter: (state, slot) => button bits.
 // `mods` optionally strengthens a fighter (arcade bosses). `mode` is 'duel'
 // or 'arena'; by default more than two fighters means an arena brawl.
-export function createGame(chars, controllers, mods = [], mode) {
+// `catchUp`: the most real time one call may make up (a background tab must
+// not replay seconds of fight; an online host on a slow phone may make up more).
+export function createGame(chars, controllers, mods = [], mode, catchUp = 100) {
   let last = null;
   let acc = 0;
   let events = [];
@@ -23,7 +25,7 @@ export function createGame(chars, controllers, mods = [], mode) {
       if (game.paused) return;
       // Cap the catch-up so a tab that was in the background does not replay
       // seconds of fight in one frame.
-      acc += Math.min(dt, 100);
+      acc += Math.min(dt, catchUp);
       while (acc >= TICK_MS) {
         acc -= TICK_MS;
         const s = game.state;
