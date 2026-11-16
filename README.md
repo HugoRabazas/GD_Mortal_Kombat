@@ -691,6 +691,10 @@ and the heartbeat, the crowd and the weather go quiet.
   to the whole room), go out at most ~6 times a second (none is lost: each
   carries the last few changes), and pings less often: ~66 messages a second
   with all four tapping, ~46 walking, every punch still arriving.
+  With that room to spare, the relayed route now carries 10 pictures a
+  second instead of 7.5 (~79 messages a second with all four tapping, under
+  the 100 allowed). One relayed four-player match fits the free plan; two at
+  the same moment would go past it (direct links cost nothing).
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

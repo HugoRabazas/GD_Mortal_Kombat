@@ -24,7 +24,7 @@ import { FIGHTERS, getFighter, isFighterId, lookCount } from '../../../shared/fi
 import { INPUT, INPUT_MASK } from '../../../shared/constants.js';
 
 const SNAP_EVERY = 3; // ticks between snapshots on a direct link (20 a second)
-const RELAY_EVERY = 8; // ticks between snapshots when relayed (7.5 a second)
+const RELAY_EVERY = 6; // ticks between snapshots when relayed (10 a second)
 const MAX_PLAYERS = 4;
 const WALK = 3.5; // walking speed in the rules, pixels a tick
 const LEAD_MAX = 14; // never draw a guest's own fighter more than this many ticks ahead
