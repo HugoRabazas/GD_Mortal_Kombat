@@ -2084,16 +2084,37 @@ function savePicture() {
 // Photo mode: drag anywhere off the buttons, or the arrow keys, to turn
 // the camera; up and down move it in and out.
 if (typeof window !== 'undefined') {
+  // One finger (or the mouse) turns; two fingers pinch to move in and out.
   let dragX = null;
+  const fingers = new Map();
+  let pinch = null;
+  const spread = () => {
+    const [a, b] = [...fingers.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
   window.addEventListener('pointerdown', (e) => {
-    if (app.screen === 'photo' && !e.target.closest?.('button')) dragX = e.clientX;
+    if (app.screen !== 'photo' || e.target.closest?.('button')) return;
+    fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    dragX = fingers.size === 1 ? e.clientX : null;
+    pinch = fingers.size === 2 ? { d: spread(), zoom: app.photo?.zoom ?? 1 } : null;
   });
   window.addEventListener('pointermove', (e) => {
-    if (dragX === null || !app.photo) return;
-    app.photo.yaw += (e.clientX - dragX) * 0.008;
-    dragX = e.clientX;
+    if (!app.photo || !fingers.has(e.pointerId)) return;
+    fingers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pinch && fingers.size === 2) {
+      app.photo.zoom = Math.max(0.45, Math.min(1.6, (pinch.zoom * pinch.d) / Math.max(20, spread())));
+    } else if (dragX !== null) {
+      app.photo.yaw += (e.clientX - dragX) * 0.008;
+      dragX = e.clientX;
+    }
   });
-  window.addEventListener('pointerup', () => (dragX = null));
+  const lift = (e) => {
+    fingers.delete(e.pointerId);
+    dragX = null;
+    pinch = null;
+  };
+  window.addEventListener('pointerup', lift);
+  window.addEventListener('pointercancel', lift);
   window.addEventListener('keydown', (e) => {
     if (app.screen !== 'photo' || !app.photo) return;
     if (e.key === 'ArrowLeft') app.photo.yaw -= 0.2;
@@ -2117,6 +2138,15 @@ function frame(now) {
   // A replay ends at once when something else takes the screen (online: the
   // host starts the next fight, or the room closes).
   if (app.replay && app.screen !== 'replay') app.replay = null;
+  // Photo mode with a gamepad: the stick turns the camera and moves it in
+  // and out (A presses the focused button: Save picture, Back...).
+  if (app.screen === 'photo' && app.photo) {
+    const pad = readPad(0);
+    if (pad & INPUT.LEFT) app.photo.yaw -= 0.03;
+    if (pad & INPUT.RIGHT) app.photo.yaw += 0.03;
+    if (pad & INPUT.UP) app.photo.zoom = Math.max(0.45, app.photo.zoom - 0.012);
+    if (pad & INPUT.DOWN) app.photo.zoom = Math.min(1.6, app.photo.zoom + 0.012);
+  }
   if (app.replay) {
     // Online, the match's own upkeep goes on underneath (its messages and
     // pings); what it would draw is the replay's.

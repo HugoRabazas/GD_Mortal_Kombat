@@ -733,7 +733,9 @@ and the heartbeat, the crowd and the weather go quiet.
   Inside the claude.ai Artifact a page may not download by itself: there
   the picture is offered through the Artifact's `downloads` capability
   (the viewer confirms the save); on the website, a plain download (loop
-  199).
+  199). Loop 200: two fingers pinch to move the camera in and out, and a
+  gamepad's stick turns it (left/right) and moves it (up/down), A pressing
+  the focused button (checked with real multi-touch and a simulated pad).
 - **Towards a realistic look - the floor** (loop 182): the first step of a
   realism pass on the arenas (the fighters later; the user chose to keep
   each member's avatar on the head). The floor and the dais are now
