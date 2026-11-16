@@ -53,3 +53,10 @@ test('the blows with a sound of their own name sounds that exist', async () => {
   const { HIT_SOUND } = await import('../client/src/effects.js');
   for (const [kind, name] of Object.entries(HIT_SOUND)) assert.ok(hasSound(name), `${kind}: ${name}`);
 });
+
+test("the boss's second wind is called out", () => {
+  const s = createMatch(['ruko', 'jackie'], [null, { health: 1.3, power: 1.1, enrage: true }]);
+  said.length = 0;
+  handleEvents([{ type: 'enrage', slot: 1, x: 0, z: 0 }], s, { quiet: false, project });
+  assert.deepEqual(said, ['Second wind!']);
+});

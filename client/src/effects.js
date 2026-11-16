@@ -107,14 +107,16 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         // The boss's second wind: a burst of light round them and a line.
         const f = state.f[e.slot];
         const char = getFighter(f.char);
-        const p = project(f.x, aboveTag(char) + (f.h || 0), f.z);
-        floatText(p.x, p.y, `${char.name.toUpperCase()} POWERS UP!`, '#ff5a36', 26, OVER);
+        showBanner(`${char.name.toUpperCase()} POWERS UP`, 'SECOND WIND', '#ff5a36', 1400);
         const q = project(f.x, 90, f.z);
         exBurst(q.x, q.y, '#ff5a36');
         lightFlash(f.x, 120, f.z, '#ff5a36', true);
         addFlash(0.25);
         addShake(8);
-        if (!quiet) play('flare');
+        if (!quiet) {
+          play('flare');
+          announce('Second wind!');
+        }
         break;
       }
       case 'lastStand': {

@@ -301,8 +301,12 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
         tint = glow;
         // A finisher that has caught its rival burns brighter: from here on
         // nobody else can stop it (see applyHit in sim.js).
-        const caught = (ULT_MOVES.has(f.move) && f.ultOn >= 0) || f.ex || f.enraged; // (an EX special, and a boss's second wind, burn bright too)
+        const caught = (ULT_MOVES.has(f.move) && f.ultOn >= 0) || f.ex; // (an EX special burns bright too)
         amount = caught ? 0.85 + 0.15 * Math.sin(now / 28) : 0.55 + 0.2 * Math.sin(now / 40);
+      } else if (f.enraged && f.hp > 0) {
+        // A boss's second wind: a hot red glow, pulsing fast, for the round.
+        tint = ember;
+        amount = 0.32 + 0.14 * Math.sin(now / 90);
       } else if (f.hp > 0 && f.hp < f.maxHp * 0.25 && f.state !== 'win' && f.state !== 'lose') {
         // Last stand: a slow red pulse, like a heartbeat (see LAST_STAND in sim.js).
         tint = ember;
