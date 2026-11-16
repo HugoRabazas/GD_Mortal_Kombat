@@ -728,7 +728,12 @@ and the heartbeat, the crowd and the weather go quiet.
   Kichta's "Catch me if you can." (every fighter has one, 44 characters at
   most, tested). A first try put them in a caption low on the screen: it
   ran into the line-up on an upright phone and into FIGHT!, so they went
-  into the line-up itself. Live checks after loop 176's online change:
+  into the line-up itself. On a touch screen held sideways (loop 178) the
+  line-up sat under the controls - the right-hand portrait behind GRAB and
+  ULT: with the controls showing it now sits higher and closer in (smaller
+  in a brawl), and a duel's challenges go under the titles (seen at
+  568x320, 740x340 and 915x412, duel and brawl). Live checks after loop
+  176's online change:
   a rollback duel, chat, looks, leaving and a whole match on the public
   site, all fine.
 - **Vibration can be turned off** (loop 174): the phone already buzzed

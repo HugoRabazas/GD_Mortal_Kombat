@@ -371,13 +371,16 @@ function finisherCutIn(ctx, s, worn) {
 // The line-up shown while the first round is announced: every fighter's
 // portrait and name, so everyone knows who is who before the bell - and in
 // a duel, each fighter's challenge.
-function lineUp(ctx, s, labels, worn) {
+// With the on-screen controls in the bottom corners (`clear`), it sits
+// higher and closer in, clear of the buttons, and a duel's challenges go
+// under the titles (the YOU / CPU tags are on the bars above anyway).
+function lineUp(ctx, s, labels, worn, clear) {
   if (s.round !== 1 || s.phase !== 'intro' || s.pt > 70) return;
   const fade = Math.min(1, s.pt / 10, (70 - s.pt) / 10);
   const n = s.f.length;
-  const r = n > 2 ? 42 : 56;
-  const gap = n > 2 ? 190 : 380;
-  const y = 388;
+  const r = n > 2 ? (clear ? 36 : 42) : clear ? 50 : 56;
+  const gap = n > 2 ? (clear ? 128 : 190) : clear ? 260 : 380;
+  const y = clear ? (n > 2 ? 314 : 292) : 388;
   ctx.save();
   ctx.globalAlpha = Math.max(0, fade);
   ctx.textAlign = 'center';
@@ -409,15 +412,17 @@ function lineUp(ctx, s, labels, worn) {
     ctx.strokeText(char.title, x, y + r + 39, gap - 16);
     ctx.fillStyle = '#f3d9a8';
     ctx.fillText(char.title, x, y + r + 39, gap - 16);
-    // In a duel, the fighter's challenge above the portrait.
+    // In a duel, the fighter's challenge above the portrait (under the title
+    // when the controls are showing).
     if (n === 2 && char.challenge) {
-      ctx.font = 'italic 600 15px Barlow, system-ui, sans-serif';
+      const cy = clear ? y + r + 57 : y - r - 18;
+      ctx.font = `italic 600 ${clear ? 14 : 15}px Barlow, system-ui, sans-serif`;
       ctx.lineWidth = 4;
-      ctx.strokeText(`\u201c${char.challenge}\u201d`, x, y - r - 18, gap - 16);
+      ctx.strokeText(`\u201c${char.challenge}\u201d`, x, cy, gap - 10);
       ctx.fillStyle = '#ffffff';
-      ctx.fillText(`\u201c${char.challenge}\u201d`, x, y - r - 18, gap - 16);
+      ctx.fillText(`\u201c${char.challenge}\u201d`, x, cy, gap - 10);
     }
-    if (labels[f.slot]) {
+    if (labels[f.slot] && !(clear && n === 2)) {
       ctx.font = '700 11px Barlow, system-ui, sans-serif';
       ctx.strokeText(labels[f.slot], x, y + r + 56);
       ctx.fillStyle = '#e8b454';
@@ -573,7 +578,7 @@ export function createStage(glCanvas, hudCanvas) {
         finaleOverlay(ctx, s, worn);
         finisherCutIn(ctx, s, worn);
         drawHud(ctx, s, view.labels, now, worn, view.clearCorners);
-        lineUp(ctx, s, view.labels, worn);
+        lineUp(ctx, s, view.labels, worn, !!view.clearCorners);
         // A reminder of the controls while the first round is being announced.
         // (Never on top of the line-up, which has the screen's lower half to itself.)
         const lineUpShown = s.round === 1 && s.phase === 'intro' && s.pt <= 70;
