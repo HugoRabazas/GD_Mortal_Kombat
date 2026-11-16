@@ -15,6 +15,7 @@
 
 import { ARENA, INPUT, MODES, RULES, TIMING, TICK_RATE } from './constants.js';
 import { getFighter } from './fighters.js';
+import { sin, cos, atan2, hypot } from './dmath.js';
 
 const BODY_R = 24; // radius of a fighter's body on the floor
 const BODY_H = 158;
@@ -518,7 +519,7 @@ const SPAWNS = {
   4: [[-300, 0], [300, 0], [0, -270], [0, 250]],
 };
 
-const angleTo = (ax, az, bx, bz) => Math.atan2(bz - az, bx - ax);
+const angleTo = (ax, az, bx, bz) => atan2(bz - az, bx - ax);
 function angleDiff(a, b) {
   let d = a - b;
   while (d > Math.PI) d -= Math.PI * 2;
@@ -544,7 +545,7 @@ function newFighter(charId, slot, count, mod) {
     vx: 0,
     vz: 0,
     vh: 0,
-    dir: Math.atan2(-z, -x), // face the centre
+    dir: atan2(-z, -x), // face the centre
     hp: health,
     maxHp: health,
     meter: 0,
@@ -631,18 +632,18 @@ function updateItems(s) {
     if (s.items.length < ITEMS.max) {
       const a = random(s) * Math.PI * 2;
       const r = Math.sqrt(random(s)) * (s.ringR - 90);
-      const item = { id: ++s.itemSeq, kind: random(s) < 0.6 ? 'energy' : 'heal', x: Math.cos(a) * r, z: Math.sin(a) * r, life: ITEMS.life * TICK_RATE };
+      const item = { id: ++s.itemSeq, kind: random(s) < 0.6 ? 'energy' : 'heal', x: cos(a) * r, z: sin(a) * r, life: ITEMS.life * TICK_RATE };
       s.items.push(item);
       emit(s, 'spawn', { kind: item.kind, x: item.x, z: item.z });
     }
   }
   for (const it of s.items) {
-    if (--it.life <= 0 || Math.hypot(it.x, it.z) > s.ringR - 20) {
+    if (--it.life <= 0 || hypot(it.x, it.z) > s.ringR - 20) {
       it.gone = true;
       continue;
     }
     for (const f of s.f) {
-      if (isOut(f) || f.h > 40 || f.state === 'down' || Math.hypot(f.x - it.x, f.z - it.z) > ITEMS.reach) continue;
+      if (isOut(f) || f.h > 40 || f.state === 'down' || hypot(f.x - it.x, f.z - it.z) > ITEMS.reach) continue;
       if (it.kind === 'energy') addMeter(f, ITEMS.energy);
       else f.hp = Math.min(f.maxHp, f.hp + ITEMS.heal);
       it.gone = true;
@@ -672,7 +673,7 @@ function nearestRival(s, f, range) {
   let bestD = range;
   for (const o of s.f) {
     if (o === f || isOut(o)) continue;
-    const d = Math.hypot(o.x - f.x, o.z - f.z);
+    const d = hypot(o.x - f.x, o.z - f.z);
     if (d < bestD) {
       bestD = d;
       best = o;
@@ -686,7 +687,7 @@ function nearestRival(s, f, range) {
 // rather than turning to whoever has come nearest.)
 function markOf(s, f, range) {
   const o = f.state === 'attack' && MOVES[f.move]?.ult && markedBy(f) >= 0 ? s.f[markedBy(f)] : null;
-  if (o && !isOut(o) && Math.hypot(o.x - f.x, o.z - f.z) < range) return o;
+  if (o && !isOut(o) && hypot(o.x - f.x, o.z - f.z) < range) return o;
   return nearestRival(s, f, range);
 }
 // The rival a finisher is after: the one it caught, or failing that the one
@@ -708,7 +709,7 @@ function aimGuard(s, f) {
   let bestD = 260;
   for (const o of s.f) {
     if (o === f || isOut(o) || (o.state !== 'attack' && o.state !== 'airAttack')) continue;
-    const d = Math.hypot(o.x - f.x, o.z - f.z);
+    const d = hypot(o.x - f.x, o.z - f.z);
     if (d < bestD) {
       best = o;
       bestD = d;
@@ -736,11 +737,11 @@ function startAttack(s, f, move) {
     // A leap or a dive aimed to come down on the nearest rival (or on the
     // one the finisher has already caught).
     const o = markOf(s, f, m.aim);
-    const d = o ? Math.hypot(o.x - f.x, o.z - f.z) : 0;
+    const d = o ? hypot(o.x - f.x, o.z - f.z) : 0;
     const flight = m.leap ? (2 * m.leap) / GRAVITY : Math.max(1, f.h / m.dive);
     const v = Math.min(m.speed, (d * (m.over || 1)) / flight); // `over`: land beyond them
-    f.vx = Math.cos(f.dir) * v;
-    f.vz = Math.sin(f.dir) * v;
+    f.vx = cos(f.dir) * v;
+    f.vz = sin(f.dir) * v;
     f.vh = m.leap || -m.dive;
   }
   emit(s, 'swing', { by: f.slot, move });
@@ -752,15 +753,15 @@ function blink(s, f) {
   const x0 = f.x;
   const z0 = f.z;
   if (o) {
-    f.x = o.x - Math.cos(o.dir) * 66;
-    f.z = o.z - Math.sin(o.dir) * 66;
+    f.x = o.x - cos(o.dir) * 66;
+    f.z = o.z - sin(o.dir) * 66;
     f.dir = angleTo(f.x, f.z, o.x, o.z);
     // A guard already raised turns to meet the shadow (so it can be blocked
     // like any finisher); one caught open is struck from behind.
     if (o.state === 'block') o.dir = angleTo(o.x, o.z, f.x, f.z);
   } else {
-    f.x += Math.cos(f.dir) * 200;
-    f.z += Math.sin(f.dir) * 200;
+    f.x += cos(f.dir) * 200;
+    f.z += sin(f.dir) * 200;
   }
   keepInside(s, f);
   emit(s, 'blink', { by: f.slot, x0, z0, x: f.x, z: f.z });
@@ -849,7 +850,7 @@ function stick(inp) {
   const mx = (inp & INPUT.RIGHT ? 1 : 0) - (inp & INPUT.LEFT ? 1 : 0);
   const mz = (inp & INPUT.DOWN ? 1 : 0) - (inp & INPUT.UP ? 1 : 0);
   if (!mx && !mz) return null;
-  const len = Math.hypot(mx, mz);
+  const len = hypot(mx, mz);
   return { x: mx / len, z: mz / len };
 }
 
@@ -887,7 +888,7 @@ function control(s, f, inp) {
         if (dir && f.rollOk && (f.state !== 'block' || f.t < ROLL.leeway)) {
           f.rollOk = false;
           const o = nearestRival(s, f, 400);
-          const d = o ? Math.hypot(o.x - f.x, o.z - f.z) || 1 : 1;
+          const d = o ? hypot(o.x - f.x, o.z - f.z) || 1 : 1;
           if (o && (dir.x * (o.x - f.x) + dir.z * (o.z - f.z)) / d < BACKSTEP.away) {
             setState(f, 'backstep');
             f.dir = angleTo(f.x, f.z, o.x, o.z);
@@ -898,7 +899,7 @@ function control(s, f, inp) {
             break;
           }
           setState(f, 'roll');
-          f.dir = Math.atan2(dir.z, dir.x);
+          f.dir = atan2(dir.z, dir.x);
           f.vx = dir.x * ROLL.speed;
           f.vz = dir.z * ROLL.speed;
           f.inv = ROLL.safe;
@@ -922,7 +923,7 @@ function control(s, f, inp) {
         f.air2 = false;
         f.vx = dir ? dir.x * AIR_SPEED * speedOf(f) : 0;
         f.vz = dir ? dir.z * AIR_SPEED * speedOf(f) : 0;
-        if (dir) f.dir = Math.atan2(dir.z, dir.x);
+        if (dir) f.dir = atan2(dir.z, dir.x);
         emit(s, 'jump', { by: f.slot });
         break;
       }
@@ -930,7 +931,7 @@ function control(s, f, inp) {
         setState(f, 'walk');
         f.vx = dir.x * WALK * speedOf(f);
         f.vz = dir.z * WALK * speedOf(f);
-        f.dir = Math.atan2(dir.z, dir.x);
+        f.dir = atan2(dir.z, dir.x);
       } else {
         setState(f, 'idle');
         f.vx = 0;
@@ -988,7 +989,7 @@ function control(s, f, inp) {
         f.vh = AIR_JUMP.v;
         f.vx = dir ? dir.x * AIR_SPEED * speedOf(f) : f.vx * 0.5;
         f.vz = dir ? dir.z * AIR_SPEED * speedOf(f) : f.vz * 0.5;
-        if (dir) f.dir = Math.atan2(dir.z, dir.x);
+        if (dir) f.dir = atan2(dir.z, dir.x);
         emit(s, 'jump2', { by: f.slot, x: f.x, z: f.z, h: f.h });
       }
       break;
@@ -1032,8 +1033,8 @@ function control(s, f, inp) {
         f.vh = -am.fall;
         if (am.speed) {
           aim(s, f, am.aim);
-          f.vx = Math.cos(f.dir) * am.speed;
-          f.vz = Math.sin(f.dir) * am.speed;
+          f.vx = cos(f.dir) * am.speed;
+          f.vz = sin(f.dir) * am.speed;
         } else f.vx = f.vz = 0;
       } else if (am.fall && f.t < am.startup) {
         f.vh = GRAVITY; // a beat's hang before the drop
@@ -1046,13 +1047,13 @@ function control(s, f, inp) {
           id: ++s.projSeq,
           owner: f.slot,
           char: f.char,
-          x: f.x + Math.cos(f.dir) * 40,
-          z: f.z + Math.sin(f.dir) * 40,
+          x: f.x + cos(f.dir) * 40,
+          z: f.z + sin(f.dir) * 40,
           h: f.h + 70,
           vh: -3.6,
           ex: f.ex,
-          vx: Math.cos(f.dir) * PROJECTILE.speed * 0.85,
-          vz: Math.sin(f.dir) * PROJECTILE.speed * 0.85,
+          vx: cos(f.dir) * PROJECTILE.speed * 0.85,
+          vz: sin(f.dir) * PROJECTILE.speed * 0.85,
           life: PROJECTILE.life,
         });
         emit(s, 'bolt', { by: f.slot });
@@ -1107,24 +1108,24 @@ function control(s, f, inp) {
       }
       if (m.rush) {
         const going = t >= m.startup && t < activeEnd;
-        f.vx = going ? Math.cos(f.dir) * m.speed : 0;
-        f.vz = going ? Math.sin(f.dir) * m.speed : 0;
+        f.vx = going ? cos(f.dir) * m.speed : 0;
+        f.vz = going ? sin(f.dir) * m.speed : 0;
       } else if (m.go) {
         // Moves that travel: full speed through their stretch, then braking.
         const going = t >= m.go[0] && t < m.go[1];
-        const v = going ? m.speed : t >= m.go[1] ? Math.hypot(f.vx, f.vz) * 0.75 : 0;
-        f.vx = Math.cos(f.dir) * v;
-        f.vz = Math.sin(f.dir) * v;
+        const v = going ? m.speed : t >= m.go[1] ? hypot(f.vx, f.vz) * 0.75 : 0;
+        f.vx = cos(f.dir) * v;
+        f.vz = sin(f.dir) * v;
       } else if (m.vh) {
         if (t === m.startup) {
           f.vh = m.vh;
           // Drifting towards the rival on the way up (the phoenix's climb).
           const o = m.drift && markOf(s, f, 600);
           if (o) {
-            const v = Math.min(m.drift, Math.max(0, Math.hypot(o.x - f.x, o.z - f.z) - 40) / 12);
+            const v = Math.min(m.drift, Math.max(0, hypot(o.x - f.x, o.z - f.z) - 40) / 12);
             f.dir = angleTo(f.x, f.z, o.x, o.z);
-            f.vx = Math.cos(f.dir) * v;
-            f.vz = Math.sin(f.dir) * v;
+            f.vx = cos(f.dir) * v;
+            f.vz = sin(f.dir) * v;
           }
         }
       } else if (f.move === 'quake') {
@@ -1135,11 +1136,11 @@ function control(s, f, inp) {
           owner: f.slot,
           char: f.char,
           ex: f.ex,
-          x: f.x + Math.cos(f.dir) * 50,
-          z: f.z + Math.sin(f.dir) * 50,
+          x: f.x + cos(f.dir) * 50,
+          z: f.z + sin(f.dir) * 50,
           h: PROJECTILE.h,
-          vx: Math.cos(f.dir) * PROJECTILE.speed,
-          vz: Math.sin(f.dir) * PROJECTILE.speed,
+          vx: cos(f.dir) * PROJECTILE.speed,
+          vz: sin(f.dir) * PROJECTILE.speed,
           life: PROJECTILE.life,
         });
         emit(s, 'bolt', { by: f.slot });
@@ -1153,7 +1154,7 @@ function control(s, f, inp) {
         // fanned out a little.
         const marks = s.f
           .filter((o) => o !== f && !isOut(o))
-          .map((o) => ({ o, d: Math.hypot(o.x - f.x, o.z - f.z) }))
+          .map((o) => ({ o, d: hypot(o.x - f.x, o.z - f.z) }))
           .filter((k) => k.d < 900)
           .sort((p, q) => p.d - q.d);
         for (let i = 0; i < m.volley; i++) {
@@ -1172,8 +1173,8 @@ function control(s, f, inp) {
             z: f.z,
             h: f.h + 60,
             vh: -Math.min(14, Math.max(0.5, fall)),
-            vx: Math.cos(a) * PROJECTILE.speed * 0.9,
-            vz: Math.sin(a) * PROJECTILE.speed * 0.9,
+            vx: cos(a) * PROJECTILE.speed * 0.9,
+            vz: sin(a) * PROJECTILE.speed * 0.9,
             life: PROJECTILE.life,
             rain: true,
           });
@@ -1214,8 +1215,8 @@ function control(s, f, inp) {
           setState(f, 'jump');
           f.move = null;
           f.vh = JUMP_V;
-          f.vx = Math.cos(f.dir) * AIR_SPEED;
-          f.vz = Math.sin(f.dir) * AIR_SPEED;
+          f.vx = cos(f.dir) * AIR_SPEED;
+          f.vz = sin(f.dir) * AIR_SPEED;
           f.jumpT = 0;
           f.air2 = false;
           emit(s, 'jump', { by: f.slot });
@@ -1260,7 +1261,7 @@ function control(s, f, inp) {
       if (f.t >= OUT_OF.rise && way && held(INPUT.BLOCK)) {
         setState(f, 'roll');
         f.rollOk = false;
-        f.dir = Math.atan2(way.z, way.x);
+        f.dir = atan2(way.z, way.x);
         f.vx = way.x * ROLL.speed;
         f.vz = way.z * ROLL.speed;
         f.inv = ROLL.safe;
@@ -1288,8 +1289,8 @@ function control(s, f, inp) {
           who.h = 0;
           who.vh = 0;
           who.stun = stun;
-          who.vx = Math.cos(a) * 5 * away;
-          who.vz = Math.sin(a) * 5 * away;
+          who.vx = cos(a) * 5 * away;
+          who.vz = sin(a) * 5 * away;
         }
         emit(s, 'escape', { by: f.slot, on: by.slot, x: (f.x + by.x) / 2, z: (f.z + by.z) / 2, h: 100 });
       }
@@ -1314,9 +1315,9 @@ function carryThrow(s, f) {
   // Angle round the thrower: 0 = in front, PI = behind.
   const k = t < THROW.lift ? 0 : Math.min(1, (t - THROW.lift) / (THROW.slam - THROW.lift));
   const turn = f.toss ? 0 : k * Math.PI; // (a fire toss keeps them in front)
-  const lift = t < THROW.lift ? (t / THROW.lift) * 0.45 : Math.sin(k * Math.PI) * 0.55 + 0.45 * (1 - k);
-  def.x = f.x + Math.cos(f.dir + turn) * THROW.reach * Math.max(0.35, Math.abs(Math.cos(turn)));
-  def.z = f.z + Math.sin(f.dir + turn) * THROW.reach * Math.max(0.35, Math.abs(Math.cos(turn)));
+  const lift = t < THROW.lift ? (t / THROW.lift) * 0.45 : sin(k * Math.PI) * 0.55 + 0.45 * (1 - k);
+  def.x = f.x + cos(f.dir + turn) * THROW.reach * Math.max(0.35, Math.abs(cos(turn)));
+  def.z = f.z + sin(f.dir + turn) * THROW.reach * Math.max(0.35, Math.abs(cos(turn)));
   def.h = THROW.height * lift;
   def.vx = def.vz = def.vh = 0;
   def.dir = f.dir + Math.PI; // facing the thrower all the way round
@@ -1329,7 +1330,7 @@ function carryThrow(s, f) {
       if (f.toss && def.state === 'down') {
         // Flung outwards into the flames (keepInside burns them, and they
         // bounce back off the fire towards the thrower).
-        const r = Math.hypot(def.x, def.z) || 1;
+        const r = hypot(def.x, def.z) || 1;
         def.vx = (def.x / r) * TOSS.speed;
         def.vz = (def.z / r) * TOSS.speed;
         emit(s, 'fireToss', { by: f.slot, on: def.slot, x: def.x, z: def.z });
@@ -1348,9 +1349,9 @@ function carryThrow(s, f) {
 function airAttack(s, f, move) {
   if (move === 'flyKnee') {
     // The knee drives on along the run.
-    const v = Math.max(Math.hypot(f.vx, f.vz), AIR_SPEED * 1.6);
-    f.vx = Math.cos(f.dir) * v;
-    f.vz = Math.sin(f.dir) * v;
+    const v = Math.max(hypot(f.vx, f.vz), AIR_SPEED * 1.6);
+    f.vx = cos(f.dir) * v;
+    f.vz = sin(f.dir) * v;
   }
   f.state = 'airAttack';
   f.landed = 0;
@@ -1380,7 +1381,7 @@ function land(s, f) {
         // The body press: everyone close by on the floor goes down.
         for (const o of s.f) {
           if (o === f || f.hits.includes(o.slot) || !canBeHit(o) || o.h > 20) continue;
-          if (Math.hypot(o.x - f.x, o.z - f.z) > m.crash) continue;
+          if (hypot(o.x - f.x, o.z - f.z) > m.crash) continue;
           f.hits.push(o.slot);
           applyHit(s, f, o, f.ex ? exOf(m) : m, f.x, f.z, f.move);
         }
@@ -1401,7 +1402,7 @@ function land(s, f) {
         // The crash: everyone close by on the floor is knocked off their feet.
         for (const o of s.f) {
           if (o === f || f.hits.includes(o.slot) || !canBeHit(o) || o.h > 20) continue;
-          if (Math.hypot(o.x - f.x, o.z - f.z) > m.crash) continue;
+          if (hypot(o.x - f.x, o.z - f.z) > m.crash) continue;
           f.hits.push(o.slot);
           applyHit(s, f, o, m, f.x, f.z, 'super');
         }
@@ -1451,7 +1452,7 @@ function physics(s, f) {
 // by the ring of fire and bounced back in.
 function keepInside(s, f) {
   const limit = s.ringR - BODY_R;
-  const r = Math.hypot(f.x, f.z);
+  const r = hypot(f.x, f.z);
   if (r <= limit) return;
   const nx = f.x / r;
   const nz = f.z / r;
@@ -1487,7 +1488,7 @@ function separate(s, a, b) {
   const split = (p, q, share) => {
     let dx = q.x - p.x;
     let dz = q.z - p.z;
-    let d = Math.hypot(dx, dz);
+    let d = hypot(dx, dz);
     const overlap = BODY_R * 2 - d;
     if (overlap <= 0) return;
     if (d < 0.001) {
@@ -1504,7 +1505,7 @@ function separate(s, a, b) {
   // Whoever ended up outside the ring is put back, and the other takes the
   // whole correction.
   for (const [p, q] of [[a, b], [b, a]]) {
-    if (Math.hypot(p.x, p.z) > s.ringR - BODY_R) {
+    if (hypot(p.x, p.z) > s.ringR - BODY_R) {
       keepInside(s, p);
       split(p, q, 1);
     }
@@ -1528,17 +1529,17 @@ function canBeHit(f) {
 // A rival in the air within an air throw's grasp (jumping, or launched).
 export function airborneRival(s, f) {
   const m = MOVES.airThrow;
-  return s.f.find((o) => o !== f && !isOut(o) && o.h > 25 && canBeHit(o) && Math.hypot(o.x - f.x, o.z - f.z) < m.reach + BODY_R && Math.abs(o.h - f.h) < 110) || null;
+  return s.f.find((o) => o !== f && !isOut(o) && o.h > 25 && canBeHit(o) && hypot(o.x - f.x, o.z - f.z) < m.reach + BODY_R && Math.abs(o.h - f.h) < 110) || null;
 }
 
 // Is `def` inside the wedge of `att`'s current attack?
 function inWedge(att, def, m) {
   const dx = def.x - att.x;
   const dz = def.z - att.z;
-  const d = Math.hypot(dx, dz);
+  const d = hypot(dx, dz);
   if (d > m.reach + BODY_R) return false;
   if (att.h + m.y1 < def.h || att.h + m.y0 > def.h + BODY_H) return false;
-  return d < BODY_R || m.arc >= Math.PI || angleDiff(Math.atan2(dz, dx), att.dir) <= m.arc;
+  return d < BODY_R || m.arc >= Math.PI || angleDiff(atan2(dz, dx), att.dir) <= m.arc;
 }
 
 function activeMove(f) {
@@ -1579,15 +1580,15 @@ function addMeter(f, amount) {
 function applyHit(s, att, def, m, fromX, fromZ, kind) {
   let dx = def.x - fromX;
   let dz = def.z - fromZ;
-  const d = Math.hypot(dx, dz);
+  const d = hypot(dx, dz);
   if (d < 0.001) {
-    dx = Math.cos(att.dir);
-    dz = Math.sin(att.dir);
+    dx = cos(att.dir);
+    dz = sin(att.dir);
   } else {
     dx /= d;
     dz /= d;
   }
-  const guarding = def.state === 'block' && angleDiff(def.dir, Math.atan2(-dz, -dx)) <= BLOCK_ARC;
+  const guarding = def.state === 'block' && angleDiff(def.dir, atan2(-dz, -dx)) <= BLOCK_ARC;
   // A low blow goes under an ordinary guard; a perfect one still stops it.
   const under = guarding && !!m.low && !(def.guard > 0);
   const blocked = !m.unblockable && guarding && !under;
@@ -1689,7 +1690,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     att.move = null;
     att.held = def.slot;
     // Near the fire, facing it through the rival: a fire toss.
-    const r = Math.hypot(def.x, def.z) || 1;
+    const r = hypot(def.x, def.z) || 1;
     att.toss = s.ringR - r < TOSS.edge && (dx * def.x + dz * def.z) / r > TOSS.facing;
     def.state = 'held';
     def.t = 0;
@@ -1833,13 +1834,13 @@ function resolveHits(s) {
         emit(s, 'clash', { x: p.x, z: p.z, h: 10 });
       }
     }
-    if (--p.life <= 0 || Math.hypot(p.x, p.z) > s.ringR + 40) p.dead = true;
+    if (--p.life <= 0 || hypot(p.x, p.z) > s.ringR + 40) p.dead = true;
   }
   for (let i = 0; i < s.proj.length; i++) {
     for (let j = i + 1; j < s.proj.length; j++) {
       const p = s.proj[i];
       const q = s.proj[j];
-      if (!p.dead && !q.dead && p.owner !== q.owner && Math.hypot(p.x - q.x, p.z - q.z) < PROJECTILE.r * 2) {
+      if (!p.dead && !q.dead && p.owner !== q.owner && hypot(p.x - q.x, p.z - q.z) < PROJECTILE.r * 2) {
         p.dead = q.dead = true;
         emit(s, 'clash', { x: (p.x + q.x) / 2, z: (p.z + q.z) / 2, h: p.h });
       }
@@ -1849,7 +1850,7 @@ function resolveHits(s) {
     if (p.dead) continue;
     for (const def of s.f) {
       if (def.slot === p.owner || !canBeHit(def)) continue;
-      if (Math.hypot(def.x - p.x, def.z - p.z) > PROJECTILE.r + BODY_R) continue;
+      if (hypot(def.x - p.x, def.z - p.z) > PROJECTILE.r + BODY_R) continue;
       if (p.h + PROJECTILE.r < def.h || p.h - PROJECTILE.r > def.h + BODY_H) continue;
       p.dead = true;
       applyHit(s, s.f[p.owner], def, p.rain ? RAIN_HIT : p.vh ? (p.ex ? (exAirBolt ??= { ...AIR_BOLT_HIT, dmg: Math.round(AIR_BOLT_HIT.dmg * 1.2), ex: true }) : AIR_BOLT_HIT) : p.ex ? (exBolt ??= { ...MOVES.bolt, dmg: Math.round(MOVES.bolt.dmg * 1.2), ex: true }) : MOVES.bolt, p.x - p.vx * 3, p.z - p.vz * 3, 'bolt');

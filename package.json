@@ -17,6 +17,7 @@
   "devDependencies": {
     "eslint": "^9.39.5",
     "globals": "^17.14.0",
+    "quickjs-emscripten": "^0.32.0",
     "vite": "^8.3.8"
   },
   "dependencies": {

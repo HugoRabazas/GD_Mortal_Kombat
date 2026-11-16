@@ -4,6 +4,7 @@
 // itself off from the fight's own events (or its state), the same way on
 // every device. Pure logic, shared with the tests.
 import { INPUT } from './constants.js';
+import { hypot } from './dmath.js';
 
 // Steps: `ev(e)` is true for an event of the fight that completes the step,
 // `st(s)` for a state that does (checked every tick). `how(k, names)` says
@@ -167,7 +168,7 @@ export function stepsDone(lesson, s, events, done) {
 
 // Turn a direction into stick bits.
 function walk(dx, dz) {
-  const d = Math.hypot(dx, dz) || 1;
+  const d = hypot(dx, dz) || 1;
   let bits = 0;
   if (dx / d < -0.38) bits |= INPUT.LEFT;
   if (dx / d > 0.38) bits |= INPUT.RIGHT;
@@ -188,8 +189,8 @@ export function drummer() {
     const me = s.f[slot];
     const you = s.f[0];
     if (beat > 0) beat--;
-    const r = Math.hypot(you.x, you.z);
-    const gap = Math.hypot(you.x - me.x, you.z - me.z) || 1;
+    const r = hypot(you.x, you.z);
+    const gap = hypot(you.x - me.x, you.z - me.z) || 1;
     // Away from the middle, take the outer side; near it, any side will do.
     const out = r > 150;
     const vx = out ? you.x / r : (me.x - you.x) / gap;
@@ -202,13 +203,13 @@ export function drummer() {
     let tx = you.x + vx * 80;
     let tz = you.z + vz * 80;
     const limit = s.ringR - 50;
-    const tr = Math.hypot(tx, tz);
+    const tr = hypot(tx, tz);
     const clamped = tr > limit;
     if (clamped) {
       tx *= limit / tr;
       tz *= limit / tr;
     }
-    const there = Math.hypot(tx - me.x, tz - me.z) < 20 || (clamped && gap < 105);
+    const there = hypot(tx - me.x, tz - me.z) < 20 || (clamped && gap < 105);
     if (!there) return walk(tx - me.x, tz - me.z);
     // Never kick a player towards the fire from the inside.
     const inside = (me.x - you.x) * you.x + (me.z - you.z) * you.z < 0;
@@ -238,7 +239,7 @@ export function floorer() {
       rest--;
       return 0;
     }
-    const gap = Math.hypot(you.x - me.x, you.z - me.z);
+    const gap = hypot(you.x - me.x, you.z - me.z);
     if (gap > 58) return walk(you.x - me.x, you.z - me.z);
     if (me.state === 'idle' || me.state === 'walk') {
       rest = REST;
@@ -255,7 +256,7 @@ export function edger() {
     const me = s.f[slot];
     if (me.state !== 'idle' && me.state !== 'walk') return 0;
     const tx = s.ringR - 48; // close enough that a kick drives them into it
-    if (Math.hypot(tx - me.x, me.z) > 8) return walk(tx - me.x, -me.z);
+    if (hypot(tx - me.x, me.z) > 8) return walk(tx - me.x, -me.z);
     return 0;
   };
 }

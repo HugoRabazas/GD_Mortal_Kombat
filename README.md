@@ -1032,7 +1032,7 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   run over direct links, and about one four-player match at a time if every
   player has to be relayed.
 
-### Rollback: the plan (not built yet)
+### Rollback: the plan (being built)
 
 Today one device, the host, runs the fight; the others see it a trip late.
 Walking and the first blow are already drawn ahead on a guest's own screen,
@@ -1086,6 +1086,28 @@ world hide that wait:
   waiting a tick); and far more code where online bugs can hide - which is
   why it would be built behind a switch, duels first, with today's way
   kept as the fallback.
+- **Progress.**
+  - *Step 1 done (loop 160).* The rules no longer use the engine's own
+    `Math.sin`, `cos`, `atan2` and `hypot`: `shared/dmath.js` builds them
+    from + - * / and `sqrt` only, which JavaScript fixes to the last bit
+    (within ~1e-15 of Math's; balance unchanged: duels 47-53 %, brawls
+    16-21 %). The proof: the same twelve seeded CPU matches run in V8 (Node,
+    Chrome) and in QuickJS - another engine, with its own maths library.
+    With Math's functions they parted at the very first fingerprint and
+    only 1 match in 12 ended the same; now all 120 fingerprints agree and
+    12 of 12 end identically. `tests/determinism.test.js` keeps it so: it
+    fails on any engine-dependent maths in `shared/`, and it runs seeded
+    matches in both engines and compares (`shared/fingerprint.js`).
+  - *Step 2 done (loop 160).* `client/src/net/rollback.js`: the ring of
+    past ticks, the guesses, the replay. `tests/rollback.test.js` puts
+    each player on a simulated network (messages up to 14 ticks late, out
+    of order, 15 % lost - each message carries every button the other side
+    has not confirmed) with restless scripted players changing buttons
+    every few ticks: a duel, a far-away duel, four players, and two players
+    with two CPU fighters. Every device ends 1,500 ticks later exactly on
+    the fight played with every button on time (same fingerprint), after
+    55-349 corrections each; with the replay switched off all four fail.
+
 - **Steps.** 1) the cross-browser fingerprint test and our own trigonometry
   (offline play unchanged, all tests and balance figures checked);
   2) the ring of past ticks and the replay, tested in Node with two

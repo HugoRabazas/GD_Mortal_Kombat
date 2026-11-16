@@ -8,6 +8,7 @@
 import { INPUT, RULES } from './constants.js';
 import { getFighter } from './fighters.js';
 import { MOVES, markedBy, EX } from './sim.js';
+import { atan2, hypot } from './dmath.js';
 
 // `parry` is how often the CPU manages a last-moment guard (a perfect guard,
 // see GUARD in sim.js). A guard raised that late is always perfect, so when
@@ -73,7 +74,7 @@ function angleDiff(a, b) {
 
 // The stick position (as button bits) that walks along (dx, dz).
 function toward(dx, dz) {
-  const d = Math.hypot(dx, dz) || 1;
+  const d = hypot(dx, dz) || 1;
   let bits = 0;
   if (dx / d < -0.38) bits |= INPUT.LEFT;
   if (dx / d > 0.38) bits |= INPUT.RIGHT;
@@ -96,7 +97,7 @@ function pickTarget(ai, s, f) {
     // Whoever is close comes first. In a brawl the pack also turns on whoever
     // is ahead on points or still fresh, the way players gang up on a leader,
     // and a rival who is nearly beaten is worth finishing.
-    let score = Math.hypot(o.x - f.x, o.z - f.z) + rnd(ai) * 80;
+    let score = hypot(o.x - f.x, o.z - f.z) + rnd(ai) * 80;
     if (rivals.length > 1) {
       if (s.pts[o.slot] === lead && lead > s.pts[f.slot]) score -= 110;
       if (o.hp === fittest) score -= 70;
@@ -180,12 +181,12 @@ export function aiInput(ai, s, me) {
   // Getting up with a rival close: now and then roll clear instead.
   if (f.state === 'getup' && f.t === 4 && ai.target >= 0) {
     const o = s.f[ai.target];
-    const d = Math.hypot(o.x - f.x, o.z - f.z);
+    const d = hypot(o.x - f.x, o.z - f.z);
     if (o.hp > 0 && d < 130 && rnd(ai) < cfg.block * 0.25) {
       // Away from them, but never out towards the fire.
       let wx = f.x - o.x;
       let wz = f.z - o.z;
-      if (Math.hypot(f.x + (wx / (d || 1)) * 130, f.z + (wz / (d || 1)) * 130) > s.ringR - 60) [wx, wz] = [-wz, wx];
+      if (hypot(f.x + (wx / (d || 1)) * 130, f.z + (wz / (d || 1)) * 130) > s.ringR - 60) [wx, wz] = [-wz, wx];
       ai.held = toward(wx, wz) | INPUT.BLOCK;
       ai.wait = 3;
       return ai.held;
@@ -195,7 +196,7 @@ export function aiInput(ai, s, me) {
   // (decided once, at the tick the move becomes possible).
   if ((f.state === 'roll' && f.t === 7) || (f.state === 'getup' && f.t === 4)) {
     const o = ai.target >= 0 ? s.f[ai.target] : null;
-    const near = o && o.hp > 0 && Math.hypot(o.x - f.x, o.z - f.z) < (f.state === 'roll' ? 150 : 115);
+    const near = o && o.hp > 0 && hypot(o.x - f.x, o.z - f.z) < (f.state === 'roll' ? 150 : 115);
     if (near && rnd(ai) < cfg.attack * (f.state === 'roll' ? 0.45 : 0.4)) {
       ai.tap = f.state === 'roll' && rnd(ai) < 0.5 ? INPUT.PUNCH : INPUT.KICK;
       ai.tapT = 2;
@@ -230,7 +231,7 @@ export function aiInput(ai, s, me) {
   // then use it (decided once per jump, apart from the other air plans).
   if (f.state === 'jump' && f.t >= 6 && !ai.airSpecial && f.meter >= RULES.SPECIAL_COST && ai.target >= 0) {
     const o = s.f[ai.target];
-    const d = Math.hypot(o.x - f.x, o.z - f.z);
+    const d = hypot(o.x - f.x, o.z - f.z);
     ai.airSpecial = true;
     if (d < 170 && o.h <= 0 && rnd(ai) < cfg.punish * 0.4) {
       // Now and then the EX version, as on the ground.
@@ -243,7 +244,7 @@ export function aiInput(ai, s, me) {
   else if (f.state === 'jump' && ai.target >= 0 && f.runJump && f.t >= 2 && f.t < 12 && ai.airPlan < 2) {
     // A jump out of a run: the flying knee once the rival is in reach.
     const o = s.f[ai.target];
-    if (Math.hypot(o.x - f.x, o.z - f.z) < 150) {
+    if (hypot(o.x - f.x, o.z - f.z) < 150) {
       ai.airPlan = 2;
       ai.tap = INPUT.KICK;
       ai.tapT = 2;
@@ -252,7 +253,7 @@ export function aiInput(ai, s, me) {
   }
   if (f.state === 'jump' && ai.target >= 0) {
     const o = s.f[ai.target];
-    const d = Math.hypot(o.x - f.x, o.z - f.z);
+    const d = hypot(o.x - f.x, o.z - f.z);
     if (!f.air2 && f.t === 9 && !ai.airPlan) {
       ai.airPlan = 1;
       if (d < 260 && rnd(ai) < 0.25) {
@@ -309,7 +310,7 @@ export function aiInput(ai, s, me) {
   const o = s.f[ai.target];
   const dx = o.x - f.x;
   const dz = o.z - f.z;
-  const dist = Math.hypot(dx, dz);
+  const dist = hypot(dx, dz);
   const special = getFighter(f.char).special.type;
   const style = STYLES[special] || {};
   const blockChance = cfg.block + (style.block || 0);
@@ -359,13 +360,13 @@ export function aiInput(ai, s, me) {
     if (e === f || e.hp <= 0) continue;
     const ex = f.x - e.x;
     const ez = f.z - e.z;
-    const ed = Math.hypot(ex, ez);
+    const ed = hypot(ex, ez);
     if (!threatening(e)) continue; // a move already spent is an opening, not a threat
     // A ground stomp cannot be blocked well: jump over it.
     if (e.move === 'quake' && ed < 230 && rnd(ai) < blockChance) return hold(INPUT.JUMP, 4);
     // A slide or a guard sweep goes under a guard: jump it.
     if ((e.move === 'slide' || e.move === 'sweep') && ed < 200 && rnd(ai) < blockChance) return hold(INPUT.JUMP, 4);
-    const facingMe = angleDiff(Math.atan2(ez, ex), e.dir) < 0.9;
+    const facingMe = angleDiff(atan2(ez, ex), e.dir) < 0.9;
     if (ed < 190 && facingMe && rnd(ai) < blockChance) {
       // Sometimes roll round to the attacker's side instead of blocking.
       if (rnd(ai) < 0.22) return hold(toward(-ez, ex) | INPUT.BLOCK, 3);
@@ -384,9 +385,9 @@ export function aiInput(ai, s, me) {
     const px = f.x - p.x;
     const pz = f.z - p.z;
     const along = px * p.vx + pz * p.vz; // > 0 when it is flying towards us
-    const pd = Math.hypot(px, pz);
+    const pd = hypot(px, pz);
     if (along <= 0 || pd > 260) continue;
-    const speed = Math.hypot(p.vx, p.vz);
+    const speed = hypot(p.vx, p.vz);
     const miss = Math.abs(px * p.vz - pz * p.vx) / speed; // how far off to the side it will pass
     if (miss < 50 && rnd(ai) < blockChance) {
       // Roll or step sideways out of its path, or put the guard up.
@@ -405,7 +406,7 @@ export function aiInput(ai, s, me) {
     let cx = 0;
     let cz = 0;
     for (const e of s.f) {
-      if (e === f || e.hp <= 0 || Math.hypot(e.x - f.x, e.z - f.z) > 150) continue;
+      if (e === f || e.hp <= 0 || hypot(e.x - f.x, e.z - f.z) > 150) continue;
       near++;
       cx += e.x;
       cz += e.z;
@@ -414,7 +415,7 @@ export function aiInput(ai, s, me) {
   }
 
   // --- stay inside the ring of fire ---
-  const r = Math.hypot(f.x, f.z);
+  const r = hypot(f.x, f.z);
   if (r > s.ringR - 70 && dist > 120) return hold(toward(-f.x, -f.z), 8);
 
   // --- punish an opening ---
@@ -432,7 +433,7 @@ export function aiInput(ai, s, me) {
   if (dist > 130) {
     for (const it of s.items) {
       const wants = it.kind === 'energy' ? f.meter < RULES.METER_MAX : f.hp < f.maxHp * 0.75;
-      const id = Math.hypot(it.x - f.x, it.z - f.z);
+      const id = hypot(it.x - f.x, it.z - f.z);
       if (wants && id < 300 && id < dist) return hold(toward(it.x - f.x, it.z - f.z), 6);
     }
   }
@@ -486,7 +487,7 @@ export function aiInput(ai, s, me) {
   if (o.state === 'block' && dist < 84 && rnd(ai) < cfg.attack * 0.35) return press(INPUT.GRAB);
 
   // A rival standing by the fire with the flames beyond them: a fire toss.
-  const ro = Math.hypot(o.x, o.z) || 1;
+  const ro = hypot(o.x, o.z) || 1;
   if (dist < 70 && o.h <= 0 && s.ringR - ro < 110 && (dx * o.x + dz * o.z) / (dist * ro || 1) > 0.55 && rnd(ai) < cfg.punish * 0.3) return press(INPUT.GRAB);
 
   // --- in range ---
