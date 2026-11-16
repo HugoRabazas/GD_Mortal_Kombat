@@ -91,7 +91,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         announce('Fight!');
         break;
       case 'swing':
-        if (!quiet) play('swing');
+        if (!quiet) play(e.move === 'diveKick' ? 'whirl' : 'swing'); // (the dive cuts the air)
         break;
       case 'jump':
         if (!quiet) play('jump');
@@ -297,6 +297,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
           lightFlash(e.x, e.h, e.z, tint.glow, true);
         }
         if (e.kind === 'riposte') floatText(p.x, p.y - 58, 'RIPOSTE!', '#9fe8ff', 26);
+        if (e.kind === 'diveKick') floatText(p.x, p.y - 58, 'DIVE KICK!', '#ffb050', 26);
         if (e.kind === 'pursuit') {
           // Knee first onto a rival on the floor: dust and a dull thud.
           const g = project(e.x, 0, e.z);

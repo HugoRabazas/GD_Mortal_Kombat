@@ -617,6 +617,11 @@ and the heartbeat, the crowd and the weather go quiet.
   heavily and leaves you open. The CPU dives after its own double jumps;
   the In the air lesson teaches it; help and pause list explain it; it
   counts on the Record's moves (now 27).
+- **The dive kick, heard and shown; checks**: the dive cuts the air with a
+  whirl and a landed one shows DIVE KICK!. Checked with real touches (JMP,
+  JMP again, K). Gleh, lowest on one seed (44-46 %), wins 49 % over 1,400
+  duels - no change needed. Two players and Training checked over the
+  full-screen 3D arena at 568x320 and 844x390.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
