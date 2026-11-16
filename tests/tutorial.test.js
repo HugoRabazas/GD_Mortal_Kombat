@@ -244,6 +244,9 @@ const BOTS = {
   final: () => routine(60, 300, (k) => (k === 0 ? INPUT.SUPER : 0)),
 };
 
+// The blows that completed a step, over all the lessons (see the test below).
+const TAUGHT = new Set();
+
 for (const lesson of LESSONS) {
   test(`every step of the "${lesson.title}" lesson can be done against its partner`, () => {
     for (const st of lesson.steps) {
@@ -258,7 +261,10 @@ for (const lesson of LESSONS) {
         if (lesson.energy) s.f[0].meter = 100;
         for (const f of s.f) if (f.hp < f.maxHp * 0.4 && f.state !== 'down') f.hp = f.maxHp;
         step(s, [bot(s, t), partner(s, 1)]);
-        for (const id of stepsDone(lesson, s, s.ev, done)) done.add(id);
+        for (const id of stepsDone(lesson, s, s.ev, done)) {
+          done.add(id);
+          for (const e of s.ev) if (e.type === 'hit' && e.by === 0) TAUGHT.add(e.kind); // (the blow that did it)
+        }
       }
       assert.ok(done.has(st.id), `${lesson.id}/${st.id} not done in ${t} ticks`);
     }
@@ -269,4 +275,17 @@ test('step ids are unique across lessons (saved progress finds a step that moved
   const ids = LESSONS.flatMap((l) => l.steps.map((st) => st.id));
   assert.equal(new Set(ids).size, ids.length);
   assert.ok(LESSONS.every((l) => l.steps.length <= 6), 'every lesson stays short');
+});
+
+test('every move the Record counts is taught by a lesson', async () => {
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync(new URL('../client/src/main.js', import.meta.url), 'utf8');
+  const start = src.indexOf('const MOVE_BOOK = {');
+  const keys = [...src.slice(start, src.indexOf('};', start)).matchAll(/(\w+): '/g)].map((m) => m[1]);
+  assert.ok(keys.length >= 27, `found ${keys.length}`);
+  // A step named after the move, or a step completed by the move landing
+  // (the second punch is taught inside the three-punch combo).
+  const steps = new Set(LESSONS.flatMap((l) => l.steps.map((st) => st.id)));
+  const missing = keys.filter((k) => !steps.has(k) && !TAUGHT.has(k) && !(k === 'punch2' && steps.has('combo')) && !(k === 'breaker' && steps.has('breaker')));
+  assert.deepEqual(missing, []);
 });

@@ -631,6 +631,13 @@ and the heartbeat, the crowd and the weather go quiet.
   the string, the diving punch, and the rising uppercut and spinning heel
   kick out of a roll); it does now, and a test keeps every counted move
   named in the help.
+- **Every counted move is taught, and what the full-screen arena costs**:
+  every move the Record counts is taught by a lesson - a step named after
+  it or a step its blow completes (the second punch inside the three-punch
+  combo) - and a test now keeps it so. The 3D arena filling a wide phone
+  draws the same 300 calls as before, only 22 % more pixels (a frame about
+  19 % dearer in a software renderer); the automatic quality setting
+  already steps down on a phone that cannot keep up.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
