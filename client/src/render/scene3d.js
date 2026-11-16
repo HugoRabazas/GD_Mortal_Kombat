@@ -317,7 +317,8 @@ export function create3D(canvas) {
   scene.add(dais);
   const rim = new THREE.Mesh(
     new THREE.TorusGeometry(6.6, 0.06, 8, 96),
-    new THREE.MeshStandardMaterial({ color: lin(0xd9a441), roughness: 0.4, metalness: 0.6, emissive: lin(0x7a4a10) }),
+    // Worn gold: fully metal, so it shows the sky and the torches in it.
+    new THREE.MeshStandardMaterial({ color: lin(0xe0b050), roughness: 0.32, metalness: 1, emissive: lin(0x3a2206) }),
   );
   rim.rotation.x = Math.PI / 2;
   rim.position.y = 0.01;
@@ -354,7 +355,8 @@ export function create3D(canvas) {
     g.fillText('GD', -10, 30);
     const mesh = new THREE.Mesh(
       new THREE.PlaneGeometry(9.2, 9.2),
-      new THREE.MeshBasicMaterial({ map: texture(c), transparent: true, depthWrite: false, opacity: 0.8 }),
+      // Inlaid brass: lit and reflecting like the rim, not painted on.
+      new THREE.MeshStandardMaterial({ map: texture(c), transparent: true, depthWrite: false, opacity: 0.9, metalness: 0.85, roughness: 0.38, emissive: lin(0x2a1804), emissiveMap: texture(c) }),
     );
     mesh.rotation.x = -Math.PI / 2;
     mesh.position.y = 0.012;

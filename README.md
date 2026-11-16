@@ -783,6 +783,9 @@ and the heartbeat, the crowd and the weather go quiet.
   torch colour (warm in the courtyard, blue on the summit), flickering
   with it - four more draws. Every screen re-checked at the seven sizes
   after the art loops (walk.js, the flat fallback): all fit, no errors.
+  Loop 192: the dais's gold rim is fully metal (it reflects the sky and the
+  torches) and the GD emblem inlaid brass - lit and reflecting, quieter,
+  where it was painted on with a flat material.
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the
