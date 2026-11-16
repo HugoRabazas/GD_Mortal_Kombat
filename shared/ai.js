@@ -7,7 +7,7 @@
 
 import { INPUT, RULES } from './constants.js';
 import { getFighter } from './fighters.js';
-import { MOVES, markedBy } from './sim.js';
+import { MOVES, markedBy, EX } from './sim.js';
 
 // `parry` is how often the CPU manages a last-moment guard (a perfect guard,
 // see GUARD in sim.js). A guard raised that late is always perfect, so when
@@ -300,6 +300,9 @@ export function aiInput(ai, s, me) {
   // In a brawl a dasher close to a full bar keeps it for the finisher rather
   // than spend a third of it on one more dash (they ran out of finishers).
   const saving = s.f.length > 2 && special === 'dash' && f.meter >= SAVE_FROM && f.meter < RULES.SUPER_COST;
+  // The special, or now and then its EX version when there is energy for it
+  // (not on Easy; never with the finisher's full bar in hand).
+  const sp = () => press(cfg.parry > 0 && f.meter >= EX.cost && f.meter < RULES.SUPER_COST && rnd(ai) < 0.35 ? INPUT.SPECIAL | INPUT.PUNCH : INPUT.SPECIAL);
 
   const press = (bits, extra = 0) => {
     ai.tap = bits;
@@ -337,7 +340,7 @@ export function aiInput(ai, s, me) {
         if (rnd(ai) < 0.5) return hold(toward(-ez, ex) | INPUT.BLOCK, 3);
         continue; // caught flat-footed
       }
-      if (special === 'rise' && f.meter >= RULES.SPECIAL_COST && ed < 90 && rnd(ai) < 0.4) return press(INPUT.SPECIAL);
+      if (special === 'rise' && f.meter >= RULES.SPECIAL_COST && ed < 90 && rnd(ai) < 0.4) return sp();
       return hold(INPUT.BLOCK, 12 + Math.floor(rnd(ai) * 8));
     }
   }
@@ -386,7 +389,7 @@ export function aiInput(ai, s, me) {
   const reeling = o.state === 'hit' && o.reel > 0;
   if ((reeling || left >= 10) && o.h <= 0 && rnd(ai) < cfg.punish) {
     if (dist < 90) return press(reeling || left < 14 ? INPUT.PUNCH : INPUT.KICK);
-    if (special === 'dash' && !saving && f.meter >= RULES.SPECIAL_COST && dist > 110 && dist < 280) return press(INPUT.SPECIAL);
+    if (special === 'dash' && !saving && f.meter >= RULES.SPECIAL_COST && dist > 110 && dist < 280) return sp();
     if (dist < 230) return hold(toward(dx, dz), 4);
   }
 
@@ -406,10 +409,10 @@ export function aiInput(ai, s, me) {
   // A zoner with a shot in hand steps back to make the room to use it.
   if (style.retreat && dist > 100 && dist < 190 && o.state !== 'attack' && f.meter >= RULES.SPECIAL_COST && r < s.ringR - 120 && rnd(ai) < style.retreat) return hold(toward(-dx, -dz), 10);
   if (f.meter >= RULES.SPECIAL_COST && rnd(ai) < specialChance) {
-    if (special === 'bolt' && dist > 200) return press(INPUT.SPECIAL);
-    if (special === 'dash' && !saving && dist > 110 && dist < 280) return press(INPUT.SPECIAL);
-    if (special === 'rise' && dist < 85) return press(INPUT.SPECIAL);
-    if (special === 'quake' && dist < 170 && o.h <= 0) return press(INPUT.SPECIAL);
+    if (special === 'bolt' && dist > 200) return sp();
+    if (special === 'dash' && !saving && dist > 110 && dist < 280) return sp();
+    if (special === 'rise' && dist < 85) return sp();
+    if (special === 'quake' && dist < 170 && o.h <= 0) return sp();
   }
 
   // Knocked down: a quick rise (block on the floor) as often as a guard.

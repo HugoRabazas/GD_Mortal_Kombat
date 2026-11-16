@@ -545,6 +545,49 @@ test('in a brawl a hit freezes only the two fighters involved', () => {
   assert.equal(s.hitstop, 0, 'the world did not stop');
 });
 
+test('special and punch together is the EX special: twice the energy, more damage, a blow shrugged off', () => {
+  const special = (bits, first = 0) => {
+    const s = startFight(['jackie', 'shadow']); // Jackie's special is the stomp: it reaches all round
+    closeUp(s, 80);
+    s.f[0].meter = 100;
+    const hp = s.f[1].hp;
+    step(s, [first || bits, 0]);
+    if (first) step(s, [bits, 0]);
+    const ex = s.f[0].ex;
+    run(s, 60);
+    return { ex, lost: hp - s.f[1].hp, meter: s.f[0].meter };
+  };
+  const plain = special(INPUT.SPECIAL);
+  const ex = special(INPUT.SPECIAL | INPUT.PUNCH);
+  assert.equal(plain.ex, false);
+  assert.equal(ex.ex, true);
+  assert.ok(ex.lost > plain.lost, `EX ${ex.lost} against ${plain.lost}`);
+  assert.ok(plain.meter > ex.meter, 'and it costs more');
+  // A moment apart, either way round.
+  assert.equal(special(INPUT.PUNCH, INPUT.SPECIAL).ex, true, 'special a tick after the punch');
+  assert.equal(special(INPUT.SPECIAL, INPUT.PUNCH).ex, true, 'punch a tick after the special');
+  // Not enough energy: the ordinary special.
+  const s = startFight(['jackie', 'shadow']);
+  closeUp(s, 80);
+  s.f[0].meter = 50;
+  step(s, [INPUT.SPECIAL | INPUT.PUNCH, 0]);
+  assert.equal(s.f[0].ex, false);
+
+  // Its armour: a jab into its start does not stop it.
+  const t = startFight(['jackie', 'shadow']);
+  closeUp(t, 60);
+  t.f[0].meter = 100;
+  step(t, [INPUT.SPECIAL | INPUT.PUNCH, 0]);
+  step(t, [0, INPUT.PUNCH]);
+  const seen = [];
+  for (let i = 0; i < 40; i++) {
+    step(t, idle(t));
+    seen.push(...t.ev);
+  }
+  assert.ok(seen.some((e) => e.type === 'armour' && e.by === 0 && e.ex), 'the jab is shrugged off');
+  assert.ok(seen.some((e) => e.type === 'hit' && e.by === 0 && e.kind === 'quake'), 'and the stomp lands');
+});
+
 test('block, then a direction a moment later, still rolls; a guard held a while does not', () => {
   const tryRoll = (gap) => {
     const s = startFight();

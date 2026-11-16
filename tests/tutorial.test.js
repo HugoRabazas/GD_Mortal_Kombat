@@ -203,6 +203,7 @@ const BOTS = {
   },
   kick2: () => routine(80, 50, (k) => (k === 0 || k === 11 ? INPUT.KICK : 0)),
   elbow: () => routine(80, 50, (k) => (k === 0 ? INPUT.KICK : k === 11 ? INPUT.PUNCH : 0)),
+  exSpecial: () => routine(120, 60, (k) => (k === 0 ? INPUT.SPECIAL | INPUT.PUNCH : 0)),
   burn: () => routine(85, 60, (k) => (k === 0 ? INPUT.KICK : 0)),
   fireToss: () => routine(50, 60, (k) => (k === 0 ? INPUT.GRAB : 0)),
   airThrow: () => {

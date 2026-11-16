@@ -58,6 +58,7 @@ export const LESSONS = [
       { id: 'guarded', name: 'Punch the guard', how: (k) => `${k('p')}: a guard stops blows from the front`, ev: (e) => e.type === 'block' && e.by === 0 },
       { id: 'grab', name: 'Throw through the guard', how: (k) => `${k('g')} up close: a throw goes straight through a guard`, ev: mine('seize') },
       { id: 'signature', name: 'Your signature move', how: (k) => `${k('g')} with the partner out of reach: each fighter's own move to cross the gap`, ev: mine('signature') },
+      { id: 'taunt', name: 'Taunt', how: (k) => `hold ${k('b')} and press ${k('g')}, standing still: energy, but any blow is a counter hit`, ev: swing('taunt') },
       { id: 'breaker', name: 'Break the guard', how: (k) => `hold ${k('k')} to charge, let go: the kick smashes the guard open`, ev: mine('guardBreak') },
     ],
   },
@@ -135,9 +136,9 @@ export const LESSONS = [
     steps: [
       { id: 'special', name: 'Special move', how: (k) => `${k('s')}: costs a third of the energy bar`, ev: mine('special') },
       { id: 'airSpecial', name: 'Air special', how: (k) => `${k('j')}, then ${k('s')} in the air: your special's own air version`, ev: (e) => e.type === 'special' && e.by === 0 && ['airDash', 'airBolt', 'bodyPress', 'airSpiral'].includes(e.move) },
+      { id: 'exSpecial', name: 'EX special', how: (k) => `${k('s')} and ${k('p')} together, with two thirds of the bar: stronger, and it shrugs off a blow as it starts`, ev: (e) => e.type === 'special' && e.by === 0 && e.ex },
       { id: 'cancel', name: 'Special cancel', how: (k) => `${k('p')} up close and, as it lands, ${k('s')}: the special comes out at once`, ev: (e) => e.type === 'special' && e.by === 0 && e.cancel },
       { id: 'super', name: 'Finisher', how: (k) => `${k('u')} with a full bar`, ev: mine('super') },
-      { id: 'taunt', name: 'Taunt', how: (k) => `hold ${k('b')} and press ${k('g')}, standing still: energy, but any blow is a counter hit`, ev: swing('taunt') },
       { id: 'final', name: 'Land the finisher', how: (k) => `${k('u')} close to the partner, all the way to its last blow`, ev: (e) => e.type === 'hit' && e.by === 0 && e.final },
     ],
   },

@@ -497,7 +497,7 @@ function helpScreen() {
         <li><b>Taunt</b>: block held and grab, standing still. A little energy, but any blow on you is a counter.</li>
         <li>Hit a rival while they are <b>winding up</b> a blow of their own for a <b>counter</b>: a quarter more damage.</li>
         <li><b>Block at the last moment</b>, just before a blow lands, for a perfect guard: it costs no health, gives energy, and a kick or another heavy blow leaves the attacker reeling - stars circle their head while you have the chance to punish. Punch at once after it for a <b>riposte</b>, a palm strike that opens a combo, or kick for the launcher. Hold the guard and it is an ordinary block.</li>
-        <li>Hits fill your <b>energy</b> bar. A special costs about a third of it; a finisher needs it full.</li>
+        <li>Hits fill your <b>energy</b> bar. A special costs about a third of it - with punch at the same time, two thirds for its <b>EX</b> version, stronger and able to shrug off one blow as it starts; a finisher needs it full.</li>
         <li>Under a quarter of your health you are in your <b>last stand</b>: the energy bar fills half as fast again. A round is not over until it is over.</li>
         <li><b>Block</b> only stops what comes from the front. Raising it turns you to face whoever is already swinging, but a guard held too early stays put: get behind a blocking rival, or step out of the way of a projectile.</li>
         <li><b>Jump</b> over a ground stomp or a slide.</li>
@@ -598,7 +598,7 @@ function movesCard() {
       const f = getFighter(s.f[slot].char);
       const who = two ? `${f.name}: ` : '';
       return `
-        <dt>${k(key.s)}</dt><dd>${who}<b>${f.special.name}</b> - ${SPECIAL_NOTES[f.special.type] || 'special move'}. Costs a third of the energy bar.</dd>
+        <dt>${k(key.s)}</dt><dd>${who}<b>${f.special.name}</b> - ${SPECIAL_NOTES[f.special.type] || 'special move'}. Costs a third of the energy bar; with ${k(key.p)} too, two thirds for the <b>EX</b> version.</dd>
         <dt>${k(key.u)}</dt><dd>${who}<b>${f.super.name}</b> - ${SUPER_NOTES[f.super.move] || 'the finisher'}. Needs the whole bar.</dd>`;
     })
     .join('');

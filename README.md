@@ -482,6 +482,19 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **EX special**: special and punch together (or a tick apart, either way
+  round) with two thirds of the energy bar is the EX version of the
+  fighter's special: it costs 70 instead of 35, hits 45 % harder (a shot
+  from afar 20 %), burns brighter, shows EX before its name, and shrugs off
+  the first blow that lands on it as it starts (EX ARMOUR; a throw, a
+  finisher or a knockout blow still stop it). The CPU uses it now and then
+  (Normal and up; never with the finisher's full bar): about 1.7 a duel
+  against 10 ordinary specials. Taught in the Tutorial (Specials: EX
+  special; the taunt moved to Guards so no lesson goes over six steps), in
+  the pause list (your fighter) and the help; a rules test (108). Measured
+  with and without the CPU using it: the duel spread barely moves; Jackie
+  117 health, Gleh 1.02 power. Duels 46-53 %, brawl wins 15-21 %, boss
+  beats Hard 93 %. Every screen and the pause tabs fit; online local OK.
 - **Result cards with four fighters, measured with the longest names**: the
   Arena's result with Zelrith, Kichta, Jackie and Shadow as yours (random
   rivals) at 568x320, 640x360, 740x340 and 360x640, and the arcade played

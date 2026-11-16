@@ -86,6 +86,19 @@ const BACKSTEP = { ticks: 10, safe: 7, speed: 11.5, rest: 3, away: -0.85 };
 // up can strike from tick `rise` of the getup.
 const OUT_OF = { from: 7, rise: 4 };
 const SPLAT = { speed: 3.2, dmg: 5 }; // being knocked into the ring of fire
+// The EX special: special and punch together (or one a moment after the
+// other) with two thirds of the bar - the same special, stronger (`dmg`
+// times), and it shrugs off one blow while it starts (`armour` ticks).
+export const EX = { cost: 70, dmg: 1.45, armour: 10 };
+const SPECIALS = new Set(['dash', 'bolt', 'rise', 'quake']);
+const exCache = new Map();
+// (A shot from afar is safer to throw than a blow up close: its EX version
+// gains less.)
+let exBolt = null;
+const exOf = (m) => {
+  if (!exCache.has(m)) exCache.set(m, { ...m, dmg: Math.round(m.dmg * EX.dmg), ex: true });
+  return exCache.get(m);
+};
 // A throw of a rival standing close to the fire, with the fire beyond them:
 // a fire toss - flung forward into the flames instead of over the head.
 // `edge`: how close to the fire they must stand; `facing`: how squarely the
@@ -518,6 +531,8 @@ function newFighter(charId, slot, count, mod) {
     prev: 0, // buttons held on the previous tick
     held: -1, // slot of the rival being thrown, or -1
     toss: false, // the throw under way is a fire toss (see TOSS)
+    ex: false, // the special under way is an EX special (see EX)
+    exHit: false, // its armour has already taken a blow
     jumpT: 0, // ticks left on a remembered press of jump (for the air jump)
     runJump: false, // the jump was taken out of a run (kick is a flying knee)
     juggle: 0, // hits a launched fighter can still take before landing
@@ -673,6 +688,7 @@ function aimGuard(s, f) {
 function startAttack(s, f, move) {
   const m = MOVES[move];
   f.cancelled = !!f.cancel; // a special cancelled out of a blow hits softer (CANCEL_DMG)
+  f.ex = false; // (set again by tryAttack for an EX special)
   f.state = 'attack';
   f.move = move;
   f.t = 0;
@@ -747,11 +763,14 @@ function tryAttack(s, f, inp = 0) {
     return true;
   }
   if (b & INPUT.SPECIAL && f.meter >= RULES.SPECIAL_COST) {
-    f.meter -= RULES.SPECIAL_COST;
+    const ex = !!(b & INPUT.PUNCH) && f.meter >= EX.cost;
+    f.meter -= ex ? EX.cost : RULES.SPECIAL_COST;
     const type = getFighter(f.char).special.type;
     startAttack(s, f, type);
+    f.ex = ex;
+    f.exHit = false;
     if (type === 'rise') f.inv = MOVES.rise.startup + 6;
-    emit(s, 'special', { by: f.slot, move: type, cancel: !!f.cancel });
+    emit(s, 'special', { by: f.slot, move: type, cancel: !!f.cancel, ex });
     return true;
   }
   if (b & INPUT.GRAB || (b & INPUT.KICK && b & INPUT.PUNCH)) {
@@ -998,6 +1017,21 @@ function control(s, f, inp) {
         startAttack(s, f, 'grab');
         break;
       }
+      // Special and punch a moment apart make the EX special, whichever came
+      // first: a punch just thrown turns into it, and so does a special just
+      // started (paying the difference).
+      if (t < GRAB_WINDOW && f.move === 'punch' && f.buf & INPUT.SPECIAL && f.meter >= EX.cost) {
+        f.buf |= INPUT.PUNCH;
+        if (tryAttack(s, f, inp)) break;
+      }
+      if (t < GRAB_WINDOW && SPECIALS.has(f.move) && !f.ex && !f.cancelled && f.buf & INPUT.PUNCH && f.meter >= EX.cost - RULES.SPECIAL_COST) {
+        f.meter -= EX.cost - RULES.SPECIAL_COST;
+        f.ex = true;
+        f.exHit = false;
+        f.buf = 0;
+        emit(s, 'special', { by: f.slot, move: f.move, ex: true, upgrade: true });
+        break;
+      }
       // A kick still held after its first ticks coils into a charge; the
       // charge lets go as the guard-breaker on release (or when full).
       if (f.move === 'kick' && t >= 5 && t < m.startup && f.holdK >= CHARGE.hold) {
@@ -1041,6 +1075,7 @@ function control(s, f, inp) {
           id: ++s.projSeq,
           owner: f.slot,
           char: f.char,
+          ex: f.ex,
           x: f.x + Math.cos(f.dir) * 50,
           z: f.z + Math.sin(f.dir) * 50,
           h: PROJECTILE.h,
@@ -1440,7 +1475,7 @@ function activeMove(f) {
   if (f.state === 'attack') {
     const m = MOVES[f.move];
     if (!m.reach || f.t < m.startup || f.t >= m.startup + m.active) return null;
-    return m;
+    return f.ex && SPECIALS.has(f.move) ? exOf(m) : m;
   }
   if (f.state === 'airAttack') {
     const m = MOVES[f.move];
@@ -1544,6 +1579,21 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
       if (att.state === 'attack') att.landed = (att.landed || 0) + 1;
       att.stop = 3;
       emit(s, 'armour', { by: def.slot, from: att.slot, ...at, dmg, first: def.shrug++ === 0 });
+      return;
+    }
+  }
+
+  // An EX special shrugs off the first blow while it starts (a throw still
+  // takes hold, a finisher still stops it, a knockout blow still knocks out).
+  if (def.state === 'attack' && def.ex && !def.exHit && def.t < MOVES[def.move].startup + EX.armour && kind !== 'super' && kind !== 'grab') {
+    const dmg = Math.max(1, Math.round(m.dmg * power));
+    if (dmg < def.hp) {
+      def.exHit = true;
+      def.hp -= dmg;
+      addMeter(att, m.gain);
+      if (att.state === 'attack') att.landed = (att.landed || 0) + 1;
+      att.stop = 3;
+      emit(s, 'armour', { by: def.slot, from: att.slot, ...at, dmg, ex: true });
       return;
     }
   }
@@ -1711,7 +1761,7 @@ function resolveHits(s) {
       if (Math.hypot(def.x - p.x, def.z - p.z) > PROJECTILE.r + BODY_R) continue;
       if (p.h + PROJECTILE.r < def.h || p.h - PROJECTILE.r > def.h + BODY_H) continue;
       p.dead = true;
-      applyHit(s, s.f[p.owner], def, p.rain ? RAIN_HIT : p.vh ? AIR_BOLT_HIT : MOVES.bolt, p.x - p.vx * 3, p.z - p.vz * 3, 'bolt');
+      applyHit(s, s.f[p.owner], def, p.rain ? RAIN_HIT : p.vh ? AIR_BOLT_HIT : p.ex ? (exBolt ??= { ...MOVES.bolt, dmg: Math.round(MOVES.bolt.dmg * 1.2), ex: true }) : MOVES.bolt, p.x - p.vx * 3, p.z - p.vz * 3, 'bolt');
       break;
     }
   }

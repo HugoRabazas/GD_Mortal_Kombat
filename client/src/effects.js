@@ -181,6 +181,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         blockSpark(p.x, p.y);
         floatText(p.x, p.y - 30, String(e.dmg), '#c8ccd8', 20);
         if (e.first) floatText(p.x, p.y - 58, 'UNSTOPPABLE', tint.accent, 20);
+        if (e.ex) floatText(p.x, p.y - 58, 'EX ARMOUR', '#ffe37a', 20);
         addShake(3);
         if (!quiet) play('block');
         break;
@@ -332,7 +333,12 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
       }
       case 'special': {
         const p = project(by.x, 210, by.z);
-        floatText(p.x, p.y, char.special.name.toUpperCase(), tint.accent, 22);
+        floatText(p.x, p.y, (e.ex ? 'EX ' : '') + char.special.name.toUpperCase(), e.ex ? '#ffe37a' : tint.accent, e.ex ? 26 : 22);
+        if (e.ex) {
+          // The EX version: a brighter flash and a stronger light around them.
+          lightFlash(by.x, 120, by.z, tint.glow, true);
+          addShake(4);
+        }
         if (!quiet) play({ dash: 'rush', rise: 'flare', quake: 'heave', airDash: 'rush', airSpiral: 'flare', bodyPress: 'heave' }[e.move] || 'special');
         break;
       }
