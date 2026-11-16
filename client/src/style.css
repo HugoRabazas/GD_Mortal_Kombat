@@ -1493,6 +1493,29 @@ kbd {
   font-weight: 700;
 }
 
+/* A phone held upright: tighter cells, and the long headings ("Perfect
+   guards") break onto two lines, so the table fits 360 px. */
+@media (max-width: 440px) {
+  .fightstats {
+    max-width: 100%;
+  }
+  .fightstats th,
+  .fightstats td {
+    padding: 4px 5px;
+  }
+  .fightstats thead th {
+    letter-spacing: 0.04em;
+  }
+  .fightstats tbody th {
+    gap: 5px;
+    font-size: 1rem;
+  }
+  .fightstats .head {
+    width: 22px;
+    height: 22px;
+  }
+}
+
 .ranking .pts {
   font: 700 1.3rem/1 var(--font-display);
   color: var(--bone);
