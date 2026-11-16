@@ -14,6 +14,8 @@
 // duplicates. Everything here is plain data in, plain data out, so the whole
 // thing is tested in Node with players on simulated networks.
 
+const KEEP = 150; // sure ticks kept, for the referee
+
 export function createRollback({ world, players, mine, step, copy, maxBehind = 12 }) {
   // players: how many fighters have buttons (CPU fighters are inside `world`).
   // mine: the indices whose buttons come from this device.
@@ -87,14 +89,25 @@ export function createRollback({ world, players, mine, step, copy, maxBehind = 1
       const out = this.settle();
       out.push({ tick, events: play(tick), replay: false });
       tick++;
-      // Ticks every rival has been heard for can never be replayed: forget them.
-      const sure = sureUpTo();
-      for (const t of saved.keys()) if (t < sure) {
+      // Ticks every rival has been heard for are never replayed for a
+      // guess - but the referee may hand back a sure tick that drifted (see
+      // restore), so the last KEEP of them are kept too.
+      const keepFrom = sureUpTo() - KEEP;
+      for (const t of saved.keys()) if (t < keepFrom) {
         saved.delete(t);
         used.delete(t);
       }
-      for (let p = 0; p < players; p++) for (const t of known[p].keys()) if (t < Math.min(sure, lastKnown[p].tick) - 1) known[p].delete(t);
+      for (let p = 0; p < players; p++) for (const t of known[p].keys()) if (t < Math.min(keepFrom, lastKnown[p].tick - 1)) known[p].delete(t);
       return out;
+    },
+    // The referee's word: the world as it really was just before tick t (a
+    // sure tick that drifted here). It is put in place and every tick since
+    // played again. False when t is no longer kept (or not played yet).
+    restore(t, w) {
+      if (!(t < tick) || !saved.has(t)) return false;
+      saved.set(t, copy(w));
+      redoFrom = Math.min(redoFrom, t);
+      return true;
     },
     // Replay what was guessed wrong, without playing a new tick.
     settle() {
@@ -125,7 +138,7 @@ export function createRollback({ world, players, mine, step, copy, maxBehind = 1
 // was wrong: now the blow lands). The same event within a couple of ticks of
 // one already played is that one again, and is let through only the first
 // time; one already played cannot be taken back.
-const eventKey = (e) => [e.type, e.by ?? '', e.to ?? e.def ?? e.slot ?? '', e.move ?? e.kind ?? ''].join('|');
+const eventKey = (e) => [e.type, e.by ?? '', e.on ?? e.to ?? e.def ?? e.slot ?? '', e.move ?? e.kind ?? ''].join('|');
 export function createEventFilter(near = 2) {
   const played = new Map(); // tick -> keys played at that tick
   return {

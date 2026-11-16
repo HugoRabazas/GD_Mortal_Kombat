@@ -1131,6 +1131,20 @@ world hide that wait:
     50-67 ms after the press, at any ping, and your blows land on your
     screen as soon - where before every hit came after the whole trip.
     The same on the live service.
+  - *Step 6 done (loop 162): the referee.* The last 150 sure ticks are
+    now kept (before, a tick's copy was dropped as soon as it was sure, so
+    a fingerprint was only taken when "sure" landed exactly on a
+    checkpoint). When two fingerprints differ the host sends its own world
+    as it was just before that tick; the guest puts it in place
+    (`restore`) and plays every tick since again; the line under the clock
+    says OUT OF STEP until a later fingerprint agrees, and the result line
+    counts it. A whole fight survives the trip as JSON unchanged (244
+    checkpoints of 30 CPU matches continued 600 ticks both ways: no
+    difference). Tested in Node (a device made to drift at tick 400 is
+    found and put right, ending on exactly the on-time fight; without the
+    referee it stays wrong) and in two browsers, locally and on the live
+    service: the guest's fight made to drift once, found at the next
+    checkpoint, put right once, every fingerprint since identical.
 - **Steps.** 1) the cross-browser fingerprint test and our own trigonometry
   (offline play unchanged, all tests and balance figures checked);
   2) the ring of past ticks and the replay, tested in Node with two

@@ -42,11 +42,19 @@ function reference(chars, humans, seed, ticks) {
 // Each human on their own device; every message takes 0..maxLate frames and
 // some are lost. A message carries every button the receiver has not yet
 // confirmed (as the real link will), so a lost one only costs time.
-function network(chars, humans, seed, ticks, { maxLate, loss, rand }) {
+function network(chars, humans, seed, ticks, { maxLate, loss, rand, drift, noReferee }) {
+  // (drift: one device's fight goes wrong at one tick - as a bug or a
+  // different rounding would make it - for the referee to put right.)
+  const drifting = (me) => (w, bits) => {
+    if (drift && drift.peer === me && w.s.tick === drift.tick) w.s.f[0].hp -= 9;
+    return stepWorld(w, bits);
+  };
   const peers = Array.from({ length: humans }, (_, me) => ({
     me,
-    rb: createRollback({ world: newWorld(chars, humans, seed), players: humans, mine: [me], step: stepWorld, copy }),
+    rb: createRollback({ world: newWorld(chars, humans, seed), players: humans, mine: [me], step: drifting(me), copy }),
   }));
+  let fixes = 0;
+  let checked = 0;
   let wire = [];
   let frame = 0;
   for (const peer of peers) for (let t = 0; t < DELAY; t++) peer.rb.local(peer.me, t, 0);
@@ -67,6 +75,18 @@ function network(chars, humans, seed, ticks, { maxLate, loss, rand }) {
         sent[me].set(t, b);
         rb.advance();
       } else rb.settle();
+      // The referee (player 0, the host): at each sure checkpoint, a device
+      // whose fingerprint differs is handed the host's world for that tick.
+      if (me > 0 && !noReferee) {
+        const k = Math.floor(Math.min(rb.sureUpTo(), peers[0].rb.sureUpTo()) / 120) * 120;
+        const mine = rb.savedAt(k);
+        const host = peers[0].rb.savedAt(k);
+        if (k > (peer.lastK ?? 0) && mine && host) {
+          peer.lastK = k;
+          checked++;
+          if (fingerprint(mine.s) !== fingerprint(host.s) && rb.restore(k, host)) fixes++;
+        }
+      }
       // send each other player what they have not confirmed (at most 30 ticks)
       for (const other of peers) {
         if (other === peer || rand() < loss) continue;
@@ -76,7 +96,7 @@ function network(chars, humans, seed, ticks, { maxLate, loss, rand }) {
       }
     }
   }
-  return peers.map((p) => ({ print: fingerprint(p.rb.world.s), stats: p.rb.stats() }));
+  return { fixes, checked, peers: peers.map((p) => ({ print: fingerprint(p.rb.world.s), stats: p.rb.stats() })) };
 }
 
 const lcg = (seed) => () => ((seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 4294967296);
@@ -90,7 +110,10 @@ for (const [name, chars, humans, opts] of [
   test(`rollback: ${name} ends exactly as played on time`, () => {
     const TICKS = 1500;
     const want = reference(chars, humans, 7, TICKS);
-    const got = network(chars, humans, 7, TICKS, { ...opts, rand: lcg(99) });
+    const run = network(chars, humans, 7, TICKS, { ...opts, rand: lcg(99) });
+    const got = run.peers;
+    assert.ok(run.checked >= 10, 'fingerprints compared along the way');
+    assert.equal(run.fixes, 0, 'nothing drifted');
     for (const g of got) {
       assert.equal(g.stats.tick, TICKS);
       assert.equal(g.print, want, JSON.stringify(g.stats));
@@ -115,4 +138,16 @@ test('a replayed tick plays only the events that are new', async () => {
   assert.deepEqual(again.map((e) => e.type), ['hit']);
   // A second replay of the same ticks plays nothing new.
   assert.deepEqual(f.pass([{ tick: 11, events: [swing], replay: true }, { tick: 14, events: [hit], replay: true }]), []);
+});
+
+test('rollback: a device whose fight drifts is put right by the host', () => {
+  const chars = ['meru', 'kichta'];
+  const TICKS = 1500;
+  const want = reference(chars, 2, 7, TICKS);
+  const run = network(chars, 2, 7, TICKS, { maxLate: 8, loss: 0.1, rand: lcg(5), drift: { peer: 1, tick: 400 } });
+  assert.ok(run.fixes >= 1, 'the drift was found and fixed');
+  for (const g of run.peers) assert.equal(g.print, want);
+  // ...and without the referee it would have stayed wrong
+  const unfixed = network(chars, 2, 7, TICKS, { maxLate: 8, loss: 0.1, rand: lcg(5), drift: { peer: 1, tick: 400 }, noReferee: true });
+  assert.notEqual(unfixed.peers[1].print, want);
 });

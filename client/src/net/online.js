@@ -385,7 +385,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
   // ---------------------------------------------------------------- match ---
 
   function onData(from, text) {
-    if (typeof text !== 'string' || text.length > 20000) return;
+    if (typeof text !== 'string' || text.length > 60000) return;
     let msg;
     try {
       msg = JSON.parse(text);
@@ -700,6 +700,9 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       players: 2,
       mine: [mySlot],
       step: (w, bits) => {
+        // (debugDrift: an automated check makes this device's fight go wrong
+        // at one tick, for the referee to put right)
+        if (online.debugDrift === w.s.tick) w.s.f[0].hp -= 9;
         stepRules(w.s, bits);
         return w.s.ev;
       },
@@ -782,8 +785,17 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     function check(k) {
       const [a, b] = prints.get(k) || [];
       if (a === undefined || b === undefined) return;
-      if (match) match.checked = (match.checked || 0) + 1;
-      if (a !== b && match) match.desync = k; // (step 6 of the plan: the host's fight to put it right)
+      if (!match) return;
+      match.checked = (match.checked || 0) + 1;
+      // Out of step: the host is the referee. It sends its own world as it
+      // was just before that tick; the guest puts it in place and plays
+      // every tick since again (rollback.js restore). Until a later
+      // fingerprint agrees, the line under the clock says so.
+      if (a !== b) {
+        if (match.desync < 0) match.drifts = (match.drifts || 0) + 1;
+        match.desync = k;
+        if (match.host && rb.savedAt(k)) send({ fix: k, w: rb.savedAt(k) });
+      } else match.desync = -1;
       for (const t of prints.keys()) if (t < k - 600) prints.delete(t);
     }
     const game = {
@@ -822,6 +834,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
           match.ping = Math.round(performance.now() - msg.pong);
           match.pings[them] = match.ping;
         }
+        if (!match.host && typeof msg.fix === 'number' && msg.w?.s && Array.isArray(msg.w.s.f) && rb.restore(msg.fix, msg.w)) match.fixes = (match.fixes || 0) + 1;
         if (typeof msg.fp === 'number' && typeof msg.h === 'number') {
           prints.set(msg.fp, [prints.get(msg.fp)?.[0], msg.h]);
           check(msg.fp);
@@ -892,7 +905,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     const kind = online.linkKind() === 'relayed' ? 'relayed through the server' : 'direct';
     if (m.rollback) {
       const st = m.rb.stats();
-      return `Rollback: ping ${m.ping ?? '?'} ms, ${st.rollbacks} corrections (${st.replayed} ticks replayed), ${m.stalls()} waits${m.desync >= 0 ? `, out of step at tick ${m.desync}` : ''}.`;
+      return `Rollback: ping ${m.ping ?? '?'} ms, ${st.rollbacks} corrections (${st.replayed} ticks replayed), ${m.stalls()} waits${m.drifts ? `, out of step ${m.drifts}x (put right by the host${m.desync >= 0 ? ', not yet the last time' : ''})` : ''}.`;
     }
     if (m.host) {
       const pings = m.pings.filter((x, i) => x !== null && i !== m.mySlot);
