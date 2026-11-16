@@ -1549,6 +1549,8 @@ leaves each mouth every couple of seconds (quicker while they move or
 fight), drifts the way they face, rises and is gone.
 In the Courtyard's storm the rain that reaches the dais leaves small rings
 of splash that widen and fade where each drop lands.
+On the Blossom Terrace some of the falling petals settle on the dais and
+lie there for a few seconds before they fade.
 
 - **Ember Courtyard**: round one at dusk, round two under a cold night sky,
   round three in a storm with rain, lightning and thunder.

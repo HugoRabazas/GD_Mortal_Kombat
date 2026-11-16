@@ -955,6 +955,25 @@ export function create3D(canvas) {
     return { m, life: 0 };
   });
   let nextSplash = 0;
+  // Blossom petals that reach the dais settle on it for a few seconds and
+  // fade (the rest drift on past its edge).
+  const petalTex = (() => {
+    const c = makeCanvas(32, 32);
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff';
+    g.beginPath();
+    g.ellipse(16, 16, 14, 7, 0, 0, Math.PI * 2);
+    g.fill();
+    return new THREE.CanvasTexture(c);
+  })();
+  const petalGeo = new THREE.PlaneGeometry(0.26, 0.26);
+  const fallen = Array.from({ length: 40 }, () => {
+    const m = new THREE.Mesh(petalGeo, new THREE.MeshBasicMaterial({ map: petalTex, color: 0xff5f98, transparent: true, depthWrite: false, opacity: 0 }));
+    m.visible = false;
+    scene.add(m);
+    return { m, life: 0 };
+  });
+  let nextFallen = 0;
 
   // ---------- snow ----------
   // Flakes drift down slowly and sway; in the blizzard the wind takes them.
@@ -1175,7 +1194,16 @@ export function create3D(canvas) {
         const r = snowSeed[d];
         r.y -= r.v * (1 + rainNow) * dt * (sand ? 0.0003 : petals ? 0.0006 : 0.001);
         r.x += (wind + Math.sin(now / 900 + r.sway) * (petals ? 1.2 : 0.5)) * dt * 0.001;
-        if (r.y < 0) r.y += 12;
+        if (r.y < 0) {
+          r.y += 12;
+          if (petals && r.x * r.x + r.z * r.z < 6.3 * 6.3 && d % 3 === 0) {
+            const pf = fallen[nextFallen++ % fallen.length];
+            pf.m.position.set(r.x, 0.018, r.z);
+            pf.m.rotation.set(-Math.PI / 2, 0, r.sway * 7);
+            pf.life = 1;
+            pf.m.visible = true;
+          }
+        }
         if (r.x > 15) r.x -= 30;
         const o = d * 3;
         snowPos[o] = r.x;
@@ -1184,6 +1212,13 @@ export function create3D(canvas) {
       }
       snowGeo.setDrawRange(0, count);
       snowGeo.attributes.position.needsUpdate = true;
+    }
+
+    for (const pf of fallen) {
+      if (pf.life <= 0) continue;
+      pf.life -= dt / 8000;
+      pf.m.visible = pf.life > 0 && petals;
+      pf.m.material.opacity = Math.min(1, Math.max(0, pf.life) * 3) * 0.85;
     }
 
     // Rain.
