@@ -745,7 +745,10 @@ and the heartbeat, the crowd and the weather go quiet.
   both steps can be done; the twelve lessons fit at the seven sizes). On a
   touch screen, block held and special with a second finger bursts (real
   multi-touch, at 360x640, 568x320, 844x390; the two buttons 48-72 px
-  apart).
+  apart). In **Training** too (loop 175): a fifth partner, **Strings**,
+  walks up and throws three-punch strings at you, energy refilled, to
+  block or burst out of as often as you like (checked: 13 strings and 13
+  bursts in 15 s; the selection fits at the seven sizes).
 - **Rollback costs a phone little** (loop 172): in a four-player brawl at a
   361 ms ping, one guest's page spent 8.9 % of a processor core on scripts
   (6.6 % the classic way), 30 % on all its work (29 %), and 14 MB of memory

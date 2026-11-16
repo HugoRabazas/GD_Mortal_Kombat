@@ -7,7 +7,7 @@ import { awardsFor as brawlAwards } from './awards.js';
 import { howWon } from './outcome.js';
 import { ARENA, INPUT, MODES, RULES, TICK_RATE } from '../../shared/constants.js';
 import { createAI, aiInput } from '../../shared/ai.js';
-import { LESSONS, lessonById, stepsDone, tutorPartner, drummer } from '../../shared/tutorial.js';
+import { LESSONS, lessonById, stepsDone, tutorPartner, drummer, comboer } from '../../shared/tutorial.js';
 import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
 import { createGame } from './game.js';
@@ -118,7 +118,7 @@ const app = {
   screen: 'loading',
   mode: 'arcade', // 'arcade', 'arena' and 'quick' are single player, 'versus' is two players
   vsArena: false, // in 2-player mode: a duel, or a brawl with two CPU fighters added
-  dummy: 'still', // training partner: 'still', 'block' or 'fight'
+  dummy: 'still', // training partner: 'still', 'block', 'beat', 'combo' or 'fight'
   picks: [FIGHTERS[0].id, FIGHTERS[1 % FIGHTERS.length].id],
   level: 'auto', // CPU difficulty: 'auto' follows the player (see stepAutoLevel)
   place: ARENAS[0].id, // the arena the player chose; the fight behind the menus shows it
@@ -459,11 +459,11 @@ function selectScreen() {
       </div>
       <div class="row">
         ${mode === 'quick' || mode === 'arena' ? seg(levels, app.level, 'level') : ''}
-        ${mode === 'training' ? seg([['still', 'Still'], ['block', 'Blocks'], ['beat', 'Kicks'], ['fight', 'Fights back']], app.dummy, 'dummy') : ''}
+        ${mode === 'training' ? seg([['still', 'Still'], ['block', 'Blocks'], ['beat', 'Kicks'], ['combo', 'Strings'], ['fight', 'Fights back']], app.dummy, 'dummy') : ''}
         ${mode === 'versus' ? seg([['duel', 'Duel'], ['brawl', 'Brawl with 2 CPU']], app.vsArena ? 'brawl' : 'duel', 'vsKind') : ''}
         ${placePicker()}
       </div>
-      ${mode === 'training' ? `<p class="note aside">No clock, and health and energy refill, so you can try every move. ${app.dummy === 'beat' ? 'Your partner walks up and kicks on a steady beat: raise your guard just before the kick lands for a perfect guard, or roll through it.' : 'Pause to leave.'}</p>` : ''}
+      ${mode === 'training' ? `<p class="note aside">No clock, and health and energy refill, so you can try every move. ${app.dummy === 'beat' ? 'Your partner walks up and kicks on a steady beat: raise your guard just before the kick lands for a perfect guard, or roll through it.' : app.dummy === 'combo' ? 'Your partner walks up and throws three-punch strings: block them, or from the second punch press block and special together to burst out.' : 'Pause to leave.'}</p>` : ''}
       ${mode === 'versus' && app.touch ? '<p class="note">Two players need a keyboard or gamepads: the on-screen buttons control one fighter only.</p>' : ''}
       ${mode === 'arcade' ? '<p class="note aside">The ladder moves through the arenas, one after another.</p>' : ''}
       <div class="row">
@@ -527,7 +527,7 @@ function helpScreen() {
         <li><b>Arcade</b>: ${STAGES.length} fights in a row, the last against a boss - who powers up once a round at half health - moving between the arenas as you climb.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
         <li>The <b>Tutorial</b> teaches every move in short lessons, each against a partner who does what the lesson needs (one even throws you down so you can practise getting up).</li>
-        <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks, kicks on a beat or fights back. Free practice, with nothing else on screen.</li>
+        <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks, kicks on a beat, throws punch strings at you (to burst out of) or fights back. Free practice, with nothing else on screen.</li>
         ${NET ? '<li><b>Online</b>: pick a name, then make a room or join one in the lobby; <b>Copy invite link</b> brings friends straight in. The room keeps score of who has won, and a reload brings you back to it.</li>' : ''}
         <li><b>Record</b> at the foot of the menu keeps your lifetime tally on this device: wins, best run, best combo and how you do with each fighter.</li>
         <li>A <b>heartbeat</b> means your fighter is nearly out.</li>
@@ -1307,7 +1307,7 @@ function startFight() {
   } else if (app.mode === 'quick') {
     controllers = [solo, cpu(cpuLevel())];
   } else if (app.mode === 'training') {
-    const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'beat' ? drummer() : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
+    const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'beat' ? drummer() : app.dummy === 'combo' ? comboer() : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
     controllers = [solo, partner];
   } else if (app.mode === 'tutorial') {
     // The lesson's partner: a fighter other than your own.
