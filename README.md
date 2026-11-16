@@ -492,6 +492,13 @@ and the heartbeat, the crowd and the weather go quiet.
   showed as overflow, so the screen walk now also reports controls cut off
   at the sides (cut) and controls lying on top of each other (lap): it
   flags the old lobby (lap3) and the old room (lap1), and nothing now.
+- **Names readable in a room held upright**: with four players in a room on
+  a phone held upright, the fighters' list is a narrow column and the
+  host / ready / choosing tag left one letter of each name ("B", "C"). The
+  tag now sits under the name, so names keep the whole width. The online
+  screens check (four players; name, lobby, room as host and as guest)
+  now runs at ten sizes, upright too, with the cut and lap checks: all
+  clean.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
