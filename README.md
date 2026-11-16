@@ -750,6 +750,19 @@ and the heartbeat, the crowd and the weather go quiet.
   it: still one draw call (~298 in all). Sandstone in the desert, dark
   blue blocks in the snow, red brick in the blossom terrace. The page is
   now 1.15 MB (the six photographs, 306 KB, travel inside it).
+  Step 4 (loops 185-186), the fighters - a prototype, not yet on by
+  default: the night and storm rounds and Fast mode checked with the new
+  light (fine; the night a little less blue). Ready-made CC0 bodies with
+  animations (Quaternius' Universal Base Characters and Animation Library)
+  sit on itch.io, whose download refuses automated requests: the user was
+  asked to download the free zips if they can; Mixamo's models (three.js'
+  Xbot) are out on licence. Meanwhile a more realistic body made in code
+  keeps every pose and the member's avatar as a mask: shaped limbs (lathe
+  profiles: shoulder and biceps, forearm narrowing to the wrist, calf and
+  ankle), a waisted trunk with a chest, smaller hands and flatter shoes, a
+  head 70 % the size, no cartoon outline, and cloth with Poly Haven's
+  "Denim Fabric" relief (Rob Tuytel, CC0, 256 px). Try it on the website
+  with `?realbody` (Ruko), `?realbody=all` or `?realbody=<fighter id>`.
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the

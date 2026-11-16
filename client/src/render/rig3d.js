@@ -20,6 +20,15 @@ import { LEN, joint, currentPose, vanished } from './fighter.js';
 import { MOVES, ULT_MOVES } from '../../../shared/sim.js';
 import { lookColors } from '../../../shared/fighters.js';
 import { heads } from '../assets.js';
+// Cloth relief for the realistic body (Poly Haven "Denim Fabric", Rob Tuytel,
+// CC0, 256 px): folds, a seam, the weave.
+import clothNorUrl from './tex/cloth_nor.jpg';
+import clothRoughUrl from './tex/cloth_rough.jpg';
+
+// The realistic body (a prototype, see README): ?realbody in the address
+// gives it to Ruko, ?realbody=all to everyone, ?realbody=<id> to one fighter.
+const REAL = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('realbody') : null;
+const realFor = (id) => REAL !== null && (REAL === 'all' || REAL === id || (REAL === '' && id === 'ruko'));
 
 const S = 0.01; // world units per arena pixel
 // Moves drawn glowing in the fighter's colour: the specials and the finisher.
@@ -34,6 +43,15 @@ const BUILDS = {
 };
 
 let geo = null;
+let weave = null; // the cloth's relief maps, loaded once
+
+// A limb shaped like one (a lathe turned along y, -0.5 at the joint it starts
+// from, +0.5 at the far end): `profile` gives the radius, as a share of the
+// widest, at points along it - shoulder and biceps, calf, wrist, ankle.
+function limbShape(THREE, profile) {
+  const pts = profile.map(([y, r]) => new THREE.Vector2(r, y - 0.5));
+  return new THREE.LatheGeometry(pts, 18);
+}
 
 function shared(THREE) {
   if (!geo) {
@@ -43,6 +61,13 @@ function shared(THREE) {
       ball: new THREE.SphereGeometry(1, 20, 14),
       ring: new THREE.TorusGeometry(1.03, 0.075, 8, 36),
       head: new THREE.SphereGeometry(1, 32, 24),
+      // The realistic body's parts: points from the near joint (0) to the far one (1).
+      upperArm: limbShape(THREE, [[0, 0.6], [0.05, 0.92], [0.25, 1], [0.55, 0.9], [0.9, 0.74], [1, 0.6]]),
+      foreArm: limbShape(THREE, [[0, 0.7], [0.08, 0.95], [0.3, 1], [0.75, 0.72], [1, 0.58]]),
+      thigh: limbShape(THREE, [[0, 0.75], [0.08, 1], [0.35, 0.95], [0.85, 0.72], [1, 0.62]]),
+      shin: limbShape(THREE, [[0, 0.7], [0.12, 0.88], [0.32, 1], [0.7, 0.66], [0.95, 0.52], [1, 0.48]]),
+      // hips (0) to shoulders (1): a waist, a chest, then the shoulder line.
+      trunk: limbShape(THREE, [[0, 0.82], [0.12, 0.9], [0.38, 0.78], [0.72, 1.02], [0.9, 1], [1, 0.62]]),
     };
     // Wrap the picture over the head as if projected from the front, so the
     // round portrait fills the visible face of the ball.
@@ -62,16 +87,29 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
   // Colours are written the way a designer picks them (sRGB); the renderer
   // does its lighting maths in linear light, so convert on the way in.
   const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
-  const cloth = (hex, rough = 0.7) => new THREE.MeshStandardMaterial({ color: lin(hex), roughness: rough, metalness: 0.05 });
+  const real = realFor(char.id);
+  if (real && !weave) {
+    const load = (url) => {
+      const t = new THREE.TextureLoader().load(url);
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(2, 2);
+      return t;
+    };
+    weave = { normalMap: load(clothNorUrl), roughnessMap: load(clothRoughUrl) };
+  }
+  // Realistic: cloth with relief (and skin smooth); otherwise plain colour.
+  const fabric = (hex, rough) => new THREE.MeshStandardMaterial({ color: lin(hex), roughness: Math.min(1, rough + 0.2), metalness: 0, normalMap: weave.normalMap, roughnessMap: weave.roughnessMap, normalScale: new THREE.Vector2(1.3, 1.3) });
+  const cloth = (hex, rough = 0.7) => (real ? fabric(hex, rough) : new THREE.MeshStandardMaterial({ color: lin(hex), roughness: rough, metalness: 0.05 }));
   const mats = {
     primary: cloth(col.primary),
     secondary: cloth(col.secondary, 0.8),
     accent: cloth(col.accent, 0.45),
-    skin: cloth(col.skin, 0.6),
+    skin: real ? new THREE.MeshStandardMaterial({ color: lin(col.skin), roughness: 0.55, metalness: 0 }) : cloth(col.skin, 0.6),
     hair: cloth(col.hair || col.secondary, 0.5),
   };
   const bodyMats = Object.values(mats);
   const hull = new THREE.MeshBasicMaterial({ color: 0x0b070d, side: THREE.BackSide });
+  hull.visible = !real;
   const glow = lin(col.glow);
   const white = new THREE.Color(0xffffff);
   const ember = lin(0xff3a1e); // the red pulse of a last stand
@@ -116,24 +154,40 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
   const L = build.limb;
   const bare = sumo ? mats.skin : mats.primary; // the sumo fights bare-chested
   const legMat = sumo ? mats.skin : mats.secondary;
-  const limb = (side) => ({
-    side,
-    shoulder: ball(0.09 * L, 0.09 * L, 0.09 * L, bare),
-    upper: seg(0.068 * L, bare),
-    elbow: ball(0.062 * L, 0.062 * L, 0.062 * L, mats.skin, true),
-    fore: seg(0.056 * L, mats.skin),
-    fist: ball(0.1 * Math.sqrt(L), 0.1 * Math.sqrt(L), 0.1 * Math.sqrt(L), mats.accent),
-    thigh: seg(0.09 * L, legMat),
-    knee: ball(0.078 * L, 0.078 * L, 0.078 * L, legMat, true),
-    shin: seg(0.07 * L, legMat),
-    foot: ball(0.15, 0.075, 0.09 * Math.sqrt(L), sumo ? mats.skin : mats.accent),
-  });
+  // Realistic: shaped limbs (a little fuller, as they taper), smaller hands
+  // in a wrap, and shoes longer and flatter.
+  const limb = real
+    ? (side) => ({
+        side,
+        shoulder: ball(0.085 * L, 0.08 * L, 0.085 * L, bare),
+        upper: seg(0.078 * L, bare, 0.078 * L, g.upperArm),
+        elbow: ball(0.05 * L, 0.05 * L, 0.05 * L, mats.skin, true),
+        fore: seg(0.066 * L, mats.skin, 0.066 * L, g.foreArm),
+        fist: ball(0.068 * Math.sqrt(L), 0.062 * Math.sqrt(L), 0.058 * Math.sqrt(L), mats.accent),
+        thigh: seg(0.108 * L, legMat, 0.108 * L, g.thigh),
+        knee: ball(0.066 * L, 0.066 * L, 0.066 * L, legMat, true),
+        shin: seg(0.085 * L, legMat, 0.085 * L, g.shin),
+        foot: ball(0.135, 0.05, 0.065 * Math.sqrt(L), sumo ? mats.skin : mats.accent),
+      })
+    : (side) => ({
+        side,
+        shoulder: ball(0.09 * L, 0.09 * L, 0.09 * L, bare),
+        upper: seg(0.068 * L, bare),
+        elbow: ball(0.062 * L, 0.062 * L, 0.062 * L, mats.skin, true),
+        fore: seg(0.056 * L, mats.skin),
+        fist: ball(0.1 * Math.sqrt(L), 0.1 * Math.sqrt(L), 0.1 * Math.sqrt(L), mats.accent),
+        thigh: seg(0.09 * L, legMat),
+        knee: ball(0.078 * L, 0.078 * L, 0.078 * L, legMat, true),
+        shin: seg(0.07 * L, legMat),
+        foot: ball(0.15, 0.075, 0.09 * Math.sqrt(L), sumo ? mats.skin : mats.accent),
+      });
   const left = limb(1);
   const right = limb(-1);
   const pelvis = ball(...build.pelvis, sumo ? mats.accent : mats.secondary);
-  const torso = seg(build.torso[0], bare, build.torso[1]);
+  const torso = real ? seg(build.torso[0] * 1.08, bare, build.torso[1] * 1.15, g.trunk) : seg(build.torso[0], bare, build.torso[1]);
   const belt = seg(build.torso[0] + 0.017, mats.accent, build.torso[1] + 0.017);
-  const chest = ball(...build.chest, bare);
+  // (Realistic: the trunk has its own chest; the ball stays as the pectorals.)
+  const chest = real ? ball(build.chest[0] * 0.75, build.chest[1] * 0.7, build.chest[2] * 0.85, bare) : ball(...build.chest, bare);
   const neck = seg(0.055 * L, mats.skin, 0.055 * L, g.cyl, true);
   const belly = sumo ? ball(0.31, 0.27, 0.33, mats.skin) : null;
   const apron = sumo ? ball(0.07, 0.17, 0.15, mats.accent) : null; // the front flap of the belt
@@ -157,7 +211,10 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
   tex.encoding = THREE.sRGBEncoding;
   const headMat = new THREE.MeshStandardMaterial({ map: tex, emissiveMap: tex, emissive: 0xffffff, emissiveIntensity: 0.5, roughness: 0.6 });
   const head = new THREE.Mesh(g.head, headMat);
-  const R = LEN.head * S * 0.97;
+  // Realistic: a smaller head on the shoulders (the mask of a person, not a
+  // cartoon's big head).
+  const HEAD_K = real ? 0.7 : 1;
+  const R = LEN.head * S * 0.97 * HEAD_K;
   head.scale.setScalar(R);
   head.castShadow = true;
   const headHull = new THREE.Mesh(g.head, hull);
@@ -284,7 +341,8 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
 
       // The head looks at the camera whatever the body is doing, and rolls
       // with the body when the fighter is knocked over.
-      put(head, nx, ny, 0);
+      // (A smaller head sits lower, its chin on the neck.)
+      put(head, nx + Math.sin(p.lean + p.tilt) * LEN.head * (1 - HEAD_K) * -0.9, ny + Math.cos(p.lean + p.tilt) * LEN.head * (1 - HEAD_K) * 0.9, 0);
       turn.updateMatrixWorld(true);
       lean.getWorldQuaternion(q).invert();
       want.setFromAxisAngle(UP, Math.atan2(camera.position.x - turn.position.x, camera.position.z - turn.position.z));
@@ -325,7 +383,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
 
     // The cartoon outline costs one draw per body part; Graphics: Fast drops it.
     setOutline(on) {
-      hull.visible = on;
+      hull.visible = on && !real; // (the realistic body has none)
     },
 
     dispose() {
