@@ -1193,6 +1193,9 @@ function show(screen) {
   app.music = screen === 'fight' ? 'fight' : 'menu';
   setMusic(app.music);
   keepAwake(screen === 'fight');
+  // The chat's newest lines are the ones to see (it scrolls up for older).
+  const log = ui.querySelector('.chat ol');
+  if (log) log.scrollTop = log.scrollHeight;
   const chat = ui.querySelector('#chat');
   if (chat && kept) {
     chat.value = kept.value;

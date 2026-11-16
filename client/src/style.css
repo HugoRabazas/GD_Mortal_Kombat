@@ -2959,3 +2959,20 @@ kbd {
     font-size: 1.1rem;
   }
 }
+
+/* A very short phone held sideways: a room's status lines (who is
+   watching, the arena, the link) in smaller print. */
+@media (max-height: 340px) and (orientation: landscape) {
+  .screen.room .rules {
+    font-size: 0.62rem;
+    line-height: 1.15;
+  }
+
+  .screen.room > h2 {
+    font-size: 0.95rem;
+  }
+
+  .screen.room .chat ol {
+    max-height: 2.3em;
+  }
+}

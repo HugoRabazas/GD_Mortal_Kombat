@@ -601,6 +601,13 @@ and the heartbeat, the crowd and the weather go quiet.
   chat and the buttons 140 to 320 px off the screen - each list now shows a
   few rows and scrolls for the rest, with Quick match and New room side by
   side. The overlap check now ignores the clipped part of a scrolling list.
+- **A full room, and the chat's newest lines**: a room with four fighters,
+  two watchers and ten chat lines, as the host and as a watcher, at seven
+  sizes. On a small phone the chat showed its oldest lines and hid the
+  newest below - it now always opens on the latest (scroll up for older).
+  A watcher's room on a very short phone held sideways ran 10 px over: its
+  status lines (who is watching, the arena, the link) are in smaller print
+  there. Chat checked on the live service again.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
