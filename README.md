@@ -1551,6 +1551,8 @@ In the Courtyard's storm the rain that reaches the dais leaves small rings
 of splash that widen and fade where each drop lands.
 On the Blossom Terrace some of the falling petals settle on the dais and
 lie there for a few seconds before they fade.
+In the Ruins' sandstorm, low pale streaks of sand race across the floor
+with the wind, stronger as the storm grows.
 
 - **Ember Courtyard**: round one at dusk, round two under a cold night sky,
   round three in a storm with rain, lightning and thunder.

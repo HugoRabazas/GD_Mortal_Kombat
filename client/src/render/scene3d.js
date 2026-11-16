@@ -974,6 +974,27 @@ export function create3D(canvas) {
     return { m, life: 0 };
   });
   let nextFallen = 0;
+  // In the Ruins' sandstorm, low streaks of sand race across the floor with
+  // the wind, as strong as the storm.
+  const streakTex = (() => {
+    const c = makeCanvas(128, 16);
+    const g = c.getContext('2d');
+    const r = g.createLinearGradient(0, 0, 128, 0);
+    r.addColorStop(0, 'rgba(255,255,255,0)');
+    r.addColorStop(0.35, 'rgba(255,255,255,0.9)');
+    r.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = r;
+    g.fillRect(0, 4, 128, 8);
+    return new THREE.CanvasTexture(c);
+  })();
+  const drifts = Array.from({ length: 14 }, (_, i) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(3, 0.4), new THREE.MeshBasicMaterial({ map: streakTex, color: 0xf0d8a8, transparent: true, depthWrite: false, opacity: 0 }));
+    m.rotation.x = -Math.PI / 2;
+    m.position.set(-9 + ((i * 7.3) % 18), 0.03, -5 + ((i * 3.7) % 10));
+    m.visible = false;
+    scene.add(m);
+    return { m, v: 0.7 + ((i * 0.37) % 0.6), phase: i * 1.3 };
+  });
 
   // ---------- snow ----------
   // Flakes drift down slowly and sway; in the blizzard the wind takes them.
@@ -1214,6 +1235,17 @@ export function create3D(canvas) {
       snowGeo.attributes.position.needsUpdate = true;
     }
 
+    // Sand streaks: only in a sandstorm.
+    const gusting = sand && rainNow > 0.3;
+    for (const dr of drifts) {
+      dr.m.visible = gusting;
+      if (!gusting) continue;
+      dr.m.position.x += dr.v * rainNow * dt * 0.012;
+      if (dr.m.position.x > 9) dr.m.position.x -= 18;
+      // Fade at the ends of the run, and flicker like gusts.
+      const edge = Math.min(1, (9 - Math.abs(dr.m.position.x)) / 3);
+      dr.m.material.opacity = Math.max(0, edge) * (0.6 + 0.25 * Math.sin(now / 300 + dr.phase)) * Math.min(1, (rainNow - 0.3) * 2);
+    }
     for (const pf of fallen) {
       if (pf.life <= 0) continue;
       pf.life -= dt / 8000;
