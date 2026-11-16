@@ -17,6 +17,9 @@ import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMus
 import { THEMES } from './render/themes.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
+import { createTape, frameIndex } from './replay.js';
+
+const tape = createTape(); // the last seconds of the fight, for the knockout's replay
 
 // Online play exists only in the web build, which is told where the bus lives
 // (see scripts/build.js). Adding ?net=local to the address swaps the internet
@@ -166,6 +169,7 @@ function lookButtons(id, current, act, slot = '') {
 let stage = null;
 let touchLayout = null;
 if (DEBUG) window.gd = app;
+if (DEBUG) window.gdTape = tape;
 
 try {
   const saved = localStorage.getItem('gd-arena-place');
@@ -929,6 +933,10 @@ function winnerQuote() {
 const netNote = () => (app.mode === 'online' && app.online?.netReport?.() ? `<p class="note netline">${esc(app.online.netReport())}</p>` : '');
 const recordNews = () => (app.newBests?.length ? `<p class="note news">New on your Record: ${esc(app.newBests.join(' · '))}</p>` : '');
 
+// The knockout again, slowed (replay.js): offered when the fight ended on one.
+const replayBtn = () => (app.koClip ? '<button type="button" class="btn quiet" data-act="replay">Replay KO</button>' : '');
+const replayScreen = () => '<section class="screen replay"><p class="rtag">REPLAY</p><button type="button" class="btn quiet" data-act="endReplay">Skip</button></section>';
+
 function resultScreen() {
   const s = app.game.state;
   const won = s.matchWinner === 0;
@@ -937,7 +945,7 @@ function resultScreen() {
       ? '<button type="button" class="btn primary" data-act="onBack">Back to the room</button>'
       : `<button type="button" class="btn primary" data-act="rematch">Rematch</button>
           <button type="button" class="btn" data-act="select">Change fighter</button>
-          <button type="button" class="btn quiet" data-act="menu">Menu</button>`;
+          ${replayBtn()}<button type="button" class="btn quiet" data-act="menu">Menu</button>`;
   if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result">${winnerQuote()}${statsCard()}${roomScoreNote()}${netNote()}${recordNews()}<div class="row">${again}</div></section>`;
   if (s.mode === 'arena' && app.mode !== 'arcade') {
     return `
@@ -958,7 +966,7 @@ function resultScreen() {
         ${recordNews()}<div class="row">
           <button type="button" class="btn primary" data-act="rematch">Rematch</button>
           <button type="button" class="btn" data-act="select">Change fighters</button>
-          <button type="button" class="btn quiet" data-act="menu">Menu</button>
+          ${replayBtn()}<button type="button" class="btn quiet" data-act="menu">Menu</button>
         </div>
       </section>`;
   }
@@ -972,7 +980,7 @@ function resultScreen() {
         ${outcome()}
         ${recordNews()}<div class="row">
           <button type="button" class="btn primary" data-act="retry">Try again</button>
-          <button type="button" class="btn quiet" data-act="menu">Menu</button>
+          ${replayBtn()}<button type="button" class="btn quiet" data-act="menu">Menu</button>
         </div>
       </section>`;
   }
@@ -984,7 +992,7 @@ function resultScreen() {
         ${outcome()}
         ${recordNews()}<div class="row">
           <button type="button" class="btn primary" data-act="arcade">Play again</button>
-          <button type="button" class="btn quiet" data-act="menu">Menu</button>
+          ${replayBtn()}<button type="button" class="btn quiet" data-act="menu">Menu</button>
         </div>
       </section>`;
   }
@@ -996,7 +1004,7 @@ function resultScreen() {
       ${outcome()}
       ${recordNews()}<div class="row">
         <button type="button" class="btn primary" data-act="next">Next fight</button>
-        <button type="button" class="btn quiet" data-act="menu">Menu</button>
+        ${replayBtn()}<button type="button" class="btn quiet" data-act="menu">Menu</button>
       </div>
     </section>`;
 }
@@ -1152,7 +1160,7 @@ function roomScreen() {
     </section>`;
 }
 
-const SCREENS = { lessons: lessonsScreen, lessonDone: lessonDoneScreen, record: recordScreen, settings: settingsScreen, menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
+const SCREENS = { lessons: lessonsScreen, lessonDone: lessonDoneScreen, record: recordScreen, settings: settingsScreen, menu: menuScreen, select: selectScreen, help: helpScreen, pause: pauseScreen, result: resultScreen, replay: replayScreen, arrange: arrangeScreen, nick: nameScreen, lobby: lobbyScreen, room: roomScreen };
 
 // Keep a phone's screen from dimming or locking in the middle of a fight.
 let wakeLock = null;
@@ -1190,7 +1198,7 @@ function show(screen) {
   const draft = ui.querySelector('#chat');
   const kept = draft ? { value: draft.value, focus: document.activeElement === draft } : null;
   app.screen = screen;
-  const inFight = screen === 'fight' || screen === 'pause' || screen === 'result' || ((screen === 'arrange' || screen === 'settings') && app.game);
+  const inFight = screen === 'fight' || screen === 'pause' || screen === 'result' || screen === 'replay' || ((screen === 'arrange' || screen === 'settings') && app.game);
   ui.innerHTML = SCREENS[screen] ? SCREENS[screen]() : '';
   ui.dataset.screen = screen;
   pauseBtn.hidden = screen !== 'fight';
@@ -1204,7 +1212,7 @@ function show(screen) {
   setTouchLive(screen !== 'arrange');
   setCapture(screen === 'fight');
   if (!inFight) app.game = null;
-  app.music = screen === 'fight' ? 'fight' : 'menu';
+  app.music = screen === 'fight' || screen === 'replay' ? 'fight' : 'menu';
   setMusic(app.music);
   keepAwake(screen === 'fight');
   // The chat's newest lines are the ones to see (it scrolls up for older).
@@ -1241,6 +1249,8 @@ function startDemo() {
 }
 
 function startFight() {
+  tape.clear();
+  app.koClip = null;
   const solo = () => readKeys('solo') | readTouch() | readPad(0);
   const two = [() => readKeys('p1') | readPad(0), () => readKeys('p2') | readPad(1)];
   let chars = app.picks;
@@ -1657,6 +1667,13 @@ const ACTIONS = {
     else startFight();
   },
   rematch: startFight,
+  replay() {
+    if (!app.koClip) return;
+    app.replay = { clip: app.koClip, t0: performance.now(), last: -1 };
+    stage.reset();
+    show('replay');
+  },
+  endReplay,
   retry() {
     // Trying a stage again costs a slice of the score.
     app.arcade.retries++;
@@ -1877,9 +1894,31 @@ function padMenus() {
   }
   if (nav.ok && items.includes(document.activeElement)) document.activeElement.click();
   if (nav.back) {
-    const back = ['resume', 'settingsDone', 'arrangeDone', 'leaveRoom', 'offline', 'menu'].map((a) => ui.querySelector(`[data-act=${a}]`)).find(Boolean);
+    const back = ['endReplay', 'resume', 'settingsDone', 'arrangeDone', 'leaveRoom', 'offline', 'menu'].map((a) => ui.querySelector(`[data-act=${a}]`)).find(Boolean);
     back?.click();
   }
+}
+
+// The replay of the knockout: its frames drawn again at half speed, with
+// their sounds and sparks; back to the result screen at the end.
+function replayFrame(now) {
+  const r = app.replay;
+  const i = r && app.screen === 'replay' ? frameIndex(r.clip, now - r.t0) : -1;
+  if (i < 0) return endReplay();
+  const st = r.clip[i].state;
+  const worn = dressColors(st.f.map((f) => f.char), fightLooks());
+  const mine = app.mode !== 'versus' ? 0 : -1;
+  for (let k = r.last + 1; k <= i; k++) handleEvents(r.clip[k].events, r.clip[k].state, { quiet: false, project: stage.project, me: mine, colors: worn });
+  r.last = i;
+  const tags = labels();
+  const humans = tags.map((t) => t === 'YOU' || t === 'P1' || t === 'P2');
+  stage.render({ state: st, theme: app.fightPlace, looks: fightLooks(), demo: false, labels: tags, boss: null, humans, me: mine, net: '', hint: '', clearCorners: touchOver(), noTags: false }, now);
+}
+
+function endReplay() {
+  app.replay = null;
+  stage.reset();
+  if (app.screen === 'replay') show('result');
 }
 
 let lastFrameAt = 0;
@@ -1893,6 +1932,7 @@ function frame(now) {
   const playing = app.game;
   const g = playing || app.demo;
   if (!g || !stage) return;
+  if (app.replay) return replayFrame(now);
   if (padStartPressed()) togglePause();
   g.update(now);
   if (playing && practising()) keepTraining(g.state);
@@ -1912,6 +1952,7 @@ function frame(now) {
   const self = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
   const events = g.drain();
   if (playing) tallyFight(g, events);
+  if (playing && app.screen === 'fight' && !practising() && app.mode !== 'online') tape.push(g.state, events, now);
   if (playing && app.mode === 'tutorial') {
     watchLesson(g.state, events);
     // Every step done: a moment to see the last tick, then the lesson's end.
@@ -2011,6 +2052,8 @@ function frame(now) {
       if (app.mode === 'online') countRoomWin(s);
       app.newBests = [];
       scoreMatch();
+      app.koClip = app.mode === 'online' ? null : tape.clip();
+      tape.clear();
       show('result'); // (the card says what is new on the Record)
     }
   } else if (s.phase === 'over' && s.pt > 200) {

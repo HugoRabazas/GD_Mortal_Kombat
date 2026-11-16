@@ -722,6 +722,16 @@ and the heartbeat, the crowd and the weather go quiet.
   Its whoosh plays at once too (1-13 ms after the press instead of
   180-290 ms relayed), and the host's own word of that swing is then not
   played again - checked on ten presses, each heard once.
+- **Replay KO**: the result screen of a fight that ended on a knockout
+  offers Replay KO - the last 1.7 seconds before the final blow and the
+  fall after it, again at half speed (the knockout's own slow motion
+  slows it further), with its sounds, sparks and the K.O. banner, a red
+  REPLAY mark and Skip at the bottom; at the end it hands back to the
+  result screen. While a fight is drawn, a copy of each frame goes on a
+  four-and-a-half-second tape (replay.js; ~0.02 ms a frame), which stops
+  once the knockout's fall is on it. Not in Training, the Tutorial or
+  online. Checked at seven sizes (the result card still fits with the new
+  button) in 2D and 3D, arcade and brawl results too.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
@@ -1348,8 +1358,10 @@ without being imported or declared, and things declared but never used.
 ## Limits worth knowing
 
 - The Artifact page is offline only; online play needs the website build.
-- Online, your own fighter answers after a short delay (the trip to the host
-  and back) unless you are the host. If the host leaves, the fight ends.
+- Online, unless you are the host, your own walking and your first punch or
+  kick show at once, but everything else - the rivals, every hit, strings
+  and specials - comes after the trip to the host and back (see the
+  rollback plan). If the host leaves, the fight ends.
 - A browser with WebRTC switched off (some privacy settings do this) cannot
   open direct links; it still plays, through the server, a little slower,
   and the room says so.
