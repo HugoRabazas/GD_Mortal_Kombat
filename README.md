@@ -75,8 +75,10 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   it with no server. The menu's tip line offers it (Today's challenge: win
   as SHADOW against KICHTA on Hard ›) until you beat it; the result says
   so and how many days you have beaten. It plays as a Quick fight without
-  changing your own level, arena or Auto difficulty. (On the two shortest
-  phone screens held sideways the menu has no tip line, so no challenge.)
+  changing your own level, arena or Auto difficulty. Phones held sideways
+  whose menu has no room for the tip line get it as a button on Quick
+  fight's select screen (Back · Today's challenge · Fight). The Record
+  counts the days beaten on its Won line (99 · 71% · 6 daily).
 - **2 Players**: a duel on one device, or a brawl with two CPU fighters added.
   From the second fight in a row the result keeps score between the two
   (This session: P1 2 · P2 1); Rematch carries it on, choosing fighters

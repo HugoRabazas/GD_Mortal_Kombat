@@ -506,6 +506,7 @@ function selectScreen() {
       ${mode === 'quick' && app.level === 'survival' ? '<p class="note aside">Survival: duels in a row, a new rival each time, harder as you go. One defeat ends the run.</p>' : ''}
       <div class="row">
         <button type="button" class="btn quiet" data-act="menu">Back</button>
+        ${mode === 'quick' && !dailyDone() ? '<button type="button" class="btn daily-btn" data-act="daily" title="The same fight for everyone today">Today\'s challenge</button>' : ''}
         <button type="button" class="btn primary" data-act="fight">${mode === 'arcade' ? 'Start' : 'Fight'}</button>
       </div>
     </section>`;
@@ -1620,7 +1621,7 @@ function recordScreen() {
         r.fights
           ? `<dl class="recordstats">
               <div><dt>Fights</dt><dd>${r.fights}</dd></div>
-              <div><dt>Won</dt><dd>${r.wins} · ${pct(r.wins, r.fights)}</dd></div>
+              <div><dt>Won</dt><dd>${r.wins} · ${pct(r.wins, r.fights)}${r.dailyWins ? ` · ${r.dailyWins} daily` : ''}</dd></div>
               <div><dt>Best run</dt><dd>${r.bestStreak} in a row${r.survival ? ` · survival ${r.survival}` : ''}</dd></div>
               <div><dt>Best combo</dt><dd>${r.bestCombo} hits</dd></div>
               <div><dt>Perfect guards</dt><dd>${r.perfect}</dd></div>

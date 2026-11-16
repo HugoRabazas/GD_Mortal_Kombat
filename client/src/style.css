@@ -1493,6 +1493,15 @@ kbd {
   font-weight: 700;
 }
 
+/* The day's challenge on Quick fight's select screen is for phones held
+   sideways, whose menu has no room for it; held upright, the menu offers it
+   and the select screen's buttons stack with no room to spare. */
+@media (max-width: 440px) {
+  .select .daily-btn {
+    display: none;
+  }
+}
+
 /* A phone held upright: tighter cells, and the long headings ("Perfect
    guards") break onto two lines, so the table fits 360 px. */
 @media (max-width: 440px) {
