@@ -1019,10 +1019,12 @@ const photoScreen = () => `<section class="screen replay photo"><button type="bu
 const replayScreen = () => '<section class="screen replay"><p class="rtag">REPLAY</p><button type="button" class="btn quiet" data-act="endReplay">Skip</button></section>';
 
 const survivalNote = () => {
-  const { wins, best, over, newBest } = app.surv;
+  const { wins, best, over, newBest, beaten = [] } = app.surv;
   const run = `${wins} ${wins === 1 ? 'win' : 'wins'}`;
+  // The run's rivals, small, on the same line (the last eight of a long one).
+  const faces = beaten.length ? ` <span class="runfaces" aria-label="Beaten: ${beaten.map((id) => getFighter(id).name).join(', ')}">${beaten.length > 8 ? '…' : ''}${beaten.slice(-8).map((id) => head(id, 'inline')).join('')}</span>` : '';
   return over
-    ? `<p class="note">Survival over: <b>${run}</b> in a row${newBest ? ' - your best yet' : best ? ` (best ${best})` : ''}.</p>`
+    ? `<p class="note">Survival over: <b>${run}</b> in a row${newBest ? ' - your best yet' : best ? ` (best ${best})` : ''}.${faces}</p>`
     : `<p class="note">Survival: <b>${run}</b> in a row. Next rival on <b>${LEVEL_NAMES[survivalLevel()]}</b>.</p>`;
 };
 
@@ -1496,7 +1498,10 @@ function noteRecord() {
   r.streak = won ? r.streak + 1 : 0;
   r.bestStreak = Math.max(r.bestStreak, r.streak);
   if (surviving()) {
-    if (won) app.surv.wins++;
+    if (won) {
+      app.surv.wins++;
+      (app.surv.beaten ||= []).push(s.f[1].char);
+    }
     else app.surv.over = true;
     app.surv.best = Math.max(r.survival || 0, app.surv.wins);
     app.surv.newBest = app.surv.wins > (r.survival || 0);

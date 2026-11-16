@@ -1276,6 +1276,20 @@ kbd {
   font-variant-numeric: tabular-nums;
 }
 
+.note .runfaces {
+  display: inline-block;
+  white-space: nowrap; /* the run's faces stay together */
+}
+
+.note .head.inline {
+  display: inline-block;
+  width: 1.35em;
+  height: 1.35em;
+  margin: -0.2em 0 -0.2em 2px;
+  vertical-align: middle;
+  box-shadow: 0 0 0 1px var(--gold);
+}
+
 .sub .head {
   width: 30px;
   height: 30px;
