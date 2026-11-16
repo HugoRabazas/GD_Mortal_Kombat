@@ -732,7 +732,15 @@ and the heartbeat, the crowd and the weather go quiet.
   fully it looked like coloured plastic, and too grey the desert lost its
   sand) and frosted on the summit. The painted slabs stand in until the
   photographs load. Draw calls unchanged (~298). Seen in 3D in the four
-  arenas, before and after.
+  arenas, before and after. Step 2 (loop 183), the light: a film camera's
+  response (ACES tone mapping), so torches and flashes roll off instead of
+  clipping; and light from the whole sky - each arena's own sky gradient,
+  ground and moon or sun glow, blurred for every roughness (PMREM) and
+  made once per arena, no download - so stone, cloth and metal take the
+  arena's colours in their shading. Tuned by eye: at first too bright and
+  flat (exposure 1.25, the sky's light at full strength); now exposure
+  0.95, the sky's light at half and the hemisphere light at 70 %, and a
+  light arena's stone capped below white (the desert floor glared).
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the

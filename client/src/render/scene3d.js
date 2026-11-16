@@ -28,6 +28,9 @@ import stoneNorUrl from './tex/stone_nor.jpg';
 import stoneRoughUrl from './tex/stone_rough.jpg';
 
 const S = 0.01;
+const TONE_EXPOSURE = 0.95;
+const SKY_LIGHT = 0.5; // how much the sky's own light adds (envMapIntensity)
+const HEMI_WITH_SKY = 0.7; // the hemisphere light's share once the sky lights the scene too
 
 
 
@@ -62,6 +65,10 @@ export function create3D(canvas) {
   renderer.setClearColor(0x0b0714);
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // A film camera's response (ACES): bright torches and flashes roll off
+  // softly instead of clipping, and the darks keep their depth.
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = TONE_EXPOSURE;
 
   // Colours are written as sRGB (what you see in a colour picker); lighting is
   // calculated in linear light, so every colour is converted on the way in.
@@ -263,7 +270,10 @@ export function create3D(canvas) {
   const stoneTint = (rgb, snow) => {
     if (snow) return lin(0xdfe8f4);
     const grey = (rgb[0] + rgb[1] + rgb[2]) / 3;
-    return new THREE.Color(...rgb.map((v) => Math.min(1, ((grey + (v - grey) * 0.65) / 255) * 2.1))).convertSRGBToLinear();
+    const t = rgb.map((v) => ((grey + (v - grey) * 0.65) / 255) * 2.1);
+    const top = Math.max(...t);
+    // (A light arena's stone capped below white: the desert's floor glared.)
+    return new THREE.Color(...t.map((v) => (top > 0.78 ? (v * 0.78) / top : v))).convertSRGBToLinear();
   };
 
   const groundMat = new THREE.MeshStandardMaterial({ roughness: 1, metalness: 0, normalMap: groundPhoto.normalMap, roughnessMap: groundPhoto.roughnessMap, normalScale: new THREE.Vector2(1.6, 1.6) });
@@ -817,6 +827,7 @@ export function create3D(canvas) {
   // so going back and forth between arenas costs nothing.
   const painted = {};
   let theme = null; // the arena on show
+  let pmremReady = false; // (the sky's light is made just below setTheme's first call)
   let moods = null;
   function setTheme(id) {
     const name = THEMES[id] ? id : 'courtyard';
@@ -863,10 +874,49 @@ export function create3D(canvas) {
     for (const t of torches) t.light.color.copy(lin(th.torch));
     for (const m of [skyMat, groundMat, daisMat, bannerMat, torchFlameMat, emberMat]) m.needsUpdate = true;
     snowCaps.visible = th.snow;
+    if (pmremReady) lightFromSky(name);
     dressCrowd(th.cloaks);
     lightning = 0;
   }
   setTheme('courtyard');
+
+  // Light from the whole sky (image-based lighting): each arena's sky
+  // gradient, its ground below and a glow where the moon or sun stands,
+  // blurred for every roughness (PMREM) - stone, cloth and metal pick up the
+  // arena's colours in their shading and reflections. Made once per arena.
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const skyLight = {};
+  function lightFromSky(name) {
+    if (!skyLight[name]) {
+      const th = THEMES[name];
+      const c = makeCanvas(256, 128);
+      const g = c.getContext('2d');
+      const sky = g.createLinearGradient(0, 0, 0, 64);
+      [0, 0.4, 0.68, 0.85, 1].forEach((at, i) => sky.addColorStop(at, th.sky[i]));
+      g.fillStyle = sky;
+      g.fillRect(0, 0, 256, 64);
+      const hex = (n) => `#${n.toString(16).padStart(6, '0')}`;
+      g.fillStyle = hex(th.moods[0].hemi[1]);
+      g.fillRect(0, 64, 256, 64);
+      const glow = g.createRadialGradient(64, 40, 0, 64, 40, 34);
+      glow.addColorStop(0, th.moon.disc[0]);
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = glow;
+      g.fillRect(0, 0, 256, 128);
+      const t = new THREE.CanvasTexture(c);
+      t.encoding = THREE.sRGBEncoding;
+      t.mapping = THREE.EquirectangularReflectionMapping;
+      skyLight[name] = pmrem.fromEquirectangular(t).texture;
+      t.dispose();
+    }
+    scene.environment = skyLight[name];
+    // (Not too much of it: lit evenly from all round, the arena went flat.)
+    scene.traverse((o) => {
+      if (o.material?.isMeshStandardMaterial) o.material.envMapIntensity = SKY_LIGHT;
+    });
+  }
+  pmremReady = true;
+  lightFromSky('courtyard');
   const c1 = new THREE.Color();
   const blend = (a, b, k) => c1.copy(a).lerp(b, k);
 
@@ -904,7 +954,7 @@ export function create3D(canvas) {
     skyMat.color.setRGB(mix(a.sky[0], b.sky[0]) + flash * 0.7, mix(a.sky[1], b.sky[1]) + flash * 0.7, mix(a.sky[2], b.sky[2]) + flash * 0.8);
     hemi.color.copy(blend(a.sky0, b.sky0, k));
     hemi.groundColor.copy(blend(a.ground, b.ground, k));
-    hemi.intensity = mix(a.hemi[2], b.hemi[2]) + flash * 1.6;
+    hemi.intensity = mix(a.hemi[2], b.hemi[2]) * HEMI_WITH_SKY + flash * 1.6;
     key.color.copy(blend(a.keyC, b.keyC, k));
     key.intensity = mix(a.key[1], b.key[1]) + flash * 0.8;
     moonLight.color.copy(blend(a.moonC, b.moonC, k));
