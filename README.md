@@ -227,7 +227,8 @@ D-pad and A/B in the menus, the stick to walk, X, B, A, Y, LB/LT and RB/RT
 in a fight, Start to pause - and two pads at once in 2 Players, each driving
 its own fighter. The help screen's controls table has a column for the
 keyboard, two players, the gamepad and the touch buttons, and lights the one
-you are using. A gamepad also works the menus: stick or D-pad
+you are using - and puts it first, since on a narrow screen the table
+scrolls sideways. A gamepad also works the menus: stick or D-pad
 moves between buttons, A chooses, B goes back. On a phone or tablet a thumb stick and six buttons
 appear on screen; **Arrange buttons** (menu and pause screen) lets you drag
 each one where you like and resize them, saved per orientation on the device.
@@ -1165,6 +1166,12 @@ and the heartbeat, the crowd and the weather go quiet.
 - **Crystals** appear on the floor: gold gives energy, green gives health.
 - As the clock runs down a **ring of fire** closes in. A fighter knocked into
   it is scorched and bounced back.
+
+The third punch of punch, punch, punch steps in as it swings, as the
+launcher (punch, punch, kick) always did: the first two punches push the
+rival back, and a string started at the jab's full reach (84) lost its
+third punch. Now it lands from up to 88 (a test checks 84); the duel
+balance did not move (Zelrith 47.7 % before, 47.2 % after, 2,100 fights).
 
 ## Online play
 

@@ -172,9 +172,11 @@ export const MOVES = {
     startup: 6, active: 4, recovery: 14, dmg: 7, reach: 86, arc: 0.9, y0: 30, y1: 170, aim: 190,
     hitstun: 0, blockstun: 12, push: 3, gain: 10, knockdown: true, heavy: true, launch: 12.5, speed: 4, go: [0, 7],
   },
+  // (It steps in as it swings, like the launcher: the first two punches push
+  // the rival back, and from the jab's full reach the third fell short.)
   punch3: {
     startup: 6, active: 4, recovery: 17, dmg: 9, reach: 92, arc: 0.9, y0: 40, y1: 170, aim: 190,
-    hitstun: 0, blockstun: 14, push: 9, gain: 11, knockdown: true, heavy: true,
+    hitstun: 0, blockstun: 14, push: 9, gain: 11, knockdown: true, heavy: true, speed: 4, go: [0, 6],
   },
   kick: {
     startup: 8, active: 4, recovery: 13, dmg: 10, reach: 104, arc: 0.75, y0: 30, y1: 140, aim: 210,

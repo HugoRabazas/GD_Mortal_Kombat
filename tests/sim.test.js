@@ -1651,3 +1651,18 @@ test('two plain blows of the same weight meeting at once clash: no damage, both 
   assert.ok(!mixed.seen.some((e) => e.type === 'clash'));
   assert.ok(mixed.lost.some((x) => x > 0));
 });
+
+test('punch, punch, punch started at the jab\'s full reach lands all three', () => {
+  const s = createMatch(['ruko', 'shadow']);
+  while (s.phase !== 'fight') step(s, [0, 0]);
+  s.f[0].x = -42;
+  s.f[1].x = 42; // 84 apart: as far as the jab reaches
+  s.f[0].z = s.f[1].z = 0;
+  const plan = { 0: INPUT.PUNCH, 8: INPUT.PUNCH, 16: INPUT.PUNCH };
+  const kinds = [];
+  for (let t = 0; t < 90; t++) {
+    step(s, [plan[t] || 0, 0]);
+    for (const e of s.ev) if (e.type === 'hit' && e.by === 0) kinds.push(e.kind);
+  }
+  assert.deepEqual(kinds, ['punch', 'punch2', 'punch3']);
+});
