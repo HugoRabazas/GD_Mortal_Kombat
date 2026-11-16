@@ -73,6 +73,7 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   partner plays that back over and over (with a short breath between), so
   you can practise against exactly the attack that gives you trouble.
   Record again, or Stop replay, from the same menu.
+  A menu tip points to it.
 - **Tutorial**: nine short lessons (Basics, Defence, Getting up, Throws, On
   the run, In the air, Combos, Counters, Specials), each against a partner
   scripted for it: one stands still, one kicks on the beat (to block, perfect
