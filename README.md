@@ -482,6 +482,24 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **Fire toss**: a throw of a rival standing within 120 of the ring of fire,
+  with the flames beyond them (the thrower facing the fire through them),
+  flings them forward into it instead of over the head: the throw's 10 and
+  the burn's 5, and they bounce back off the flames, open to one more blow
+  (INTO THE FIRE!). Elsewhere, or with the fire behind the thrower, the
+  throw is as before. The CPU tosses a rival it finds by the fire. A new
+  Tutorial lesson, **Ring of fire** (the ring was taught nowhere): a partner
+  who waits by the flames, and two steps - drive them in with a kick, and
+  the fire toss - each played by a scripted player in the tests. Pause list
+  (Basics), help, a menu tip and a rules test (104). With ten lessons the
+  Tutorial's list takes four columns on a wide phone held sideways and
+  slimmer buttons on a short one: every screen, the pause tabs and all 18
+  tips still fit at the seven phone sizes. Duels 48-54 %, brawl wins
+  14-22 %, ladder 100 / 73 / 63 %, boss beats Hard 94 %.
+- **Online, a dropped connection in the middle of a fight**: could not be
+  reproduced here - two browsers on one machine keep their direct link
+  when one goes offline - so the fight simply carried on; still to be seen
+  on real phones.
 - **The newer four's rituals sound their own**: Meru's fist rings on an
   iron breastplate, Gleh's bowstring twangs, Kichta's blade hand hisses
   through the air twice, Zelrith's spins whistle and the bow ends on two

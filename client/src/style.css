@@ -224,6 +224,27 @@ body {
   }
 }
 
+/* Ten lessons on a small phone held sideways: four columns when there is
+   width for them, and slimmer buttons below 400 px of height. */
+@media (max-height: 480px) and (min-width: 700px) {
+  .lessons .lesson-list {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-height: 400px) {
+  .lessons .lesson-list {
+    gap: 4px;
+  }
+
+  .lessons .lesson-list .btn {
+    padding-top: 3px;
+    padding-bottom: 3px;
+    font-size: 1rem;
+    line-height: 1.1;
+  }
+}
+
 .lessons .who {
   display: flex;
   align-items: center;

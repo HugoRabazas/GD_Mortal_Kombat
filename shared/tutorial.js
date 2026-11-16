@@ -109,6 +109,16 @@ export const LESSONS = [
     ],
   },
   {
+    id: 'ring',
+    title: 'Ring of fire',
+    partner: 'edger',
+    intro: 'Your partner waits by the ring of fire.',
+    steps: [
+      { id: 'burn', name: 'Into the flames', how: (k) => `${k('k')} with the partner between you and the fire: a blow that drives them in burns them`, ev: (e) => e.type === 'burn' && e.slot === 1 },
+      { id: 'fireToss', name: 'Fire toss', how: (k) => `${k('g')} up close, the fire beyond them: flung into the flames, not over your head`, ev: mine('fireToss') },
+    ],
+  },
+  {
     id: 'specials',
     title: 'Specials',
     partner: 'still',
@@ -222,10 +232,23 @@ export function floorer() {
   };
 }
 
+// A partner who walks to the edge of the ring of fire and waits there,
+// facing the middle - and walks back to it after every blow.
+export function edger() {
+  return (s, slot) => {
+    const me = s.f[slot];
+    if (me.state !== 'idle' && me.state !== 'walk') return 0;
+    const tx = s.ringR - 48; // close enough that a kick drives them into it
+    if (Math.hypot(tx - me.x, me.z) > 8) return walk(tx - me.x, -me.z);
+    return 0;
+  };
+}
+
 // The partner a lesson asks for, as a controller: (state, slot) -> buttons.
 export function tutorPartner(kind) {
   if (kind === 'kicker') return drummer();
   if (kind === 'floorer') return floorer();
+  if (kind === 'edger') return edger();
   if (kind === 'blocker') return () => INPUT.BLOCK;
   return () => 0;
 }

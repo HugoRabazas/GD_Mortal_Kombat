@@ -619,6 +619,31 @@ test('kick, punch is a stepping elbow that carries on into either ender; a guard
   assert.ok(launched, 'and it lands');
 });
 
+test('a throw by the fire with the flames beyond the rival is a fire toss; elsewhere the usual throw', () => {
+  const throwAt = (x, facing = 1) => {
+    const s = startFight();
+    Object.assign(s.f[0], { x: x - 55 * facing, z: 0, dir: facing > 0 ? 0 : Math.PI });
+    Object.assign(s.f[1], { x, z: 0, dir: facing > 0 ? Math.PI : 0 });
+    const hp = s.f[1].hp;
+    const seen = [];
+    step(s, [INPUT.GRAB, 0]);
+    for (let i = 0; i < 90; i++) {
+      step(s, idle(s));
+      seen.push(...s.ev);
+    }
+    return { toss: seen.some((e) => e.type === 'fireToss'), burnt: seen.some((e) => e.type === 'burn' && e.slot === 1), lost: hp - s.f[1].hp };
+  };
+  const edge = throwAt(ARENA.R - 70);
+  assert.ok(edge.toss && edge.burnt, 'flung into the fire');
+  assert.ok(edge.lost >= 14, `the throw and the burn: ${edge.lost}`);
+  const middle = throwAt(60);
+  assert.ok(!middle.toss && !middle.burnt, 'in the middle: over the head as ever');
+  // By the fire but facing away from it (the fire behind the thrower): the
+  // usual throw, over the head - which is where the fire is.
+  const back = throwAt(ARENA.R - 140, -1);
+  assert.ok(!back.toss);
+});
+
 test('grab in the air: an air throw with a rival in the air close by, the stomp with them on the ground', () => {
   // Both jump together, face to face: grab at the top.
   const s = startFight();

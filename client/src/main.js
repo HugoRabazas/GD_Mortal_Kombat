@@ -188,6 +188,7 @@ const TIPS = [
   (c) => `Tip: <kbd>${c.g}</kbd> is a <b>throw</b>: it lifts the rival over your head, and it goes straight through a guard.`,
   (c) => `Tip: <kbd>${c.b}</kbd> and a direction is a <b>dodge roll</b> - blows pass through you for a moment.`,
   (c) => `Tip: knock a rival into the <b>ring of fire</b> as it closes in for extra damage.`,
+  (c) => `Tip: <kbd>${c.g}</kbd> a rival with the fire beyond them for a <b>fire toss</b> into the flames.`,
   (c) => `Tip: gold crystals give energy, green ones health. Walk over one to take it.`,
   (c) => `Tip: a guard only stops what comes from the front. Get behind a blocking rival.`,
   (c) => `Tip: in a brawl, do not stand between two rivals.`,
@@ -501,7 +502,7 @@ function helpScreen() {
         <li><b>Block</b> only stops what comes from the front. Raising it turns you to face whoever is already swinging, but a guard held too early stays put: get behind a blocking rival, or step out of the way of a projectile.</li>
         <li><b>Jump</b> over a ground stomp or a slide.</li>
         <li><b>Crystals</b> appear on the floor: gold gives energy, green gives health. Walk over one to take it.</li>
-        <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage: knocked down into it, they bounce back off it, open to one more blow.</li>
+        <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage: knocked down into it, they bounce back off it, open to one more blow. A throw with the flames beyond the rival is a <b>fire toss</b> straight into them.</li>
         <li>Each fighter's <b>finisher</b> is their own: a chain of blows with its own scene, ending in a last blow the camera closes in on. In a brawl, once it has landed the others cannot stop it.</li>
         <li><b>Arcade</b>: ${STAGES.length} fights in a row, the last against a boss, moving between the arenas as you climb.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
@@ -610,7 +611,7 @@ function movesCard() {
       <dt>${k(key.g)}, far</dt><dd><b>${own2 ? 'Signature move' : esc(getFighter(s.f[slots[0]].char).signature.name)}</b>: grab with the rival out of reach - ${SIG_NOTES[getFighter(s.f[slots[0]].char).signature.move]}.</dd>
       <dt>Hold ${k(key.k)}</dt><dd><b>Guard-breaker</b>: charge a kick, let go - it smashes a guard open. Open to blows while charging.</dd>
       <dt>${k(key.b)} + ${k(key.g)}</dt><dd><b>Taunt</b>: standing still - a little energy, but any blow on you is a counter hit.</dd>
-      <dt>Ring of fire</dt><dd>Knock a rival down into the flames: they <b>bounce</b> back off them, open to one more blow.</dd>`],
+      <dt>Ring of fire</dt><dd>Knocked down into it, a rival <b>bounces</b> back off it. ${k(key.g)} with the flames beyond them: a <b>fire toss</b> in.</dd>`],
     strings: ['Strings', `
       <dt>${k(key.p, key.p, key.p)}</dt><dd><b>Three-punch combo</b>; each punch must land, the third knocks down.</dd>
       <dt>${k(key.p, key.p, key.k)}</dt><dd><b>Launcher</b>: the rival goes up. Hold ${k(key.j)} to chase and hit them in the air (a <b>juggle</b>, twice at most).</dd>

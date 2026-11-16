@@ -86,6 +86,11 @@ const BACKSTEP = { ticks: 10, safe: 7, speed: 11.5, rest: 3, away: -0.85 };
 // up can strike from tick `rise` of the getup.
 const OUT_OF = { from: 7, rise: 4 };
 const SPLAT = { speed: 3.2, dmg: 5 }; // being knocked into the ring of fire
+// A throw of a rival standing close to the fire, with the fire beyond them:
+// a fire toss - flung forward into the flames instead of over the head.
+// `edge`: how close to the fire they must stand; `facing`: how squarely the
+// thrower must face the fire through them; `speed`: how hard they are flung.
+const TOSS = { edge: 120, facing: 0.5, speed: 9 };
 // ...and thrown back off it: a fighter knocked down into the fire bounces up
 // off it (`vh`), open to one more blow in the air before landing; one still
 // on their feet is held in the stun a little longer (`stun`).
@@ -505,6 +510,7 @@ function newFighter(charId, slot, count, mod) {
     reel: 0, // ticks left staggering after a heavy blow was guarded perfectly
     prev: 0, // buttons held on the previous tick
     held: -1, // slot of the rival being thrown, or -1
+    toss: false, // the throw under way is a fire toss (see TOSS)
     jumpT: 0, // ticks left on a remembered press of jump (for the air jump)
     runJump: false, // the jump was taken out of a run (kick is a flying knee)
     juggle: 0, // hits a launched fighter can still take before landing
@@ -1199,7 +1205,7 @@ function carryThrow(s, f) {
   const t = f.t;
   // Angle round the thrower: 0 = in front, PI = behind.
   const k = t < THROW.lift ? 0 : Math.min(1, (t - THROW.lift) / (THROW.slam - THROW.lift));
-  const turn = k * Math.PI;
+  const turn = f.toss ? 0 : k * Math.PI; // (a fire toss keeps them in front)
   const lift = t < THROW.lift ? (t / THROW.lift) * 0.45 : Math.sin(k * Math.PI) * 0.55 + 0.45 * (1 - k);
   def.x = f.x + Math.cos(f.dir + turn) * THROW.reach * Math.max(0.35, Math.abs(Math.cos(turn)));
   def.z = f.z + Math.sin(f.dir + turn) * THROW.reach * Math.max(0.35, Math.abs(Math.cos(turn)));
@@ -1212,6 +1218,14 @@ function carryThrow(s, f) {
     f.held = -1;
     if (s.phase === 'fight') {
       applyHit(s, f, def, MOVES.grab, f.x, f.z, 'grab');
+      if (f.toss && def.state === 'down') {
+        // Flung outwards into the flames (keepInside burns them, and they
+        // bounce back off the fire towards the thrower).
+        const r = Math.hypot(def.x, def.z) || 1;
+        def.vx = (def.x / r) * TOSS.speed;
+        def.vz = (def.z / r) * TOSS.speed;
+        emit(s, 'fireToss', { by: f.slot, on: def.slot, x: def.x, z: def.z });
+      }
     } else {
       def.state = 'down';
       def.t = 0;
@@ -1527,6 +1541,9 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     att.t = 0;
     att.move = null;
     att.held = def.slot;
+    // Near the fire, facing it through the rival: a fire toss.
+    const r = Math.hypot(def.x, def.z) || 1;
+    att.toss = s.ringR - r < TOSS.edge && (dx * def.x + dz * def.z) / r > TOSS.facing;
     def.state = 'held';
     def.t = 0;
     def.move = null;

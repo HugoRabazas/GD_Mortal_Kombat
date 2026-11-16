@@ -155,6 +155,14 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         if (!quiet) play('pickup');
         break;
       }
+      case 'fireToss': {
+        // A throw that flings the rival into the ring of fire.
+        const p = project(e.x, 120, e.z);
+        floatText(p.x, p.y - 30, 'INTO THE FIRE!', '#ff8a2a', 26);
+        addShake(6);
+        if (!quiet) play('heave');
+        break;
+      }
       case 'escape': {
         // A throw broken: both thrown apart in a ring of sparks.
         const p = project(e.x, e.h, e.z);

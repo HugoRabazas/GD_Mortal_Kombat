@@ -431,6 +431,10 @@ export function aiInput(ai, s, me) {
   // A rival hiding behind a guard gets grabbed.
   if (o.state === 'block' && dist < 84 && rnd(ai) < cfg.attack * 0.35) return press(INPUT.GRAB);
 
+  // A rival standing by the fire with the flames beyond them: a fire toss.
+  const ro = Math.hypot(o.x, o.z) || 1;
+  if (dist < 70 && o.h <= 0 && s.ringR - ro < 110 && (dx * o.x + dz * o.z) / (dist * ro || 1) > 0.55 && rnd(ai) < cfg.punish * 0.3) return press(INPUT.GRAB);
+
   // --- in range ---
   const roll = rnd(ai);
   if (roll < cfg.attack + (style.attack || 0)) return press(rnd(ai) < 0.55 ? INPUT.PUNCH : INPUT.KICK);
