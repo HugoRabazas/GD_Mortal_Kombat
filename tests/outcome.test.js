@@ -19,6 +19,7 @@ test('the way a duel was won', () => {
 
 test('every fighter has a line for each way of winning', () => {
   for (const f of FIGHTERS) for (const how of ['perfect', 'comeback', 'close']) assert.ok(f.quotes?.[how]?.length > 5, `${f.id} ${how}`);
+  for (const f of FIGHTERS) assert.ok(f.challenge?.length > 5 && f.challenge.length <= 44, `${f.id} challenge (short enough for a phone)`);
 });
 
 test('the way a brawl was won', () => {

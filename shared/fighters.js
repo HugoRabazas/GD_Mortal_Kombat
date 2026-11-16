@@ -43,6 +43,7 @@ export const FIGHTERS = [
     gear: ['scarf'],
     victory: 'howl',
     entrance: 'prowl', // the ritual while a round is announced
+    challenge: 'The moon is up. Your luck is not.', // called out as a duel's first round is announced
     quote: 'The moon saw that one coming. You did not.',
     // Said instead when the match went a certain way (see winnerQuote).
     quotes: { perfect: 'Not a scratch. The moon is kind tonight.', comeback: 'One round to wake up. Then the moon rose.', close: 'Close. The moon still chose me.' },
@@ -67,6 +68,7 @@ export const FIGHTERS = [
     gear: ['pads'],
     victory: 'calm',
     entrance: 'bow', // the ritual while a round is announced
+    challenge: 'You will not see it coming.', // called out as a duel's first round is announced
     quote: 'Quiet. Quick. Finished.',
     // Said instead when the match went a certain way (see winnerQuote).
     quotes: { perfect: 'You never touched me. You never saw me.', comeback: 'I let you have one. Only one.', close: 'Closer than I like. Still mine.' },
@@ -91,6 +93,7 @@ export const FIGHTERS = [
     build: 'sumo',
     victory: 'stomp',
     entrance: 'clap', // the ritual while a round is announced
+    challenge: 'Go on. Try to move me.', // called out as a duel's first round is announced
     quote: 'The mountain does not move. You did.',
     // Said instead when the match went a certain way (see winnerQuote).
     quotes: { perfect: 'Not one stone fell.', comeback: 'Mountains are slow to start. Then they do not stop.', close: 'Shaken. Not moved.' },
@@ -116,6 +119,7 @@ export const FIGHTERS = [
     gear: ['skirt', 'ponytail'],
     victory: 'cheer',
     entrance: 'swirl', // the ritual while a round is announced
+    challenge: 'Ready to get burned?', // called out as a duel's first round is announced
     quote: 'Two flames, one winner!',
     // Said instead when the match went a certain way (see winnerQuote).
     quotes: { perfect: 'Not even singed!', comeback: 'Down one - then two flames up!', close: 'Phew, a hot one! Still won!' },
@@ -141,6 +145,7 @@ export const FIGHTERS = [
     gear: ['pads'],
     victory: 'salute',
     entrance: 'oath',
+    challenge: 'I promised a fair fight. Not an easy one.', // called out as a duel's first round is announced
     quote: 'I gave my word. You gave up.',
     // Said instead when the match went a certain way (see winnerQuote).
     quotes: { perfect: 'Clean, as I promised.', comeback: 'I lost a round. I never lost my word.', close: 'Barely kept. Still kept.' },
@@ -167,6 +172,7 @@ export const FIGHTERS = [
     gear: ['skirt', 'ponytail'],
     victory: 'volley',
     entrance: 'draw',
+    challenge: 'Look up. The moon is watching.', // called out as a duel's first round is announced
     quote: 'The moon never misses. Neither do I.',
     // Said instead when the match went a certain way (see winnerQuote).
     quotes: { perfect: 'Not a single miss on me.', comeback: 'The moon grows back. So did I.', close: 'A thin moon is still a moon.' },
@@ -192,6 +198,7 @@ export const FIGHTERS = [
     gear: ['scarf'],
     victory: 'sheathe',
     entrance: 'flourish',
+    challenge: 'Catch me if you can.', // called out as a duel's first round is announced
     quote: 'One step ahead. Always.',
     // Said instead when the match went a certain way (see winnerQuote).
     quotes: { perfect: 'Too fast to touch.', comeback: 'Behind you? Not for long.', close: 'Half a step. Enough.' },
@@ -218,6 +225,7 @@ export const FIGHTERS = [
     gear: ['scarf'],
     victory: 'laugh',
     entrance: 'twirl',
+    challenge: 'Ha! Let\'s go, let\'s go!', // called out as a duel's first round is announced
     quote: 'Ha! Again, again!',
     // Said instead when the match went a certain way (see winnerQuote).
     quotes: { perfect: 'Ha! Didn\'t even feel it!', comeback: 'Ha! Thought I was done? Again!', close: 'Ha... ha... again? Give me a minute.' },

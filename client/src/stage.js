@@ -369,7 +369,8 @@ function finisherCutIn(ctx, s, worn) {
 }
 
 // The line-up shown while the first round is announced: every fighter's
-// portrait and name, so everyone knows who is who before the bell.
+// portrait and name, so everyone knows who is who before the bell - and in
+// a duel, each fighter's challenge.
 function lineUp(ctx, s, labels, worn) {
   if (s.round !== 1 || s.phase !== 'intro' || s.pt > 70) return;
   const fade = Math.min(1, s.pt / 10, (70 - s.pt) / 10);
@@ -408,6 +409,14 @@ function lineUp(ctx, s, labels, worn) {
     ctx.strokeText(char.title, x, y + r + 39, gap - 16);
     ctx.fillStyle = '#f3d9a8';
     ctx.fillText(char.title, x, y + r + 39, gap - 16);
+    // In a duel, the fighter's challenge above the portrait.
+    if (n === 2 && char.challenge) {
+      ctx.font = 'italic 600 15px Barlow, system-ui, sans-serif';
+      ctx.lineWidth = 4;
+      ctx.strokeText(`\u201c${char.challenge}\u201d`, x, y - r - 18, gap - 16);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(`\u201c${char.challenge}\u201d`, x, y - r - 18, gap - 16);
+    }
     if (labels[f.slot]) {
       ctx.font = '700 11px Barlow, system-ui, sans-serif';
       ctx.strokeText(labels[f.slot], x, y + r + 56);

@@ -722,6 +722,15 @@ and the heartbeat, the crowd and the weather go quiet.
   Its whoosh plays at once too (1-13 ms after the press instead of
   180-290 ms relayed), and the host's own word of that swing is then not
   played again - checked on ten presses, each heard once.
+- **A challenge before the bell** (loop 177): as a duel's first round is
+  announced, the line-up of the two fighters now shows each one's
+  challenge above their portrait - Jackie's "Go on. Try to move me.",
+  Kichta's "Catch me if you can." (every fighter has one, 44 characters at
+  most, tested). A first try put them in a caption low on the screen: it
+  ran into the line-up on an upright phone and into FIGHT!, so they went
+  into the line-up itself. Live checks after loop 176's online change:
+  a rollback duel, chat, looks, leaving and a whole match on the public
+  site, all fine.
 - **Vibration can be turned off** (loop 174): the phone already buzzed
   (and a gamepad rumbled) on the blows that matter - hits on you, throws,
   finishers. Settings now has **Vibration: on/off**, shown where the device
