@@ -52,6 +52,17 @@ export const LESSONS = [
     ],
   },
   {
+    id: 'pressure',
+    title: 'Under pressure',
+    partner: 'comboer',
+    energy: true, // (the burst costs half the bar)
+    intro: 'Your partner walks up and throws a three-punch string, again and again.',
+    steps: [
+      { id: 'blockString', name: 'Block the string', how: (k) => `hold ${k('b')} as the punches come`, ev: (e) => e.type === 'block' && e.on === 0 },
+      { id: 'burst', name: 'Burst out', how: (k) => `caught by the string, from its second punch: ${k('b')} and ${k('s')} together - half your energy`, ev: mine('burst') },
+    ],
+  },
+  {
     id: 'throws',
     title: 'Guards',
     partner: 'blocker',
@@ -249,6 +260,45 @@ export function floorer() {
   };
 }
 
+// A partner who walks up to a standing player and throws a three-punch
+// string at them (a punch every few ticks, so each one chains), then rests
+// a moment before the next - to block, or to burst out of.
+export function comboer() {
+  let rest = 40;
+  let left = 0; // punches of the string still to throw
+  let wait = 0;
+  return (s, slot) => {
+    const me = s.f[slot];
+    const you = s.f[0];
+    if (me.state === 'hit' || me.state === 'down') {
+      // Burst away (or struck): the string is over.
+      left = 0;
+      rest = REST;
+      return 0;
+    }
+    if (left > 0) {
+      if (--wait > 0) return 0;
+      left--;
+      wait = 10;
+      if (!left) rest = REST;
+      return INPUT.PUNCH;
+    }
+    const standing = you.state === 'idle' || you.state === 'walk' || you.state === 'block';
+    if (!standing) return 0;
+    if (rest > 0) {
+      rest--;
+      return 0;
+    }
+    const gap = hypot(you.x - me.x, you.z - me.z);
+    if (gap > 62) return walk(you.x - me.x, you.z - me.z);
+    if (me.state === 'idle' || me.state === 'walk') {
+      left = 3;
+      wait = 1;
+    }
+    return 0;
+  };
+}
+
 // A partner who walks to the edge of the ring of fire and waits there,
 // facing the middle - and walks back to it after every blow.
 export function edger() {
@@ -265,6 +315,7 @@ export function edger() {
 export function tutorPartner(kind) {
   if (kind === 'kicker') return drummer();
   if (kind === 'floorer') return floorer();
+  if (kind === 'comboer') return comboer();
   if (kind === 'edger') return edger();
   if (kind === 'blocker') return () => INPUT.BLOCK;
   return () => 0;

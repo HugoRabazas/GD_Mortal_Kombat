@@ -731,7 +731,14 @@ and the heartbeat, the crowd and the weather go quiet.
   never on Easy). Balance at seed 500 still in its ranges: duels 47-54 %,
   brawls 14-21 %. In the help and the pause screen's Defence list (two of
   its lines shortened so it still fits at 360x640); a rules test plays it
-  from a real punch string.
+  from a real punch string. Taught in the Tutorial's new **Under pressure**
+  lesson (loop 173): a partner walks up and throws a three-punch string,
+  again and again, with your energy kept full - block the string, then
+  burst out of one (tests: the partner's strings reach a second blow, and
+  both steps can be done; the twelve lessons fit at the seven sizes). On a
+  touch screen, block held and special with a second finger bursts (real
+  multi-touch, at 360x640, 568x320, 844x390; the two buttons 48-72 px
+  apart).
 - **Rollback costs a phone little** (loop 172): in a four-player brawl at a
   361 ms ping, one guest's page spent 8.9 % of a processor core on scripts
   (6.6 % the classic way), 30 % on all its work (29 %), and 14 MB of memory

@@ -169,6 +169,8 @@ const BOTS = {
   backstep: () => (s, t) => (t % 40 < 2 ? INPUT.BLOCK | (s.f[1].x > s.f[0].x ? INPUT.LEFT : INPUT.RIGHT) : 0),
   tech: () => (s) => (s.f[0].state === 'down' ? INPUT.BLOCK : 0),
   escape: () => (s) => (s.f[0].state === 'held' ? INPUT.GRAB : 0),
+  blockString: () => () => INPUT.BLOCK,
+  burst: () => (s, t) => (s.f[0].state === 'hit' && s.f[0].taken >= 2 ? INPUT.BLOCK | (t % 2 ? INPUT.SPECIAL : 0) : 0),
   wakeRoll: () => (s) => (s.f[0].state === 'getup' ? INPUT.BLOCK | INPUT.UP : 0),
   riseKick: () => (s) => (s.f[0].state === 'getup' && s.f[0].t >= 5 ? INPUT.PUNCH : 0),
   guarded: () => routine(60, 30, (k) => (k === 0 ? INPUT.PUNCH : 0)),
@@ -288,4 +290,25 @@ test('every move the Record counts is taught by a lesson', async () => {
   const steps = new Set(LESSONS.flatMap((l) => l.steps.map((st) => st.id)));
   const missing = keys.filter((k) => !steps.has(k) && !TAUGHT.has(k) && !(k === 'punch2' && steps.has('combo')) && !(k === 'breaker' && steps.has('breaker')));
   assert.deepEqual(missing, []);
+});
+
+test('the pressing partner throws strings: block them, and burst out of one', () => {
+  const lesson = LESSONS.find((l) => l.id === 'pressure');
+  assert.ok(lesson.energy, 'energy refilled for the burst');
+  // Strings land when you stand there: count the second blows.
+  const { s, partner } = lessonFight('comboer');
+  let seconds = 0;
+  for (let t = 0; t < 1200; t++) {
+    step(s, [0, partner(s, 1)]);
+    if (s.ev.some((e) => e.type === 'hit' && e.on === 0 && e.combo === 2)) seconds++;
+    for (const f of s.f) f.hp = f.maxHp;
+  }
+  assert.ok(seconds >= 3, `strings that reached a second blow: ${seconds}`);
+  assert.ok(play(lesson, () => INPUT.BLOCK, 600).has('blockString'));
+  // Caught by the second punch, block + special (the energy refilled as in the game).
+  const burst = play(lesson, (st, t) => {
+    st.f[0].meter = 100;
+    return st.f[0].state === 'hit' && st.f[0].taken >= 2 ? INPUT.BLOCK | (t % 2 ? INPUT.SPECIAL : 0) : 0;
+  }, 1200);
+  assert.ok(burst.has('burst'));
 });
