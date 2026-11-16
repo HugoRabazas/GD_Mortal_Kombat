@@ -654,6 +654,23 @@ and the heartbeat, the crowd and the weather go quiet.
   "devices" meet in their own room over the live online service, link
   directly, and play a whole match to the end - both result screens show
   the same numbers.
+- **Online lag, looked into (after a laggy four-player match across
+  countries)**: measured on the live service with four players in their own
+  room. With a direct link the guests get 20 updates a second and a few ms
+  of trip; when the direct link fails (some mobile networks) everything is
+  relayed through the server: 7 updates a second and ~100 ms even with all
+  four on one machine - far worse between countries. And the whole fight
+  runs on the host's device: at under 10 frames a second it slows for
+  everyone, and if the host leaves the app it stops. Now:
+  - a quick tap can no longer be lost: every message from a guest carries
+    its last few button changes, numbered, and the host applies any it
+    missed (inputs.js, with tests);
+  - a small line under the clock shows each player how the game travels:
+    DIRECT or RELAYED, the trip to the host, updates a second and how many
+    were lost, the host's frame rate when it is low, or HOST AWAY when the
+    host left the app; the host sees its frame rate and the guests' pings;
+  - the result screen says how the match travelled, and the last ten such
+    lines are kept on the device to look into a laggy match.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

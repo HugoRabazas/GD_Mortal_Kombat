@@ -2988,3 +2988,10 @@ kbd {
   text-decoration: underline dotted rgba(232, 180, 84, 0.6);
   text-underline-offset: 3px;
 }
+
+/* The line on an online result saying how the match travelled. */
+.result .note.netline {
+  margin: 0;
+  font-size: 0.68rem;
+  color: var(--ash);
+}

@@ -924,6 +924,9 @@ function winnerQuote() {
 // A milestone reached or a best broken in this fight (see the Record screen),
 // as a line in the result card - a notice over the card hid its title or its
 // buttons.
+// Online: how the match travelled (the trip to the host, lost updates...), so
+// a laggy match tells us why.
+const netNote = () => (app.mode === 'online' && app.online?.netReport?.() ? `<p class="note netline">${esc(app.online.netReport())}</p>` : '');
 const recordNews = () => (app.newBests?.length ? `<p class="note news">New on your Record: ${esc(app.newBests.join(' · '))}</p>` : '');
 
 function resultScreen() {
@@ -935,13 +938,13 @@ function resultScreen() {
       : `<button type="button" class="btn primary" data-act="rematch">Rematch</button>
           <button type="button" class="btn" data-act="select">Change fighter</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>`;
-  if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result">${winnerQuote()}${statsCard()}${roomScoreNote()}${recordNews()}<div class="row">${again}</div></section>`;
+  if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result">${winnerQuote()}${statsCard()}${roomScoreNote()}${netNote()}${recordNews()}<div class="row">${again}</div></section>`;
   if (s.mode === 'arena' && app.mode !== 'arcade') {
     return `
       <section class="screen result">
         ${winnerQuote()}
         ${rankingList()}
-        ${app.mode === 'online' ? roomScoreNote() : ''}
+        ${app.mode === 'online' ? roomScoreNote() + netNote() : ''}
         ${app.levelMoved ? `<p class="note">The CPU is now on <b>${LEVEL_NAMES[app.levelMoved]}</b> for your next fight.</p>` : ''}
         ${recordNews()}<div class="row">${again}</div>
       </section>`;
