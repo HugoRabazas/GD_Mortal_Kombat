@@ -722,6 +722,15 @@ and the heartbeat, the crowd and the weather go quiet.
   Its whoosh plays at once too (1-13 ms after the press instead of
   180-290 ms relayed), and the host's own word of that swing is then not
   played again - checked on ten presses, each heard once.
+- **What's new, for players coming back** (loop 181): the menu's tip line
+  says "New: burst out of a combo (block + special), blows that clash, and
+  online fights that answer at once" on the first three openings of the
+  game after the news changes (never to newcomers, who get the Tutorial
+  note; NEWS in main.js), with the controls named for the device. Checked
+  at the seven sizes: NEW, NEW, NEW, then tips again; the menu fits (on the
+  shortest landscape phones that line is hidden for room, as tips are).
+  Live after the Clash: a rollback duel and a three-player brawl with a CPU
+  fighter identical on every screen.
 - **Clash** (loop 180): two plain blows of the same weight meeting on the
   same tick (punch against punch, kick against kick, and the blows of their
   strings) no longer trade damage: they clash - a white flash, CLASH!, a

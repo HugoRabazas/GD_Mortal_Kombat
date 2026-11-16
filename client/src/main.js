@@ -222,6 +222,29 @@ function menuTip() {
 }
 
 // True until this device has started its first fight.
+// What changed lately, for players coming back: shown in place of the tip
+// on the first few visits to the menu after it changes (never to newcomers,
+// who get the Tutorial note). Change NEWS.id with the text.
+const NEWS = {
+  id: 'burst-clash-rollback',
+  text: (c) => `New: <b>burst</b> out of a combo (<kbd>${c.b}</kbd> + <kbd>${c.s}</kbd>), blows that <b>clash</b>, and online fights that answer at once.`,
+};
+function newsLine() {
+  try {
+    const seen = JSON.parse(localStorage.getItem('gd-arena-news') || '{}');
+    const n = seen.id === NEWS.id ? seen.n : 0;
+    if (n >= 3) return '';
+    if (app.newsShownFor !== NEWS.id) {
+      // (counted once per opening of the game, not per redraw)
+      app.newsShownFor = NEWS.id;
+      localStorage.setItem('gd-arena-news', JSON.stringify({ id: NEWS.id, n: n + 1 }));
+    }
+    return NEWS.text(controlNames());
+  } catch {
+    return '';
+  }
+}
+
 function isNewcomer() {
   try {
     return localStorage.getItem('gd-arena-played') !== '1';
@@ -339,7 +362,7 @@ function menuScreen() {
         <button type="button" class="btn quiet" data-act="help">How to play</button>
       </div>
       ${best ? `<p class="best">Arcade best <b>${points(best)}</b></p>` : ''}
-      ${isNewcomer() ? '<p class="note">New here? The <b>Tutorial</b> teaches every move, step by step.</p>' : `<p class="note tip">${menuTip()}</p>`}
+      ${isNewcomer() ? '<p class="note">New here? The <b>Tutorial</b> teaches every move, step by step.</p>' : `<p class="note tip">${newsLine() || menuTip()}</p>`}
       <div class="foot">
         <button type="button" class="link" data-act="settings">Settings</button>
         <button type="button" class="link" data-act="record">Record</button>
