@@ -790,7 +790,9 @@ and the heartbeat, the crowd and the weather go quiet.
   the device, from the next fight), so the realistic body can be tried on a
   phone or in the Artifact without typing `?realbody`; Settings still fits
   at the seven sizes. The ring of fire and the hit flashes checked under
-  the new light: bright and readable.
+  the new light: bright and readable. Loop 194: the realistic body gets
+  a fighter's wraps on the wrists (they flash and glow with the rest), a
+  dark sole under each shoe and a collar at the neck.
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the

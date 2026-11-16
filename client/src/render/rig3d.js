@@ -193,6 +193,18 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
       });
   const left = limb(1);
   const right = limb(-1);
+  // Realistic details: fighter's wraps on the wrists, a darker sole under
+  // each shoe, a collar where the neck meets the shirt.
+  const wrapMat = real ? cloth('#ece4d2', 0.85) : null;
+  const soleMat = real ? new THREE.MeshStandardMaterial({ color: lin('#1c1416'), roughness: 0.9, metalness: 0 }) : null;
+  if (real) {
+    bodyMats.push(wrapMat); // (it flashes and glows with the rest)
+    for (const l of [left, right]) {
+      l.wrap = seg(0.07 * L, wrapMat, 0.07 * L, g.cyl, true);
+      l.sole = ball(0.14, 0.02, 0.07 * Math.sqrt(L), soleMat, true);
+    }
+  }
+  const collar = real && !sumo ? ball(build.torso[0] * 0.62, 0.035, build.torso[1] * 0.62, mats.secondary, true) : null;
   const pelvis = ball(...build.pelvis, sumo ? mats.accent : mats.secondary);
   const torso = real ? seg(build.torso[0] * 1.08, bare, build.torso[1] * 1.15, g.trunk) : seg(build.torso[0], bare, build.torso[1]);
   const belt = seg(build.torso[0] + 0.017, mats.accent, build.torso[1] + 0.017);
@@ -306,6 +318,10 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
       put(chest, sx - Math.sin(p.lean) * 6, sy + 9, 0);
       chest.rotation.z = -p.lean;
       stretch(neck, sx, sy, 0, nx, ny, 0);
+      if (collar) {
+        put(collar, sx, sy + 4, 0);
+        collar.rotation.z = -p.lean;
+      }
       if (belly) {
         put(belly, hx + (sx - hx) * 0.42 + 9, hy + (sy - hy) * 0.42, 0);
         put(apron, hx + 24, hy + 8, 0);
@@ -345,6 +361,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
         put(l.elbow, arm.jx, arm.jy, zs * 1.1);
         stretch(l.fore, arm.jx, arm.jy, zs * 1.1, arm.ex, arm.ey, zs * 0.7);
         put(l.fist, arm.ex, arm.ey, zs * 0.7);
+        if (l.wrap) stretch(l.wrap, arm.jx + (arm.ex - arm.jx) * 0.72, arm.jy + (arm.ey - arm.jy) * 0.72, zs * 0.78, arm.ex, arm.ey, zs * 0.7);
 
         const zh = build.hip * l.side;
         const leg = joint(hx, hy, footX, footY, LEN.thigh, LEN.shin, -1);
@@ -352,6 +369,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
         put(l.knee, leg.jx, leg.jy, zh * 1.2);
         stretch(l.shin, leg.jx, leg.jy, zh * 1.2, leg.ex, leg.ey - 6, zh * 1.3);
         put(l.foot, leg.ex + 5, leg.ey - 6, zh * 1.3);
+        if (l.sole) put(l.sole, leg.ex + 5, leg.ey - 2, zh * 1.3);
       }
 
       // The head looks at the camera whatever the body is doing, and rolls
@@ -403,6 +421,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
     dispose() {
       scene.remove(turn);
       for (const m of bodyMats) m.dispose();
+      soleMat?.dispose();
       headMat.dispose();
       ringMat.dispose();
       hull.dispose();
