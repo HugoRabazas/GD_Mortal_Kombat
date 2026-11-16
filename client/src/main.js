@@ -1020,7 +1020,7 @@ function lobbyScreen() {
         <div class="ladder">
           <span class="who">Online now · ${on.lobbyPeers.length}</span>
           <ol class="people">
-            ${on.lobbyPeers.map((p) => `<li>${head(p.char)}<span class="lname">${esc(p.name)}${p.id === on.me.id ? ' (you)' : ''}${p.wins ? ` <span class="wins" title="Fights won, all time">${p.wins} ${p.wins === 1 ? 'win' : 'wins'}</span>` : ''}</span><span class="ltag">${p.playing ? 'fighting' : p.room ? 'in a room' : 'in the lobby'}</span></li>`).join('')}
+            ${on.lobbyPeers.map((p) => `<li>${head(p.char)}<span class="lname pname"><span class="nm" title="${esc(p.name)}">${esc(p.name)}</span>${p.id === on.me.id ? '<span class="you">(you)</span>' : ''}${p.wins ? ` <span class="wins" title="Fights won, all time">${p.wins} ${p.wins === 1 ? 'win' : 'wins'}</span>` : ''}</span><span class="ltag">${p.playing ? 'fighting' : p.room ? 'in a room' : 'in the lobby'}</span></li>`).join('')}
           </ol>
         </div>
         <div class="ladder">
@@ -1081,7 +1081,7 @@ function roomScreen() {
           <ol class="people">
             ${players
               .map(
-                (p) => `<li>${head(p.char)}<span class="lname">${esc(p.name)}${p.id === on.me.id ? ' (you)' : ''}${wins[p.id] ? ` <span class="wins" title="Fights won in this room">${wins[p.id]} ${wins[p.id] === 1 ? 'win' : 'wins'}</span>` : ''}</span>
+                (p) => `<li>${head(p.char)}<span class="lname pname"><span class="nm" title="${esc(p.name)}">${esc(p.name)}</span>${p.id === on.me.id ? '<span class="you">(you)</span>' : ''}${wins[p.id] ? ` <span class="wins" title="Fights won in this room">${wins[p.id]} ${wins[p.id] === 1 ? 'win' : 'wins'}</span>` : ''}</span>
                   <span class="ltag ${p.ready || p.id === room.hostId ? 'ok' : ''}">${p.id === room.hostId ? 'host' : p.ready ? 'ready' : 'choosing'}</span></li>`,
               )
               .join('')}

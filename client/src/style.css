@@ -2684,11 +2684,6 @@ kbd {
     align-self: center;
   }
 
-  .screen.room .people .lname {
-    overflow-wrap: anywhere;
-    line-height: 1.1;
-  }
-
   .screen.room .people .ltag {
     grid-column: 2;
     justify-self: start;
@@ -2700,4 +2695,25 @@ kbd {
   .screen.select:not(.narrow) > .note {
     display: none;
   }
+}
+
+/* A player's name in the online lists: a long name is cut short with an
+   ellipsis, and "(you)" and the wins always show beside it. */
+.people .lname.pname {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3em;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.pname .nm {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pname .you,
+.pname .wins {
+  flex: none;
 }

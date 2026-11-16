@@ -148,6 +148,14 @@ function duelPanel(ctx, s, side, label, now, worn, top) {
 }
 
 // A brawl: one compact panel per fighter, two either side of the timer.
+// Text cut short with an ellipsis to fit a width (in the current font).
+function cutToWidth(ctx, text, maxW) {
+  if (ctx.measureText(text).width <= maxW) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+  return t + '…';
+}
+
 function arenaPanel(ctx, s, slot, label, now, worn) {
   const f = s.f[slot];
   const char = getFighter(f.char);
@@ -164,11 +172,24 @@ function arenaPanel(ctx, s, slot, label, now, worn) {
   energyBar(ctx, f, worn.glow, x + 60, 51, 96, 7, 1, now);
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
-  ctx.font = `italic 700 20px ${FONT}`;
-  outlined(ctx, char.name, x + 60, 25, '#ffffff', 3);
-  const nameW = ctx.measureText(char.name).width;
+  // The fighter's name and the player's (a nickname online, up to 14
+  // letters) share the room left of the points: the name shrinks a little,
+  // then the nickname is cut short, rather than run into the next panel.
+  const tag = out ? 'OUT' : label || '';
+  const room = 98;
   ctx.font = `700 10px ${BODY}`;
-  outlined(ctx, out ? 'OUT' : label, x + 66 + nameW, 25, out ? '#ff5a36' : SLOT_COLORS[slot], 3);
+  const tagW = ctx.measureText(tag).width;
+  let size = 20;
+  let nameW;
+  for (;;) {
+    ctx.font = `italic 700 ${size}px ${FONT}`;
+    nameW = ctx.measureText(char.name).width;
+    if (size <= 15 || nameW + 6 + tagW <= room) break;
+    size--;
+  }
+  outlined(ctx, char.name, x + 60, 25, '#ffffff', 3);
+  ctx.font = `700 10px ${BODY}`;
+  outlined(ctx, cutToWidth(ctx, tag, room - nameW - 6), x + 66 + nameW, 25, out ? '#ff5a36' : SLOT_COLORS[slot], 3);
   // Match points.
   ctx.textAlign = 'center';
   ctx.font = `700 30px ${FONT}`;

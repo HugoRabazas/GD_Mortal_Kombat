@@ -506,6 +506,15 @@ and the heartbeat, the crowd and the weather go quiet.
   The CPU on Hard and Boss uses it now and then; the Air combos lesson
   (energy bar full) teaches it. Names over a fighter in the air now float
   above where they are, not on their head.
+- **Long names online**: names of up to 14 letters (the most allowed) used
+  to wrap onto three lines in a room held upright, with the host / choosing
+  tag drawn over them, and in the lobby on a small phone held sideways they
+  pushed the fourth player out of sight. A long name is now cut short with
+  an ellipsis (the whole name shows on hover), with "(you)" and the wins
+  always beside it. And in an online fight of four, the players' names on
+  the scoreboard ran into the points and the next player's panel: the
+  fighter's name shrinks a little, then the nickname is cut short. Checked
+  with four 14-letter names at every phone size, upright and sideways.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
