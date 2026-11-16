@@ -945,6 +945,16 @@ export function create3D(canvas) {
   const rain = new THREE.LineSegments(rainGeo, rainMat);
   rain.frustumCulled = false;
   scene.add(rain);
+  // Where a drop meets the dais it leaves a ring that widens and fades.
+  const splashGeo = new THREE.RingGeometry(0.78, 1, 20);
+  const splashes = Array.from({ length: 48 }, () => {
+    const m = new THREE.Mesh(splashGeo, new THREE.MeshBasicMaterial({ color: 0xd4e0ff, transparent: true, depthWrite: false, opacity: 0, blending: THREE.AdditiveBlending, fog: false }));
+    m.rotation.x = -Math.PI / 2;
+    m.visible = false;
+    scene.add(m);
+    return { m, life: 0 };
+  });
+  let nextSplash = 0;
 
   // ---------- snow ----------
   // Flakes drift down slowly and sway; in the blizzard the wind takes them.
@@ -1185,7 +1195,16 @@ export function create3D(canvas) {
       for (let d = 0; d < drops; d++) {
         const r = rainSeed[d];
         r.y -= r.v * dt * 0.06;
-        if (r.y < 0) r.y += 12;
+        if (r.y < 0) {
+          r.y += 12;
+          // (on the dais only: the ground around lies lower)
+          if (r.x * r.x + r.z * r.z < 6.3 * 6.3 && Math.random() < 0.6) {
+            const sp = splashes[nextSplash++ % splashes.length];
+            sp.m.position.set(r.x, 0.02, r.z);
+            sp.life = 1;
+            sp.m.visible = true;
+          }
+        }
         const o = d * 6;
         rainPos[o] = r.x;
         rainPos[o + 1] = r.y;
@@ -1195,6 +1214,15 @@ export function create3D(canvas) {
         rainPos[o + 5] = r.z;
       }
       rainGeo.attributes.position.needsUpdate = true;
+    }
+
+    for (const sp of splashes) {
+      if (sp.life <= 0) continue;
+      sp.life -= dt / 380;
+      sp.m.visible = sp.life > 0 && rain.visible;
+      const sz = 0.03 + (1 - sp.life) * 0.13;
+      sp.m.scale.set(sz, sz, 1);
+      sp.m.material.opacity = Math.max(0, sp.life) * 0.5 * Math.min(1, rainNow * 1.5);
     }
 
     // Ring of fire.

@@ -1494,6 +1494,8 @@ marks fade after a few seconds. Stone and tiles keep none.
 On the frozen Summit the fighters' breath shows: a small cloud of mist
 leaves each mouth every couple of seconds (quicker while they move or
 fight), drifts the way they face, rises and is gone.
+In the Courtyard's storm the rain that reaches the dais leaves small rings
+of splash that widen and fade where each drop lands.
 
 - **Ember Courtyard**: round one at dusk, round two under a cold night sky,
   round three in a storm with rain, lightning and thunder.
