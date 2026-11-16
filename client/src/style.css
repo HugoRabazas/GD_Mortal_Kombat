@@ -3039,3 +3039,13 @@ kbd {
     animation: none;
   }
 }
+
+/* Result buttons on a short landscape phone above the smallest (640x360):
+   four of them (Replay KO among them) fit on one line. */
+@media (min-height: 346px) and (max-height: 420px) and (orientation: landscape) {
+  .screen.result .row .btn {
+    min-height: 40px;
+    padding: 6px 16px 4px;
+    font-size: 1.3rem;
+  }
+}

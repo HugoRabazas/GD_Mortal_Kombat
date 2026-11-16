@@ -733,7 +733,9 @@ and the heartbeat, the crowd and the weather go quiet.
   Online too, each player from their own screen; the match goes on
   underneath, and the replay gives way at once when the host takes the
   room back or starts the next fight (checked on the live service).
-  Checked at seven sizes (the result card still fits with the new
+  Checked at seven sizes (loop 167: at 640x360 the four buttons wrapped and
+  pushed the brawl result 2 px over - on short landscape phones they are now a
+  little smaller and fit on one line) (the result card still fits with the new
   button) in 2D and 3D, arcade and brawl results too.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
