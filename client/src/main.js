@@ -198,6 +198,7 @@ const TIPS = [
   (c) => `Tip: <kbd>${c.s}</kbd> in the air is your special's own <b>air version</b>. With <kbd>${c.p}</kbd> too, and two thirds of the bar: its <b>EX</b> version.`,
   (c) => `Tip: <kbd>${c.p}</kbd> right after a perfect guard is a <b>riposte</b> that opens a combo.`,
   (c) => `Tip: a rival hiding behind a guard? Hold <kbd>${c.b}</kbd>, then <kbd>${c.k}</kbd>: a <b>guard sweep</b> under it.`,
+  (c) => `Tip: <kbd>${c.k}</kbd> as a thrown rival lands is a <b>pursuit</b> - and <kbd>${c.b}</kbd> on the floor (a quick rise) escapes one.`,
   (c) => `Tip: getting up, hold <kbd>${c.b}</kbd> and a direction to <b>roll clear</b> as you rise.`,
   (c) => `Tip: new to a move? The <b>Tutorial</b> has a short lesson for it.`,
   // Only on the website, on a touch screen, when not opened from the home screen.
@@ -502,7 +503,7 @@ function helpScreen() {
         <li><b>In the air</b>: jump again for a <b>double jump</b>; punch dives at the rival, kick is a flying kick, grab a <b>stomp</b> straight down - or, with a rival in the air close by, an <b>air throw</b> that drives them into the floor; an air punch that lands flows into an axe kick, a flying kick into a <b>hammer fist</b> that bounces them; special is your <b>air special</b> (with punch, its EX version).</li>
         <li><b>Grab with the rival out of reach</b> is your fighter's <b>signature move</b> for crossing the gap: ${FIGHTERS.map((f) => `${f.name[0] + f.name.slice(1).toLowerCase()}'s ${f.signature.name}`).join(', ')}.</li>
         <li><b>Hold kick</b> to charge a <b>guard-breaker</b>: let go and it smashes a guard open.</li>
-        <li><b>Grab</b> (its own button, or punch + kick together) seizes a rival up close, lifts them over your head and slams them down behind you. Short reach, but it goes straight through a guard; in a brawl, anyone can break it with a blow.</li>
+        <li><b>Grab</b> (its own button, or punch + kick together) seizes a rival up close, lifts them over your head and slams them down behind you. Short reach, but it goes straight through a guard; in a brawl, anyone can break it with a blow. Kick as they land: a <b>pursuit</b> onto them (a quick rise escapes it).</li>
         <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment; punch or kick late in it strikes out of it. Block with the stick straight away from the rival is a quick <b>back-step</b>.</li>
         <li>Seized? Press <b>grab</b> at once to <b>break the throw</b>: both of you stagger apart.</li>
         <li>Knocked down? Press <b>block</b> on the floor for a <b>quick rise</b>: you are back up in a blink. Punch or kick while getting up for a <b>rising sweep</b>.</li>
@@ -621,6 +622,7 @@ function movesCard() {
       <dt>${k(key.p)}</dt><dd><b>Punch</b>: quick. Into a rival <b>winding up</b> a blow it is a <b>counter hit</b>, a quarter more damage.</dd>
       <dt>${k(key.k)}</dt><dd><b>Kick</b>: slower than a punch, heavier, longer reach.</dd>
       <dt>${k(key.g)}</dt><dd><b>Throw</b>: seize, lift and slam. Short reach, goes straight through a guard.</dd>
+      <dt>${k(key.g)}, ${k(key.k)}</dt><dd><b>Pursuit</b>: a knee onto a thrown rival. A quick rise escapes it.</dd>
       <dt>${k(key.g)}, far</dt><dd><b>${own2 ? 'Signature move' : esc(getFighter(s.f[slots[0]].char).signature.name)}</b>: grab with the rival out of reach - ${SIG_NOTES[getFighter(s.f[slots[0]].char).signature.move]}.</dd>
       <dt>Hold ${k(key.k)}</dt><dd><b>Guard-breaker</b>: charge a kick, let go - it smashes a guard open. Open to blows while charging.</dd>
       <dt>${k(key.b)} + ${k(key.g)}</dt><dd><b>Taunt</b>: standing still - a little energy, but any blow on you is a counter hit.</dd>

@@ -52,7 +52,7 @@ const STYLES = {
 };
 
 export function createAI(level = 'normal', seed = 1) {
-  return { cfg: LEVELS[level] || LEVELS.normal, seed: seed >>> 0 || 1, wait: 0, held: 0, tap: 0, tapT: 0, target: -1, retarget: 0, sweep: -1 };
+  return { cfg: LEVELS[level] || LEVELS.normal, seed: seed >>> 0 || 1, wait: 0, held: 0, tap: 0, tapT: 0, target: -1, retarget: 0, sweep: -1, pursue: -1 };
 }
 
 // Small deterministic random generator (mulberry32).
@@ -117,7 +117,11 @@ export function aiInput(ai, s, me) {
   if (s.phase !== 'fight' || f.hp <= 0) return 0;
   const cfg = ai.cfg;
   // A blow of ours just blocked: the rival is behind a guard (see the sweep).
-  for (const e of s.ev) if (e.type === 'block' && e.by === me) ai.walled = s.tick;
+  for (const e of s.ev) {
+    if (e.type === 'block' && e.by === me) ai.walled = s.tick;
+    // A throw of ours just slammed them down: now and then the pursuit.
+    if (e.type === 'slam' && e.by === me && cfg.parry > 0 && rnd(ai) < cfg.punish * 0.6) ai.pursue = s.tick;
+  }
 
   // Attack buttons are tapped (held 2 ticks) so each decision is one press.
   let tap = 0;
@@ -321,6 +325,11 @@ export function aiInput(ai, s, me) {
     return bits;
   };
 
+  // The pursuit after our throw: kick as soon as we can act again.
+  if (ai.pursue >= 0 && s.tick - ai.pursue < 18 && (f.state === 'idle' || f.state === 'walk')) {
+    ai.pursue = -1;
+    return press(INPUT.KICK);
+  }
   // A guard sweep under way: the guard is up, now the kick.
   if (ai.sweep >= 0 && s.tick - ai.sweep < 20 && f.state === 'block' && f.stun <= 0) {
     ai.sweep = -1;

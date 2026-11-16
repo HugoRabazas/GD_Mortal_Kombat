@@ -45,7 +45,7 @@ function buzz(ms) {
 const TAUNTS = { ruko: 'Awoo!', shadow: 'Too slow.', jackie: 'Hmph!', pixie: 'Catch me!', meru: 'Is that all?', gleh: 'Over here!', kichta: 'Too easy.', zelrith: 'Hehe! Again!' };
 
 // Which shape a blow's spark takes.
-const KICKS = new Set(['kick', 'kick2', 'hook', 'slide', 'sweep', 'airKick', 'axeKick', 'flyKnee', 'launch', 'riseKick', 'rollSpin', 'breaker', 'stomp', 'quake']);
+const KICKS = new Set(['kick', 'kick2', 'hook', 'slide', 'sweep', 'pursuit', 'airKick', 'axeKick', 'flyKnee', 'launch', 'riseKick', 'rollSpin', 'breaker', 'stomp', 'quake']);
 function sparkStyle(e) {
   if (e.stage) {
     if (e.stage === 'howl2') return 'slash';

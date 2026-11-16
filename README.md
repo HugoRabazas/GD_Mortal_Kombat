@@ -566,6 +566,13 @@ and the heartbeat, the crowd and the weather go quiet.
   sat on the scoreboard's clock. On phones under 340 px tall a duel's
   result card now starts under the scoreboard (a brawl's standings keep
   the height they need); every arcade and arena result still fits.
+- **Pursuit**: right after a throw slams its victim down, kick sends the
+  thrower after them - a hop and a dropping knee onto them where they lie
+  (a small blow that keeps them on the floor a moment longer). The answer
+  is a quick rise: block on the floor and they are up and out of its way,
+  and the thrower is left open. The CPU (Normal and up) pursues about half
+  of its throws, and already rises quickly; the Combos lesson teaches it;
+  help, pause list and a tip explain both sides.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

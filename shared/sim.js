@@ -75,6 +75,9 @@ const GETUP_TICKS = 18;
 // TECH_TICKS instead of DOWN_TICKS - once per knockdown, and not in the
 // last few ticks, when there would be nothing to gain.
 const TECH_TICKS = 8;
+// After a throw's slam, kick within this many ticks (the slam's own freeze
+// included) is the pursuit.
+const PURSUE_TICKS = 20;
 export const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle of where you face
 const ROLL = { ticks: 15, safe: 11, speed: 8.5, rest: 7, leeway: 6 }; // the dodge roll (`leeway`: ticks into a guard in which a direction still rolls)
 // Block with the stick pointing straight away from the nearest rival: a hop
@@ -234,6 +237,14 @@ export const MOVES = {
   slide: {
     startup: 7, active: 9, recovery: 20, dmg: 6, reach: 66, arc: 0.6, y0: -20, y1: 60, aim: 220,
     hitstun: 0, blockstun: 12, push: 6, gain: 10, knockdown: true, speed: 7.5, go: [7, 16], low: true,
+  },
+  // Right after a throw has slammed its victim down, kick: a dropping knee
+  // onto them where they lie (`otg`: it only hits a fighter on the floor,
+  // and leaves them there). A quick rise (block on the floor) gets them up
+  // and out of its way in time - and leaves the thrower open.
+  pursuit: {
+    startup: 15, active: 8, recovery: 16, dmg: 6, reach: 70, arc: 1.3, y0: -40, y1: 40, aim: 260,
+    hitstun: 0, blockstun: 8, push: 1, gain: 6, otg: true, speed: 6.5, go: [2, 15],
   },
   // Out of the guard (block held, standing still), kick: a low sweep. It
   // goes under an ordinary guard and floors whoever it catches - the answer
@@ -804,9 +815,12 @@ function tryAttack(s, f, inp = 0) {
     // Right after a perfect guard, kick is the launcher at once.
     const rip = f.rip > 0;
     f.rip = 0;
-    // From the guard, standing still: the guard sweep.
+    // From the guard, standing still: the guard sweep. Right after a throw:
+    // the pursuit onto the rival it floored.
     const guard = f.state === 'block' && !!(inp & INPUT.BLOCK) && !stick(inp);
-    startAttack(s, f, rip ? 'launch' : moving ? 'slide' : guard ? 'sweep' : 'kick');
+    const pursue = (f.pursue ?? -1) >= s.tick;
+    f.pursue = -1;
+    startAttack(s, f, rip ? 'launch' : pursue ? 'pursuit' : moving ? 'slide' : guard ? 'sweep' : 'kick');
     return true;
   }
   if (b & INPUT.PUNCH) {
@@ -1315,6 +1329,7 @@ function carryThrow(s, f) {
       def.stun = DOWN_TICKS;
     }
     emit(s, 'slam', { by: f.slot, on: def.slot, x: def.x, z: def.z });
+    f.pursue = s.tick + PURSUE_TICKS; // (kick until then: the pursuit)
   }
   if (t >= THROW.end) setState(f, 'idle');
 }
@@ -1482,6 +1497,12 @@ function separate(s, a, b) {
     }
   }
 }
+
+// Lying on the floor, open to a blow meant for it (the pursuit).
+// (A quick rise is already on the way up: out of its reach.)
+// It needs them settled a moment (`stun` counts down from the landing), so
+// a quick rise always has its chance first.
+const floored = (f) => f.state === 'down' && f.h <= 0 && f.vh === 0 && f.inv <= 0 && !f.teched && f.stun <= DOWN_TICKS - 2;
 
 function canBeHit(f) {
   // Both fighters in a throw can be hit by others: grabbing in a crowd is a
@@ -1711,6 +1732,11 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     def.koBy = kind;
     def.outAt = s.tick;
     emit(s, 'out', { slot: def.slot, by: att.slot });
+  } else if (m.otg) {
+    // Struck where they lie: they stay down a little longer.
+    def.state = 'down';
+    def.stun = Math.max(def.stun, 0) + 6;
+    def.vx = def.vz = 0;
   } else if ((m.knockdown && soft === 1) || def.h > 0) {
     def.state = 'down';
     def.t = 0;
@@ -1762,13 +1788,15 @@ function resolveHits(s) {
     const m = activeMove(att);
     if (!m) continue;
     for (const def of s.f) {
-      if (def === att || att.hits.includes(def.slot) || !canBeHit(def)) continue;
+      if (def === att || att.hits.includes(def.slot)) continue;
+      // A blow for the floor (the pursuit) finds only those lying on it.
+      if (m.otg ? !floored(def) : !canBeHit(def)) continue;
       if (m.airOnly && def.h <= 5) continue; // (an air throw takes hold of nobody on the ground)
       if (inWedge(att, def, m)) pending.push({ att, def, m, x: att.x, z: att.z, kind: m.ult ? 'super' : att.move });
     }
   }
   for (const p of pending) p.att.hits.push(p.def.slot);
-  for (const p of pending) if (canBeHit(p.def) || p.def.state === 'ko') applyHitOnce(s, p);
+  for (const p of pending) if (canBeHit(p.def) || p.def.state === 'ko' || (p.m.otg && floored(p.def))) applyHitOnce(s, p);
 
   // Projectiles.
   for (const p of s.proj) {

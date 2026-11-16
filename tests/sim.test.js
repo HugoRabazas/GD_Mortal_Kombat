@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMatch, step, MOVES, AIR_SPECIAL } from '../shared/sim.js';
+import { createMatch, step, MOVES, AIR_SPECIAL, THROW } from '../shared/sim.js';
 import { createAI, aiInput } from '../shared/ai.js';
 import { FIGHTERS } from '../shared/fighters.js';
 import { ARENA, INPUT, RULES, TIMING } from '../shared/constants.js';
@@ -1515,4 +1515,31 @@ test('block held, then kick standing still: the guard sweep - low, it floors a g
   assert.ok(!jumped.hit, 'a jump clears it');
   // Kick without the guard is still the kick; with the stick pushed, the guard rolls.
   assert.equal(sweepAt(() => 0, (t) => (t === 4 ? INPUT.KICK : 0)).move, 'kick');
+});
+
+test('after a throw, kick drops onto the floored rival (the pursuit); a quick rise gets out of its way', () => {
+  const pursue = (victim) => {
+    const s = startFight();
+    closeUp(s, 50);
+    const seen = [];
+    let thrown = -1;
+    for (let t = 0; t < 120; t++) {
+      const me = t === 0 ? INPUT.GRAB : s.f[0].state === 'throw' && s.f[0].t > THROW.slam ? INPUT.KICK : 0;
+      step(s, [me, victim(s, t, thrown)]);
+      for (const e of s.ev) if (e.type === 'slam') thrown = t;
+      seen.push(...s.ev);
+    }
+    return { thrown, pursued: seen.some((e) => e.type === 'swing' && e.by === 0 && e.move === 'pursuit'), hit: seen.find((e) => e.type === 'hit' && e.by === 0 && e.kind === 'pursuit'), hp: s.f[1].hp, state: s.f[1].state };
+  };
+  const stay = pursue(() => 0);
+  assert.ok(stay.thrown >= 0 && stay.pursued, 'the throw lands and the pursuit comes out');
+  assert.ok(stay.hit, 'it lands on a rival who stays down');
+  // A quick rise the moment they land: up and away before it falls.
+  const rise = pursue((s, t, thrown) => (thrown >= 0 && t > thrown ? INPUT.BLOCK : 0));
+  assert.ok(rise.pursued && !rise.hit, 'a quick rise beats it');
+  // Not after an ordinary knockdown: kick is just a kick there.
+  const s = startFight();
+  closeUp(s, 60);
+  step(s, [INPUT.KICK, 0]);
+  assert.equal(s.f[0].move, 'kick');
 });
