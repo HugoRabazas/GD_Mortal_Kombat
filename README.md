@@ -729,8 +729,11 @@ and the heartbeat, the crowd and the weather go quiet.
   REPLAY mark and Skip at the bottom; at the end it hands back to the
   result screen. While a fight is drawn, a copy of each frame goes on a
   four-and-a-half-second tape (replay.js; ~0.02 ms a frame), which stops
-  once the knockout's fall is on it. Not in Training, the Tutorial or
-  online. Checked at seven sizes (the result card still fits with the new
+  once the knockout's fall is on it. Not in Training or the Tutorial.
+  Online too, each player from their own screen; the match goes on
+  underneath, and the replay gives way at once when the host takes the
+  room back or starts the next fight (checked on the live service).
+  Checked at seven sizes (the result card still fits with the new
   button) in 2D and 3D, arcade and brawl results too.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the

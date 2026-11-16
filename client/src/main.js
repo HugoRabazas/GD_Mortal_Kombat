@@ -942,7 +942,7 @@ function resultScreen() {
   const won = s.matchWinner === 0;
   const again =
     app.mode === 'online'
-      ? '<button type="button" class="btn primary" data-act="onBack">Back to the room</button>'
+      ? `<button type="button" class="btn primary" data-act="onBack">Back to the room</button>${replayBtn()}`
       : `<button type="button" class="btn primary" data-act="rematch">Rematch</button>
           <button type="button" class="btn" data-act="select">Change fighter</button>
           ${replayBtn()}<button type="button" class="btn quiet" data-act="menu">Menu</button>`;
@@ -1780,6 +1780,8 @@ async function goOnline(name) {
       app.game = online.game;
       app.resultShown = false;
       app.notice = '';
+      tape.clear();
+      app.koClip = null;
       stage.reset();
       show('fight');
       document.activeElement?.blur?.();
@@ -1907,11 +1909,11 @@ function replayFrame(now) {
   if (i < 0) return endReplay();
   const st = r.clip[i].state;
   const worn = dressColors(st.f.map((f) => f.char), fightLooks());
-  const mine = app.mode !== 'versus' ? 0 : -1;
+  const mine = app.mode === 'online' ? app.online?.mySlot ?? -1 : app.mode !== 'versus' ? 0 : -1;
   for (let k = r.last + 1; k <= i; k++) handleEvents(r.clip[k].events, r.clip[k].state, { quiet: false, project: stage.project, me: mine, colors: worn });
   r.last = i;
   const tags = labels();
-  const humans = tags.map((t) => t === 'YOU' || t === 'P1' || t === 'P2');
+  const humans = app.mode === 'online' ? tags.map((_, i) => i === mine) : tags.map((t) => t === 'YOU' || t === 'P1' || t === 'P2');
   stage.render({ state: st, theme: app.fightPlace, looks: fightLooks(), demo: false, labels: tags, boss: null, humans, me: mine, net: '', hint: '', clearCorners: touchOver(), noTags: false }, now);
 }
 
@@ -1932,7 +1934,18 @@ function frame(now) {
   const playing = app.game;
   const g = playing || app.demo;
   if (!g || !stage) return;
-  if (app.replay) return replayFrame(now);
+  // A replay ends at once when something else takes the screen (online: the
+  // host starts the next fight, or the room closes).
+  if (app.replay && app.screen !== 'replay') app.replay = null;
+  if (app.replay) {
+    // Online, the match's own upkeep goes on underneath (its messages and
+    // pings); what it would draw is the replay's.
+    if (app.mode === 'online') {
+      g.update(now);
+      g.drain();
+    }
+    return replayFrame(now);
+  }
   if (padStartPressed()) togglePause();
   g.update(now);
   if (playing && practising()) keepTraining(g.state);
@@ -1952,7 +1965,7 @@ function frame(now) {
   const self = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
   const events = g.drain();
   if (playing) tallyFight(g, events);
-  if (playing && app.screen === 'fight' && !practising() && app.mode !== 'online') tape.push(g.state, events, now);
+  if (playing && app.screen === 'fight' && !practising()) tape.push(g.state, events, now);
   if (playing && app.mode === 'tutorial') {
     watchLesson(g.state, events);
     // Every step done: a moment to see the last tick, then the lesson's end.
@@ -2052,7 +2065,7 @@ function frame(now) {
       if (app.mode === 'online') countRoomWin(s);
       app.newBests = [];
       scoreMatch();
-      app.koClip = app.mode === 'online' ? null : tape.clip();
+      app.koClip = tape.clip();
       tape.clear();
       show('result'); // (the card says what is new on the Record)
     }
