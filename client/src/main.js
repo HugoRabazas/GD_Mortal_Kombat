@@ -211,6 +211,7 @@ const TIPS = [
   (c) => `Tip: new to a move? The <b>Tutorial</b> has a short lesson for it.`,
   () => `Tip: pause and press <b>Photo</b> to turn the camera round the fight and save a picture.`,
   () => `Tip: <b>Quick fight</b> on <b>Survival</b>: rival after rival, each harder. How many in a row can you beat?`,
+  () => `Tip: a rival keeps jumping in on you? Meet them with a standing <b>punch</b> as they come down - the Tutorial's <b>From the air</b> shows how.`,
   () => `Tip: a move that keeps beating you? In <b>Training</b>, pause and <b>Record partner</b>: do it to yourself, then practise against it.`,
   // Only on the website, on a touch screen, when not opened from the home screen.
   () => (NET && app.touch && !installed ? `Tip: add GD Arena to your <b>home screen</b> to play full screen.` : ''),
