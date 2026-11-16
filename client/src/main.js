@@ -209,6 +209,7 @@ const TIPS = [
   (c) => `Tip: caught in a combo? <kbd>${c.b}</kbd> + <kbd>${c.s}</kbd> from its second blow <b>bursts</b> out of it, for half your energy.`,
   (c) => `Tip: new to a move? The <b>Tutorial</b> has a short lesson for it.`,
   () => `Tip: pause and press <b>Photo</b> to turn the camera round the fight and save a picture.`,
+  () => `Tip: <b>Quick fight</b> on <b>Survival</b>: rival after rival, each harder. How many in a row can you beat?`,
   () => `Tip: a move that keeps beating you? In <b>Training</b>, pause and <b>Record partner</b>: do it to yourself, then practise against it.`,
   // Only on the website, on a touch screen, when not opened from the home screen.
   () => (NET && app.touch && !installed ? `Tip: add GD Arena to your <b>home screen</b> to play full screen.` : ''),
@@ -485,7 +486,7 @@ function selectScreen() {
         ${second}
       </div>
       <div class="row">
-        ${mode === 'quick' || mode === 'arena' ? seg(levels, app.level, 'level') : ''}
+        ${mode === 'quick' ? seg([...levels, ['survival', 'Survival']], app.level, 'level') : mode === 'arena' ? seg(levels, app.level === 'survival' ? 'auto' : app.level, 'level') : ''}
         ${mode === 'training' ? seg([['still', 'Still'], ['block', 'Blocks'], ['beat', 'Kicks'], ['combo', 'Strings'], ['fight', 'Fights back']], app.dummy, 'dummy') : ''}
         ${mode === 'versus' ? seg([['duel', 'Duel'], ['brawl', 'Brawl with 2 CPU']], app.vsArena ? 'brawl' : 'duel', 'vsKind') : ''}
         ${placePicker()}
@@ -1017,6 +1018,14 @@ const replayBtn = () => (app.koClip ? '<button type="button" class="btn quiet" d
 const photoScreen = () => `<section class="screen replay photo"><button type="button" class="btn quiet" data-act="photoTurn" data-id="-1" aria-label="Turn left">◀</button><button type="button" class="btn primary" data-act="photoSave">Save picture</button><button type="button" class="btn quiet" data-act="photoTurn" data-id="1" aria-label="Turn right">▶</button><button type="button" class="btn quiet" data-act="photoDone">Back</button></section>`;
 const replayScreen = () => '<section class="screen replay"><p class="rtag">REPLAY</p><button type="button" class="btn quiet" data-act="endReplay">Skip</button></section>';
 
+const survivalNote = () => {
+  const { wins, best, over, newBest } = app.surv;
+  const run = `${wins} ${wins === 1 ? 'win' : 'wins'}`;
+  return over
+    ? `<p class="note">Survival over: <b>${run}</b> in a row${newBest ? ' - your best yet' : best ? ` (best ${best})` : ''}.</p>`
+    : `<p class="note">Survival: <b>${run}</b> in a row. Next rival on <b>${LEVEL_NAMES[survivalLevel()]}</b>.</p>`;
+};
+
 function resultScreen() {
   const s = app.game.state;
   const won = s.matchWinner === 0;
@@ -1043,8 +1052,9 @@ function resultScreen() {
         ${winnerQuote()}
         ${statsCard()}
         ${app.levelMoved ? `<p class="note">The CPU is now on <b>${LEVEL_NAMES[app.levelMoved]}</b> for your next fight.</p>` : ''}
+        ${surviving() ? survivalNote() : ''}
         ${recordNews()}<div class="row">
-          <button type="button" class="btn primary" data-act="rematch">Rematch</button>
+          ${surviving() ? (app.surv.over ? '<button type="button" class="btn primary" data-act="survAgain">Try again</button>' : '<button type="button" class="btn primary" data-act="survNext">Next rival</button>') : '<button type="button" class="btn primary" data-act="rematch">Rematch</button>'}
           <button type="button" class="btn" data-act="select">Change fighters</button>
           ${replayBtn()}<button type="button" class="btn quiet" data-act="menu">Menu</button>
         </div>
@@ -1394,7 +1404,7 @@ function startArcade() {
 // step up (to Hard at most), each loss one step down (to Easy at least), so
 // everyone in the alliance settles where fights are close. Remembered.
 const AUTO_STEPS = ['easy', 'normal', 'hard'];
-const LEVEL_NAMES = { easy: 'Easy', normal: 'Normal', hard: 'Hard' };
+const LEVEL_NAMES = { easy: 'Easy', normal: 'Normal', hard: 'Hard', boss: 'Boss' };
 function autoLevel() {
   try {
     const saved = localStorage.getItem('gd-arena-auto-level');
@@ -1403,7 +1413,16 @@ function autoLevel() {
     return 'normal';
   }
 }
-const cpuLevel = () => (app.level === 'auto' ? autoLevel() : app.level);
+// Survival (Quick fight): duels in a row against fresh rivals, harder as the
+// run grows - Normal for the first two, then Hard, then the boss's mind from
+// the sixth; the first defeat ends it. The best run is kept on the Record.
+const survivalLevel = () => { const n = app.surv?.wins || 0; return n < 2 ? 'normal' : n < 5 ? 'hard' : 'boss'; };
+const surviving = () => app.mode === 'quick' && app.level === 'survival' && !!app.surv;
+const cpuLevel = () => (app.level === 'survival' ? (app.mode === 'quick' ? survivalLevel() : autoLevel()) : app.level === 'auto' ? autoLevel() : app.level);
+function nextSurvivalRival() {
+  const pool = FIGHTERS.map((f) => f.id).filter((id) => id !== app.picks[0] && id !== app.picks[1]);
+  return pool[Math.floor(Math.random() * pool.length)] || app.picks[1];
+}
 function stepAutoLevel(won) {
   app.levelMoved = null;
   if (app.level !== 'auto' || (app.mode !== 'quick' && app.mode !== 'arena')) return;
@@ -1476,6 +1495,13 @@ function noteRecord() {
   if (won) r.wins++;
   r.streak = won ? r.streak + 1 : 0;
   r.bestStreak = Math.max(r.bestStreak, r.streak);
+  if (surviving()) {
+    if (won) app.surv.wins++;
+    else app.surv.over = true;
+    app.surv.best = Math.max(r.survival || 0, app.surv.wins);
+    app.surv.newBest = app.surv.wins > (r.survival || 0);
+    r.survival = app.surv.best;
+  }
   if (app.mode === 'online') r.online++;
   app.newBests = [];
   if (won && WIN_MILESTONES.includes(r.wins)) app.newBests.push(`${r.wins} wins in all`);
@@ -1532,7 +1558,7 @@ function recordScreen() {
           ? `<dl class="recordstats">
               <div><dt>Fights</dt><dd>${r.fights}</dd></div>
               <div><dt>Won</dt><dd>${r.wins} · ${pct(r.wins, r.fights)}</dd></div>
-              <div><dt>Best run</dt><dd>${r.bestStreak} in a row</dd></div>
+              <div><dt>Best run</dt><dd>${r.bestStreak} in a row${r.survival ? ` · survival ${r.survival}` : ''}</dd></div>
               <div><dt>Best combo</dt><dd>${r.bestCombo} hits</dd></div>
               <div><dt>Perfect guards</dt><dd>${r.perfect}</dd></div>
               <div><dt>Flawless · comebacks</dt><dd>${r.flawless || 0} · ${r.comebacks || 0}</dd></div>
@@ -1773,8 +1799,18 @@ const ACTIONS = {
     show('select');
   },
   fight() {
+    app.surv = app.mode === 'quick' && app.level === 'survival' ? { wins: 0 } : null;
     if (app.mode === 'arcade') startArcade();
     else startFight();
+  },
+  // Survival: a win brings the next rival; a defeat, a fresh run.
+  survNext() {
+    app.picks[1] = nextSurvivalRival();
+    startFight();
+  },
+  survAgain() {
+    app.surv = { wins: 0 };
+    startFight();
   },
   rematch() {
     // (Training keeps a recorded partner through a restart.)

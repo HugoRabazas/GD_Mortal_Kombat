@@ -55,6 +55,11 @@ finisher's cut-in all take their colour from one place (`dressColors` in
 - **Quick Fight**: one duel against the CPU on Auto, Easy, Normal or Hard.
   Auto (also in Arena) follows you: each win moves the CPU one step up, each
   loss one step down, and the result screen says when it moves.
+  **Survival** (the fifth choice there): duels in a row, each against a new
+  rival - on Normal for the first two wins, then Hard, then with the boss's
+  mind from the sixth. The first defeat ends the run; Next rival / Try again
+  on the result screen, and the best run is kept on the Record (next to
+  the best run of wins).
 - **2 Players**: a duel on one device, or a brawl with two CPU fighters added.
 - **Training**: a duel with no clock where health and energy refill, against a
   partner who stands still, blocks, fights back, or **kicks on a steady beat**
