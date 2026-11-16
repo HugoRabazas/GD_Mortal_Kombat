@@ -1743,11 +1743,16 @@ ui.addEventListener('submit', (e) => {
     unlockAudio();
     goOnline(ui.querySelector('#nick').value);
   } else if (e.target.dataset.form === 'chat') {
+    // Emptied before it is sent: sending redraws the room at once, and the
+    // redraw carries over whatever is in the box.
     const box = ui.querySelector('#chat');
-    if (app.online?.say(box.value)) {
-      box.value = '';
-      box.focus({ preventScroll: true });
-    }
+    const text = box.value;
+    box.value = '';
+    const sent = app.online?.say(text);
+    const now = ui.querySelector('#chat');
+    if (!now) return;
+    if (!sent) now.value = text;
+    now.focus({ preventScroll: true });
   }
 });
 

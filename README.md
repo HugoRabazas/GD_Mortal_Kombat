@@ -515,6 +515,16 @@ and the heartbeat, the crowd and the weather go quiet.
   the scoreboard ran into the points and the next player's panel: the
   fighter's name shrinks a little, then the nickname is cut short. Checked
   with four 14-letter names at every phone size, upright and sideways.
+- **After an online fight, on a phone held upright**: a fresh check of the
+  whole round trip (four long names: room, fight, result card, back to the
+  room, a chat message from each) found three faults. The result card's
+  numbers broke one word per line beside the nicknames: the nickname now
+  sits over the points. Back in the room with some chat, "Exit full screen"
+  and the "still ready" note, the room ran 40 to 140 px past the screen:
+  its buttons now go two by two at any height, the fighter's bars are left
+  to the fighter screens, and the chat keeps to a few lines. And a message
+  sent stayed in the box: sending redraws the room at once and the redraw
+  carried the box's text over - it is now emptied before it is sent.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
