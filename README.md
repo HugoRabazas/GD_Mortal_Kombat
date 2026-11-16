@@ -65,6 +65,9 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   boss: measured, a strong player beats Hard about a third of the time and
   the boss's mind about a fifth, so six in a row is already rare.
 - **2 Players**: a duel on one device, or a brawl with two CPU fighters added.
+  From the second fight in a row the result keeps score between the two
+  (This session: P1 2 · P2 1); Rematch carries it on, choosing fighters
+  again starts afresh.
 - **Training**: a duel with no clock where health and energy refill, against a
   partner who stands still, blocks, fights back, or **kicks on a steady beat**
   (one kick every 100 ticks, about 1.7 s) - the way to learn the timing of

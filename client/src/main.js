@@ -1046,7 +1046,7 @@ function resultScreen() {
       <section class="screen result">
         ${winnerQuote()}
         ${rankingList()}
-        ${app.mode === 'online' ? roomScoreNote() + netNote() : ''}
+        ${app.mode === 'online' ? roomScoreNote() + netNote() : couchNote()}
         ${app.levelMoved ? `<p class="note">The CPU is now on <b>${LEVEL_NAMES[app.levelMoved]}</b> for your next fight.</p>` : ''}
         ${recordNews()}<div class="row">${again}</div>
       </section>`;
@@ -1057,7 +1057,7 @@ function resultScreen() {
         ${winnerQuote()}
         ${statsCard()}
         ${app.levelMoved ? `<p class="note">The CPU is now on <b>${LEVEL_NAMES[app.levelMoved]}</b> for your next fight.</p>` : ''}
-        ${surviving() ? survivalNote() : ''}
+        ${surviving() ? survivalNote() : couchNote()}
         ${recordNews()}<div class="row">
           ${surviving() ? (app.surv.over ? '<button type="button" class="btn primary" data-act="survAgain">Try again</button>' : '<button type="button" class="btn primary" data-act="survNext">Next rival</button>') : '<button type="button" class="btn primary" data-act="rematch">Rematch</button>'}
           <button type="button" class="btn" data-act="select">Change fighters</button>
@@ -1180,6 +1180,11 @@ function countRoomWin(s) {
 }
 
 // After an online fight: who has won how many in this room, best first.
+const couchNote = () => {
+  const c = app.mode === 'versus' ? app.couch : null;
+  return c && c[0] + c[1] >= 2 ? `<p class="note">This session: P1 <b>${c[0]}</b> · P2 <b>${c[1]}</b></p>` : '';
+};
+
 function roomScoreNote() {
   const people = app.roomWins.slots.filter((sl) => sl.id && app.roomWins.wins[sl.id]);
   if (!people.length) return '';
@@ -1586,6 +1591,13 @@ function recordScreen() {
 
 function scoreMatch() {
   noteRecord();
+  // Two players on one device: who has won how many since they sat down
+  // (Rematch keeps it; choosing fighters again starts afresh).
+  if (app.mode === 'versus') {
+    const w = app.game.state.matchWinner;
+    app.couch ||= [0, 0];
+    if (w === 0 || w === 1) app.couch[w]++;
+  }
   stepAutoLevel(app.game.state.matchWinner === 0);
   if (app.mode !== 'arcade') return;
   const a = app.arcade;
@@ -1809,6 +1821,7 @@ const ACTIONS = {
     show('select');
   },
   fight() {
+    app.couch = null;
     app.surv = app.mode === 'quick' && app.level === 'survival' ? { wins: 0 } : null;
     if (app.mode === 'arcade') startArcade();
     else startFight();
