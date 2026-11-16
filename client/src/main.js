@@ -1501,14 +1501,16 @@ function noteRecord() {
   r.streak = won ? r.streak + 1 : 0;
   r.bestStreak = Math.max(r.bestStreak, r.streak);
   if (surviving()) {
+    // The best as it stood when this run began (the Record is updated on
+    // every win, so a run would never beat itself).
+    app.surv.before ??= r.survival || 0;
     if (won) {
       app.surv.wins++;
       (app.surv.beaten ||= []).push(s.f[1].char);
-    }
-    else app.surv.over = true;
-    app.surv.best = Math.max(r.survival || 0, app.surv.wins);
-    app.surv.newBest = app.surv.wins > (r.survival || 0);
-    r.survival = app.surv.best;
+    } else app.surv.over = true;
+    app.surv.best = Math.max(app.surv.before, app.surv.wins);
+    app.surv.newBest = app.surv.wins > app.surv.before;
+    r.survival = Math.max(r.survival || 0, app.surv.best);
   }
   if (app.mode === 'online') r.online++;
   app.newBests = [];
