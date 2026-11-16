@@ -7,7 +7,11 @@ import { ARENA, TIMING } from '../../shared/constants.js';
 import { getFighter, dressLineUp, dressColors } from '../../shared/fighters.js';
 import { heads } from './assets.js';
 import { create3D } from './render/scene3d.js';
-import { drawArena } from './render/arena.js';
+import { drawArena, useFlatPhotos } from './render/arena.js';
+import stoneUrl from './render/tex/stone_diff.jpg';
+import wallUrl from './render/tex/wall_diff.jpg';
+
+useFlatPhotos({ stone: stoneUrl, wall: wallUrl });
 import { drawFighter, drawProjectile, resetPoses, setAnnounce } from './render/fighter.js';
 import { updateFx, drawFx, drawOverlays, resetFx } from './render/fx.js';
 import { drawHud, drawTags, resetHud } from './render/hud.js';

@@ -10,6 +10,21 @@ const TORCHES = [150, 810];
 const HORIZON = FLOOR - 46;
 
 let backdrop = null;
+// The same photographed stone as the 3D arena (Poly Haven, CC0): the stage
+// hands their addresses over (useFlatPhotos); once loaded, the backdrop is
+// painted again with them.
+const photos = { stone: null, wall: null };
+export function useFlatPhotos(urls) {
+  if (typeof Image === 'undefined') return;
+  for (const [key, url] of Object.entries(urls)) {
+    const img = new Image();
+    img.onload = () => {
+      photos[key] = img;
+      backdrop = null;
+    };
+    img.src = url;
+  }
+}
 const embers = [];
 
 // Tiny repeatable random so the scenery looks the same on every screen.
@@ -120,6 +135,24 @@ function paintBackdrop() {
   g.fillRect(0, wallTop - 10, W, 12);
   g.fillStyle = 'rgba(255,255,255,0.03)';
   for (let y = wallTop + 18; y < HORIZON; y += 22) g.fillRect(0, y, W, 1);
+  if (photos.wall) {
+    // Stone blocks laid over the painted wall (soft light: it keeps the
+    // wall's dusk colour).
+    g.save();
+    g.globalAlpha = 0.9;
+    g.fillStyle = g.createPattern(photos.wall, 'repeat');
+    // (relative to the canvas's own scale: setTransform would drop it)
+    g.save();
+    g.translate(0, wallTop);
+    g.scale(0.3, 0.3);
+    g.fillRect(0, -10 / 0.3, W / 0.3, (HORIZON - wallTop + 10) / 0.3);
+    g.restore();
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'multiply';
+    g.fillStyle = '#3a2440';
+    g.fillRect(0, wallTop - 10, W, HORIZON - wallTop + 10);
+    g.restore();
+  }
   for (let x = 30; x < W; x += 150) {
     g.fillStyle = '#241626';
     g.fillRect(x, wallTop - 34, 34, HORIZON - wallTop + 34);
@@ -154,7 +187,32 @@ function paintBackdrop() {
   floor.addColorStop(1, '#170e18');
   g.fillStyle = floor;
   g.fillRect(0, HORIZON, W, H - HORIZON);
-  g.strokeStyle = 'rgba(0,0,0,0.35)';
+  if (photos.stone) {
+    // The photographed flagstones in perspective: each row of the floor takes
+    // a row of the photograph, shrunk by its distance and repeated across.
+    const img = photos.stone;
+    g.save();
+    for (let y = HORIZON; y < H; y += 2) {
+      const near = (y - HORIZON + 6) / (H - HORIZON); // 0 far .. 1 near
+      const scale = 0.1 + near * 0.9; // screen pixels per photo pixel
+      g.globalAlpha = Math.min(0.9, near * 1.4); // (fading out into the distance, where it would only be noise)
+      const depth = 900 / (y - HORIZON + 6); // how far along the floor
+      const row = Math.floor((depth * 26) % img.height);
+      const w = img.width * scale;
+      for (let x = (W / 2) % w - w; x < W; x += w) g.drawImage(img, 0, row, img.width, 1, x, y, w, 2);
+    }
+    // ...tinted to the courtyard's dusk stone and darkened into the distance.
+    g.globalAlpha = 1;
+    g.globalCompositeOperation = 'multiply';
+    const tint = g.createLinearGradient(0, HORIZON, 0, H);
+    tint.addColorStop(0, '#2a1a28');
+    tint.addColorStop(0.4, '#7a5268');
+    tint.addColorStop(1, '#3a2433');
+    g.fillStyle = tint;
+    g.fillRect(0, HORIZON, W, H - HORIZON);
+    g.restore();
+  }
+  g.strokeStyle = photos.stone ? 'rgba(0,0,0,0)' : 'rgba(0,0,0,0.35)'; // (the photograph has its own joints)
   g.lineWidth = 1.5;
   const vx = W / 2;
   for (let i = -14; i <= 14; i++) {

@@ -792,7 +792,15 @@ and the heartbeat, the crowd and the weather go quiet.
   at the seven sizes. The ring of fire and the hit flashes checked under
   the new light: bright and readable. Loop 194: the realistic body gets
   a fighter's wraps on the wrists (they flash and glow with the rest), a
-  dark sole under each shoe and a collar at the neck.
+  dark sole under each shoe and a collar at the neck. Loop 195: the flat
+  arena (phones without WebGL) gets the same photographs - the flagstones
+  painted row by row in perspective (each row of the photograph shrunk by
+  its distance, fading out towards the horizon where it would only be
+  noise) and the stone blocks on the wall, both tinted to the courtyard's
+  dusk. (A first try used setTransform for the wall and painted a band of
+  bricks across the sky: the canvas has a scale of its own.) Live checks
+  after the rendering loops: a three-player rollback brawl identical on
+  every screen, a whole match on the public site, chat.
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the
