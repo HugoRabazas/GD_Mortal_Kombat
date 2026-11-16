@@ -31,6 +31,8 @@ import stoneRoughUrl from './tex/stone_rough.jpg';
 import wallDiffUrl from './tex/wall_diff.jpg';
 import wallNorUrl from './tex/wall_nor.jpg';
 import wallRoughUrl from './tex/wall_rough.jpg';
+// The banners' cloth: the same denim relief as the fighters' clothes.
+import clothNorUrl from './tex/cloth_nor.jpg';
 
 const S = 0.01;
 const TONE_EXPOSURE = 0.95;
@@ -406,7 +408,11 @@ export function create3D(canvas) {
     g.fillText('GD', 124, 215);
     return texture(c);
   };
-  const bannerMat = new THREE.MeshLambertMaterial({ transparent: true, side: THREE.DoubleSide });
+  // Cloth: the painted banner with a woven relief and its folds, matt.
+  const bannerWeave = new THREE.TextureLoader().load(clothNorUrl);
+  bannerWeave.wrapS = bannerWeave.wrapT = THREE.RepeatWrapping;
+  bannerWeave.repeat.set(1.2, 2.4);
+  const bannerMat = new THREE.MeshStandardMaterial({ transparent: true, side: THREE.DoubleSide, roughness: 0.9, metalness: 0, normalMap: bannerWeave, normalScale: new THREE.Vector2(1.6, 1.6) });
   // Each banner hangs from its top edge (the geometry is moved down by half
   // its height) so it can sway in the wind - gently at first, hard in the
   // storm, the blizzard or the sandstorm (see applyMood).

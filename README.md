@@ -773,7 +773,9 @@ and the heartbeat, the crowd and the weather go quiet.
   night it kept the arena warm; it now fades out with the evening (full at
   dusk, none at night and in the storm), the hemisphere light taking its
   place - the night is cold and blue again (seen in the courtyard and on
-  the summit).
+  the summit). Loop 189: the banners are cloth - the physical material
+  with the denim relief (folds, a seam, the weave) under their painted
+  letters, where a flat Lambert material had none.
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the
