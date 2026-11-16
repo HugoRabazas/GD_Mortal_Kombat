@@ -1574,6 +1574,7 @@ function noteRecord() {
   if (app.daily && app.mode === 'quick') {
     app.daily.won = won;
     if (won && r.dailyLast !== app.daily.key) {
+      app.daily.fresh = true; // (beaten for the first time today)
       r.dailyRun = runAfter(r.dailyLast, r.dailyRun, app.daily.key); // days in a row
       r.dailyLast = app.daily.key;
       r.dailyWins = (r.dailyWins || 0) + 1;
@@ -1667,6 +1668,9 @@ function recordScreen() {
 
 function scoreMatch() {
   noteRecord();
+  // A milestone sounds once the fanfare is done.
+  if (app.newBests?.length || app.daily?.fresh) setTimeout(() => play('milestone'), 1100);
+  if (app.daily) app.daily.fresh = false;
   // Two players on one device: who has won how many since they sat down
   // (Rematch keeps it; choosing fighters again starts afresh).
   if (app.mode === 'versus') {

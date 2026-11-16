@@ -317,6 +317,12 @@ const SOUNDS = {
   win: () => {
     [523, 659, 784, 1047].forEach((f, i) => tone('triangle', f, f, 0.22, 0.35, i * 0.13));
   },
+  // Something new on the Record, or the day's challenge beaten: a quick
+  // rising sparkle after the fanfare.
+  milestone: () => {
+    [1047, 1319, 1568, 2093].forEach((f, i) => tone('sine', f, f, 0.16, 0.16, i * 0.07));
+    tone('triangle', 2093, 2637, 0.4, 0.08, 0.3);
+  },
   // Life around the arena: a bird's quick chirps (by day) and a cricket's
   // pulsed trill (at night), quiet under the fight.
   chirp: () => {

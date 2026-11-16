@@ -79,6 +79,9 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   whose menu has no room for the tip line get it as a button on Quick
   fight's select screen (Back · Today's challenge · Fight). The Record
   counts the days beaten on its Won line (99 · 71% · 6 daily).
+  Beating it, like anything new on the Record (a best streak, a move
+  landed for the first time), is marked by a short rising sparkle of
+  sound after the win's fanfare.
   Beating it on consecutive days makes a run (Challenge beaten · 3 days in
   a row), which starts again after a day missed; with a run going the
   menu's line says so (Day 4 of your run: win as SHADOW against KICHTA…). Once beaten, the result

@@ -146,3 +146,8 @@ test('the daily challenge run: the day after carries it on, a gap starts again',
   assert.equal(runAfter(undefined, undefined, '2026-11-16'), 1);
   assert.equal(runAfter('2026-11-16', 3, '2026-11-16'), 3); // the same day again
 });
+
+test('the milestone sound (a new best, the day\'s challenge beaten) exists', async () => {
+  const { hasSound } = await import('../client/src/audio.js');
+  assert.ok(hasSound('milestone'));
+});
