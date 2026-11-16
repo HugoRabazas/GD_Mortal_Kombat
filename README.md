@@ -741,6 +741,15 @@ and the heartbeat, the crowd and the weather go quiet.
   flat (exposure 1.25, the sky's light at full strength); now exposure
   0.95, the sky's light at half and the hemisphere light at 70 %, and a
   light arena's stone capped below white (the desert floor glared).
+  Step 3 (loop 184), the walls: the courtyard wall, its pillars and trims
+  are Poly Haven's "Stone Brick Wall 001" (Dimitrios Savva and Rico
+  Cilliers, CC0) - colour mostly taken out so each arena tints it,
+  relief and roughness, 512 px. The blocks are now merged into one shape
+  whose texture is measured in metres (one repeat every 1.6 units, shifted
+  by each block's place), where stretched unit boxes would have smeared
+  it: still one draw call (~298 in all). Sandstone in the desert, dark
+  blue blocks in the snow, red brick in the blossom terrace. The page is
+  now 1.15 MB (the six photographs, 306 KB, travel inside it).
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the

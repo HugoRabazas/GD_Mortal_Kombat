@@ -26,6 +26,11 @@ import { THEMES } from './themes.js';
 import stoneDiffUrl from './tex/stone_diff.jpg';
 import stoneNorUrl from './tex/stone_nor.jpg';
 import stoneRoughUrl from './tex/stone_rough.jpg';
+// ...and for the walls, Poly Haven's "Stone Brick Wall 001" (CC0), its colour
+// mostly taken out so each arena tints it.
+import wallDiffUrl from './tex/wall_diff.jpg';
+import wallNorUrl from './tex/wall_nor.jpg';
+import wallRoughUrl from './tex/wall_rough.jpg';
 
 const S = 0.01;
 const TONE_EXPOSURE = 0.95;
@@ -262,6 +267,21 @@ export function create3D(canvas) {
     return t;
   };
   const stonePhoto = (repeat) => ({ map: photo(stoneDiffUrl, repeat, true), normalMap: photo(stoneNorUrl, repeat), roughnessMap: photo(stoneRoughUrl, repeat) });
+  // The wall's photographs (the blocks' own coordinates do the repeating).
+  const wallPhoto = { map: new THREE.TextureLoader().load(wallDiffUrl, () => {
+    for (const m of [wallMat, trimMat]) {
+      m.map = wallPhoto.map;
+      m.needsUpdate = true;
+    }
+  }), normalMap: new THREE.TextureLoader().load(wallNorUrl), roughnessMap: new THREE.TextureLoader().load(wallRoughUrl) };
+  for (const t of Object.values(wallPhoto)) {
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+  }
+  wallPhoto.map.encoding = THREE.sRGBEncoding;
+  // A wall's colour over the grey photograph: lifted, as the photograph is
+  // darker than the plain colour it replaces.
+  const wallTint = (hex) => lin(hex).multiplyScalar(3);
   const groundPhoto = stonePhoto(10);
   const daisPhoto = stonePhoto(2.2);
   // An arena's stone colour as a tint over the grey photograph (snow: frost).
@@ -340,8 +360,8 @@ export function create3D(canvas) {
   }
 
   // ---------- courtyard wall, pillars, banners ----------
-  const wallMat = new THREE.MeshStandardMaterial({ roughness: 0.9 });
-  const trimMat = new THREE.MeshStandardMaterial({ roughness: 0.8 });
+  const wallMat = new THREE.MeshStandardMaterial({ roughness: 1, normalMap: wallPhoto.normalMap, roughnessMap: wallPhoto.roughnessMap, normalScale: new THREE.Vector2(1.4, 1.4) });
+  const trimMat = new THREE.MeshStandardMaterial({ roughness: 0.95, normalMap: wallPhoto.normalMap, roughnessMap: wallPhoto.roughnessMap });
   // Snow lying on top of the wall and the pillars; only the frozen arena shows it.
   const snowMat = new THREE.MeshStandardMaterial({ color: lin(0xe6f0ff), roughness: 1 });
   const snowCaps = new THREE.Group();
@@ -426,10 +446,51 @@ export function create3D(canvas) {
       }
     }
   }
+  // Blocks dressed in photographed stone are merged into one shape whose
+  // texture is measured in metres (one repeat every WALL_TILE units, shifted
+  // by where each block stands): stretched unit boxes would smear it. Still
+  // one draw call for the lot.
+  const WALL_TILE = 1.6;
+  const mergeBlocks = (list) => {
+    const pos = [];
+    const nor = [];
+    const uv = [];
+    const idx = [];
+    for (const [w, h, d, x, y, z] of list) {
+      const g = new THREE.BoxGeometry(w, h, d);
+      const sizes = [[d, h], [d, h], [w, d], [w, d], [w, h], [w, h]]; // +x -x +y -y +z -z
+      const u = g.attributes.uv;
+      for (let f = 0; f < 6; f++) {
+        for (let k = 0; k < 4; k++) {
+          const i = f * 4 + k;
+          u.setXY(i, (u.getX(i) * sizes[f][0] + x + z) / WALL_TILE, (u.getY(i) * sizes[f][1] + y) / WALL_TILE);
+        }
+      }
+      g.translate(x, y, z);
+      const base = pos.length / 3;
+      pos.push(...g.attributes.position.array);
+      nor.push(...g.attributes.normal.array);
+      uv.push(...u.array);
+      for (const i of g.index.array) idx.push(base + i);
+      g.dispose();
+    }
+    const merged = new THREE.BufferGeometry();
+    merged.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    merged.setAttribute('normal', new THREE.Float32BufferAttribute(nor, 3));
+    merged.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+    merged.setIndex(idx);
+    return merged;
+  };
   {
     const unit = new THREE.BoxGeometry(1, 1, 1);
     const place = new THREE.Object3D();
     for (const [mat, list] of boxLists) {
+      if (mat === wallMat || mat === trimMat) {
+        const mesh = new THREE.Mesh(mergeBlocks(list), mat);
+        mesh.frustumCulled = false;
+        scene.add(mesh);
+        continue;
+      }
       const blocks = new THREE.InstancedMesh(unit, mat, list.length);
       list.forEach(([w, h, d, x, y, z], i) => {
         place.position.set(x, y, z);
@@ -865,8 +926,8 @@ export function create3D(canvas) {
     groundMat.color.copy(stoneTint(th.ground, th.snow));
     daisMat.color.copy(stoneTint(th.dais, th.snow));
     daisSideMat.color.copy(lin(th.daisSide));
-    wallMat.color.copy(lin(th.wall));
-    trimMat.color.copy(lin(th.trim));
+    wallMat.color.copy(wallTint(th.wall));
+    trimMat.color.copy(wallTint(th.trim));
     bannerMat.map = theme.banner;
     torchFlameMat.map = theme.flame;
     emberMat.map = theme.flame;
