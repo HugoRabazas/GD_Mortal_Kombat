@@ -506,7 +506,10 @@ function helpScreen() {
   const d = lastDevice() ?? (app.touch ? 'touch' : 'keys');
   const lit = d === 'pad' ? 4 : d === 'touch' && app.touch ? 5 : 1;
   const cell = (i, v, tag = 'td') => `<${tag}${i === lit ? ' class="now"' : ''}>${v}</${tag}>`;
-  const row = (what, ...cols) => `<tr><th scope="row">${what}</th>${cols.map((v, i) => cell(i + 1, v)).join('')}</tr>`;
+  // Yours comes first: on a narrow screen the table scrolls sideways, and the
+  // touch column (last) was off the edge of the very phones that use it.
+  const order = [lit, ...[1, 2, 3, 4, 5].filter((i) => i !== lit)];
+  const row = (what, ...cols) => `<tr><th scope="row">${what}</th>${order.map((i) => cell(i, cols[i - 1])).join('')}</tr>`;
   const k = (...keys) => keys.map((x) => `<kbd>${x}</kbd>`).join(' ');
   // With a controller connected, its own buttons; otherwise the two common names.
   const pad = hasPad() ? PAD_NAMES[padStyle()] : null;
@@ -516,7 +519,7 @@ function helpScreen() {
       <h2>How to play</h2>
       <div class="scroll">
         <table>
-          <thead><tr><th></th>${heads.map((h, i) => cell(i + 1, h + (i + 1 === lit ? ' · yours' : ''), 'th')).join('')}</tr></thead>
+          <thead><tr><th></th>${order.map((i) => cell(i, heads[i - 1] + (i === lit ? ' · yours' : ''), 'th')).join('')}</tr></thead>
           <tbody>
             ${row('Walk', `${k('W', 'A', 'S', 'D')} or arrows`, k('W', 'A', 'S', 'D'), 'Arrows', 'Stick / D-pad', 'Stick')}
             ${row('Jump', `${k('Space')} or ${k('U')}`, k('Space'), k('U'), pad ? k(pad.j) : 'A / Cross', k('JMP'))}
