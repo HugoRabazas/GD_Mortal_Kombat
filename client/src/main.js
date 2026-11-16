@@ -511,7 +511,7 @@ function helpScreen() {
         ${NET ? '<li><b>Online</b>: pick a name, then make a room or join one in the lobby; <b>Copy invite link</b> brings friends straight in. The room keeps score of who has won, and a reload brings you back to it.</li>' : ''}
         <li><b>Record</b> at the foot of the menu keeps your lifetime tally on this device: wins, best run, best combo and how you do with each fighter.</li>
         <li>A <b>heartbeat</b> means your fighter is nearly out.</li>
-        <li>On a phone, use the stick and the buttons on screen. The stick follows your thumb: touch anywhere free on its side of the screen. <b>Arrange buttons</b> lets you drag them where you like.</li>
+        <li>On a phone, use the stick and the buttons on screen. The stick follows your thumb: touch anywhere free on its side of the screen. <b>Arrange buttons</b> lets you drag them where you like. Every button follows its own finger, so two-button moves work with two fingers: hold BLK and tap GRAB to taunt, the stick and BLK to roll, hold K to charge the guard-breaker.</li>
         <li>With a <b>gamepad</b> you can also work the menus: stick or D-pad to move, A / Cross to choose, B / Circle to go back. Hints in a fight name your controller's own buttons (Xbox, PlayStation or Nintendo labels).</li>
         <li>Press <kbd>P</kbd>, <kbd>Esc</kbd> or Start to pause.</li>
       </ul>

@@ -482,6 +482,13 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **Touch controls, two fingers at once, checked**: with real multi-touch
+  events (two fingers down together) on the on-screen buttons at 844x390,
+  568x320 and 390x844: block held and grab tapped is the taunt, the stick
+  and block the roll, kick held the guard-breaker, punch then special the
+  special cancel. Every button follows its own finger; the help now says
+  so. And live: a player who changes fighter seven times in a room shows,
+  to someone watching the lobby, the last one picked.
 - **Two buttons pressed a moment apart, checked**: after the roll, every
   other two-button move was tried with the second button 0, 2, 4 and 8 ticks
   late: the taunt (block held, then grab) comes out however late the grab;
