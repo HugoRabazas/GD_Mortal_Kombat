@@ -719,6 +719,9 @@ and the heartbeat, the crowd and the weather go quiet.
   first, or the press became another move) is dropped. Strings, specials,
   grabs, lunges, ripostes and pursuits are still the host's alone - and the
   host still decides every hit.
+  Its whoosh plays at once too (1-13 ms after the press instead of
+  180-290 ms relayed), and the host's own word of that swing is then not
+  played again - checked on ten presses, each heard once.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

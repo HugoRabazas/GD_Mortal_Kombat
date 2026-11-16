@@ -529,6 +529,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     let lastPingAt = 0;
     const lead = { x: 0, z: 0 }; // how far ahead of the host's word our own fighter is drawn
     const blow = createAttackPredictor(); // our own punch or kick, drawn at once
+    let ownSwing = null; // its sound, already played
     const lerp = (a, b, k) => a + (b - a) * k;
 
     const game = {
@@ -566,7 +567,15 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         // by the time the host's answer catches up - so draw it there. The lead
         // grows as you set off and melts away as you stop, attack or get hit,
         // and the host's word is still what decides every hit.
-        if (mySlot >= 0 && cur) blow.note(bits, cur.f[mySlot], cur.phase === 'fight' && !cur.freeze, match?.ping, now, cur.tick);
+        if (mySlot >= 0 && cur) {
+          // A blow drawn at once whooshes at once too; the host's own word
+          // of that swing, when it comes, is then not played again.
+          const started = blow.note(bits, cur.f[mySlot], cur.phase === 'fight' && !cur.freeze, match?.ping, now, cur.tick);
+          if (started) {
+            queue.push({ type: 'swing', by: mySlot, move: started });
+            ownSwing = { move: started, at: performance.now() };
+          }
+        }
         if (mySlot >= 0 && cur) {
           const f = view.f[mySlot];
           const free = cur.phase === 'fight' && (f.state === 'idle' || f.state === 'walk') && !f.stun && !blow.active();
@@ -633,6 +642,10 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       for (const e of snap.ev || []) {
         if (e.id > seen) {
           seen = e.id;
+          if (e.type === 'swing' && e.by === mySlot && ownSwing?.move === e.move && performance.now() - ownSwing.at < 700) {
+            ownSwing = null;
+            continue;
+          }
           queue.push(e);
         }
       }

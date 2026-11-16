@@ -50,8 +50,12 @@ export function createAttackPredictor() {
         const stick = bits & (INPUT.LEFT | INPUT.RIGHT | INPUT.UP | INPUT.DOWN);
         const still = f.state === 'idle' || (f.state === 'walk' && !stick);
         const free = still && !(f.stun > 0) && !(f.rip > 0) && !(f.h > 0) && !((f.pursue ?? -1) >= tick);
-        if (!other && !both && free) guess = { move: pressed & INPUT.KICK ? 'kick' : 'punch', at: now, seen: false };
+        if (!other && !both && free) {
+          guess = { move: pressed & INPUT.KICK ? 'kick' : 'punch', at: now, seen: false };
+          return guess.move; // (a new guess: its sound can play now too)
+        }
       }
+      return null;
     },
     // Our fighter as it should be drawn.
     draw(f, now) {

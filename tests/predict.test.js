@@ -8,7 +8,8 @@ const idle = { state: 'idle', t: 30, stun: 0, h: 0, x: 0, z: 0 };
 
 test('a punch from standing shows at once, then follows the host without jumping back', () => {
   const p = createAttackPredictor();
-  p.note(INPUT.PUNCH, idle, true, 100, 0);
+  assert.equal(p.note(INPUT.PUNCH, idle, true, 100, 0), 'punch', 'a new guess is announced (for its sound)');
+  assert.equal(p.note(INPUT.PUNCH, idle, true, 100, 5), null, 'once');
   assert.equal(p.draw(idle, 0).state, 'attack');
   assert.equal(p.draw(idle, 0).move, 'punch');
   // 100 ms later the host shows the punch at t 2 (it began later there): keep our t 6.
