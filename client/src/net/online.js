@@ -20,7 +20,7 @@ import { createAttackPredictor } from './predict.js';
 import { createGame } from '../game.js';
 import { ARENAS, isArenaId } from '../arenas.js';
 import { createMatch, step as stepRules } from '../../../shared/sim.js';
-import { createRollback, createEventFilter } from './rollback.js';
+import { createRollback, createEventFilter, unconfirmed } from './rollback.js';
 import { fingerprint } from '../../../shared/fingerprint.js';
 import { createAI, aiInput } from '../../../shared/ai.js';
 import { FIGHTERS, getFighter, isFighterId, lookCount } from '../../../shared/fighters.js';
@@ -785,14 +785,12 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       });
     }
     let lastSendAt = 0;
-    // Every button of ours each other player has not confirmed (at most 40 ticks).
+    // Every button of ours each other player has not confirmed (rollback.js unconfirmed).
     function sendButtons(now) {
       lastSendAt = now;
       const newest = rb.tick - 1 + delay;
       for (const i of others) {
-        const from = Math.max(acks.get(i) + 1, newest - 40);
-        const b = [];
-        for (let u = from; u <= newest; u++) b.push(sent.get(u) ?? 0);
+        const { from, b } = unconfirmed(sent, acks.get(i), newest);
         sendTo(i, { rb: from, b, a: rb.heard(i) });
       }
       const oldest = Math.min(...acks.values());
@@ -812,6 +810,9 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         if (rb.tick - theirs > trip + 3 && rb.tick % 6 === 0 && acc < 2000 / 60) break;
         if (!rb.canAdvance()) {
           stalls++;
+          // Who we are waiting for: the player heard from least far.
+          if (match && !match.waitingSince) match.waitingSince = now;
+          if (match) match.waitingFor = others.reduce((w, i) => (rb.heard(i) < rb.heard(w) ? i : w), others[0]);
           take(rb.settle());
           // Waiting for someone: our buttons again (they may be waiting too,
           // and the last messages may have been lost).
@@ -820,6 +821,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
           break;
         }
         acc -= 1000 / 60;
+        if (match) match.waitingSince = 0;
         const t = rb.tick + delay;
         const bits = readInput();
         rb.local(mySlot, t, bits);
@@ -887,10 +889,19 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     const clock = setInterval(() => {
       if (typeof document === 'undefined' || !document.hidden) run(performance.now());
     }, 8);
+    // Gone to another app: this device's fight stops (and soon everyone
+    // else's, waiting for its buttons) - tell them why.
+    const away = () => {
+      for (const i of others) sendTo(i, { away: !!document.hidden });
+    };
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', away);
     match = {
       info,
       game,
       rollback: true,
+      away: slots.map(() => false),
+      waitingSince: 0,
+      waitingFor: -1,
       glide,
       host: !!room?.isHost,
       mySlot,
@@ -911,13 +922,17 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         }
         if (typeof msg.ping === 'number') sendTo(slot, { pong: msg.ping });
         if (typeof msg.pong === 'number') pings[slot] = Math.round(performance.now() - msg.pong);
+        if (typeof msg.away === 'boolean') match.away[slot] = msg.away;
         if (!match.host && slot === hostSlot && typeof msg.fix === 'number' && msg.w?.s && Array.isArray(msg.w.s.f) && rb.restore(msg.fix, msg.w)) match.fixes = (match.fixes || 0) + 1;
         if (typeof msg.fp === 'number' && typeof msg.h === 'number') {
           note(msg.fp).bySlot.set(slot, msg.h);
           check(msg.fp);
         }
       },
-      stop: () => clearInterval(clock),
+      stop: () => {
+        clearInterval(clock);
+        if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', away);
+      },
     };
     lobby?.track(lobbyState());
     onStart(info);
@@ -962,6 +977,10 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     const kind = online.linkKind() === 'relayed' ? 'RELAYED' : 'DIRECT';
     if (match.rollback) {
       const st = match.rb.stats();
+      const nameOf = (i) => (match.info.slots[i]?.name || 'a player').toUpperCase().slice(0, 12);
+      const gone = match.away.findIndex((a) => a);
+      if (gone >= 0) return `${nameOf(gone)} LEFT THE APP · THE FIGHT WAITS`;
+      if (match.waitingSince && performance.now() - match.waitingSince > 300) return `WAITING FOR ${nameOf(match.waitingFor)}`;
       return `ROLLBACK${match.ping !== null ? ` · ${match.ping} MS` : ''}${st.behind > 6 ? ` · ${st.behind} AHEAD` : ''}${match.desync >= 0 ? ' · OUT OF STEP' : ''}`;
     }
     if (match.host) {

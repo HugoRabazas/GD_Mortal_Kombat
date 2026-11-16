@@ -168,3 +168,15 @@ export function createEventFilter(near = 2) {
     },
   };
 }
+
+// The buttons to send another player: from the first one they have not
+// confirmed (`ack` is the last tick they have every button up to), at most
+// `max` of them; the next messages carry the rest. Always from the first
+// missing one: sending only the newest few left a gap for good after a run
+// of lost messages, and both sides then waited for each other forever.
+export function unconfirmed(sent, ack, newest, max = 64) {
+  const from = ack + 1;
+  const b = [];
+  for (let u = from; u <= Math.min(newest, from + max - 1); u++) b.push(sent.get(u) ?? 0);
+  return { from, b };
+}

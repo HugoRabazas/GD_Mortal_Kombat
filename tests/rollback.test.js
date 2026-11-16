@@ -3,7 +3,7 @@
 // played with every button on time.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createRollback } from '../client/src/net/rollback.js';
+import { createRollback, unconfirmed } from '../client/src/net/rollback.js';
 import { createMatch, step } from '../shared/sim.js';
 import { createAI, aiInput } from '../shared/ai.js';
 import { fingerprint } from '../shared/fingerprint.js';
@@ -42,7 +42,7 @@ function reference(chars, humans, seed, ticks) {
 // Each human on their own device; every message takes 0..maxLate frames and
 // some are lost. A message carries every button the receiver has not yet
 // confirmed (as the real link will), so a lost one only costs time.
-function network(chars, humans, seed, ticks, { maxLate, loss, rand, drift, noReferee }) {
+function network(chars, humans, seed, ticks, { maxLate, loss, rand, drift, noReferee, blackout, maxBehind }) {
   // (drift: one device's fight goes wrong at one tick - as a bug or a
   // different rounding would make it - for the referee to put right.)
   const drifting = (me) => (w, bits) => {
@@ -51,7 +51,7 @@ function network(chars, humans, seed, ticks, { maxLate, loss, rand, drift, noRef
   };
   const peers = Array.from({ length: humans }, (_, me) => ({
     me,
-    rb: createRollback({ world: newWorld(chars, humans, seed), players: humans, mine: [me], step: drifting(me), copy }),
+    rb: createRollback({ world: newWorld(chars, humans, seed), players: humans, mine: [me], step: drifting(me), copy, maxBehind }),
   }));
   let fixes = 0;
   let checked = 0;
@@ -90,8 +90,10 @@ function network(chars, humans, seed, ticks, { maxLate, loss, rand, drift, noRef
       // send each other player what they have not confirmed (at most 30 ticks)
       for (const other of peers) {
         if (other === peer || rand() < loss) continue;
-        const from = other.rb.heard(me) + 1; // (in real play, told by their acknowledgements)
-        const inputs = [...sent[me]].filter(([t]) => t >= from && t < from + 30);
+        if (blackout && (blackout.from ?? me) === me && frame >= blackout.frames[0] && frame < blackout.frames[1]) continue; // the line is down (one way, or both)
+        // (in real play the ack comes in their messages)
+        const { from, b } = unconfirmed(sent[me], other.rb.heard(me), peer.rb.tick - 1 + DELAY);
+        const inputs = b.map((bits, i) => [from + i, bits]);
         if (inputs.length) wire.push({ to: other.me, from: me, inputs, at: frame + 1 + Math.floor(rand() * maxLate) });
       }
     }
@@ -151,3 +153,16 @@ test('rollback: a device whose fight drifts is put right by the host', () => {
   const unfixed = network(chars, 2, 7, TICKS, { maxLate: 8, loss: 0.1, rand: lcg(5), drift: { peer: 1, tick: 400 }, noReferee: true });
   assert.notEqual(unfixed.peers[1].print, want);
 });
+
+for (const [name, blackout] of [['both ways', { frames: [300, 420] }], ['one way only', { from: 1, frames: [300, 420] }]]) {
+  test(`rollback: the line down ${name} for two seconds, then back - both carry on and agree`, () => {
+    const chars = ['ruko', 'zelrith'];
+    const TICKS = 1500;
+    const want = reference(chars, 2, 7, TICKS);
+    const run = network(chars, 2, 7, TICKS, { maxLate: 6, loss: 0.05, rand: lcg(21), blackout, maxBehind: 20 });
+    for (const g of run.peers) {
+      assert.equal(g.stats.tick, TICKS, 'not stuck waiting');
+      assert.equal(g.print, want);
+    }
+  });
+}

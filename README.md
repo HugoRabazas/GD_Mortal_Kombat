@@ -1180,6 +1180,20 @@ world hide that wait:
     counted the hits it had shown (checked: a fight forced on the host's
     side only, put right by the referee, now shows the same numbers on
     both; a test checks the tally against the events).
+  - *Polish (loop 165).* When the fight stops to wait for a player (their
+    buttons have not come for 20 ticks), the line under the clock says
+    WAITING FOR and their name; a player who switches to another app tells
+    the others, whose line says NAME LEFT THE APP · THE FIGHT WAITS. A bug
+    found on the way: each message carried only the newest 40 ticks of
+    buttons, so after a run of lost messages in one direction (the other
+    side kept moving on) a gap was never sent again and both sides waited
+    for each other forever; now every message starts from the first tick
+    the other side lacks (64 at most; the next ones follow) - a Node test
+    with the line down one way for two seconds fails the old way and
+    passes now, and in the browser the fight carries on when the line comes
+    back, fingerprints identical. On a slow phone (the processor 4x and 8x
+    slower): the fight keeps real time, never a wait, your own punch on
+    screen in 62-94 ms.
 - **Steps.** 1) the cross-browser fingerprint test and our own trigonometry
   (offline play unchanged, all tests and balance figures checked);
   2) the ring of past ticks and the replay, tested in Node with two
