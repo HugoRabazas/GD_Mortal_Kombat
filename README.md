@@ -730,6 +730,10 @@ and the heartbeat, the crowd and the weather go quiet.
   read straight after drawing). Checked: the turned view and the saved
   picture in 3D; the pause and photo screens fit at the seven sizes (the
   buttons more compact on narrow phones: they ran 2 px over at 360x640).
+  Inside the claude.ai Artifact a page may not download by itself: there
+  the picture is offered through the Artifact's `downloads` capability
+  (the viewer confirms the save); on the website, a plain download (loop
+  199).
 - **Towards a realistic look - the floor** (loop 182): the first step of a
   realism pass on the arenas (the fighters later; the user chose to keep
   each member's avatar on the head). The floor and the dais are now

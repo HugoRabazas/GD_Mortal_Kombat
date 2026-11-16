@@ -2060,11 +2060,20 @@ function savePicture() {
   const g = c.getContext('2d');
   if (src === gl) g.drawImage(gl, 0, 0, c.width, c.height);
   g.drawImage(hud, 0, 0, c.width, c.height);
-  c.toBlob((blob) => {
+  c.toBlob(async (blob) => {
     if (!blob) return;
+    const filename = `gd-arena-${app.fightPlace || 'arena'}.png`;
+    // Inside a claude.ai Artifact a page may not download by itself: the
+    // viewer is offered the file through the 'downloads' capability (and
+    // confirms it). On the website, a plain download.
+    const viewer = typeof window !== 'undefined' && window.claude?.use ? await window.claude.use('downloads').catch(() => null) : null;
+    if (viewer) {
+      viewer.save({ filename, data: blob }).catch(() => {}); // (declined or unavailable: nothing to do)
+      return;
+    }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `gd-arena-${app.fightPlace || 'arena'}.png`;
+    a.download = filename;
     document.body.append(a);
     a.click();
     a.remove();
