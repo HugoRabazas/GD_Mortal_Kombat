@@ -1574,3 +1574,23 @@ test('kick after a double jump is a dive kick: down at the rival, it floors them
   step(s, [INPUT.KICK, 0]);
   assert.equal(s.f[0].move, 'airKick');
 });
+
+test('a boss brought to half health powers up once a round (second wind)', () => {
+  const s = createMatch(['ruko', 'shadow'], [null, { health: 1.3, power: 1.1, enrage: true }]);
+  while (s.phase !== 'fight') step(s, idle(s));
+  closeUp(s, 60);
+  const boss = s.f[1];
+  const pw = boss.pw;
+  boss.hp = Math.round(boss.maxHp * 0.55); // a few blows from half
+  const seen = [];
+  for (let t = 0; t < 600 && boss.hp > boss.maxHp * 0.3; t++) {
+    if (t % 60 === 0) closeUp(s, 60);
+    step(s, [t % 60 === 1 ? INPUT.PUNCH : 0, 0]);
+    seen.push(...s.ev);
+  }
+  const winds = seen.filter((e) => e.type === 'enrage' && e.slot === 1);
+  assert.equal(winds.length, 1, 'once');
+  assert.ok(boss.enraged && boss.pw > pw, 'harder blows');
+  // An ordinary fighter never does.
+  assert.ok(!seen.some((e) => e.type === 'enrage' && e.slot === 0));
+});

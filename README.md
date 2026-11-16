@@ -638,6 +638,11 @@ and the heartbeat, the crowd and the weather go quiet.
   draws the same 300 calls as before, only 22 % more pixels (a frame about
   19 % dearer in a software renderer); the automatic quality setting
   already steps down on a phone that cannot keep up.
+- **The boss's second wind**: the arcade boss, brought to half health,
+  powers up once a round - a red burst, "<NAME> POWERS UP!", a jolt of
+  energy and blows a tenth harder - and burns bright for the rest of the
+  round. It makes the last stage feel like one; the boss still beats a
+  Hard CPU 93 % of the time, as before. How to play mentions it.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

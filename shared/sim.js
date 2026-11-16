@@ -75,6 +75,8 @@ const GETUP_TICKS = 18;
 // TECH_TICKS instead of DOWN_TICKS - once per knockdown, and not in the
 // last few ticks, when there would be nothing to gain.
 const TECH_TICKS = 8;
+// The arcade boss's second wind (see secondWind).
+export const ENRAGE = { at: 0.5, power: 1.1, meter: 40 };
 // After a throw's slam, kick within this many ticks (the slam's own freeze
 // included) is the pursuit.
 const PURSUE_TICKS = 20;
@@ -534,6 +536,8 @@ function newFighter(charId, slot, count, mod) {
     char: c.id,
     slot,
     pw: mod?.power ?? 1,
+    enrage: !!mod?.enrage, // (a boss) powers up once a round at half health
+    enraged: false,
     x,
     z,
     h: 0,
@@ -1556,6 +1560,14 @@ function activeMove(f) {
 // half as fast again, so the one behind gets a special or a finisher sooner
 // and a round is not over before it is over.
 const LAST_STAND = { below: 0.25, gain: 1.5 };
+// A boss brought to half health powers up: harder blows and energy.
+function secondWind(s, f) {
+  if (!f.enrage || f.enraged || f.hp <= 0 || f.hp > f.maxHp * ENRAGE.at) return;
+  f.enraged = true;
+  f.pw *= ENRAGE.power;
+  addMeter(f, ENRAGE.meter);
+  emit(s, 'enrage', { slot: f.slot, x: f.x, z: f.z });
+}
 const lastStand = (f) => f.hp > 0 && f.hp < f.maxHp * LAST_STAND.below;
 
 function addMeter(f, amount) {
@@ -1645,6 +1657,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
       const wasStanding = lastStand(def);
       def.hp -= dmg;
       if (!wasStanding && lastStand(def)) emit(s, 'lastStand', { slot: def.slot });
+      secondWind(s, def);
       addMeter(att, m.gain);
       if (att.state === 'attack') att.landed = (att.landed || 0) + 1;
       att.stop = 3;
@@ -1725,6 +1738,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
   // A finisher's flurry never knocks out: that is left to its last blow.
   def.hp = Math.max(m.ult && m.light ? Math.min(1, def.hp) : 0, def.hp - dmg);
   if (!wasStanding && lastStand(def)) emit(s, 'lastStand', { slot: def.slot });
+  secondWind(s, def);
   addMeter(att, m.gain);
   addMeter(def, m.gain * 0.6 + dmg * 0.4);
   def.move = null;

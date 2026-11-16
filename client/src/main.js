@@ -107,7 +107,7 @@ const STAGES = [
   { level: 'normal', mod: null },
   { level: 'easy', mod: null, brawl: true },
   { level: 'hard', mod: { health: 1.15, power: 1.05 } },
-  { level: 'boss', mod: { health: 1.3, power: 1.1 }, boss: true },
+  { level: 'boss', mod: { health: 1.3, power: 1.1, enrage: true }, boss: true },
 ];
 
 const app = {
@@ -518,7 +518,7 @@ function helpScreen() {
         <li><b>Crystals</b> appear on the floor: gold gives energy, green gives health. Walk over one to take it.</li>
         <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage: knocked down into it, they bounce back off it, open to one more blow. A throw with the flames beyond the rival is a <b>fire toss</b> straight into them.</li>
         <li>Each fighter's <b>finisher</b> is their own: a chain of blows with its own scene, ending in a last blow the camera closes in on. In a brawl, once it has landed the others cannot stop it.</li>
-        <li><b>Arcade</b>: ${STAGES.length} fights in a row, the last against a boss, moving between the arenas as you climb.</li>
+        <li><b>Arcade</b>: ${STAGES.length} fights in a row, the last against a boss - who powers up once a round at half health - moving between the arenas as you climb.</li>
         <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
         <li>The <b>Tutorial</b> teaches every move in short lessons, each against a partner who does what the lesson needs (one even throws you down so you can practise getting up).</li>
         <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks, kicks on a beat or fights back. Free practice, with nothing else on screen.</li>
