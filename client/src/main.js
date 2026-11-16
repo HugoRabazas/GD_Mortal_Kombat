@@ -315,6 +315,7 @@ function layout() {
   const wide = stage?.resize(w, h, fullW, fullH);
   root.classList.toggle('bleed', !!wide);
   touchLayout?.apply();
+  placeUnderArena();
 }
 
 // --------------------------------------------------------------- screens ---
@@ -1338,6 +1339,20 @@ function refreshTouch() {
   }
 }
 
+// Held upright, a fight's result sits just under the arena when it fits
+// there (centred in the screen it left a gap of up to 190 px above it);
+// when it does not fit it stays centred and lies over the arena's lower part.
+function placeUnderArena() {
+  const card = ui.querySelector('.screen.result');
+  ui.style.alignItems = '';
+  if (card) card.style.marginTop = '';
+  if (!card || !isPortrait()) return;
+  const below = stageEl.getBoundingClientRect().bottom + 10;
+  if (below + card.offsetHeight + 16 > ui.clientHeight) return;
+  ui.style.alignItems = 'flex-start';
+  card.style.marginTop = `${Math.round(below - parseFloat(getComputedStyle(ui).paddingTop))}px`;
+}
+
 function show(screen) {
   // The lobby and the rooms redraw whenever someone joins or speaks: carry a
   // half-typed chat message (and the cursor) across the redraw.
@@ -1361,6 +1376,7 @@ function show(screen) {
   app.music = screen === 'fight' || screen === 'replay' ? 'fight' : 'menu';
   setMusic(app.music);
   keepAwake(screen === 'fight');
+  placeUnderArena();
   // The chat's newest lines are the ones to see (it scrolls up for older).
   const log = ui.querySelector('.chat ol');
   if (log) log.scrollTop = log.scrollHeight;
