@@ -78,16 +78,38 @@ body {
 
 /* The training checklist, top left under the scoreboard. */
 /* A passing notice (a controller arriving or leaving), above everything. */
-/* Beside a result card, not over its title: the bottom left corner, small. */
-#toast.aside {
-  top: auto;
-  bottom: max(10px, env(safe-area-inset-bottom, 0px));
-  left: max(12px, env(safe-area-inset-left, 0px));
-  transform: none;
-  max-width: min(34%, 260px);
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  text-align: left;
+/* What is new on the Record, in the result card. */
+.result .note.news {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* A brawl's standings on a phone held sideways: slimmer rows. */
+@media (max-height: 400px) and (orientation: landscape) {
+  .result .ranking {
+    gap: 3px;
+  }
+
+  .result .ranking li {
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+
+  .result .ranking .head {
+    width: 30px;
+    height: 30px;
+  }
+}
+
+/* On a short screen it takes the place of each row's numbers in a brawl. */
+@media (max-height: 480px) {
+  .result .note.news {
+    margin: 0;
+  }
+
+  .screen.result:has(.news) .ranking small {
+    display: none;
+  }
 }
 
 #toast {

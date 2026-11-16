@@ -76,8 +76,6 @@ const toastEl = $('#toast');
 let toastTimer = 0;
 function toast(text, ms = 3600) {
   toastEl.textContent = text;
-  // Over a result card it would hide the card's title: it goes to a corner.
-  toastEl.classList.toggle('aside', app.screen === 'result');
   toastEl.hidden = false;
   clearTimeout(toastTimer);
   toastTimer = setTimeout(() => (toastEl.hidden = true), ms);
@@ -906,6 +904,11 @@ function winnerQuote() {
   return f.quote ? `<p class="quote">“${f.quote}” <span>${f.name}</span></p>` : '';
 }
 
+// A milestone reached or a best broken in this fight (see the Record screen),
+// as a line in the result card - a notice over the card hid its title or its
+// buttons.
+const recordNews = () => (app.newBests?.length ? `<p class="note news">New on your Record: ${esc(app.newBests.join(' · '))}</p>` : '');
+
 function resultScreen() {
   const s = app.game.state;
   const won = s.matchWinner === 0;
@@ -915,7 +918,7 @@ function resultScreen() {
       : `<button type="button" class="btn primary" data-act="rematch">Rematch</button>
           <button type="button" class="btn" data-act="select">Change fighter</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>`;
-  if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result">${winnerQuote()}${statsCard()}${roomScoreNote()}<div class="row">${again}</div></section>`;
+  if (app.mode === 'online' && s.mode !== 'arena') return `<section class="screen result">${winnerQuote()}${statsCard()}${roomScoreNote()}${recordNews()}<div class="row">${again}</div></section>`;
   if (s.mode === 'arena' && app.mode !== 'arcade') {
     return `
       <section class="screen result">
@@ -923,7 +926,7 @@ function resultScreen() {
         ${rankingList()}
         ${app.mode === 'online' ? roomScoreNote() : ''}
         ${app.levelMoved ? `<p class="note">The CPU is now on <b>${LEVEL_NAMES[app.levelMoved]}</b> for your next fight.</p>` : ''}
-        <div class="row">${again}</div>
+        ${recordNews()}<div class="row">${again}</div>
       </section>`;
   }
   if (app.mode !== 'arcade') {
@@ -932,7 +935,7 @@ function resultScreen() {
         ${winnerQuote()}
         ${statsCard()}
         ${app.levelMoved ? `<p class="note">The CPU is now on <b>${LEVEL_NAMES[app.levelMoved]}</b> for your next fight.</p>` : ''}
-        <div class="row">
+        ${recordNews()}<div class="row">
           <button type="button" class="btn primary" data-act="rematch">Rematch</button>
           <button type="button" class="btn" data-act="select">Change fighters</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>
@@ -947,7 +950,7 @@ function resultScreen() {
         <p class="headline">Stopped at stage ${a.stage + 1} of ${total}</p>
         <p class="sub">${s.mode === 'arena' ? 'Only a clear first place goes through. ' : ''}Score ${points(a.score)}</p>
         ${outcome()}
-        <div class="row">
+        ${recordNews()}<div class="row">
           <button type="button" class="btn primary" data-act="retry">Try again</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>
         </div>
@@ -959,7 +962,7 @@ function resultScreen() {
         <p class="headline">Arena champion</p>
         <p class="sub">Final score ${points(a.score)}${a.score >= bestScore() ? ' · new best' : ''}</p>
         ${outcome()}
-        <div class="row">
+        ${recordNews()}<div class="row">
           <button type="button" class="btn primary" data-act="arcade">Play again</button>
           <button type="button" class="btn quiet" data-act="menu">Menu</button>
         </div>
@@ -971,7 +974,7 @@ function resultScreen() {
       <p class="headline">Stage ${a.stage + 1} cleared · +${points(a.gained)}</p>
       <p class="sub next">Next: ${next.brawl ? `<b>a brawl</b> against ${next.rivals.map((id) => head(id)).join('')} all at once` : `${head(next.char)} <b>${getFighter(next.char).name}</b>${next.boss ? ' · the boss' : ''}`}</p>
       ${outcome()}
-      <div class="row">
+      ${recordNews()}<div class="row">
         <button type="button" class="btn primary" data-act="next">Next fight</button>
         <button type="button" class="btn quiet" data-act="menu">Menu</button>
       </div>
@@ -1933,9 +1936,7 @@ function frame(now) {
       if (app.mode === 'online') countRoomWin(s);
       app.newBests = [];
       scoreMatch();
-      show('result');
-      // A milestone reached or a best broken in this fight (see the Record screen).
-      if (app.newBests.length) toast(`New on your Record: ${app.newBests.join(' · ')}`, 5200);
+      show('result'); // (the card says what is new on the Record)
     }
   } else if (s.phase === 'over' && s.pt > 200) {
     startDemo();

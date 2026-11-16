@@ -482,11 +482,19 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **Result cards with four fighters, measured with the longest names**: the
+  Arena's result with Zelrith, Kichta, Jackie and Shadow as yours (random
+  rivals) at 568x320, 640x360, 740x340 and 360x640, and the arcade played
+  through at six sizes: the arcade's brawl standings overflowed 640x360 by
+  30 px - rows are slimmer on any phone held sideways - and with the record
+  line in a brawl card on a short screen, the rows' numbers (all zero by
+  then for the rivals) give way to it.
 - **The arcade on a phone, played through**: every stage won in turn at
   568x320, 360x640, 740x340 and 844x390, with each result card measured.
   Two fixes: the "New on your Record" notice sat over the result card's
-  title (STAGE 3 CLEARED was hidden for five seconds) - over a result card
-  it now goes small to the bottom left corner; and the brawl stage's
+  title (STAGE 3 CLEARED was hidden for five seconds) - it is now a gold
+  line inside the result card itself (a corner was tried first, but in the
+  Arena the Rematch button is there); and the brawl stage's
   standings overflowed a 568x320 screen by a few pixels (smaller faces, a
   smaller headline and tighter rows below 345 px of height).
 - **Touch controls, two fingers at once, checked**: with real multi-touch
