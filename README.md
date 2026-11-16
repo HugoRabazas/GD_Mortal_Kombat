@@ -1181,9 +1181,11 @@ world hide that wait:
     side only, put right by the referee, now shows the same numbers on
     both; a test checks the tally against the events).
   - *Polish (loop 165).* When the fight stops to wait for a player (their
-    buttons have not come for 20 ticks), the line under the clock says
-    WAITING FOR and their name; a player who switches to another app tells
-    the others, whose line says NAME LEFT THE APP · THE FIGHT WAITS. A bug
+    buttons have not come for 20 ticks), the middle of the screen says
+    WAITING FOR and their name, large, with "The fight goes on when they
+    are back" under it; a player who switches to another app tells the
+    others, whose screens say NAME LEFT THE APP (loop 166; seen at
+    360x640, 568x320 and 915x412). A bug
     found on the way: each message carried only the newest 40 ticks of
     buttons, so after a run of lost messages in one direction (the other
     side kept moving on) a gap was never sent again and both sides waited
