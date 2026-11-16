@@ -146,10 +146,10 @@ export function confetti(width, colors) {
 }
 
 const COMBO_WORDS = [[12, 'UNSTOPPABLE'], [9, 'AMAZING'], [7, 'AWESOME'], [5, 'GREAT'], [3, 'NICE']];
-export function comboCount(side, n, color) {
+export function comboCount(side, n, color, damage = 0) {
   const now = performance.now();
-  if (combo && combo.side === side && n > combo.n) Object.assign(combo, { n, at: now });
-  else combo = { side, n, color, born: now, at: now };
+  if (combo && combo.side === side && n > combo.n) Object.assign(combo, { n, damage, at: now });
+  else combo = { side, n, color, damage, born: now, at: now };
 }
 
 // `rise`: how fast it drifts up (px a frame); `top`: the highest it may go.
@@ -242,6 +242,15 @@ function drawCombo(ctx, high) {
     ctx.strokeText(word, 0, 58);
     ctx.fillStyle = '#ffd34d';
     ctx.fillText(word, 0, 58);
+  }
+  if (combo.damage > 0) {
+    // What the combo has taken off so far.
+    ctx.font = 'italic 700 20px Teko, Impact, "Arial Black", sans-serif';
+    const y = word ? 82 : 58;
+    ctx.lineWidth = 5;
+    ctx.strokeText(`${Math.round(combo.damage)} DAMAGE`, 0, y);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(`${Math.round(combo.damage)} DAMAGE`, 0, y);
   }
   ctx.restore();
 }

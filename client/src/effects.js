@@ -73,6 +73,8 @@ const aboveTag = (char) => (char.build === 'sumo' ? 285 : 265);
 // They drift up only a little, and never into the scoreboard across the top.
 const OVER = { rise: 0.35, top: 104 };
 
+const comboDamage = []; // per fighter hit: the damage of the combo they are in
+
 export function handleEvents(events, state, { quiet, project, me = -1, colors = null, how = '' }) {
   // Behind the menus (quiet) the fight keeps its sparks and flashes but not
   // its words, which would sit on top of the menu's own text.
@@ -328,10 +330,12 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
         lightFlash(e.x, e.h, e.z, tint.glow, e.heavy);
         cheerFor(e.by, e.heavy ? 0.8 : 0.25);
         floatText(p.x, p.y - 30, String(e.dmg), e.heavy ? '#ffd34d' : '#ffffff', e.heavy ? 28 : 22);
+        // The combo's damage so far, for the counter.
+        comboDamage[e.on] = (e.combo > 1 ? comboDamage[e.on] || 0 : 0) + e.dmg;
         // Two blows in a row: a small tag by the blow; three or more: the big
         // counter at the attacker's side of the screen.
         if (e.combo === 2) floatText(p.x, p.y - 58, '2 HITS', '#ff8a5c', 20);
-        else if (e.combo >= 3) comboCount(by && by.x < state.f[e.on].x ? -1 : 1, e.combo, tint.glow);
+        else if (e.combo >= 3) comboCount(by && by.x < state.f[e.on].x ? -1 : 1, e.combo, tint.glow, comboDamage[e.on]);
         if (e.kind === 'grab') floatText(p.x, p.y - 58, 'SLAM!', '#ffb050', 26);
         if (e.kind === 'dash' || e.kind === 'bolt' || e.kind === 'rise' || e.kind === 'quake') {
           // A special landing: a second burst of sparks and a stronger light.

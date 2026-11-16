@@ -66,6 +66,8 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   under your health bar (P, K, GRAB, BLK, SP, ULT, JMP, each with the
   direction held as it was pressed: →P, ↘K) and fading after four seconds,
   to check the order and rhythm of a string.
+  The combo counter (in every mode) also adds up what the combo has taken
+  off so far: 3 HITS, NICE, 18 DAMAGE.
 - **Tutorial**: nine short lessons (Basics, Defence, Getting up, Throws, On
   the run, In the air, Combos, Counters, Specials), each against a partner
   scripted for it: one stands still, one kicks on the beat (to block, perfect
