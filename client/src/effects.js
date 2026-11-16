@@ -45,6 +45,8 @@ function buzz(ms) {
 const TAUNTS = { ruko: 'Awoo!', shadow: 'Too slow.', jackie: 'Hmph!', pixie: 'Catch me!', meru: 'Is that all?', gleh: 'Over here!', kichta: 'Too easy.', zelrith: 'Hehe! Again!' };
 
 // Which shape a blow's spark takes.
+// Blows with a sound of their own when they land.
+export const HIT_SOUND = { slide: 'scrape', sweep: 'scrape', diveKick: 'diveHit' };
 const KICKS = new Set(['kick', 'kick2', 'hook', 'slide', 'sweep', 'pursuit', 'diveKick', 'airKick', 'axeKick', 'flyKnee', 'launch', 'riseKick', 'rollSpin', 'breaker', 'stomp', 'quake']);
 function sparkStyle(e) {
   if (e.stage) {
@@ -321,7 +323,7 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
           if (!quiet) play('finale');
           if (!quiet && (e.on === me || e.by === me)) buzz(160);
         }
-        if (!quiet) play(e.heavy ? 'heavy' : 'hit');
+        if (!quiet) play(HIT_SOUND[e.kind] ?? (e.heavy ? 'heavy' : 'hit'));
         if (!quiet && e.on === me) buzz(fin ? 120 : e.heavy ? 45 : 20);
         else if (!quiet && e.by === me && e.heavy) buzz(12); // your own heavy blows are felt too, lightly
         break;

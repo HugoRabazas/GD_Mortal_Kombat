@@ -166,6 +166,17 @@ const SOUNDS = {
     tone('sine', 150, 38, 0.26, 1);
     tone('square', 90, 40, 0.12, 0.25);
   },
+  // A low blow along the floor (slide, guard sweep): a scrape and a thump.
+  scrape: () => {
+    burst(0.22, 0.6, 420, 0.5);
+    tone('sine', 140, 60, 0.18, 0.6);
+  },
+  // A dive kick landing: a falling crack.
+  diveHit: () => {
+    burst(0.16, 0.9, 760, 0.6);
+    tone('sine', 260, 50, 0.3, 0.9);
+    tone('square', 110, 45, 0.1, 0.2);
+  },
   block: () => {
     burst(0.07, 0.4, 2600, 2);
     tone('triangle', 520, 300, 0.08, 0.3);

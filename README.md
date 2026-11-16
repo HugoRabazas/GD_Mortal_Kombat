@@ -622,6 +622,10 @@ and the heartbeat, the crowd and the weather go quiet.
   JMP again, K). Gleh, lowest on one seed (44-46 %), wins 49 % over 1,400
   duels - no change needed. Two players and Training checked over the
   full-screen 3D arena at 568x320 and 844x390.
+- **Blows with a sound of their own**: every blow used one of two hit
+  sounds (ordinary, heavy). The low blows along the floor (the slide and
+  the guard sweep) now land with a scrape and a thump, and a dive kick with
+  a falling crack; a test checks that each named sound exists.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

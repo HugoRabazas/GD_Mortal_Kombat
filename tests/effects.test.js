@@ -47,3 +47,9 @@ test('every sound a ritual asks for exists (a wrong name would be silent)', asyn
   for (const name of names) assert.ok(hasSound(name), name);
   for (const name of ['oathRing', 'twang', 'slice', 'whirl', 'bowOut']) assert.ok(names.includes(name), `${name} is used`);
 });
+
+test('the blows with a sound of their own name sounds that exist', async () => {
+  const { hasSound } = await import('../client/src/audio.js');
+  const { HIT_SOUND } = await import('../client/src/effects.js');
+  for (const [kind, name] of Object.entries(HIT_SOUND)) assert.ok(hasSound(name), `${kind}: ${name}`);
+});
