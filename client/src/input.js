@@ -271,3 +271,20 @@ export function initTouch(root) {
   }
   root.addEventListener('contextmenu', (e) => e.preventDefault());
 }
+
+// Training shows your last buttons: each new press as a chip, with the
+// direction held as it was pressed.
+const BUTTON_CHIPS = [
+  [INPUT.PUNCH, 'P'],
+  [INPUT.KICK, 'K'],
+  [INPUT.GRAB, 'GRAB'],
+  [INPUT.BLOCK, 'BLK'],
+  [INPUT.SPECIAL, 'SP'],
+  [INPUT.SUPER, 'ULT'],
+  [INPUT.JUMP, 'JMP'],
+];
+const ARROWS = { 1: '←', 2: '→', 4: '↑', 8: '↓', 5: '↖', 6: '↗', 9: '↙', 10: '↘' };
+export function buttonChips(fresh, held) {
+  const dir = ARROWS[held & 15] || '';
+  return BUTTON_CHIPS.filter(([bit]) => fresh & bit).map(([, name]) => ({ dir, name }));
+}

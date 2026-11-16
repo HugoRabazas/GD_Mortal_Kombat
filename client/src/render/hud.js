@@ -275,3 +275,34 @@ export function drawHud(ctx, s, labels, now, worn, top) {
   ctx.fillText(closing && s.phase === 'fight' ? 'RING CLOSING' : arena ? `ROUND ${s.round} / ${MODES.arena.maxRounds}` : `ROUND ${s.round}`, W / 2, 76);
   ctx.restore();
 }
+
+// Training: your last buttons, oldest first, under your health bar (below the
+// energy bar when that is up there too). Each fades after a few seconds.
+const CHIP_INK = { P: '#c62a3a', K: '#9c1f30', GRAB: '#a86a1f', BLK: '#4a3a52', SP: '#7a2a8a', ULT: '#b8862a', JMP: '#2856a8' };
+export function drawInputs(ctx, list, top) {
+  const now = performance.now();
+  let x = 24;
+  const y = top ? 104 : 84;
+  ctx.save();
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+  for (const c of list) {
+    const age = now - c.at;
+    if (age > 4000) continue;
+    ctx.globalAlpha = Math.min(1, (4000 - age) / 800);
+    ctx.font = `italic 700 18px ${FONT}`;
+    const label = c.dir + c.name;
+    const w = ctx.measureText(label).width + 14;
+    ctx.beginPath();
+    ctx.roundRect ? ctx.roundRect(x, y, w, 24, 6) : ctx.rect(x, y, w, 24);
+    ctx.fillStyle = CHIP_INK[c.name] || '#444';
+    ctx.fill();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.fillText(label, x + 7, y + 13);
+    x += w + 5;
+  }
+  ctx.restore();
+}

@@ -12,7 +12,7 @@ import { loadAssets, headUrls } from './assets.js';
 import { createStage } from './stage.js';
 import { createGame } from './game.js';
 import { handleEvents, setBuzz } from './effects.js';
-import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, padStyle, hasPad, setCapture, setTouchLive, lastDevice } from './input.js';
+import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, padStyle, hasPad, setCapture, setTouchLive, lastDevice, buttonChips } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, setAmbience, getVolume, setVolume, STEP_SOUND } from './audio.js';
 import { setFloor } from './render/fx.js';
@@ -1350,7 +1350,7 @@ function startFight() {
     controllers = [solo, cpu(cpuLevel())];
   } else if (app.mode === 'training') {
     const partner = app.dummy === 'fight' ? cpu('easy') : app.dummy === 'beat' ? drummer() : app.dummy === 'combo' ? comboer() : app.dummy === 'block' ? () => INPUT.BLOCK : () => 0;
-    controllers = [solo, partner];
+    controllers = [watchButtons(solo), partner];
   } else if (app.mode === 'tutorial') {
     // The lesson's partner: a fighter other than your own.
     chars = [app.picks[0], FIGHTERS.find((f) => f.id !== app.picks[0]).id];
@@ -1425,6 +1425,24 @@ function readRecord() {
   }
   return { v: 1, fights: 0, wins: 0, streak: 0, bestStreak: 0, bestCombo: 0, perfect: 0, damage: 0, online: 0, by: {} };
 }
+// Training shows your last buttons under your health bar (each with the
+// direction held as it was pressed), to check a string's timing and order.
+function watchButtons(read) {
+  let was = 0;
+  app.pressed = [];
+  return (...a) => {
+    const b = read(...a);
+    const fresh = b & ~was;
+    was = b;
+    if (fresh & ~15) {
+      const at = performance.now();
+      for (const c of buttonChips(fresh, b)) app.pressed.push({ ...c, at });
+      if (app.pressed.length > 8) app.pressed.splice(0, app.pressed.length - 8);
+    }
+    return b;
+  };
+}
+
 // The moves every fighter has, by the name a landed blow carries: the
 // Record counts how many of them you have landed at least once.
 const MOVE_BOOK = {
@@ -2278,7 +2296,7 @@ function frame(now) {
   // guests: they see the fight through the host's updates, not its screen.
   if (app.mode === 'online' && playing && app.online?.isHosting?.() && app.hostDrawMs > 30 && now - (app.lastDrawAt || 0) < 90) return;
   const drawStart = performance.now();
-  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, photo: app.screen === 'photo' ? app.photo : null, labels: tags, boss, humans, me: mine, net, wait, hint, hintAlways: practising(), clearCorners: touchOver(), noTags: app.screen === 'pause' }, now);
+  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, photo: app.screen === 'photo' ? app.photo : null, labels: tags, boss, humans, me: mine, net, wait, hint, hintAlways: practising(), clearCorners: touchOver(), noTags: app.screen === 'pause', inputs: playing && app.mode === 'training' && app.screen === 'fight' ? app.pressed : null }, now);
   if (app.photoSave) {
     app.photoSave = false;
     savePicture();

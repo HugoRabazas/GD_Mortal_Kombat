@@ -62,7 +62,10 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   the perfect guard. That partner always kicks from the outer side, so its
   kicks push you back towards the middle and never into the ring of fire.
   It is free practice: nothing on screen but the fight (the list of moves to
-  learn lives in the Tutorial).
+  learn lives in the Tutorial) - and your last eight buttons, shown as chips
+  under your health bar (P, K, GRAB, BLK, SP, ULT, JMP, each with the
+  direction held as it was pressed: →P, ↘K) and fading after four seconds,
+  to check the order and rhythm of a string.
 - **Tutorial**: nine short lessons (Basics, Defence, Getting up, Throws, On
   the run, In the air, Combos, Counters, Specials), each against a partner
   scripted for it: one stands still, one kicks on the beat (to block, perfect

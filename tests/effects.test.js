@@ -82,3 +82,11 @@ test('every arena floor kicks up its own dust', async () => {
   const { ARENAS } = await import('../client/src/arenas.js');
   for (const a of ARENAS) assert.match(FLOOR_DUST[a.id]?.color ?? '', /^#[0-9a-f]{6}$/, a.id);
 });
+
+test('training button chips: each new button, with the direction held', async () => {
+  const { buttonChips } = await import('../client/src/input.js');
+  const { INPUT } = await import('../shared/constants.js');
+  assert.deepEqual(buttonChips(INPUT.PUNCH, INPUT.PUNCH), [{ dir: '', name: 'P' }]);
+  assert.deepEqual(buttonChips(INPUT.KICK, INPUT.KICK | INPUT.DOWN | INPUT.RIGHT), [{ dir: '↘', name: 'K' }]);
+  assert.deepEqual(buttonChips(INPUT.PUNCH | INPUT.KICK, INPUT.PUNCH | INPUT.KICK | INPUT.LEFT).map((c) => c.dir + c.name), ['←P', '←K']);
+});

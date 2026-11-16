@@ -14,7 +14,7 @@ import wallUrl from './render/tex/wall_diff.jpg';
 useFlatPhotos({ stone: stoneUrl, wall: wallUrl });
 import { drawFighter, drawProjectile, resetPoses, setAnnounce } from './render/fighter.js';
 import { updateFx, drawFx, drawOverlays, resetFx } from './render/fx.js';
-import { drawHud, drawTags, resetHud } from './render/hud.js';
+import { drawHud, drawTags, drawInputs, resetHud } from './render/hud.js';
 
 const { W, H } = ARENA;
 const calm = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -586,6 +586,7 @@ export function createStage(glCanvas, hudCanvas) {
         finaleOverlay(ctx, s, worn);
         finisherCutIn(ctx, s, worn);
         drawHud(ctx, s, view.labels, now, worn, view.clearCorners);
+        if (view.inputs?.length) drawInputs(ctx, view.inputs, view.clearCorners);
         lineUp(ctx, s, view.labels, worn, !!view.clearCorners);
         // A reminder of the controls while the first round is being announced.
         // (Never on top of the line-up, which has the screen's lower half to itself.)
