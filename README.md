@@ -1488,6 +1488,9 @@ noise every 14 ticks of walking, only for your own fighter in a brawl).
 The dust the feet kick up matches the floor too - grey stone dust, white
 powder snow, pale sand, pink tile dust - and a small puff now marks where
 a fighter pushes off for a jump, not only where they land.
+Snow and sand also keep footprints: each step presses a foot into the
+floor of the Summit and the Ruins (a pair where someone lands), and the
+marks fade after a few seconds. Stone and tiles keep none.
 
 - **Ember Courtyard**: round one at dusk, round two under a cold night sky,
   round three in a storm with rain, lightning and thunder.

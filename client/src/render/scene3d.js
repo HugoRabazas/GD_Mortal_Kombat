@@ -812,6 +812,45 @@ export function create3D(canvas) {
     return { m, life: 0 };
   });
   let nextCrack = 0;
+  // Footprints in the snow and the sand: a foot pressed into the floor at
+  // each step and where a fighter lands, fading after a few seconds. (Stone
+  // and tiles keep no marks.)
+  // (Unlit, so the tint is dark: a press in the floor reads as shadow.)
+  const PRINTS = { frost: { color: 0x1a2638, opacity: 0.5 }, dunes: { color: 0x2e1e0c, opacity: 0.55 } };
+  const printTex = (() => {
+    const c = makeCanvas(64, 128);
+    const g = c.getContext('2d');
+    g.fillStyle = '#fff';
+    g.beginPath();
+    g.ellipse(32, 44, 20, 34, 0, 0, Math.PI * 2); // the ball of the foot
+    g.fill();
+    g.beginPath();
+    g.ellipse(32, 100, 15, 20, 0, 0, Math.PI * 2); // the heel
+    g.fill();
+    return new THREE.CanvasTexture(c);
+  })();
+  const printGeo = new THREE.PlaneGeometry(0.24, 0.44);
+  const prints = Array.from({ length: 28 }, () => {
+    const m = new THREE.Mesh(printGeo, new THREE.MeshBasicMaterial({ map: printTex, transparent: true, depthWrite: false, opacity: 0 }));
+    m.visible = false;
+    m.renderOrder = 1;
+    scene.add(m);
+    return { m, life: 0, top: 0.4 };
+  });
+  let nextPrint = 0;
+  const lastStep = []; // per slot: the walking step that last left a print
+  const wasUp = []; // per slot: in the air last frame
+  const press = (f, side, look) => {
+    const pr = prints[nextPrint++ % prints.length];
+    const a = f.dir;
+    const off = side * 0.12; // left or right of the middle
+    pr.m.position.set(f.x * S - Math.sin(a) * off, 0.022, f.z * S + Math.cos(a) * off);
+    pr.m.rotation.set(-Math.PI / 2, 0, -a - Math.PI / 2);
+    pr.m.material.color.setHex(look.color);
+    pr.top = look.opacity;
+    pr.life = 1;
+    pr.m.visible = true;
+  };
   const shardGeo = new THREE.TetrahedronGeometry(0.09);
   const shards = Array.from({ length: 16 }, () => {
     const m = new THREE.Mesh(shardGeo, new THREE.MeshLambertMaterial({ color: 0x7a6a5e }));
@@ -1621,6 +1660,31 @@ export function create3D(canvas) {
             sl.material.opacity = 0.7;
           }
         }
+      }
+      // Footprints, in the arenas whose floor keeps them.
+      const look = PRINTS[theme?.name];
+      if (look && s.phase !== 'intro') {
+        for (const f of s.f) {
+          const up = f.h > 0;
+          if (f.state === 'walk' && !up) {
+            const step = Math.floor(f.t / 14);
+            if (step !== lastStep[f.slot]) {
+              lastStep[f.slot] = step;
+              press(f, step % 2 ? 1 : -1, look);
+            }
+          }
+          if (wasUp[f.slot] && !up) {
+            press(f, 1, look);
+            press(f, -1, look);
+          }
+          wasUp[f.slot] = up;
+        }
+      }
+      for (const pr of prints) {
+        if (pr.life <= 0) continue;
+        pr.life -= dt / 6000;
+        pr.m.visible = pr.life > 0 && !!look;
+        pr.m.material.opacity = Math.min(1, Math.max(0, pr.life) * 2.5) * pr.top;
       }
       for (const c of cracks) {
         if (c.life <= 0) continue;
