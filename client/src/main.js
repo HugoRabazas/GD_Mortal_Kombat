@@ -1404,6 +1404,15 @@ function noteRecord() {
     if (fresh.length && was.played > 0) app.newBests.push(fresh.length === 1 ? `first ${MOVE_BOOK[fresh[0]]} landed` : `${fresh.length} moves landed for the first time`);
     r.moves = [...known, ...fresh];
   }
+  // Flawless wins and comebacks (see outcome.js), the first of each said.
+  const how = won ? howWon(s, app.roundEnds || []) : '';
+  if (how === 'perfect') {
+    r.flawless = (r.flawless || 0) + 1;
+    if (r.flawless === 1 && was.played > 0) app.newBests.push('first flawless win');
+  } else if (how === 'comeback') {
+    r.comebacks = (r.comebacks || 0) + 1;
+    if (r.comebacks === 1 && was.played > 0) app.newBests.push('first comeback');
+  }
   const f = (r.by[char] = r.by[char] || { fights: 0, wins: 0 });
   f.fights++;
   if (won) f.wins++;
@@ -1439,6 +1448,7 @@ function recordScreen() {
               <div><dt>Best run</dt><dd>${r.bestStreak} in a row</dd></div>
               <div><dt>Best combo</dt><dd>${r.bestCombo} hits</dd></div>
               <div><dt>Perfect guards</dt><dd>${r.perfect}</dd></div>
+              <div><dt>Flawless · comebacks</dt><dd>${r.flawless || 0} · ${r.comebacks || 0}</dd></div>
               <div><dt>Damage dealt</dt><dd>${points(r.damage)}</dd></div>
               <div><dt>Online fights</dt><dd>${r.online}</dd></div>
               <div title="${esc(missingMoves(r))}"><dt>Moves landed</dt><dd><button type="button" class="linkish" data-act="movesLeft" aria-label="Moves still to land">${(r.moves || []).filter((k) => MOVE_BOOK[k]).length} of ${MOVE_TOTAL} ›</button></dd></div>

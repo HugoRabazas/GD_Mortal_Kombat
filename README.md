@@ -733,7 +733,11 @@ and the heartbeat, the crowd and the weather go quiet.
   last flawless; the first round someone else's; or first place by a
   single point. And the banner at the end of the match says it under the
   winner's name - FLAWLESS, WHAT A COMEBACK, BY A WHISKER - and the
-  announcer after "X wins!" (seen: SHADOW WINS · FLAWLESS).
+  announcer after "X wins!" (seen: SHADOW WINS · FLAWLESS). Your Record
+  counts your flawless wins and comebacks (loop 171), and the result says
+  "first flawless win" / "first comeback" the first time; the Record still
+  fits at the seven sizes (its figures slimmer on landscape phones up to
+  430 px tall, and never broken across lines).
 - **Replay KO**: the result screen of a fight that ended on a knockout
   offers Replay KO - the last 1.7 seconds before the final blow and the
   fall after it, again at half speed (the knockout's own slow motion

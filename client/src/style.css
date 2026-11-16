@@ -1407,6 +1407,7 @@ kbd {
   margin: 0;
   font: 500 1.1rem/1 var(--font-display);
   color: var(--bone);
+  white-space: nowrap; /* a figure is never broken across lines */
 }
 
 .record .ranking li {
@@ -3047,5 +3048,18 @@ kbd {
     min-height: 40px;
     padding: 6px 16px 4px;
     font-size: 1.3rem;
+  }
+}
+
+/* The Record on a landscape phone up to 430 px tall: its figures a little
+   slimmer, so ten of them and the fighters fit (915x412 ran 5 px over once
+   flawless wins and comebacks were counted). */
+@media (min-height: 341px) and (max-height: 430px) and (orientation: landscape) {
+  .recordstats {
+    gap: 2px 18px;
+  }
+
+  .recordstats div {
+    padding: 2px 0;
   }
 }
