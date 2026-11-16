@@ -110,7 +110,7 @@ export const LESSONS = [
   },
   {
     id: 'ring',
-    title: 'Ring of fire',
+    title: 'Fire',
     partner: 'edger',
     intro: 'Your partner waits by the ring of fire.',
     steps: [

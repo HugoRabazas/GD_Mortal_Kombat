@@ -176,7 +176,9 @@ export function updateFx(dt = 1000 / 60) {
   return { x: (Math.random() - 0.5) * s * 2, y: (Math.random() - 0.5) * s * 2 };
 }
 
-function drawCombo(ctx) {
+// `high`: the on-screen controls lie over the bottom corners, so the counter
+// goes up near the timer instead (clear of the lesson panel on the left too).
+function drawCombo(ctx, high) {
   if (!combo) return;
   const now = performance.now();
   const age = now - combo.at;
@@ -187,11 +189,11 @@ function drawCombo(ctx) {
   const W = ARENA.W;
   const pop = 1 + Math.max(0, 1 - age / 140) * 0.35; // swells on each new blow
   const fade = Math.min(1, (1400 - age) / 300);
-  const x = combo.side < 0 ? 110 : W - 110;
+  const x = high ? W / 2 + combo.side * 160 : combo.side < 0 ? 110 : W - 110;
   const word = COMBO_WORDS.find(([at]) => combo.n >= at)?.[1];
   ctx.save();
   ctx.globalAlpha = fade;
-  ctx.translate(x, 330); // below the practice panel, above the energy bars
+  ctx.translate(x, high ? 165 : 330); // (low: below the practice panel, above the energy bars)
   ctx.scale(pop, pop);
   ctx.rotate(combo.side < 0 ? -0.06 : 0.06);
   ctx.textAlign = 'center';
@@ -217,8 +219,8 @@ function drawCombo(ctx) {
   ctx.restore();
 }
 
-export function drawFx(ctx) {
-  drawCombo(ctx);
+export function drawFx(ctx, high = false) {
+  drawCombo(ctx, high);
   ctx.save();
   for (const p of particles) {
     if (p.kind === 'confetti') {

@@ -531,7 +531,7 @@ export function createStage(glCanvas, hudCanvas) {
       }
 
       // Sparks, dust and damage numbers sit on the flat layer in both views.
-      drawFx(ctx);
+      drawFx(ctx, !!view.clearCorners);
 
       if (!view.demo) {
         const spots = s.f.map((f) => project(f.x, f.h + (three ? three.headTop(f.slot) * 100 - f.h : 150), f.z));

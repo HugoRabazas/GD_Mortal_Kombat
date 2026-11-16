@@ -482,13 +482,20 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **On a phone held sideways, the combo counter sits up by the timer**:
+  with the on-screen controls over the bottom corners it was drawn under
+  the stick or the SP button and could hardly be read (seen at 568x320).
+  It now goes up near the timer, on the attacker's side, clear of the
+  lesson panel too. The Tutorial's fire lesson is called **Fire** (its
+  button took three lines at 740x340) and was played through in a browser
+  at 844x390 with the keyboard.
 - **Fire toss**: a throw of a rival standing within 120 of the ring of fire,
   with the flames beyond them (the thrower facing the fire through them),
   flings them forward into it instead of over the head: the throw's 10 and
   the burn's 5, and they bounce back off the flames, open to one more blow
   (INTO THE FIRE!). Elsewhere, or with the fire behind the thrower, the
   throw is as before. The CPU tosses a rival it finds by the fire. A new
-  Tutorial lesson, **Ring of fire** (the ring was taught nowhere): a partner
+  Tutorial lesson, **Fire** (the ring was taught nowhere): a partner
   who waits by the flames, and two steps - drive them in with a kick, and
   the fire toss - each played by a scripted player in the tests. Pause list
   (Basics), help, a menu tip and a rules test (104). With ten lessons the
