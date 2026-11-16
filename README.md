@@ -732,8 +732,11 @@ and the heartbeat, the crowd and the weather go quiet.
   line-up sat under the controls - the right-hand portrait behind GRAB and
   ULT: with the controls showing it now sits higher and closer in (smaller
   in a brawl), and a duel's challenges go under the titles (seen at
-  568x320, 740x340 and 915x412, duel and brawl). Live checks after loop
-  176's online change:
+  568x320, 740x340 and 915x412, duel and brawl). The same for a brawl's
+  YOU ARE OUT · WATCHING THE REST line (loop 179): low down it ran under
+  GRAB; with the controls showing it sits under the bars at the top, and
+  the floating texts (combo counts, move names) go round it. The round's
+  banners were already clear. Live checks after loop 176's online change:
   a rollback duel, chat, looks, leaving and a whole match on the public
   site, all fine.
 - **Vibration can be turned off** (loop 174): the phone already buzzed

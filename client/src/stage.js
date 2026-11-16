@@ -570,6 +570,9 @@ export function createStage(glCanvas, hudCanvas) {
       }
       const tagged = !view.demo && !view.noTags && s.phase !== 'over';
       const avoid = tagged ? settled : [];
+      // ...and the YOU ARE OUT line of a brawl (drawn below).
+      const out = view.me >= 0 && s.f.length > 2 && s.phase === 'fight' && s.f[view.me]?.hp <= 0;
+      if (out) avoid.push({ x: W / 2, y: view.clearCorners ? 128 : H - 78, w: 440, h: 36 });
       drawFx(ctx, !!view.clearCorners, avoid);
 
       if (!view.demo) {
@@ -633,9 +636,12 @@ export function createStage(glCanvas, hudCanvas) {
           ctx.lineJoin = 'round';
           ctx.lineWidth = 6;
           ctx.strokeStyle = '#0b070d';
-          ctx.strokeText('YOU ARE OUT · WATCHING THE REST', W / 2, H - 78);
+          // (Under the bars at the top when the on-screen controls fill the
+          // bottom corners: low down, it ran under GRAB.)
+          const oy = view.clearCorners ? 128 : H - 78;
+          ctx.strokeText('YOU ARE OUT · WATCHING THE REST', W / 2, oy);
           ctx.fillStyle = '#ff8a5c';
-          ctx.fillText('YOU ARE OUT · WATCHING THE REST', W / 2, H - 78);
+          ctx.fillText('YOU ARE OUT · WATCHING THE REST', W / 2, oy);
           ctx.restore();
         }
       }
