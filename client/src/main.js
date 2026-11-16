@@ -107,7 +107,7 @@ const ultBtn = $('.tb-ult');
 
 // The arcade ladder: who you meet at each stage and how tough they are.
 // Stage three breaks the run of duels: a brawl against every rival at once,
-// where only a clear first place goes through.
+// where only first place goes through (level on points: more damage dealt).
 const STAGES = [
   { level: 'easy', mod: null },
   { level: 'normal', mod: null },
@@ -480,7 +480,7 @@ function rivalsCard(taken) {
           .map((id) => `<li><span class="num">vs</span>${head(id)}<span class="lname">${getFighter(id).name}</span><span class="ltag">CPU</span></li>`)
           .join('')}
       </ol>
-      <p class="rules aside">Everyone fights at once. Three rounds; each round scores by how long you last. Level on points is a shared place.</p>
+      <p class="rules aside">Everyone fights at once. Three rounds; each round scores by how long you last. Level on points, more damage dealt goes ahead.</p>
     </div>`;
 }
 
@@ -574,7 +574,7 @@ function helpScreen() {
         <li>As the clock runs down, a <b>ring of fire</b> closes in. Knock a rival into it for extra damage: knocked down into it, they bounce back off it, open to one more blow. A throw with the flames beyond the rival is a <b>fire toss</b> straight into them.</li>
         <li>Each fighter's <b>finisher</b> is their own: a chain of blows with its own scene, ending in a last blow the camera closes in on. In a brawl, once it has landed the others cannot stop it.</li>
         <li><b>Arcade</b>: ${STAGES.length} fights in a row, the last against a boss - who powers up once a round at half health - moving between the arenas as you climb.</li>
-        <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points means a shared place.</li>
+        <li><b>Arena</b>: four fighters at once, three rounds. Each round gives 3, 2, 1 or 0 points by how long you last; level on points at the end, more damage dealt goes ahead.</li>
         <li>The <b>Tutorial</b> teaches every move in short lessons, each against a partner who does what the lesson needs (one even throws you down so you can practise getting up).</li>
         <li><b>Training</b> in the menu is a fight with no clock where health and energy refill, against a partner who stands still, blocks, kicks on a beat, throws punch strings at you (to burst out of) or fights back. Free practice, with nothing else on screen.</li>
         <li><b>Photo</b> on the pause screen shows the scene alone: drag (or two fingers, the arrow keys, a gamepad's stick) to turn the camera round the fighters, and <b>Save picture</b>.</li>

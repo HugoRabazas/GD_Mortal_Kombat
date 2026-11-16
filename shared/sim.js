@@ -1976,10 +1976,15 @@ function endRound(s, kind) {
   });
 }
 
+// A brawl's final standings: points first; level on points, more damage
+// dealt over the match goes ahead (a quarter of brawls used to end with no
+// winner). Level on both, a shared place.
 function standings(s) {
-  const order = s.f.map((f) => ({ slot: f.slot, char: f.char, points: s.pts[f.slot] })).sort((a, b) => b.points - a.points);
+  const dmg = (slot) => (s.mode === 'arena' && s.tally ? s.tally[slot].dmg : 0);
+  const order = s.f.map((f) => ({ slot: f.slot, char: f.char, points: s.pts[f.slot], dmg: dmg(f.slot) })).sort((a, b) => b.points - a.points || b.dmg - a.dmg);
   order.forEach((r, i) => {
-    r.rank = i > 0 && order[i - 1].points === r.points ? order[i - 1].rank : i + 1;
+    const prev = order[i - 1];
+    r.rank = i > 0 && prev.points === r.points && prev.dmg === r.dmg ? prev.rank : i + 1;
   });
   return order;
 }

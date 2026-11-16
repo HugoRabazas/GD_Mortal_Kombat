@@ -1760,3 +1760,27 @@ test('every fighter\'s special, air special, signature move and finisher land', 
     assert.ok(lands(f.id, 80, press(INPUT.SUPER)), `${f.id} finisher`);
   }
 });
+
+test('arena: level on points at the end, more damage dealt takes first place', () => {
+  const s = startFight(BRAWL);
+  for (let round = 1; round <= 3; round++) {
+    while (s.phase !== 'fight') step(s, idle(s));
+    s.timer = 2;
+    run(s, 4);
+    run(s, TIMING.TIMEUP + 10);
+  }
+  assert.equal(s.phase, 'over');
+  // (everyone level on points and on damage above; now the same end with
+  // fighter 2 having dealt the most)
+  const t = startFight(BRAWL);
+  t.tally[2].dmg = 40;
+  t.tally[0].dmg = 10;
+  for (let round = 1; round <= 3; round++) {
+    while (t.phase !== 'fight') step(t, idle(t));
+    t.timer = 2;
+    run(t, 4);
+    run(t, TIMING.TIMEUP + 10);
+  }
+  assert.equal(t.matchWinner, 2);
+  assert.deepEqual(t.ranking.map((r) => r.rank), [1, 2, 3, 3]);
+});

@@ -46,12 +46,14 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   stops, the healthier fighter ranks higher. Fighters who cannot be separated
   share a place, and a shared place is worth the lower position, so a tie
   never crowns a winner. The final ranking adds the three rounds; fighters
-  level on points share a rank.
+  level on points are ranked by the damage they dealt over the match (loop
+  249: a quarter of brawls used to end with no winner, now none do in
+  600 simulated), and only fighters level on both share a rank.
 - **Arcade**: a ladder of five stages that get harder, ending in a
   powered-up boss, with a score and a best score remembered on the device.
   Stage three breaks the run of duels: a brawl against all three rivals at
-  once, three rounds, where only a clear first place goes through (a tie at
-  the top is not enough). The ladder moves between the arenas as you climb.
+  once, three rounds, where only first place goes through (level on
+  points, more damage dealt decides). The ladder moves between the arenas as you climb.
   Each stage opens with its own heading over its first round - STAGE 2 OF 5
   (CPU on Normal), the brawl's ALL THREE AT ONCE, and FINAL STAGE for the
   boss - and the announcer calls it.
