@@ -3110,6 +3110,15 @@ kbd {
   }
 }
 
+/* Held upright, the photo's buttons sit just under the picture (the arena
+   is (width - 32px) x 9/16 tall, from the top), not at the far bottom. */
+#app.portrait #ui[data-screen='photo'] {
+  align-items: flex-start;
+}
+#app.portrait .screen.photo {
+  margin: calc((100vw - 32px) * 0.5625 + 8px) auto 0;
+}
+
 /* Photo mode: four buttons in a row, compact on a narrow phone. */
 .screen.photo {
   flex-wrap: wrap;
