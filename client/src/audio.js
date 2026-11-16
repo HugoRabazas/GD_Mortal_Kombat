@@ -77,7 +77,7 @@ export function unlockAudio() {
 
 // Combat sounds are nudged up or down a little each time they play, so a
 // flurry of hits does not sound like one sample on repeat.
-const VARIED = new Set(['swing', 'hit', 'heavy', 'block', 'jump', 'land', 'thud', 'burn']);
+const VARIED = new Set(['swing', 'hit', 'heavy', 'block', 'jump', 'land', 'thud', 'burn', 'stepStone', 'stepSnow', 'stepSand', 'stepTile']);
 let pitch = 1;
 
 function tone(type, from, to, dur, gain, delay = 0) {
@@ -188,6 +188,12 @@ const SOUNDS = {
   },
   jump: () => tone('sine', 240, 520, 0.12, 0.18),
   land: () => burst(0.08, 0.3, 300, 0.7, 0, 'lowpass'),
+  // Footsteps, by what the arena's floor is: a soft knock on stone, a crunch
+  // of snow, a hiss of sand, the tap of a temple's polished stone.
+  stepStone: () => burst(0.05, 0.09, 520, 1.2, 0, 'bandpass'),
+  stepSnow: () => burst(0.09, 0.08, 3200, 0.6, 0, 'highpass'),
+  stepSand: () => burst(0.1, 0.06, 1600, 0.5, 0, 'bandpass'),
+  stepTile: () => burst(0.04, 0.08, 1100, 2.2, 0, 'bandpass'),
   thud: () => {
     burst(0.2, 0.7, 220, 0.7, 0, 'lowpass');
     tone('sine', 90, 35, 0.25, 0.8);
@@ -716,6 +722,8 @@ export function setWeather(kind, level) {
 
 // Is there a sound by this name? (play() ignores unknown names quietly.)
 export const hasSound = (name) => Object.hasOwn(SOUNDS, name);
+// Each arena's footstep (by what its floor is).
+export const STEP_SOUND = { courtyard: 'stepStone', frost: 'stepSnow', dunes: 'stepSand', blossom: 'stepTile' };
 
 export function play(name) {
   if (!ctx || muted || ctx.state !== 'running') return;

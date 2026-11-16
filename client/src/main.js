@@ -14,7 +14,7 @@ import { createGame } from './game.js';
 import { handleEvents, setBuzz } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, padStyle, hasPad, setCapture, setTouchLive, lastDevice } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
-import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, setAmbience, getVolume, setVolume } from './audio.js';
+import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, setAmbience, getVolume, setVolume, STEP_SOUND } from './audio.js';
 import { THEMES } from './render/themes.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
@@ -2191,6 +2191,20 @@ function frame(now) {
   if (playing && !drillEl.hidden && lastDevice() !== app.drillDevice) {
     app.drillDevice = lastDevice();
     drawLesson();
+  }
+  // Footsteps of the walking fighters, by what the floor is made of (one
+  // step every 14 ticks of a walk; brawls only the player's own, so four
+  // pairs of feet do not patter).
+  if (playing && app.screen === 'fight' && g.state.phase === 'fight') {
+    const sound = STEP_SOUND[app.fightPlace] || 'stepStone';
+    g.state.f.forEach((f, i) => {
+      if (f.state !== 'walk' || f.h > 0 || (g.state.f.length > 2 && i !== self)) return;
+      const step = Math.floor(f.t / 14);
+      if (step !== app.lastStep?.[i]) {
+        (app.lastStep ||= [])[i] = step;
+        if (f.t > 0) play(sound);
+      }
+    });
   }
   // A heartbeat when a player's fighter is nearly out: tension, and a warning
   // that reaches the player even when their eyes are off the health bar.

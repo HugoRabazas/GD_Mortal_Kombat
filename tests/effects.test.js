@@ -70,3 +70,9 @@ test('the end of a match says how it was won', () => {
   assert.match(said[0], /wins! What a comeback!$/);
   assert.match(said[1], /wins!$/);
 });
+
+test('every arena has a footstep sound that exists', async () => {
+  const { hasSound, STEP_SOUND } = await import('../client/src/audio.js');
+  const { ARENAS } = await import('../client/src/arenas.js');
+  for (const a of ARENAS) assert.ok(hasSound(STEP_SOUND[a.id]), a.id);
+});

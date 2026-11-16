@@ -1482,6 +1482,10 @@ device remembers it (on small screens the picker shows short names:
 Courtyard, Summit, Ruins, Terrace). The places share the same floor, the same rules and
 the same ring of fire - they differ in paint, light, weather and sound.
 
+Footsteps sound like the floor: dry stone in the Courtyard, crunching snow
+on the Summit, soft sand in the Ruins and tiles on the Terrace (one short
+noise every 14 ticks of walking, only for your own fighter in a brawl).
+
 - **Ember Courtyard**: round one at dusk, round two under a cold night sky,
   round three in a storm with rain, lightning and thunder.
 - **Frost Summit**: a shrine on a frozen peak, with snow on the walls, blue
