@@ -312,3 +312,16 @@ test('the pressing partner throws strings: block them, and burst out of one', ()
   }, 1200);
   assert.ok(burst.has('burst'));
 });
+
+test('the jumping partner leaps in and lands flying kicks', async () => {
+  const { jumper } = await import('../shared/tutorial.js');
+  const s = createMatch(['ruko', 'shadow']);
+  const p = jumper();
+  let kicks = 0;
+  for (let t = 0; t < 60 * 20; t++) {
+    step(s, [0, p(s, 1)]);
+    s.f[0].hp = s.f[0].maxHp;
+    kicks += s.ev.filter((e) => e.type === 'hit' && e.by === 1 && e.kind === 'airKick').length;
+  }
+  assert.ok(kicks >= 4, `kicks ${kicks}`);
+});

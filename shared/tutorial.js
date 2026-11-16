@@ -194,6 +194,30 @@ function walk(dx, dz) {
 // never into the ring of fire. The beat is counted in real ticks (hit pauses
 // included), so it stays steady to the ear.
 export const BEAT = 100;
+// A partner who jumps in: it keeps a jump's distance, then leaps at you and
+// kicks on the way down, again about every two seconds - to learn to block
+// it, roll under it, or meet it with a blow as it lands.
+export function jumper(every = 130) {
+  let wait = 60;
+  return (s, slot) => {
+    const me = s.f[slot];
+    const you = s.f[0];
+    const dx = you.x - me.x;
+    const dz = you.z - me.z;
+    const gap = hypot(dx, dz) || 1;
+    if (me.state === 'jump' || me.state === 'airAttack') {
+      // Kick as it comes down, close enough to reach.
+      return me.vh <= 0 && gap < 140 && me.state === 'jump' ? INPUT.KICK : 0;
+    }
+    if (wait > 0) wait--;
+    if (gap > 240) return walk(dx, dz);
+    if (gap < 150) return walk(-dx, -dz); // back to a jump's distance
+    if (wait > 0 || me.state !== 'idle' && me.state !== 'walk') return 0;
+    wait = every;
+    return INPUT.JUMP | walk(dx, dz);
+  };
+}
+
 export function drummer() {
   let beat = BEAT;
   return (s, slot) => {
