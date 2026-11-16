@@ -545,6 +545,20 @@ test('in a brawl a hit freezes only the two fighters involved', () => {
   assert.equal(s.hitstop, 0, 'the world did not stop');
 });
 
+test('block, then a direction a moment later, still rolls; a guard held a while does not', () => {
+  const tryRoll = (gap) => {
+    const s = startFight();
+    Object.assign(s.f[0], { x: 0, z: 0, dir: 0 });
+    Object.assign(s.f[1], { x: 300, z: 0 });
+    for (let i = 0; i < gap; i++) step(s, [INPUT.BLOCK, 0]);
+    step(s, [INPUT.BLOCK | INPUT.DOWN, 0]);
+    return s.f[0].state;
+  };
+  assert.equal(tryRoll(0), 'roll', 'pressed together');
+  assert.equal(tryRoll(3), 'roll', 'the direction three ticks late');
+  assert.equal(tryRoll(20), 'block', 'a guard already held stays a guard');
+});
+
 test('a punch right after a perfect guard is a riposte; later it is a punch again', () => {
   const guardThen = (wait) => {
     const s = startFight();

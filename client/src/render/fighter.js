@@ -602,9 +602,13 @@ function targetPose(f, now) {
       const k = Math.sin(Math.min(1, f.t / 9) * Math.PI);
       return pose({ hipX: -4, hipY: -60 - 8 * k, lean: -0.2, ffx: 14, ffy: -10 * k, fbx: -26, fby: -14 * k, hfx: 26, hfy: -10, hbx: 20, hby: 0 });
     }
-    case 'roll':
-      // Tucked into a ball, turning head over heels.
-      return pose({ hipY: -30, lean: 0.9, tilt: 0.5, hfx: 16, hfy: 22, hbx: 10, hby: 22, ffx: 14, ffy: -8, fbx: -6, fby: -8, rot: f.t * 0.42, lift: -6 });
+    case 'roll': {
+      // Tucked into a ball, turning head over heels - about the hips, not the
+      // feet, or halfway round the body would sink into the floor (the lift
+      // makes up for the turn, as for the somersault of the air jump).
+      const rot = f.t * 0.42;
+      return pose({ hipY: -30, lean: 0.9, tilt: 0.5, hfx: 16, hfy: 22, hbx: 10, hby: 22, ffx: 14, ffy: -8, fbx: -6, fby: -8, rot, lift: -6 - 36 * (1 - Math.cos(rot)) });
+    }
     case 'jump':
       if (f.air2 && f.t < FLIP) {
         // The air jump: tucked into a forward somersault, turned about the
@@ -815,6 +819,7 @@ export function currentPose(f, now) {
   cur.spin = target.spin; // a turn on the spot is drawn as it is: easing would unwind it
   if (f.state === 'roll' || (f.state === 'jump' && f.air2) || (f.state === 'attack' && f.move === 'moonVault')) {
     cur.rot = target.rot; // a spin must not be smoothed away
+    cur.lift = target.lift; // (nor the lift that keeps it off the floor)
     rolled[f.slot] = true;
   } else if (rolled[f.slot]) {
     // Coming out of a roll: carry on turning the same way to upright (an

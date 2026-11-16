@@ -76,7 +76,7 @@ const GETUP_TICKS = 18;
 // last few ticks, when there would be nothing to gain.
 const TECH_TICKS = 8;
 export const BLOCK_ARC = 1.25; // a block stops attacks coming from within this angle of where you face
-const ROLL = { ticks: 15, safe: 11, speed: 8.5, rest: 7 }; // the dodge roll
+const ROLL = { ticks: 15, safe: 11, speed: 8.5, rest: 7, leeway: 6 }; // the dodge roll (`leeway`: ticks into a guard in which a direction still rolls)
 // Block with the stick pointing straight away from the nearest rival: a hop
 // back instead of a roll - shorter, safe for fewer ticks, but over sooner,
 // and still facing the rival, ready to answer.
@@ -825,7 +825,9 @@ function control(s, f, inp) {
       if (held(INPUT.BLOCK)) {
         // Block pressed while pushing a direction is a dodge roll that way:
         // quick, and nothing can hit you for most of it.
-        if (dir && f.rollOk && f.state !== 'block') {
+        // (A direction that comes a moment after the guard still rolls: the
+        // two are seldom pressed on the very same tick.)
+        if (dir && f.rollOk && (f.state !== 'block' || f.t < ROLL.leeway)) {
           f.rollOk = false;
           const o = nearestRival(s, f, 400);
           const d = o ? Math.hypot(o.x - f.x, o.z - f.z) || 1 : 1;

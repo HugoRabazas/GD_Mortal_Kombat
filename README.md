@@ -482,6 +482,14 @@ and the heartbeat, the crowd and the weather go quiet.
   against the live service: eight changes, then twelve in six seconds, a
   latecomer who sees everyone's current choice, leaving (0.1 s) and closing
   the tab (3 s), and a full match.
+- **Rolling, fixed twice over**: block and a direction pressed a moment
+  apart (the direction a few ticks after the guard, as a thumb or a finger
+  does) now still rolls - within six ticks of raising the guard (a test);
+  a guard held longer stays a guard. And the roll is drawn turning about
+  the hips: it turned about the feet, so halfway round the body sank into
+  the floor and only a foot showed (seen in 3D frames); its lift now
+  follows the turn and is not smoothed away. The help checked at phone
+  sizes: no sideways overflow, the newest lines readable. 107 tests.
 - **Combos split in two**: the Combos lesson had grown to nine steps, so it
   keeps the ground strings (launcher, kick string, kick-elbow, hook kick,
   backfist) and a new **Air combos** lesson takes the juggle, the air
