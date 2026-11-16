@@ -753,7 +753,7 @@ function settingsScreen() {
       ${slider('vol-music', 'Music', getVolume('music'))}
       ${slider('vol-sfx', 'Effects', getVolume('sfx'))}
       <div class="seg" role="group" aria-label="Graphics">${[['auto', 'Graphics: auto'], ['sharp', 'Sharp'], ['fast', 'Fast']].map(([id, label]) => `<button type="button" class="${app.graphics === id ? 'on' : ''}" data-act="graphics" data-id="${id}" aria-pressed="${app.graphics === id}">${label}</button>`).join('')}</div>
-      <p class="note">${{ auto: 'Full detail, lowered by itself if the device struggles.', sharp: 'Full detail always: shadows and full sharpness.', fast: 'For slower phones: no shadows, lower resolution, lighter weather.' }[app.graphics]}</p>
+      <p class="note">${{ auto: 'Full detail, lowered by itself if the device struggles.', sharp: 'Full detail always: shadows and full sharpness.', fast: 'For slower phones: no shadows or floor details, lower resolution, lighter weather.' }[app.graphics]}</p>
       <div class="row">
         <button type="button" class="btn small" data-act="mute" aria-pressed="${!isMuted()}">${soundLabel()}</button>
         <button type="button" class="btn small" data-act="announcer" aria-pressed="${isAnnouncer()}">${announcerLabel()}</button>
