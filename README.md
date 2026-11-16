@@ -704,6 +704,21 @@ and the heartbeat, the crowd and the weather go quiet.
   "Best host: Ana · 60 vs 140 ms" - and the host can hand the role over
   with one tap. Checked on the live service: the hand-over moves the role,
   and the new host starts a fight with everyone linked directly.
+- **A guest's own punch starts at once**: online, a guest's press had to
+  reach the host and the host's picture of the swing come back before the
+  guest saw their own fighter move - a full round trip plus the wait for
+  the next picture. Measured on the live service in a clean duel: 40 ms
+  from press to seeing one's own punch on a direct link with all players on
+  one machine, 190-300 ms on the relayed route (and between countries add
+  the distance both ways). Now a plain punch or kick pressed while the
+  fighter is free (standing, or walking with the stick let go) starts on
+  the guest's screen at once (predict.js): 4-8 ms on both routes, every one
+  of ten presses still reaching the host, and no swing shown and taken back.
+  When the host's picture shows the same blow, the drawing keeps whichever
+  is further along, so it never jumps back; one the host never shows (struck
+  first, or the press became another move) is dropped. Strings, specials,
+  grabs, lunges, ripostes and pursuits are still the host's alone - and the
+  host still decides every hit.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
@@ -966,8 +981,9 @@ The website build adds an **Online** mode for the whole alliance:
   snapshot of the fight twenty times a second, which they draw gliding from
   one to the next. One copy of the truth, so nobody drifts out of sync.
 - A guest's own fighter is drawn slightly ahead of the host's word while it
-  is simply walking (where it will be once the host's answer arrives), so
-  moving feels immediate; the host still decides every hit.
+  is simply walking (where it will be once the host's answer arrives), and a
+  plain punch or kick from standing starts on the guest's screen at once, so
+  moving and swinging feel immediate; the host still decides every hit.
 - Players find each other through Supabase Realtime (`client/src/net/bus.js`).
   The game data then goes over a direct browser-to-browser link
   (`link.js`, WebRTC) when the networks allow it, and is relayed through
@@ -999,6 +1015,74 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   people connected and 100 messages a second, which is plenty while matches
   run over direct links, and about one four-player match at a time if every
   player has to be relayed.
+
+### Rollback: the plan (not built yet)
+
+Today one device, the host, runs the fight; the others see it a trip late.
+Walking and the first blow are already drawn ahead on a guest's own screen,
+but the rivals - and every hit - still arrive late, and a far-away host
+makes everyone wait. **Rollback** is how fighting games played across the
+world hide that wait:
+
+- **The idea.** Every player runs the whole fight on their own device, from
+  the same start, and the players send each other only their buttons,
+  numbered by tick. A device that has not yet heard a rival's buttons for
+  this tick guesses them (the same as last tick - right most of the time)
+  and carries on at once. When the real buttons arrive and differ, it goes
+  back to the tick they belong to, puts the right buttons in, and plays the
+  ticks since then again in one go, before drawing. Your own fighter never
+  waits; a rival seldom jumps, and only when the guess was wrong.
+- **Why it can work here.** The rules (`shared/sim.js`) are already a
+  deterministic 60-tick step with its own seeded dice, no clock and no
+  `Math.random`. Measured: one tick of a four-fighter brawl with CPU
+  fighters takes ~0.005 ms in Node, and a copy of the whole fight
+  (~2.7 KB) ~0.02 ms - so going back 15 ticks (a quarter second) and
+  replaying them costs well under a millisecond even on a slow phone.
+- **What would change.**
+  1. *Same result everywhere.* Every device must compute exactly the same
+     numbers. JavaScript's `Math.sin`, `cos`, `atan2` and `hypot` (73 uses
+     in the rules) may round differently in Chrome, Safari and Firefox;
+     they would be replaced by our own versions (tables or short series)
+     that give the same bits everywhere. A check would run a recorded
+     match in every engine and compare a fingerprint of the fight.
+  2. *Keeping the past.* The fight is copied every tick into a ring of the
+     last ~20 ticks, to go back to.
+  3. *Buttons by tick.* Each device sends its buttons for each tick to every
+     other over the direct links the room already makes, with the last few
+     ticks repeated in every message (as now) so a lost one costs nothing.
+     A small built-in delay (1-2 ticks, set from the ping) makes most
+     guesses unnecessary.
+  4. *Sound and sparks.* Effects come from the fight's events; replayed
+     ticks would fire them again, so events would be keyed by tick and
+     move, played once, and a hit that a replay takes back would not be
+     shown at all.
+  5. *CPU fighters.* Every device runs the same CPU with the same seed.
+  6. *A referee.* The host stays the referee: every second each device
+     sends a fingerprint of its fight; a device that drifted is handed the
+     host's full picture (as today) and carries on.
+  7. *The relayed route.* Buttons from every player to every other would
+     not fit the free service's 100 messages a second on the relayed route,
+     so a room where anyone is relayed keeps today's way of playing.
+- **Risks.** A rival may visibly snap when a guess was wrong (worst on big
+  pings; the built-in delay and smoothing reduce it); different rounding
+  between browsers (step 1 exists for this, and the referee catches what
+  it misses); a slow phone replaying too much (capped, falling back to
+  waiting a tick); and far more code where online bugs can hide - which is
+  why it would be built behind a switch, duels first, with today's way
+  kept as the fallback.
+- **Steps.** 1) the cross-browser fingerprint test and our own trigonometry
+  (offline play unchanged, all tests and balance figures checked);
+  2) the ring of past ticks and the replay, tested in Node with two
+  simulated players and random delays: both must end on identical
+  fingerprints; 3) buttons by tick over the direct links; 4) events played
+  once; 5) duels online behind a switch; 6) the referee; 7) brawls and CPU
+  fighters; 8) the switch on by default where every link is direct.
+- **How to test it.** Node tests that replay a match with buttons arriving
+  late, out of order and lost, ending identical to the same match played
+  with no delay; the fingerprint in every browser engine; live matches
+  with an artificial delay of 150 ms and 5 % loss added in the link layer,
+  measuring press-to-see for one's own and the rival's moves, how often and
+  how far a rival snaps, and frame time on a phone-speed processor.
 
 A brawl's standings hand out up to three awards to whoever alone led
 the way: **Heavy hitter** (most damage), **Combo master** (the longest combo,

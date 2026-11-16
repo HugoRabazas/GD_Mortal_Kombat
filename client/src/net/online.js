@@ -16,6 +16,7 @@ import { createBus } from './bus.js';
 import { createLink } from './link.js';
 import { createInputSender, createInputReceiver, createSnapshotMeter } from './inputs.js';
 import { createPacker, createUnpacker } from './pack.js';
+import { createAttackPredictor } from './predict.js';
 import { createGame } from '../game.js';
 import { ARENAS, isArenaId } from '../arenas.js';
 import { createMatch } from '../../../shared/sim.js';
@@ -527,6 +528,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     let dirty = false;
     let lastPingAt = 0;
     const lead = { x: 0, z: 0 }; // how far ahead of the host's word our own fighter is drawn
+    const blow = createAttackPredictor(); // our own punch or kick, drawn at once
     const lerp = (a, b, k) => a + (b - a) * k;
 
     const game = {
@@ -564,9 +566,10 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         // by the time the host's answer catches up - so draw it there. The lead
         // grows as you set off and melts away as you stop, attack or get hit,
         // and the host's word is still what decides every hit.
+        if (mySlot >= 0 && cur) blow.note(bits, cur.f[mySlot], cur.phase === 'fight' && !cur.freeze, match?.ping, now, cur.tick);
         if (mySlot >= 0 && cur) {
           const f = view.f[mySlot];
-          const free = cur.phase === 'fight' && (f.state === 'idle' || f.state === 'walk') && !f.stun;
+          const free = cur.phase === 'fight' && (f.state === 'idle' || f.state === 'walk') && !f.stun && !blow.active();
           const mx = (bits & INPUT.RIGHT ? 1 : 0) - (bits & INPUT.LEFT ? 1 : 0);
           const mz = (bits & INPUT.DOWN ? 1 : 0) - (bits & INPUT.UP ? 1 : 0);
           const moving = free && (mx || mz) && !(bits & INPUT.BLOCK);
@@ -593,6 +596,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
             const mine = { ...f, x, z, dir: moving ? Math.atan2(mz, mx) : f.dir, state: moving ? 'walk' : f.state };
             view = { ...view, f: view.f.map((o, i) => (i === mySlot ? mine : o)) };
           }
+          if (blow.active()) view = { ...view, f: view.f.map((o, i) => (i === mySlot ? blow.draw(o, now) : o)) };
         }
 
         if (mySlot >= 0) {
