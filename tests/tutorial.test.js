@@ -244,6 +244,9 @@ const BOTS = {
   taunt: () => (s, t) => INPUT.BLOCK | (t % 30 === 5 ? INPUT.GRAB : 0),
   super: () => (s, t) => (t % 120 === 0 ? INPUT.SUPER : 0),
   final: () => routine(60, 300, (k) => (k === 0 ? INPUT.SUPER : 0)),
+  blockJumpIn: () => () => INPUT.BLOCK,
+  rollUnder: () => (s) => (s.f[1].h > 40 && s.f[0].state !== 'roll' ? INPUT.BLOCK | INPUT.UP : 0),
+  antiAir: () => (s) => (s.f[1].h > 20 && gap(s) < 110 ? INPUT.PUNCH : 0),
 };
 
 // The blows that completed a step, over all the lessons (see the test below).

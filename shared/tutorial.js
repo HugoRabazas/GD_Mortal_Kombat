@@ -63,6 +63,17 @@ export const LESSONS = [
     ],
   },
   {
+    id: 'jumpins',
+    title: 'From the air',
+    partner: 'jumper',
+    intro: 'Your partner leaps at you and kicks on the way down, again and again.',
+    steps: [
+      { id: 'blockJumpIn', name: 'Block the jump-in', how: (k) => `hold ${k('b')} as they come down`, ev: (e) => e.type === 'block' && e.on === 0 },
+      { id: 'rollUnder', name: 'Roll under it', how: (k) => `${k('b')} + a direction while they are in the air: you come out where they were`, st: (s) => s.f[0].state === 'roll' && s.f[1].h > 30 },
+      { id: 'antiAir', name: 'Meet them in the air', how: (k) => `${k('p')} as they come in: a punch reaches up and meets them in the air (a kick aims too low)`, ev: (e) => e.type === 'hit' && e.by === 0 && e.h > 150 },
+    ],
+  },
+  {
     id: 'throws',
     title: 'Guards',
     partner: 'blocker',
@@ -341,6 +352,7 @@ export function tutorPartner(kind) {
   if (kind === 'floorer') return floorer();
   if (kind === 'comboer') return comboer();
   if (kind === 'edger') return edger();
+  if (kind === 'jumper') return jumper();
   if (kind === 'blocker') return () => INPUT.BLOCK;
   return () => 0;
 }

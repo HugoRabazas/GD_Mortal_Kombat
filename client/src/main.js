@@ -856,8 +856,8 @@ function lessonsScreen() {
           const full = n === l.steps.length;
           return `<li><button type="button" class="btn${i === first ? ' primary' : ''}" data-act="lesson" data-id="${l.id}">${full ? '✓ ' : ''}${l.title} <small>${n} / ${l.steps.length}</small></button></li>`;
         }).join('')}
+        <li><button type="button" class="btn quiet" data-act="menu">Back</button></li>
       </ol>
-      <button type="button" class="btn quiet" data-act="menu">Back</button>
     </section>`;
 }
 
