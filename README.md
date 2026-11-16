@@ -611,6 +611,12 @@ and the heartbeat, the crowd and the weather go quiet.
 - **The moves still to land, on a phone**: the Record's list of moves still
   to land was only a tooltip, which a phone never shows. "Moves landed" is
   now a link: a tap lists them in a notice at the top for a few seconds.
+- **Dive kick**: kick after a double jump - a beat's hang with the leg
+  cocked, then down at the rival along a slant, heel first, and over they
+  go. It reaches a long way, but a dive that misses or is blocked lands
+  heavily and leaves you open. The CPU dives after its own double jumps;
+  the In the air lesson teaches it; help and pause list explain it; it
+  counts on the Record's moves (now 27).
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

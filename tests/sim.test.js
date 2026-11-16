@@ -1543,3 +1543,34 @@ test('after a throw, kick drops onto the floored rival (the pursuit); a quick ri
   step(s, [INPUT.KICK, 0]);
   assert.equal(s.f[0].move, 'kick');
 });
+
+test('kick after a double jump is a dive kick: down at the rival, it floors them; a miss lands heavily', () => {
+  const dive = (gap, rival = 0) => {
+    const s = startFight();
+    closeUp(s, gap);
+    const seen = [];
+    let move = null;
+    let stun = 0;
+    for (let t = 0; t < 90; t++) {
+      const me = t === 0 ? INPUT.JUMP : t === 10 ? INPUT.JUMP : t === 16 ? INPUT.KICK : 0;
+      step(s, [me, rival]);
+      if (s.f[0].state === 'airAttack' && !move) move = s.f[0].move;
+      if (s.f[0].state === 'land') stun = Math.max(stun, s.f[0].stun);
+      seen.push(...s.ev);
+    }
+    return { move, hit: seen.find((e) => e.type === 'hit' && e.by === 0 && e.kind === 'diveKick'), down: seen.some((e) => e.type === 'hit' && e.by === 0) && s.f[1].state !== 'idle', stun };
+  };
+  const near = dive(150);
+  assert.equal(near.move, 'diveKick');
+  assert.ok(near.hit, 'it reaches a rival a good way off');
+  const miss = dive(600);
+  assert.ok(!miss.hit && miss.stun >= 14, `a miss lands heavily (${miss.stun})`);
+  assert.ok(near.stun < miss.stun, 'a hit lands lighter');
+  // A single jump's kick is still the flying kick.
+  const s = startFight();
+  closeUp(s, 150);
+  step(s, [INPUT.JUMP, 0]);
+  run(s, 8);
+  step(s, [INPUT.KICK, 0]);
+  assert.equal(s.f[0].move, 'airKick');
+});

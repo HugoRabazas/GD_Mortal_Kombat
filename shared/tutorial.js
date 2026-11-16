@@ -83,6 +83,7 @@ export const LESSONS = [
       { id: 'airPunch', name: 'Diving punch', how: (k) => `${k('p')} in the air, near the partner`, ev: hit('airPunch') },
       { id: 'airKick', name: 'Flying kick', how: (k) => `from a standstill, ${k('j')} then ${k('k')} in the air`, ev: hit('airKick') },
       { id: 'stomp', name: 'Stomp', how: (k) => `${k('g')} in the air, right above the partner`, ev: hit('stomp') },
+      { id: 'diveKick', name: 'Dive kick', how: (k) => `${k('j')}, ${k('j')} again, then ${k('k')}: down at the partner foot first, along a slant`, ev: hit('diveKick') },
     ],
   },
   {

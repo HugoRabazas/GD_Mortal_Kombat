@@ -290,6 +290,13 @@ export const MOVES = {
     startup: 5, active: 999, recovery: 0, dmg: 9, reach: 80, arc: 1.0, y0: -20, y1: 90, aim: 0,
     hitstun: 18, blockstun: 11, push: 6, gain: 10, heavy: true,
   },
+  // Kick after a double jump: a dive kick - a beat's hang, then down at the
+  // rival foot first along a slant, and over they go. Far-reaching and
+  // fast, but a dive that misses (or is blocked) lands heavily: open.
+  diveKick: {
+    startup: 5, active: 999, recovery: 0, dmg: 9, speed: 9, reach: 72, arc: 0.9, y0: -90, y1: 60, aim: 320,
+    hitstun: 0, blockstun: 12, push: 7, gain: 9, knockdown: true, heavy: true, fall: 9,
+  },
   // An air punch that lands can be followed in the same jump by kick: an
   // axe kick brought straight down that knocks over.
   axeKick: {
@@ -963,7 +970,7 @@ function control(s, f, inp) {
         break;
       }
       if (b & (INPUT.PUNCH | INPUT.KICK | INPUT.GRAB)) {
-        const kick = f.runJump && !f.air2 && f.t < 16 ? 'flyKnee' : 'airKick';
+        const kick = f.air2 ? 'diveKick' : f.runJump && f.t < 16 ? 'flyKnee' : 'airKick';
         const grab = b & INPUT.GRAB || (b & INPUT.PUNCH && b & INPUT.KICK);
         airAttack(s, f, grab ? (airborneRival(s, f) ? 'airThrow' : 'stomp') : b & INPUT.KICK ? kick : 'airPunch');
         break;
@@ -1342,6 +1349,7 @@ function airAttack(s, f, move) {
     f.vz = Math.sin(f.dir) * v;
   }
   f.state = 'airAttack';
+  f.landed = 0;
   f.ex = false; // (set again for an EX air special)
   f.exHit = false;
   f.move = move;
@@ -1376,7 +1384,8 @@ function land(s, f) {
       }
       const special = f.move in AIR_MOVES;
       setState(f, 'land');
-      f.stun = f.move === 'stomp' ? STOMP.rest : special ? 12 : 4;
+      // (A dive kick that found nobody, or a guard, lands heavily.)
+      f.stun = f.move === 'stomp' ? STOMP.rest : special ? 12 : f.move === 'diveKick' ? (f.landed ? 6 : 16) : 4;
       f.vx = f.vz = 0;
       emit(s, f.move === 'stomp' || f.move === 'bodyPress' ? 'stompLand' : 'land', here);
       f.move = null;
@@ -1699,7 +1708,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     }
   }
 
-  if (att.state === 'attack') att.landed = (att.landed || 0) + 1; // a blow that got through
+  if (att.state === 'attack' || att.state === 'airAttack') att.landed = (att.landed || 0) + 1; // a blow that got through
   if (m.ult && att.state === 'attack') att.ultOn = def.slot; // the finisher has its victim
   const juggled = def.state === 'down' && !m.otg; // struck in the air after a launcher (not a pursuit on the floor)
   // Caught winding up? (Checked before the hit wipes out their move.)

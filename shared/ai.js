@@ -261,6 +261,15 @@ export function aiInput(ai, s, me) {
         return ai.held;
       }
     }
+    // After a double jump: the dive kick down at a rival on the ground.
+    if (f.air2 && f.t >= 4 && ai.airPlan < 2 && d < 260 && d > 60 && o.h <= 0) {
+      ai.airPlan = 2;
+      if (rnd(ai) < cfg.attack * 0.8) {
+        ai.tap = INPUT.KICK;
+        ai.tapT = 2;
+        return INPUT.KICK;
+      }
+    }
     // A rival launched into the air: strike them before they land.
     if (o.state === 'down' && o.h > 0 && o.juggle > 0 && d < 95 && f.t >= 3 && ai.airPlan < 3) {
       ai.airPlan = 3;

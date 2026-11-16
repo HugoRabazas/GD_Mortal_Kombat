@@ -500,7 +500,7 @@ function helpScreen() {
         <li><b>Walk anywhere</b> on the arena: left, right, into the depth and back. Attacks turn you towards the nearest rival, so you do not need perfect aim.</li>
         <li><b>Strings</b>: punch, punch, punch knocks down; punch, punch, kick <b>launches</b> the rival into the air (hold jump to chase and <b>juggle</b> them); punch, kick is a <b>hook kick</b> that spins them round (then punch for a <b>spinning backfist</b>, kick to launch); kick, kick a roundhouse; kick, punch a stepping <b>elbow</b> that carries on into either ender. Each blow must land for the next. A blow that lands can also be <b>cancelled into your special</b>.</li>
         <li><b>On the run</b> (a few steps, the stick still held): punch is a <b>lunging straight</b>, kick a <b>slide</b> along the floor, and jump then kick a <b>flying knee</b>.</li>
-        <li><b>In the air</b>: jump again for a <b>double jump</b>; punch dives at the rival, kick is a flying kick, grab a <b>stomp</b> straight down - or, with a rival in the air close by, an <b>air throw</b> that drives them into the floor; an air punch that lands flows into an axe kick, a flying kick into a <b>hammer fist</b> that bounces them; special is your <b>air special</b> (with punch, its EX version).</li>
+        <li><b>In the air</b>: jump again for a <b>double jump</b> (then kick: a <b>dive kick</b> down at the rival, which lands heavily if it misses); punch dives at the rival, kick is a flying kick, grab a <b>stomp</b> straight down - or, with a rival in the air close by, an <b>air throw</b> that drives them into the floor; an air punch that lands flows into an axe kick, a flying kick into a <b>hammer fist</b> that bounces them; special is your <b>air special</b> (with punch, its EX version).</li>
         <li><b>Grab with the rival out of reach</b> is your fighter's <b>signature move</b> for crossing the gap: ${FIGHTERS.map((f) => `${f.name[0] + f.name.slice(1).toLowerCase()}'s ${f.signature.name}`).join(', ')}.</li>
         <li><b>Hold kick</b> to charge a <b>guard-breaker</b>: let go and it smashes a guard open.</li>
         <li><b>Grab</b> (its own button, or punch + kick together) seizes a rival up close, lifts them over your head and slams them down behind you. Short reach, but it goes straight through a guard; in a brawl, anyone can break it with a blow. Kick as they land: a <b>pursuit</b> onto them (a quick rise escapes it).</li>
@@ -639,7 +639,7 @@ function movesCard() {
       <dt>Run + ${k(key.k)}</dt><dd><b>Slide</b>: feet first, sweeps the rival off their feet. Low: it goes <b>under a guard</b> - jump it, roll, or guard perfectly.</dd>
       <dt>Run, ${k(key.j)}, ${k(key.k)}</dt><dd><b>Flying knee</b>: jump out of a run and kick - far, fast, knocks down.</dd>`],
     air: ['Air', `
-      <dt>${k(key.j)}, ${k(key.j)}</dt><dd><b>Double jump</b>: press again in the air, with a somersault.</dd>
+      <dt>${k(key.j)}, ${k(key.j)}</dt><dd><b>Double jump</b>: press again in the air, with a somersault. Then ${k(key.k)}: a <b>dive kick</b> down at them.</dd>
       <dt>Air ${k(key.p)} / ${k(key.k)}</dt><dd>A <b>diving punch</b> angled down, or a <b>flying kick</b>.</dd>
       <dt>Air ${k(key.p)}, ${k(key.k)}</dt><dd><b>Air string</b>: an air punch that lands, then an axe kick chopped down. Air ${k(key.k)}, ${k(key.p)}: a <b>hammer fist</b> that bounces them.</dd>
       <dt>Air ${k(key.g)}</dt><dd><b>Stomp</b>: feet first onto whoever is below - they bounce off the floor. Rooted if it misses. With a rival in the air beside you: an <b>air throw</b>.</dd>
@@ -1329,7 +1329,7 @@ function readRecord() {
 const MOVE_BOOK = {
   punch: 'Jab', punch2: 'Second punch', punch3: 'Third punch', kick: 'Kick', kick2: 'Roundhouse', hook: 'Hook kick',
   backfist: 'Spinning backfist', elbow: 'Elbow', launch: 'Launcher', riposte: 'Riposte', lunge: 'Lunging straight',
-  slide: 'Slide', sweep: 'Guard sweep', grab: 'Throw', pursuit: 'Pursuit', breaker: 'Guard-breaker',
+  slide: 'Slide', sweep: 'Guard sweep', diveKick: 'Dive kick', grab: 'Throw', pursuit: 'Pursuit', breaker: 'Guard-breaker',
   airPunch: 'Diving punch', airKick: 'Flying kick', flyKnee: 'Flying knee', axeKick: 'Axe kick', hammer: 'Hammer fist',
   stomp: 'Stomp', airThrow: 'Air throw', riseKick: 'Rising sweep', rollUpper: 'Rising uppercut', rollSpin: 'Spinning heel kick',
 };

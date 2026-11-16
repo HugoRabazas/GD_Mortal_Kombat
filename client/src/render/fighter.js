@@ -675,6 +675,12 @@ function targetPose(f, now) {
         if (pre) return pose({ hipY: -64, lean: -0.3, ffx: 26, ffy: -126, fbx: -14, fby: -20, hfx: 14, hfy: -20, hbx: -18, hby: -10 });
         return pose({ hipY: -62, lean: 0.35, ffx: 48, ffy: 8, fbx: -18, fby: -28, hfx: 18, hfy: 6, hbx: -24, hby: -12 });
       }
+      if (f.move === 'diveKick') {
+        // A beat's hang with the leg cocked, then down along a slant, the
+        // front leg straight out, heel first.
+        if (pre) return pose({ hipY: -66, lean: -0.2, ffx: 18, ffy: -40, fbx: -12, fby: -22, hfx: 16, hfy: -28, hbx: -20, hby: -22 });
+        return pose({ hipX: 8, hipY: -60, lean: -0.55, ffx: 66, ffy: 26, fbx: -16, fby: -30, hfx: -10, hfy: -24, hbx: -30, hby: -18 });
+      }
       if (f.move === 'flyKnee') {
         // Driving forward off the run: the knee up in front, the arms pulled back.
         if (pre) return pose({ hipY: -64, lean: 0.1, ffx: 12, ffy: -24, fbx: -24, fby: -10, hfx: 20, hfy: -16, hbx: 6, hby: -10 });
