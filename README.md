@@ -769,6 +769,11 @@ and the heartbeat, the crowd and the weather go quiet.
   above the small one - they now follow the head and shrink with it. With
   everyone on the realistic body a four-fighter brawl takes ~208 draw
   calls instead of ~298 (no outline pass).
+  Loop 188, the night: the sky's light is made from the dusk sky, so at
+  night it kept the arena warm; it now fades out with the evening (full at
+  dusk, none at night and in the storm), the hemisphere light taking its
+  place - the night is cold and blue again (seen in the courtyard and on
+  the summit).
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the

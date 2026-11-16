@@ -972,9 +972,19 @@ export function create3D(canvas) {
     }
     scene.environment = skyLight[name];
     // (Not too much of it: lit evenly from all round, the arena went flat.)
+    skyLit.length = 0;
     scene.traverse((o) => {
-      if (o.material?.isMeshStandardMaterial) o.material.envMapIntensity = SKY_LIGHT;
+      if (o.material?.isMeshStandardMaterial) skyLit.push(o.material);
     });
+    setSkyLight(lastSky);
+  }
+  // How much of the (dusk) sky light shows, by mood: all of it at dusk, a
+  // little at night and in the storm, so the cold moonlight leads.
+  const skyLit = [];
+  let lastSky = SKY_LIGHT;
+  function setSkyLight(k) {
+    lastSky = k;
+    for (const m of skyLit) m.envMapIntensity = k;
   }
   pmremReady = true;
   lightFromSky('courtyard');
@@ -1015,7 +1025,9 @@ export function create3D(canvas) {
     skyMat.color.setRGB(mix(a.sky[0], b.sky[0]) + flash * 0.7, mix(a.sky[1], b.sky[1]) + flash * 0.7, mix(a.sky[2], b.sky[2]) + flash * 0.8);
     hemi.color.copy(blend(a.sky0, b.sky0, k));
     hemi.groundColor.copy(blend(a.ground, b.ground, k));
-    hemi.intensity = mix(a.hemi[2], b.hemi[2]) * HEMI_WITH_SKY + flash * 1.6;
+    hemi.intensity = mix(a.hemi[2], b.hemi[2]) * (HEMI_WITH_SKY + (1 - HEMI_WITH_SKY) * Math.min(1, mood)) + flash * 1.6; // (the hemisphere takes the sky's place at night)
+    const skyNow = SKY_LIGHT * (1 - Math.min(1, mood));
+    if (Math.abs(skyNow - lastSky) > 0.01) setSkyLight(skyNow);
     key.color.copy(blend(a.keyC, b.keyC, k));
     key.intensity = mix(a.key[1], b.key[1]) + flash * 0.8;
     moonLight.color.copy(blend(a.moonC, b.moonC, k));
