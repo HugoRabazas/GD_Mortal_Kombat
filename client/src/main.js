@@ -205,6 +205,7 @@ const TIPS = [
   (c) => `Tip: a rival hiding behind a guard? Hold <kbd>${c.b}</kbd>, then <kbd>${c.k}</kbd>: a <b>guard sweep</b> under it.`,
   (c) => `Tip: <kbd>${c.k}</kbd> as a thrown rival lands is a <b>pursuit</b> - and <kbd>${c.b}</kbd> on the floor (a quick rise) escapes one.`,
   (c) => `Tip: getting up, hold <kbd>${c.b}</kbd> and a direction to <b>roll clear</b> as you rise.`,
+  (c) => `Tip: caught in a combo? <kbd>${c.b}</kbd> + <kbd>${c.s}</kbd> from its second blow <b>bursts</b> out of it, for half your energy.`,
   (c) => `Tip: new to a move? The <b>Tutorial</b> has a short lesson for it.`,
   // Only on the website, on a touch screen, when not opened from the home screen.
   () => (NET && app.touch && !installed ? `Tip: add GD Arena to your <b>home screen</b> to play full screen.` : ''),
@@ -1162,7 +1163,7 @@ function roomScreen() {
           </ol>
           ${watching.length ? `<p class="rules">Watching: ${esc(watching.map((p) => p.name).join(', '))}</p>` : ''}
           ${room.isHost ? '' : `<p class="rules">Arena: <b>${ARENAS.find((a) => a.id === on.arena())?.name ?? ''}</b> (the host chooses)</p>`}
-          ${bestHostNote(on, room) || `<p class="rules">${link === 'direct' ? 'Connected directly.' : link === 'relayed' ? (on.canLink ? 'Connecting… (relayed for now)' : 'Connected through the server: this browser does not allow direct links, so moves may arrive a little later.') : 'Waiting for others. Share the room name, or start with CPU rivals.'}</p>`}
+          ${bestHostNote(on, room) || `<p class="rules">${link === 'direct' ? (on.nextByRollback?.() ? 'Direct · rollback.' : 'Connected directly.') : link === 'relayed' ? (on.canLink ? 'Connecting… (relayed for now)' : 'Connected through the server: this browser does not allow direct links, so moves may arrive a little later.') : 'Waiting for others. Share the room name, or start with CPU rivals.'}</p>`}
         </div>
         <div class="slot" style="--tint:${lookColors(room.char, room.look ?? 0).primary};--ring:${lookColors(room.char, room.look ?? 0).accent}">
           <span class="who">Your fighter</span>

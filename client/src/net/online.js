@@ -427,6 +427,18 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     }
   }
 
+  // The trip between every two of these players over their direct links,
+  // or null when rollback cannot be used (it is off, fewer than two, or a
+  // pair without a working link - their ping over it unknown).
+  function rollbackPairs(humans) {
+    if (!online.rollback || !room || humans.length < 2) return null;
+    const mine = (id) => (room.links.get(id)?.isOpen() ? room.pings.get(id) ?? 60 : null);
+    const pairs = humans.flatMap((x, i) => humans.slice(i + 1).map((y) => (x.id === me.id ? mine(y.id) : y.id === me.id ? mine(x.id) : pingBetween(x.id, y.id))));
+    return pairs.every((ms) => ms !== null) ? pairs : null;
+  }
+  // Would a fight started now run by rollback? (For the room's line.)
+  online.nextByRollback = () => !!rollbackPairs(online.players());
+
   // Host: start a match with everyone who is in the room.
   online.start = ({ fill = true, arena = ARENAS[0].id } = {}) => {
     if (!online.canStart()) return;
@@ -439,11 +451,8 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     // Rollback (beta): when every two players have a direct link between
     // them (their pings, measured over those links, are known), so each can
     // send its buttons straight to every other.
-    const humans = slots.filter((sl) => !sl.cpu);
-    const pairs = humans.flatMap((x, i) => humans.slice(i + 1).map((y) => (x.id === me.id ? (room.links.get(y.id)?.isOpen() ? room.pings.get(y.id) ?? 60 : null) : y.id === me.id ? (room.links.get(x.id)?.isOpen() ? room.pings.get(x.id) ?? 60 : null) : pingBetween(x.id, y.id))));
-    if (online.rollback && humans.length >= 2 && pairs.every((ms) => ms !== null)) {
-      info.rb = { seed: (Math.random() * 0xffffffff) >>> 0 || 1, delay: Math.max(...pairs) > 140 ? 3 : 2 };
-    }
+    const pairs = rollbackPairs(slots.filter((sl) => !sl.cpu));
+    if (pairs) info.rb = { seed: (Math.random() * 0xffffffff) >>> 0 || 1, delay: Math.max(...pairs) > 140 ? 3 : 2 };
     room.ch.send('start', info);
     if (info.rb) beginRollback(info);
     else beginHost(info);

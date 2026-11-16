@@ -745,7 +745,8 @@ and the heartbeat, the crowd and the weather go quiet.
   both steps can be done; the twelve lessons fit at the seven sizes). On a
   touch screen, block held and special with a second finger bursts (real
   multi-touch, at 360x640, 568x320, 844x390; the two buttons 48-72 px
-  apart). In **Training** too (loop 175): a fifth partner, **Strings**,
+  apart); a menu tip names it (loop 176; the 21 tips fit at the seven
+  sizes). In **Training** too (loop 175): a fifth partner, **Strings**,
   walks up and throws three-punch strings at you, energy refilled, to
   block or burst out of as often as you like (checked: 13 strings and 13
   bursts in 15 s; the selection fits at the seven sizes).
@@ -1046,7 +1047,10 @@ The website build adds an **Online** mode for the whole alliance:
 - How a match travels: when every two players have a direct link, by
   **rollback** (see below): every player's device runs the whole fight,
   only buttons travel, and your own moves and blows show at once at any
-  distance; the line under the clock says ROLLBACK and the worst ping.
+  distance; the line under the clock says ROLLBACK and the worst ping,
+  and before the fight the room's line says "Direct · rollback." when the
+  next fight will run that way (loop 176; a longer wording made a full
+  room run 12 px over at 360x640).
   Otherwise the classic way: the host's browser runs the real fight with
   the same rules code as offline; the others send only their buttons and
   receive a snapshot of the fight twenty times a second, which they draw
@@ -1528,7 +1532,11 @@ without being imported or declared, and things declared but never used.
   (anyone relayed), unless you are the host, only your own walking and
   first punch or kick show at once; the rest comes after the trip to the
   host and back. If a player leaves a rollback fight, or the host a
-  classic one, the fight ends.
+  classic one, the fight ends. Rollback needs a direct link between every
+  two players: one player whose links fail makes the whole fight run the
+  classic way.
+- Vibration needs a browser that offers it: most Android ones, not iPhones
+  (Safari has none); there the switch is not shown.
 - A browser with WebRTC switched off (some privacy settings do this) cannot
   open direct links; it still plays, through the server, a little slower,
   and the room says so.
