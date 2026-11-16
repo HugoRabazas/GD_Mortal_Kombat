@@ -15,6 +15,7 @@ import { handleEvents, setBuzz } from './effects.js';
 import { initKeyboard, initTouch, readKeys, readTouch, readPad, padStartPressed, padMenu, padStyle, hasPad, setCapture, setTouchLive, lastDevice } from './input.js';
 import { createTouchLayout } from './touchLayout.js';
 import { unlockAudio, play, isMuted, setMuted, isAnnouncer, setAnnouncer, setMusic, setMusicTheme, setCrowd, duckMusic, setWeather, setAmbience, getVolume, setVolume, STEP_SOUND } from './audio.js';
+import { setFloor } from './render/fx.js';
 import { THEMES } from './render/themes.js';
 import { createOnline } from './net/online.js';
 import { ARENAS, isArenaId } from './arenas.js';
@@ -2263,6 +2264,7 @@ function frame(now) {
       : (({ p, k, b, s, u, j, g, walk }) => `${walk} move · ${j} jump · ${p} punch (x3 combo) · ${k} kick · ${g} throw · ${b} block (+move = roll) · ${s} special · ${u} finisher`)(controlNames());
   const place = playing ? app.fightPlace : app.place;
   setMusicTheme(place);
+  setFloor(place);
   // Behind the menus (and the pause and result screens) the arena is drawn
   // on every other frame: thirty a second is plenty for a backdrop, and a
   // phone stays cooler and lasts longer while someone reads. (Everything

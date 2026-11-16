@@ -102,9 +102,15 @@ export function handleEvents(events, state, { quiet, project, me = -1, colors = 
       case 'swing':
         if (!quiet) play(e.move === 'diveKick' ? 'whirl' : 'swing'); // (the dive cuts the air)
         break;
-      case 'jump':
+      case 'jump': {
+        // A small puff where the feet push off.
+        if (by) {
+          const p = project(by.x, 0, by.z);
+          dust(p.x, p.y, 3);
+        }
         if (!quiet) play('jump');
         break;
+      }
       case 'spawn': {
         lightFlash(e.x, 60, e.z, e.kind === 'energy' ? '#ffd34d' : '#5dff8f', false);
         if (!quiet) play('spawn');

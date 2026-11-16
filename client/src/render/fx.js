@@ -103,9 +103,22 @@ export function exBurst(x, y, color) {
   }
 }
 
+// What the floor kicks up: grey stone dust, white powder snow (a little
+// thicker, or it vanishes against the snow), pale sand, pink tile dust.
+export const FLOOR_DUST = {
+  courtyard: { color: '#c9b0a8', alpha: 0.35 },
+  frost: { color: '#f4f8ff', alpha: 0.55 },
+  dunes: { color: '#e2c78f', alpha: 0.45 },
+  blossom: { color: '#ead0d6', alpha: 0.4 },
+};
+let floor = FLOOR_DUST.courtyard;
+export function setFloor(place) {
+  floor = FLOOR_DUST[place] || FLOOR_DUST.courtyard;
+}
+
 export function dust(x, y, amount = 6) {
   for (let i = 0; i < amount; i++) {
-    particles.push({ kind: 'dust', x: x + (Math.random() - 0.5) * 30, y: y + 2, vx: (Math.random() - 0.5) * 2.4, vy: -Math.random() * 1.2, life: 1, decay: 0.035 + Math.random() * 0.02, color: '#c9b0a8', size: 5 + Math.random() * 6 });
+    particles.push({ kind: 'dust', x: x + (Math.random() - 0.5) * 30, y: y + 2, vx: (Math.random() - 0.5) * 2.4, vy: -Math.random() * 1.2, life: 1, decay: 0.035 + Math.random() * 0.02, color: floor.color, alpha: floor.alpha, size: 5 + Math.random() * 6 });
   }
 }
 
@@ -251,7 +264,7 @@ export function drawFx(ctx, high = false, avoid = []) {
     }
     if (p.kind === 'dust') {
       ctx.globalCompositeOperation = 'source-over';
-      ctx.globalAlpha = p.life * 0.35;
+      ctx.globalAlpha = p.life * (p.alpha ?? 0.35);
       ctx.fillStyle = p.color;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size * (1.6 - p.life * 0.6), 0, Math.PI * 2);

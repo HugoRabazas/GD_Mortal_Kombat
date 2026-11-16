@@ -76,3 +76,9 @@ test('every arena has a footstep sound that exists', async () => {
   const { ARENAS } = await import('../client/src/arenas.js');
   for (const a of ARENAS) assert.ok(hasSound(STEP_SOUND[a.id]), a.id);
 });
+
+test('every arena floor kicks up its own dust', async () => {
+  const { FLOOR_DUST } = await import('../client/src/render/fx.js');
+  const { ARENAS } = await import('../client/src/arenas.js');
+  for (const a of ARENAS) assert.match(FLOOR_DUST[a.id]?.color ?? '', /^#[0-9a-f]{6}$/, a.id);
+});
