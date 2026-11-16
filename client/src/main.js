@@ -498,13 +498,13 @@ function helpScreen() {
       </div>
       <ul class="tips">
         <li><b>Walk anywhere</b> on the arena: left, right, into the depth and back. Attacks turn you towards the nearest rival, so you do not need perfect aim.</li>
-        <li><b>Strings</b>: punch, punch, punch knocks down; punch, punch, kick <b>launches</b> the rival into the air (hold jump to chase and <b>juggle</b> them); punch, kick is a <b>hook kick</b> that spins them round (then punch for a <b>spinning backfist</b>, kick to launch); kick, kick a roundhouse; kick, punch a stepping <b>elbow</b> that carries on into either ender. Each blow must land for the next. A blow that lands can also be <b>cancelled into your special</b>.</li>
+        <li><b>Strings</b>: punch, punch, punch - a <b>jab</b>, a <b>second punch</b> and a <b>third punch</b> - knocks down; punch, punch, kick <b>launches</b> the rival into the air (hold jump to chase and <b>juggle</b> them); punch, kick is a <b>hook kick</b> that spins them round (then punch for a <b>spinning backfist</b>, kick to launch); kick, kick a roundhouse; kick, punch a stepping <b>elbow</b> that carries on into either ender. Each blow must land for the next. A blow that lands can also be <b>cancelled into your special</b>.</li>
         <li><b>On the run</b> (a few steps, the stick still held): punch is a <b>lunging straight</b>, kick a <b>slide</b> along the floor, and jump then kick a <b>flying knee</b>.</li>
-        <li><b>In the air</b>: jump again for a <b>double jump</b> (then kick: a <b>dive kick</b> down at the rival, which lands heavily if it misses); punch dives at the rival, kick is a flying kick, grab a <b>stomp</b> straight down - or, with a rival in the air close by, an <b>air throw</b> that drives them into the floor; an air punch that lands flows into an axe kick, a flying kick into a <b>hammer fist</b> that bounces them; special is your <b>air special</b> (with punch, its EX version).</li>
+        <li><b>In the air</b>: jump again for a <b>double jump</b> (then kick: a <b>dive kick</b> down at the rival, which lands heavily if it misses); punch is a <b>diving punch</b> at the rival, kick is a flying kick, grab a <b>stomp</b> straight down - or, with a rival in the air close by, an <b>air throw</b> that drives them into the floor; an air punch that lands flows into an axe kick, a flying kick into a <b>hammer fist</b> that bounces them; special is your <b>air special</b> (with punch, its EX version).</li>
         <li><b>Grab with the rival out of reach</b> is your fighter's <b>signature move</b> for crossing the gap: ${FIGHTERS.map((f) => `${f.name[0] + f.name.slice(1).toLowerCase()}'s ${f.signature.name}`).join(', ')}.</li>
         <li><b>Hold kick</b> to charge a <b>guard-breaker</b>: let go and it smashes a guard open.</li>
         <li><b>Grab</b> (its own button, or punch + kick together) seizes a rival up close, lifts them over your head and slams them down behind you. Short reach, but it goes straight through a guard; in a brawl, anyone can break it with a blow. Kick as they land: a <b>pursuit</b> onto them (a quick rise escapes it).</li>
-        <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment; punch or kick late in it strikes out of it. Block with the stick straight away from the rival is a quick <b>back-step</b>.</li>
+        <li><b>Block + a direction</b> is a dodge roll: attacks pass through you for a moment; punch or kick late in it strikes out of it - a <b>rising uppercut</b> or a <b>spinning heel kick</b>. Block with the stick straight away from the rival is a quick <b>back-step</b>.</li>
         <li>Seized? Press <b>grab</b> at once to <b>break the throw</b>: both of you stagger apart.</li>
         <li>Knocked down? Press <b>block</b> on the floor for a <b>quick rise</b>: you are back up in a blink. Punch or kick while getting up for a <b>rising sweep</b>.</li>
         <li><b>Taunt</b>: block held and grab, standing still. A little energy, but any blow on you is a counter.</li>
@@ -628,7 +628,7 @@ function movesCard() {
       <dt>${k(key.b)} + ${k(key.g)}</dt><dd><b>Taunt</b>: standing still - a little energy, but any blow on you is a counter hit.</dd>
       <dt>Ring of fire</dt><dd>Knocked down into it, a rival <b>bounces</b> back off it. ${k(key.g)} with the flames beyond them: a <b>fire toss</b> in.</dd>`],
     strings: ['Strings', `
-      <dt>${k(key.p, key.p, key.p)}</dt><dd><b>Three-punch combo</b>; each punch must land, the third knocks down.</dd>
+      <dt>${k(key.p, key.p, key.p)}</dt><dd><b>Three-punch combo</b>: jab, second punch, third punch - the third knocks down.</dd>
       <dt>${k(key.p, key.p, key.k)}</dt><dd><b>Launcher</b>: the rival goes up. Hold ${k(key.j)} to chase and hit them in the air (a <b>juggle</b>, twice at most).</dd>
       <dt>${k(key.p, key.k)}</dt><dd><b>Hook kick</b>: spins the rival round, back to you. Then ${k(key.p)}: a <b>spinning backfist</b> that floors; ${k(key.k)}: the launcher.</dd>
       <dt>${k(key.k, key.k)}</dt><dd><b>Kick string</b>: into a spinning roundhouse that knocks down.</dd>
@@ -1327,7 +1327,7 @@ function readRecord() {
 // The moves every fighter has, by the name a landed blow carries: the
 // Record counts how many of them you have landed at least once.
 const MOVE_BOOK = {
-  punch: 'Jab', punch2: 'Second punch', punch3: 'Third punch', kick: 'Kick', kick2: 'Roundhouse', hook: 'Hook kick',
+  punch: 'Jab', punch2: 'Second punch', punch3: 'Third punch', // (named in How to play's strings) kick: 'Kick', kick2: 'Roundhouse', hook: 'Hook kick',
   backfist: 'Spinning backfist', elbow: 'Elbow', launch: 'Launcher', riposte: 'Riposte', lunge: 'Lunging straight',
   slide: 'Slide', sweep: 'Guard sweep', diveKick: 'Dive kick', grab: 'Throw', pursuit: 'Pursuit', breaker: 'Guard-breaker',
   airPunch: 'Diving punch', airKick: 'Flying kick', flyKnee: 'Flying knee', axeKick: 'Axe kick', hammer: 'Hammer fist',

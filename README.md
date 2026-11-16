@@ -626,6 +626,11 @@ and the heartbeat, the crowd and the weather go quiet.
   sounds (ordinary, heavy). The low blows along the floor (the slide and
   the guard sweep) now land with a scrape and a thump, and a dive kick with
   a falling crack; a test checks that each named sound exists.
+- **Every counted move is in the help**: How to play did not name six of
+  the moves the Record counts (the jab and the second and third punch of
+  the string, the diving punch, and the rising uppercut and spinning heel
+  kick out of a roll); it does now, and a test keeps every counted move
+  named in the help.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
