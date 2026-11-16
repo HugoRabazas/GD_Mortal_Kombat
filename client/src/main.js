@@ -1021,6 +1021,16 @@ const replayBtn = () => (app.koClip ? '<button type="button" class="btn quiet" d
 const photoScreen = () => `<section class="screen replay photo"><button type="button" class="btn quiet" data-act="photoTurn" data-id="-1" aria-label="Turn left">◀</button><button type="button" class="btn primary" data-act="photoSave">Save picture</button><button type="button" class="btn quiet" data-act="photoTurn" data-id="1" aria-label="Turn right">▶</button><button type="button" class="btn quiet" data-act="photoDone">Back</button></section>`;
 const replayScreen = () => '<section class="screen replay"><p class="rtag">REPLAY</p><button type="button" class="btn quiet" data-act="endReplay">Skip</button></section>';
 
+// Each Arcade stage opens with its own heading over its first round:
+// STAGE 2 OF 5 (CPU on Normal), the brawl, and the boss's FINAL STAGE.
+function arcadeHeading() {
+  const a = app.arcade;
+  const st = a.ladder[a.stage];
+  if (st.boss) return ['FINAL STAGE', 'THE BOSS · ROUND 1'];
+  if (st.brawl) return [`STAGE ${a.stage + 1} OF ${a.ladder.length}`, 'ALL THREE AT ONCE · ROUND 1 OF 3'];
+  return [`STAGE ${a.stage + 1} OF ${a.ladder.length}`, `ROUND 1 · CPU ON ${LEVEL_NAMES[st.level].toUpperCase()}`];
+}
+
 const survivalNote = () => {
   const { wins, best, over, newBest, beaten = [] } = app.surv;
   const run = `${wins} ${wins === 1 ? 'win' : 'wins'}`;
@@ -2345,7 +2355,7 @@ function frame(now) {
   duckMusic(playing && (app.screen === 'pause' ? 0.6 : st.freeze > 0 ? 1 : st.phase === 'ko' && st.koKind === 'ko' && st.pt < 60 ? 0.7 : 0));
   // (How the match was won, for the banner and the announcer at its end.)
   const how = playing && events.some((e) => e.type === 'matchEnd') ? howWon(g.state, app.roundEnds || []) : '';
-  const heading = playing && surviving() ? [`RIVAL ${app.surv.wins + 1}`, `ROUND 1 · CPU ON ${LEVEL_NAMES[survivalLevel()].toUpperCase()}`] : null;
+  const heading = !playing ? null : surviving() ? [`RIVAL ${app.surv.wins + 1}`, `ROUND 1 · CPU ON ${LEVEL_NAMES[survivalLevel()].toUpperCase()}`] : app.mode === 'arcade' && app.arcade ? arcadeHeading() : null;
   handleEvents(events, g.state, { quiet: !playing, project: stage.project, me: self, colors: worn, how, heading });
   // The sounds of each fighter's ritual while a round is announced.
   if (playing && st.phase === 'intro') {

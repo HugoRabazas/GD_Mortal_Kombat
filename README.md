@@ -52,6 +52,9 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   Stage three breaks the run of duels: a brawl against all three rivals at
   once, three rounds, where only a clear first place goes through (a tie at
   the top is not enough). The ladder moves between the arenas as you climb.
+  Each stage opens with its own heading over its first round - STAGE 2 OF 5
+  (CPU on Normal), the brawl's ALL THREE AT ONCE, and FINAL STAGE for the
+  boss - and the announcer calls it.
 - **Quick Fight**: one duel against the CPU on Auto, Easy, Normal or Hard.
   Auto (also in Arena) follows you: each win moves the CPU one step up, each
   loss one step down, and the result screen says when it moves.
