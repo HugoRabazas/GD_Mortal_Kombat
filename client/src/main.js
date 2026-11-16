@@ -494,6 +494,7 @@ function selectScreen() {
       ${mode === 'training' ? `<p class="note aside">No clock, and health and energy refill, so you can try every move. ${app.dummy === 'beat' ? 'Your partner walks up and kicks on a steady beat: raise your guard just before the kick lands for a perfect guard, or roll through it.' : app.dummy === 'combo' ? 'Your partner walks up and throws three-punch strings: block them, or from the second punch press block and special together to burst out.' : 'Pause to leave.'}</p>` : ''}
       ${mode === 'versus' && app.touch ? '<p class="note">Two players need a keyboard or gamepads: the on-screen buttons control one fighter only.</p>' : ''}
       ${mode === 'arcade' ? '<p class="note aside">The ladder moves through the arenas, one after another.</p>' : ''}
+      ${mode === 'quick' && app.level === 'survival' ? '<p class="note aside">Survival: duels in a row, a new rival each time, harder as you go. One defeat ends the run.</p>' : ''}
       <div class="row">
         <button type="button" class="btn quiet" data-act="menu">Back</button>
         <button type="button" class="btn primary" data-act="fight">${mode === 'arcade' ? 'Start' : 'Fight'}</button>
