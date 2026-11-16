@@ -541,8 +541,21 @@ export function createStage(glCanvas, hudCanvas) {
       // Sparks, dust and damage numbers sit on the flat layer in both views;
       // floating texts keep clear of the name tags over the fighters.
       const spots = view.demo ? [] : s.f.map((f) => project(f.x, f.h + (three ? three.headTop(f.slot) * 100 - f.h : 150), f.z));
+      // Two fighters one over the other (a throw, a crowd): their tags would
+      // print on top of each other, so the higher one steps up a line.
+      const tagBox = (f) => { const p = spots[f.slot]; const k = Math.min(1.25, Math.max(0.7, p.k)); return { x: p.x, y: p.y - 8 * k, w: (view.labels[f.slot]?.length ?? 0) * 9 * k + 8, h: 26 * k }; };
+      const settled = [];
+      for (const f of s.f.filter((f) => spots[f.slot] && f.hp > 0 && view.labels?.[f.slot]).sort((a, b) => spots[b.slot].y - spots[a.slot].y)) {
+        const p = spots[f.slot];
+        for (let n = 0; n < 3; n++) {
+          const me = tagBox(f);
+          if (!settled.some((o) => Math.abs(o.x - me.x) * 2 < o.w + me.w && Math.abs(o.y - me.y) * 2 < o.h + me.h)) break;
+          spots[f.slot] = { ...p, y: spots[f.slot].y - me.h * 0.8 };
+        }
+        settled.push(tagBox(f));
+      }
       const tagged = !view.demo && !view.noTags && s.phase !== 'over';
-      const avoid = tagged ? s.f.filter((f) => spots[f.slot] && f.hp > 0 && view.labels[f.slot]).map((f) => { const p = spots[f.slot]; const k = Math.min(1.25, Math.max(0.7, p.k)); return { x: p.x, y: p.y - 8 * k, w: view.labels[f.slot].length * 9 * k + 8, h: 26 * k }; }) : [];
+      const avoid = tagged ? settled : [];
       drawFx(ctx, !!view.clearCorners, avoid);
 
       if (!view.demo) {

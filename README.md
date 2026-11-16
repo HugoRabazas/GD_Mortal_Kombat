@@ -579,6 +579,11 @@ and the heartbeat, the crowd and the weather go quiet.
   checked on a phone with real touches (GRAB, then K). Floating texts now
   keep clear of the name tags over the fighters too, but are never lifted
   into the scoreboard.
+- **Name tags that keep apart**: two fighters one over the other (after a
+  throw, in a crowd) printed their tags on top of each other; the higher
+  tag now steps up a line. Floating texts, rising as they fade, stop under
+  the scoreboard instead of passing behind the clock. The public site was
+  checked too: it loads with the newest moves and a fight runs.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

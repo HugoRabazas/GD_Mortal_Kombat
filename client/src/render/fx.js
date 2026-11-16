@@ -330,6 +330,7 @@ export function drawFx(ctx, high = false, avoid = []) {
     let y = t.y - (t.off || 0);
     for (let n = 0; n < 6 && y - h > CEIL && placed.some((p) => Math.abs(p.x - t.x) * 2 < p.w + w && Math.abs(p.y - y) * 2 < p.h + h); n++) y -= h;
     t.off = Math.max(t.off || 0, t.y - y);
+    if (t.top === -Infinity) y = Math.max(y, CEIL); // (rising, never into the scoreboard)
     placed.push({ x: t.x, y, w, h });
     ctx.globalAlpha = Math.min(1, t.life * 2);
     ctx.lineWidth = 5;
