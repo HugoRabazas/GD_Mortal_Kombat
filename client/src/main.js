@@ -862,12 +862,18 @@ function tallyFight(g, events) {
       st.perfect++;
     }
   }
+  // The fight's own count, where it keeps one, is the true one (see statsCard).
+  const tally = g.state.tally;
+  if (Array.isArray(tally)) tally.forEach((t, i) => app.stats[i] && Object.assign(app.stats[i], { dmg: t.dmg, hits: t.hits, combo: t.combo, perfect: t.perfect }));
 }
 
 // One line of numbers per fighter, for the result screen of a duel.
 function statsCard() {
   const s = app.game?.state;
   if (!s || app.statsFor !== app.game || !app.stats) return '';
+  // The fight's own count where it keeps one (the same on every device of an
+  // online match); the moves landed still come from the events.
+  if (Array.isArray(s.tally)) s.tally.forEach((t, i) => app.stats[i] && Object.assign(app.stats[i], { dmg: t.dmg, hits: t.hits, combo: t.combo, perfect: t.perfect }));
   const who = labels();
   const best = (k) => Math.max(...app.stats.map((st) => st[k]));
   const cell = (st, k) => `<td class="${st[k] > 0 && st[k] === best(k) && app.stats.length > 1 ? 'lead' : ''}">${st[k]}</td>`;
@@ -1795,8 +1801,9 @@ async function goOnline(name) {
   });
   try {
     await online.connect();
-    // (beta) ?rollback in the address: a host's duels run by rollback.
-    online.rollback = new URLSearchParams(location.search).has('rollback');
+    // Fights run by rollback wherever every two players are linked directly
+    // (see README); ?classic in the address keeps a host's fights the old way.
+    online.rollback = !new URLSearchParams(location.search).has('classic');
     app.online = online;
     app.notice = '';
     const code = invited();

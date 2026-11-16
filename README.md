@@ -992,10 +992,14 @@ The website build adds an **Online** mode for the whole alliance:
   an old page open, the room says so and the fight cannot start until they
   reload. During a fight a small line under the timer shows whether the data
   is travelling directly or relayed, and the round-trip time to the host.
-- How a match travels: the host's browser runs the real fight with the same
-  rules code as offline; the others send only their buttons and receive a
-  snapshot of the fight twenty times a second, which they draw gliding from
-  one to the next. One copy of the truth, so nobody drifts out of sync.
+- How a match travels: when every two players have a direct link, by
+  **rollback** (see below): every player's device runs the whole fight,
+  only buttons travel, and your own moves and blows show at once at any
+  distance; the line under the clock says ROLLBACK and the worst ping.
+  Otherwise the classic way: the host's browser runs the real fight with
+  the same rules code as offline; the others send only their buttons and
+  receive a snapshot of the fight twenty times a second, which they draw
+  gliding from one to the next.
 - A guest's own fighter is drawn slightly ahead of the host's word while it
   is simply walking (where it will be once the host's answer arrives), and a
   plain punch or kick from standing starts on the guest's screen at once, so
@@ -1032,7 +1036,7 @@ The Artifact page cannot reach the network, so it has the offline modes only.
   run over direct links, and about one four-player match at a time if every
   player has to be relayed.
 
-### Rollback: the plan (being built)
+### Rollback
 
 Today one device, the host, runs the fight; the others see it a trip late.
 Walking and the first blow are already drawn ahead on a guest's own screen,
@@ -1160,6 +1164,22 @@ world hide that wait:
     players with one made to drift (found and put right once) - every
     fingerprint the same on every screen, never a wait; three players and
     a CPU fighter on the live service, drift included, the same.
+  - *Step 8 done (loop 164): on by default.* Every online fight in which
+    every two players have a working direct link now runs by rollback;
+    anyone relayed (a link that failed) and the fight runs the classic way,
+    as before (checked: four players relayed run classic, under the
+    service's quota). `?classic` at the end of a host's address keeps the
+    classic way, for comparing. Watchers (members beyond the four players)
+    get pictures of a rollback fight from the host as in the classic way
+    (checked: 21 a second, the same health bars). A guess put right no
+    longer makes a rival jump: drawn, it glides to its right place over a
+    few frames (the fight itself is right at once). The numbers on the
+    result screen (damage, hits, best combo, perfect guards) are now kept
+    in the fight itself (`state.tally`), so every device counts the same,
+    through replays and the referee's fixes too - before, each device
+    counted the hits it had shown (checked: a fight forced on the host's
+    side only, put right by the referee, now shows the same numbers on
+    both; a test checks the tally against the events).
 - **Steps.** 1) the cross-browser fingerprint test and our own trigonometry
   (offline play unchanged, all tests and balance figures checked);
   2) the ring of past ticks and the replay, tested in Node with two
@@ -1435,10 +1455,13 @@ without being imported or declared, and things declared but never used.
 ## Limits worth knowing
 
 - The Artifact page is offline only; online play needs the website build.
-- Online, unless you are the host, your own walking and your first punch or
-  kick show at once, but everything else - the rivals, every hit, strings
-  and specials - comes after the trip to the host and back (see the
-  rollback plan). If the host leaves, the fight ends.
+- Online by rollback, your own moves show about 3 ticks (50 ms) after the
+  press at any distance; a rival can be shown a moment wrong and put right
+  (gliding) when a guess about their buttons missed. In the classic way
+  (anyone relayed), unless you are the host, only your own walking and
+  first punch or kick show at once; the rest comes after the trip to the
+  host and back. If a player leaves a rollback fight, or the host a
+  classic one, the fight ends.
 - A browser with WebRTC switched off (some privacy settings do this) cannot
   open direct links; it still plays, through the server, a little slower,
   and the room says so.

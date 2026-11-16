@@ -67,7 +67,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
 
   const online = {
     me,
-    rollback: false, // (beta) duels between two linked players run by rollback
+    rollback: true, // fights where every two players are linked directly run by rollback
     kind: bus.kind,
     lobbyPeers: [],
     chat: [], // the last few messages heard, in the lobby or in the room
@@ -263,7 +263,10 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     });
     ch.on('chat', (m) => heard(m));
     ch.on('start', (info) => {
-      if (!room.isHost && info?.rb) beginRollback(info);
+      // A player of a rollback fight runs it; anyone watching gets pictures
+      // of it from the host, as in the classic way.
+      const playing = info?.rb && Array.isArray(info.slots) && info.slots.some((sl) => !sl.cpu && sl.id === me.id);
+      if (!room.isHost && playing) beginRollback(info);
       else if (!room.isHost) beginClient(info);
     });
     ch.on('away', (m) => {
@@ -736,9 +739,51 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     let lastPingAt = 0;
     const pings = slots.map(() => null);
     const sendTo = (slot, payload) => room?.links.get(slots[slot].id)?.send(JSON.stringify(payload));
+    // Pictures for anyone watching (host only): as in the classic way, packed,
+    // with the events of the last moments, numbered afresh (a replayed
+    // tick's events come again with the rules' own numbers).
+    const packer = createPacker();
+    const relayPacker = createPacker(3);
+    let forWatchers = [];
+    let watchId = 0;
+    let pictures = 0;
     const take = (events) => {
-      for (const e of filter.pass(events)) shown.push(e);
+      for (const e of filter.pass(events)) {
+        shown.push(e);
+        if (match?.host) forWatchers.push({ ...e, id: ++watchId });
+      }
     };
+    function showWatchers() {
+      const watching = room ? room.peers.filter((p) => p.id !== me.id && !slots.some((sl) => sl.id === p.id)) : [];
+      if (!watching.length) return;
+      pictures++;
+      forWatchers = forWatchers.filter((e) => e.id > watchId - 40);
+      const s = rb.world.s;
+      const text = JSON.stringify({ s: { p: packer.pack(s), ev: forWatchers, n: pictures } }, compact);
+      let unreached = 0;
+      for (const p of watching) if (!room.links.get(p.id)?.send(text)) unreached++;
+      if (unreached && pictures % Math.round(RELAY_EVERY / SNAP_EVERY) === 0) room.ch.send('relay', { to: '*', from: me.id, d: JSON.stringify({ s: { p: relayPacker.pack(s), ev: forWatchers, n: pictures, via: 'relay' } }, compact) });
+    }
+    // A guess put right moves a rival at once - drawn, it glides there over
+    // a few frames instead (the fight itself is already right).
+    const glide = slots.map(() => ({ x: 0, z: 0 }));
+    function smooth(before, entries) {
+      const s = rb.world.s;
+      const fixed = entries.some((e) => e.replay);
+      s.f.forEach((f, i) => {
+        const g = glide[i];
+        if (fixed && i !== mySlot && before[i]) {
+          const dx = before[i].x - f.x;
+          const dz = before[i].z - f.z;
+          if (dx * dx + dz * dz > 36) {
+            g.x += dx;
+            g.z += dz;
+          }
+        }
+        g.x *= 0.8;
+        g.z *= 0.8;
+      });
+    }
     let lastSendAt = 0;
     // Every button of ours each other player has not confirmed (at most 40 ticks).
     function sendButtons(now) {
@@ -779,8 +824,12 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
         const bits = readInput();
         rb.local(mySlot, t, bits);
         sent.set(t, bits);
-        take(rb.advance());
+        const before = rb.world.s.f.map((f) => ({ x: f.x, z: f.z }));
+        const played = rb.advance();
+        take(played);
+        smooth(before, played);
         sendButtons(now);
+        if (match?.host && rb.tick % SNAP_EVERY === 0) showWatchers();
         // A fingerprint of a tick everyone is sure of, every two seconds: the
         // host sends its own to every guest, a guest its own to the host.
         const sure = rb.sureUpTo();
@@ -825,7 +874,9 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
     }
     const game = {
       get state() {
-        return rb.world.s;
+        const s = rb.world.s;
+        if (!glide.some((g) => Math.abs(g.x) + Math.abs(g.z) > 0.5)) return s;
+        return { ...s, f: s.f.map((f, i) => (Math.abs(glide[i].x) + Math.abs(glide[i].z) > 0.5 ? { ...f, x: f.x + glide[i].x, z: f.z + glide[i].z } : f)) };
       },
       paused: false,
       update(now) {
@@ -840,6 +891,7 @@ export function createOnline({ config, name, char, arena = () => ARENAS[0].id, l
       info,
       game,
       rollback: true,
+      glide,
       host: !!room?.isHost,
       mySlot,
       get ping() {

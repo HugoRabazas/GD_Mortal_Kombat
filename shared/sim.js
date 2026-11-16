@@ -598,6 +598,10 @@ export function createMatch(chars, mods = [], mode = chars.length > 2 ? 'arena' 
     timer: rules.seconds * TICK_RATE,
     ringR: ARENA.R,
     f: chars.map((c, i) => newFighter(c, i, n, mods[i])),
+    // The match's numbers for the result screen, kept in the fight itself so
+    // every device of an online match counts the same (and a replayed tick
+    // counts once): damage dealt, hits, best combo, perfect guards.
+    tally: chars.map(() => ({ dmg: 0, hits: 0, combo: 0, perfect: 0 })),
     proj: [],
     items: [], // crystals lying on the floor
     itemSeq: 0,
@@ -1616,6 +1620,7 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     }
     if (s.f.length === 2) s.hitstop = 8;
     else att.stop = def.stop = 5;
+    if (s.tally?.[def.slot]) s.tally[def.slot].perfect++;
     emit(s, 'parry', { by: def.slot, on: att.slot, ...at, stagger });
     return;
   }
@@ -1800,6 +1805,12 @@ function applyHit(s, att, def, m, fromX, fromZ, kind) {
     s.hitstop = s.f.length === 2 ? FINALE.stop : FINALE.stop / 2;
     s.finale = FINALE.ticks;
     s.finaleOn = def.slot;
+  }
+  const tl = s.tally?.[att.slot];
+  if (tl) {
+    tl.dmg += dealt ?? dmg;
+    tl.hits++;
+    tl.combo = Math.max(tl.combo, def.taken || 1);
   }
   emit(s, 'hit', { by: att.slot, on: def.slot, ...at, dmg, dealt, heavy: !!m.heavy, kind, combo: def.taken, counter, juggle: juggled, light: !!m.light, stage: m.ult ? att.move : undefined, final: !!m.final, under });
 }
