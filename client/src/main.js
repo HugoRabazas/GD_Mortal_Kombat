@@ -2062,6 +2062,7 @@ function labels() {
     if (st.brawl) return ['YOU', ...st.rivals.map(() => 'CPU')];
     return ['YOU', st.boss ? 'BOSS' : `STAGE ${app.arcade.stage + 1}/${app.arcade.ladder.length}`];
   }
+  if (surviving()) return ['YOU', `RIVAL ${app.surv.wins + 1}`];
   return ['YOU', 'CPU', 'CPU', 'CPU'].slice(0, n);
 }
 
