@@ -18,7 +18,7 @@ signature moves of any existing fighting game.
 | JACKIE | sumo | Mountain Stomp: floors everyone nearby who is not jumping; a shockwave ring on the floor shows how far it reaches, the floor splits in glowing cracks and shards of rock fly up | slow, heavy, hard to knock out |
 | PIXIE | slim | Twin Flame Spiral: a spinning leap that hits all around, two flames orbiting and leaving a spiral, lit by a ring of fire on the floor at take-off | quick and fragile |
 | MERU | standard | Iron Charge: a lunging shoulder charge | heavy and steady; Last Oath: a charge, three hammer blows, a slam that floors everyone near; Shield Ram |
-| GLEH | slim | Moon Arrow: a projectile | quick, fights from range; Crescent Rain: a leap high and a rain of five moonlit arrows; Moon Vault (lands behind the rival) |
+| GLEH | slim | Moon Arrow: a projectile | quick, fights from range; Crescent Rain: a leap high and a rain of five moonlit arrows; Moon Vault (a high vault that kicks from above, from well out of reach) |
 | KICHTA | standard | Rising Edge: a spinning leap that hits all around | quick blade; Thousand Cuts: a dash, a storm of cuts, a rising slash; Blade Dash |
 | ZELRITH | slim | Storm Clap: floors everyone nearby who is not jumping | quick and tough; Sunburst: climbs in a ball of light and falls like the sun; Spin Top |
 

@@ -598,7 +598,7 @@ const SIG_NOTES = {
   bellyBump: 'a barge, belly first, that shoves the rival far',
   cartwheel: 'a cartwheel in, untouchable as it starts, ending in a kick',
   shieldRam: 'a shoulder-first ram that shoves the rival back',
-  moonVault: 'a vault over the rival that lands behind them, kicking on the way down',
+  moonVault: 'a high vault at the rival that kicks them from above, from well out of reach',
   bladeDash: 'a long dashing slash',
   spinTop: 'a spin across the floor that strikes all round',
 };

@@ -1714,3 +1714,23 @@ test('the dash special lands from well beyond a kick, but not across the arena',
   assert.ok(lands(MOVES.kick.reach * 2.4), 'from 2.4 kicks away');
   assert.ok(!lands(ARENA.R), 'not from half the arena away');
 });
+
+// Gleh's Moon Vault, as the move list says: a high vault that lands its kick
+// from well out of reach (beyond a kick's reach, up to about three).
+test('Moon Vault kicks from well out of reach', () => {
+  const lands = (d0) => {
+    const s = createMatch(['gleh', 'jackie']);
+    while (s.phase !== 'fight') step(s, [0, 0]);
+    s.f[0].x = -d0 / 2;
+    s.f[1].x = d0 / 2;
+    s.f[0].z = s.f[1].z = 0;
+    let hit = false;
+    for (let t = 0; t < 90; t++) {
+      step(s, [t < 3 ? INPUT.GRAB : 0, 0]);
+      if (s.ev.some((e) => e.type === 'hit' && e.by === 0 && e.kind === 'moonVault')) hit = true;
+    }
+    return hit;
+  };
+  assert.ok(lands(MOVES.kick.reach * 2.5), 'from 2.5 kicks away');
+  assert.ok(!lands(ARENA.R * 0.8), 'not from most of the arena away');
+});
