@@ -317,14 +317,24 @@ export function drawFx(ctx, high = false) {
   ctx.save();
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  // In a crowd (a brawl) texts would land on top of each other: each one,
+  // oldest first, is lifted clear of those already placed - and stays lifted
+  // (`off` only grows), so nothing jitters from frame to frame.
+  const placed = [];
   for (const t of texts) {
-    ctx.globalAlpha = Math.min(1, t.life * 2);
     ctx.font = `italic 900 ${t.size}px Teko, Impact, "Arial Black", sans-serif`;
+    const w = ctx.measureText(t.text).width + 6;
+    const h = t.size * 0.85;
+    let y = t.y - (t.off || 0);
+    for (let n = 0; n < 6 && placed.some((p) => Math.abs(p.x - t.x) * 2 < p.w + w && Math.abs(p.y - y) * 2 < p.h + h); n++) y -= h;
+    t.off = Math.max(t.off || 0, t.y - y);
+    placed.push({ x: t.x, y, w, h });
+    ctx.globalAlpha = Math.min(1, t.life * 2);
     ctx.lineWidth = 5;
     ctx.strokeStyle = '#0b070d';
-    ctx.strokeText(t.text, t.x, t.y);
+    ctx.strokeText(t.text, t.x, y);
     ctx.fillStyle = t.color;
-    ctx.fillText(t.text, t.x, t.y);
+    ctx.fillText(t.text, t.x, y);
   }
   ctx.restore();
 }

@@ -540,6 +540,12 @@ and the heartbeat, the crowd and the weather go quiet.
   start and to recover. The CPU on Normal and up sweeps a guard now and
   then and jumps a sweep it sees coming; the Guards lesson teaches it (the
   taunt moved to Defence); help, pause list and a tip explain it.
+- **The guard sweep on a phone, and texts in a crowd**: hold BLK and tap K
+  with a second finger - checked with real multi-touch at three phone
+  sizes, and the touch help now says so. The sweep checked in 3D too (low,
+  the leg at the rival's feet). In a busy brawl the floating texts (damage,
+  COUNTER, a special's name, the hits) landed on top of one another: each
+  is now lifted clear of those already there, and stays put.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);
