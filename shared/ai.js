@@ -128,6 +128,24 @@ export function aiInput(ai, s, me) {
   // better it guards perfectly, the more often; never on Easy).
   if (f.state === 'hit' && f.taken >= BURST.from && f.h <= 0 && f.meter >= BURST.cost && cfg.parry > 0 && rnd(ai) < cfg.parry * 0.08) return INPUT.BLOCK | INPUT.SPECIAL;
 
+  // A rival jumping in: once per jump decide (as often as it punishes, by
+  // half; never on Easy) to meet them on the way down with a punch - a
+  // standing punch reaches a fighter in the air, a kick aims too low.
+  const foe = ai.target >= 0 ? s.f[ai.target] : null;
+  if (foe) {
+    if (foe.h > 0 && !ai.foeUp) {
+      ai.foeUp = true;
+      ai.antiAir = cfg.parry > 0 && rnd(ai) < cfg.punish * 0.5;
+    } else if (foe.h <= 0) ai.foeUp = false;
+    const near = hypot(foe.x - f.x, foe.z - f.z);
+    if (ai.antiAir && f.h <= 0 && (f.state === 'idle' || f.state === 'walk') && (foe.state === 'jump' || foe.state === 'airAttack') && foe.vh <= 0 && foe.h > 20 && foe.h < 140 && near < 105) {
+      ai.antiAir = false;
+      ai.tap = INPUT.PUNCH;
+      ai.tapT = 1;
+      return INPUT.PUNCH;
+    }
+  }
+
   // Attack buttons are tapped (held 2 ticks) so each decision is one press.
   let tap = 0;
   if (ai.tapT > 0) {

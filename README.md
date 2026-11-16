@@ -126,7 +126,8 @@ finisher's cut-in all take their colour from one place (`dressColors` in
   practised. **From the air** (loop 245) has a partner who leaps in and
   kicks on the way down: block it, roll under it, and meet it in the air
   with a punch (a standing kick aims too low to reach a fighter in the air,
-  measured). Thirteen lessons in all; Back sits in the list's last row so
+  measured) - and the CPU from Normal up does it too (loop 246).
+  Thirteen lessons in all; Back sits in the list's last row so
   they fit a phone held sideways. The steps of the lesson sit in the corner, named in the
   controls being used, and tick off from what really happens in the fight;
   when they are all done the lesson ends with Next lesson / Again / All
