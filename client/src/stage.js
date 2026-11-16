@@ -543,7 +543,7 @@ export function createStage(glCanvas, hudCanvas) {
 
       if (!view.demo) {
         const spots = s.f.map((f) => project(f.x, f.h + (three ? three.headTop(f.slot) * 100 - f.h : 150), f.z));
-        drawTags(ctx, s, spots, view.labels);
+        if (!view.noTags) drawTags(ctx, s, spots, view.labels);
         dizzyStars(ctx, s, (f, back) => project(f.x - Math.cos(f.dir) * back, three ? three.headTop(f.slot) * 100 : 150, f.z - Math.sin(f.dir) * back), now);
         finaleOverlay(ctx, s, worn);
         finisherCutIn(ctx, s, worn);

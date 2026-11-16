@@ -553,6 +553,14 @@ and the heartbeat, the crowd and the weather go quiet.
   the camera keeps the stage's view exactly as it was, only adding to the
   sides, so the scoreboard, the name tags and every hit mark stay where
   they were. Upright, and in the flat 2D view, nothing changes.
+- **The fill checked in a lesson, a room and an online fight; a cleaner
+  pause**: the full-screen arena checked in 3D behind the tutorial's lesson
+  panel, an online room and an online fight (with the guest's view). The
+  pause screen let the fight show through: the keyboard hint line and the
+  name tags over the fighters crossed the move list, and on a very short
+  phone held sideways "PAUSED" sat on the clock. While paused the hint and
+  the tags are not drawn, and there the title's place is kept but the word
+  goes.
 - **Names over a fighter clear their tag**: the special's name (and the
   signature move's, and the taunt's line) floated at the height of the
   YOU / CPU tag on top of the head and covered it (seen in 3D at 844x390);

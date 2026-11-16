@@ -2851,3 +2851,12 @@ kbd {
 #app.bleed #hud {
   z-index: 1;
 }
+
+/* A very short phone held sideways: the pause screen's title would sit on
+   the scoreboard's clock - its place is kept (under the scoreboard), the
+   word goes. */
+@media (max-height: 340px) and (orientation: landscape) {
+  .screen.pause h2 {
+    visibility: hidden;
+  }
+}

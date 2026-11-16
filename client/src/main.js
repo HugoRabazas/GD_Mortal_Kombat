@@ -1922,7 +1922,7 @@ function frame(now) {
   const mine = app.mode === 'online' ? app.online?.mySlot ?? -1 : playing && app.mode !== 'versus' ? 0 : -1;
   const humans = app.mode === 'online' ? tags.map((_, i) => i === mine) : tags.map((t) => t === 'YOU' || t === 'P1' || t === 'P2');
   const net = app.mode === 'online' && playing ? app.online?.status() : '';
-  const hint = !playing || !touchEl.hidden
+  const hint = !playing || !touchEl.hidden || app.screen !== 'fight' // (not through the pause screen)
     ? ''
     : app.mode === 'versus' && lastDevice() === 'pad'
       ? (({ p, k, b, s, u, j, g }) => `Pad 1 and pad 2: stick move · ${j} jump · ${p} punch · ${k} kick · ${g} throw · ${b} block · ${s} special · ${u} finisher`)(PAD_NAMES[padStyle()])
@@ -1939,7 +1939,7 @@ function frame(now) {
     app.demoSkip = !app.demoSkip;
     if (app.demoSkip) return;
   }
-  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: practising(), clearCorners: touchOver() }, now);
+  stage.render({ state: g.state, theme: place, looks: playing ? fightLooks() : null, demo: !playing, labels: tags, boss, humans, me: mine, net, hint, hintAlways: practising(), clearCorners: touchOver(), noTags: app.screen === 'pause' }, now);
 
   const s = g.state;
   if (playing && !touchEl.hidden) {
