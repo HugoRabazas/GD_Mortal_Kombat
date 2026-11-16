@@ -1204,6 +1204,10 @@ The website build adds an **Online** mode for the whole alliance:
   that moment and are not stored anywhere. A soft two-note chime sounds for
   a message from someone else, and a rising one when someone joins your
   room (not during a fight), so neither goes unnoticed on a phone.
+- From a room's second fight on, the first round opens with the fight's
+  number and who is ahead: FIGHT 3 · ROUND 1 · ANA LEADS 2-0 (LEVEL ON
+  WINS when tied; in a brawl, who leads and with how many). Each device
+  counts from when it came into the room.
 - If the **host** leaves or reloads, the room carries on: the next player in
   it becomes the host (a fight already under way ends for everyone).
 - **Copy invite link** in a room gives an address ending in `#room-ABCD`;

@@ -1187,6 +1187,21 @@ function lobbyScreen() {
 function countRoomWin(s) {
   const sl = app.roomWins.slots[s.matchWinner];
   if (sl?.id) app.roomWins.wins[sl.id] = (app.roomWins.wins[sl.id] || 0) + 1;
+  app.roomWins.fights = (app.roomWins.fights || 0) + 1;
+}
+
+// From a room's second fight on, its first round opens with the fight's
+// number and who is ahead (as this device has counted since it came in).
+function roomHeading() {
+  const n = app.roomWins.fights || 0;
+  if (!n) return null;
+  const tally = app.roomWins.slots
+    .filter((sl) => sl.id)
+    .map((sl) => ({ name: sl.name, w: app.roomWins.wins[sl.id] || 0 }))
+    .sort((a, b) => b.w - a.w);
+  const [a, b] = tally;
+  const lead = !a || !a.w ? '' : b && a.w === b.w ? ' · LEVEL ON WINS' : tally.length === 2 ? ` · ${a.name.toUpperCase()} LEADS ${a.w}-${b.w}` : ` · ${a.name.toUpperCase()} LEADS WITH ${a.w}`;
+  return [`FIGHT ${n + 1}`, `ROUND 1${lead}`];
 }
 
 // After an online fight: who has won how many in this room, best first.
@@ -2355,7 +2370,7 @@ function frame(now) {
   duckMusic(playing && (app.screen === 'pause' ? 0.6 : st.freeze > 0 ? 1 : st.phase === 'ko' && st.koKind === 'ko' && st.pt < 60 ? 0.7 : 0));
   // (How the match was won, for the banner and the announcer at its end.)
   const how = playing && events.some((e) => e.type === 'matchEnd') ? howWon(g.state, app.roundEnds || []) : '';
-  const heading = !playing ? null : surviving() ? [`RIVAL ${app.surv.wins + 1}`, `ROUND 1 · CPU ON ${LEVEL_NAMES[survivalLevel()].toUpperCase()}`] : app.mode === 'arcade' && app.arcade ? arcadeHeading() : null;
+  const heading = !playing ? null : surviving() ? [`RIVAL ${app.surv.wins + 1}`, `ROUND 1 · CPU ON ${LEVEL_NAMES[survivalLevel()].toUpperCase()}`] : app.mode === 'arcade' && app.arcade ? arcadeHeading() : app.mode === 'online' ? roomHeading() : null;
   handleEvents(events, g.state, { quiet: !playing, project: stage.project, me: self, colors: worn, how, heading });
   // The sounds of each fighter's ritual while a round is announced.
   if (playing && st.phase === 'intro') {
