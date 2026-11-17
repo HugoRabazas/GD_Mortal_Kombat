@@ -23,7 +23,17 @@ const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search)
 
 // Which fighters the address asks for: ?qbody (or ?qbody=all) for everyone,
 // ?qbody=pixie,ruko for some.
-export const qbodyFor = (id) => Q !== null && (Q === '' || Q === 'all' || Q === '1' || Q.split(',').includes(id));
+// Settings › Bodies: Quaternius (beta) turns it on for everyone (kept on the
+// device, read at each new fight); ?realbody=none in the address still wins.
+const chosen = () => {
+  try {
+    return localStorage.getItem('gd-arena-body') === 'quaternius';
+  } catch {
+    return false;
+  }
+};
+const NONE = typeof location !== 'undefined' && new URLSearchParams(location.search).get('realbody') === 'none';
+export const qbodyFor = (id) => !NONE && ((Q !== null && (Q === '' || Q === 'all' || Q === '1' || Q.split(',').includes(id))) || chosen());
 
 // Those in a skirt get the female base body; the rest the male one.
 const bodyFile = (char) => ((char.gear || []).includes('skirt') ? 'q/body-female.json' : 'q/body-male.json');
@@ -55,6 +65,8 @@ function fetchFile(file) {
     );
   return files.get(file);
 }
+
+const SKIRT_N = 28; // points round the skirt's waist and hem
 
 // Bones by name, and the pairs aimed every frame: [bone, the joint it points
 // at, which of the game's joints that is].
@@ -95,7 +107,7 @@ const WEAR = {
   pelvis: 'legs', thigh_l: 'legs', thigh_r: 'legs', calf_l: 'legs', calf_r: 'legs',
   foot_l: 'shoes', foot_r: 'shoes', ball_l: 'shoes', ball_r: 'shoes',
 };
-const OUTFIT = ['top', 'legs', 'shoes'];
+const OUTFIT = ['top', 'legs', 'shoes', 'skirt']; // ('skirt': the hips and thighs under one, in its colour)
 
 // Clothes painted on the body itself. Each corner of the skin carries how
 // much of it is under the top, the trousers and the shoes (the share of its
@@ -103,37 +115,40 @@ const OUTFIT = ['top', 'legs', 'shoes'];
 // triangle and, where it is over a half, draws cloth in the fighter's colour
 // instead of skin - so hems are smooth lines rather than the stairs of whole
 // triangles, and the clothes cost no extra mesh, draw or triangle.
-function dress(THREE, skin, colours, { bareChest }) {
+function dress(THREE, skin, colours, { bareChest, skirt }) {
   const g = skin.geometry;
   const bones = skin.skeleton.bones;
   const si = g.attributes.skinIndex;
   const sw = g.attributes.skinWeight;
   const get = ['getX', 'getY', 'getZ', 'getW']; // (r128 has no getComponent)
   const n = si.count;
-  const wear = new Float32Array(n * 3);
+  const wear = new Float32Array(n * 4);
   for (let v = 0; v < n; v++)
     for (let k = 0; k < 4; k++) {
-      const kind = OUTFIT.indexOf(WEAR[bones[si[get[k]](v)]?.name]);
+      const name = bones[si[get[k]](v)]?.name;
+      // Under a skirt, the hips and thighs are dressed in its colour: no
+      // band of trousers shows between the top and the skirt.
+      const kind = OUTFIT.indexOf(skirt && /^(pelvis|thigh_)/.test(name || '') ? 'skirt' : WEAR[name]);
       if (kind < 0 || (bareChest && kind === 0)) continue;
-      wear[v * 3 + kind] += sw[get[k]](v);
+      wear[v * 4 + kind] += sw[get[k]](v);
     }
-  g.setAttribute('wear', new THREE.BufferAttribute(wear, 3));
+  g.setAttribute('wear', new THREE.BufferAttribute(wear, 4));
   const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
-  const uniforms = { cTop: { value: lin(colours.primary) }, cLegs: { value: lin(colours.secondary) }, cShoes: { value: lin(colours.accent) } };
+  const uniforms = { cTop: { value: lin(colours.primary) }, cLegs: { value: lin(colours.secondary) }, cShoes: { value: lin(colours.accent) }, cSkirt: { value: lin(skirt || colours.accent) } };
   const mat = skin.material;
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
     sh.vertexShader = sh.vertexShader
-      .replace('#include <common>', '#include <common>\nattribute vec3 wear;\nvarying vec3 vWear;')
+      .replace('#include <common>', '#include <common>\nattribute vec4 wear;\nvarying vec4 vWear;')
       .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWear = wear;');
     sh.fragmentShader = sh.fragmentShader
-      .replace('#include <common>', '#include <common>\nvarying vec3 vWear;\nuniform vec3 cTop;\nuniform vec3 cLegs;\nuniform vec3 cShoes;')
+      .replace('#include <common>', '#include <common>\nvarying vec4 vWear;\nuniform vec3 cTop;\nuniform vec3 cLegs;\nuniform vec3 cShoes;\nuniform vec3 cSkirt;')
       .replace(
         '#include <map_fragment>',
         `#include <map_fragment>
-        float clothed = step(0.5, vWear.x + vWear.y + vWear.z);
-        float m = max(vWear.x, max(vWear.y, vWear.z));
-        vec3 cloth = vWear.x >= m ? cTop : vWear.y >= m ? cLegs : cShoes;
+        float clothed = step(0.5, vWear.x + vWear.y + vWear.z + vWear.w);
+        float m = max(max(vWear.x, vWear.y), max(vWear.z, vWear.w));
+        vec3 cloth = vWear.x >= m ? cTop : vWear.y >= m ? cLegs : vWear.z >= m ? cShoes : cSkirt;
         // (a little of the skin's shading shows through: muscle under a tight suit)
         diffuseColor.rgb = mix(diffuseColor.rgb, cloth * (0.75 + 0.5 * dot(diffuseColor.rgb, vec3(0.33))), clothed);`,
       );
@@ -206,14 +221,17 @@ export function createQRig(THREE, scene, char, opts) {
       root.traverse((o) => {
         if (o.isSkinnedMesh && (!skin || o.geometry.attributes.position.count > skin.geometry.attributes.position.count)) skin = o;
       });
-      if (skin) dress(THREE, skin, lookColors(char.id, opts?.look ?? 0), { bareChest: char.build === 'sumo' });
+      if (skin) {
+        const skirtMat = base.gearParts.skirt?.material;
+        dress(THREE, skin, lookColors(char.id, opts?.look ?? 0), { bareChest: char.build === 'sumo', skirt: skirtMat ? '#' + skirtMat.color.clone().convertLinearToSRGB().getHexString() : null });
+      }
       base.lean.add(root);
       // Hide the shapes, keep the picture head and what the fighter wears
       // (skirt, ponytail, scarf, pads: drawn from the same pose).
       // (Not the pads nor the trailing scarf: made for the shapes, they
       // looked wrong on this body. The scarf becomes a wrap round the neck.)
       const { scarf, pads } = base.gearParts;
-      const drop = new Set([...(pads || []), ...(scarf ? [scarf.knot, scarf.a, scarf.b] : [])]);
+      const drop = new Set([...(pads || []), ...(scarf ? [scarf.knot, scarf.a, scarf.b] : []), base.gearParts.skirt]);
       const keep = new Set([root, base.head, ...base.worn.filter((m) => !drop.has(m))]);
       if (scarf) {
         const col = lookColors(char.id, opts?.look ?? 0);
@@ -239,12 +257,70 @@ export function createQRig(THREE, scene, char, opts) {
       base.gearParts.ring.emissiveIntensity = 0.12;
       base.gearParts.ring.metalness = 0.75;
       base.gearParts.ring.roughness = 0.3;
+      // The skirt: its own cone, which widens wherever a leg would push
+      // through it (see the update).
       if (base.gearParts.skirt) {
-        base.gearParts.skirt.userData.r *= 0.8; // (a slimmer waist)
-        base.gearParts.skirt.userData.rz *= 0.8;
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SKIRT_N * 2 * 3), 3));
+        const idx = [];
+        for (let i = 0; i < SKIRT_N; i++) {
+          const j = (i + 1) % SKIRT_N;
+          idx.push(i, SKIRT_N + i, j, j, SKIRT_N + i, SKIRT_N + j);
+        }
+        geo.setIndex(idx);
+        const mat = base.gearParts.skirt.material.clone();
+        mat.side = THREE.DoubleSide;
+        body.skirt = new THREE.Mesh(geo, mat);
+        body.skirt.castShadow = true;
+        body.skirt.frustumCulled = false;
+        base.lean.add(body.skirt);
       }
     })
     .catch((e) => console.warn('Quaternius body unavailable:', e.message));
+
+  // The skirt, every frame: a cone from the waist down, its hem pushed out
+  // wherever a thigh reaches past it, so a kick or a wide stance never pokes
+  // through the cloth. For each direction round the waist, the hem goes at
+  // least as far as is needed to keep every point of both thighs (sampled
+  // from hip to knee, with the thigh's thickness) inside the cone.
+  const sk = { up: new THREE.Vector3(), x: new THREE.Vector3(), z: new THREE.Vector3(), waist: new THREE.Vector3(), p: new THREE.Vector3(), d: new THREE.Vector3() };
+  const legPts = Array.from({ length: 10 }, () => new THREE.Vector3());
+  function layOutSkirt(mesh, J, u) {
+    const { up, x, z, waist, p, d } = sk;
+    up.subVectors(J.neck, J.hip).normalize(); // up the spine
+    // The waistband starts inside the body, under the top's hem, so the
+    // skirt comes out of the body with no gap to see the waist through.
+    waist.copy(J.hip).addScaledVector(up, 0.14 * u);
+    x.set(1, 0, 0).addScaledVector(up, -up.x).normalize(); // forward, square to the spine
+    z.crossVectors(x, up);
+    const top = 0.12 * u; // the waistband's radius (just inside the body)
+    const len = 0.4 * u; // waistband to hem
+    const thick = 0.075 * u; // a thigh's radius
+    let n = 0;
+    for (const s of [1, -1])
+      for (let i = 0; i < 5; i++) legPts[n++].lerpVectors(J.side[s].hip, J.side[s].knee, i / 4);
+    const pos = mesh.geometry.attributes.position;
+    for (let i = 0; i < SKIRT_N; i++) {
+      const a = (i / SKIRT_N) * Math.PI * 2;
+      d.copy(x).multiplyScalar(Math.cos(a)).addScaledVector(z, Math.sin(a));
+      let hem = 0.3 * u; // the hem's radius when nothing pushes it
+      for (const q of legPts) {
+        p.subVectors(q, waist);
+        const depth = -p.dot(up); // how far below the waist
+        if (depth < 0.02 * u) continue;
+        const out = p.dot(d) + thick; // how far out in this direction
+        // The cone's radius at that depth must reach `out`: so the hem's must
+        // reach at least this much.
+        hem = Math.max(hem, top + ((out - top) * len) / Math.min(depth, len));
+      }
+      hem = Math.min(hem, 0.6 * u);
+      pos.setXYZ(i, waist.x + d.x * top, waist.y + d.y * top, waist.z + d.z * top);
+      p.copy(waist).addScaledVector(up, -len).addScaledVector(d, hem);
+      pos.setXYZ(SKIRT_N + i, p.x, p.y, p.z);
+    }
+    pos.needsUpdate = true;
+    mesh.geometry.computeVertexNormals();
+  }
 
   // Turns `bone` (in world space) so the direction to `child` points at `target`.
   function aim(bone, child, target) {
@@ -297,6 +373,7 @@ export function createQRig(THREE, scene, char, opts) {
         const L = J.side[side];
         for (const [b, c, key] of [...ARM(s), ...LEG(s)]) aim(bones[b], bones[c], world(L[key]));
       }
+      if (body.skirt) layOutSkirt(body.skirt, J, poseLeg);
       // The neck wrap: round the neck, just above the shoulders, square to it.
       if (body.wrap) {
         const w = body.wrap;
@@ -329,6 +406,8 @@ export function createQRig(THREE, scene, char, opts) {
     dispose() {
       gone = true;
       body?.frame?.dispose();
+      body?.skirt?.geometry.dispose();
+      body?.skirt?.material.dispose();
       if (body?.wrap) {
         body.wrap.geometry.dispose();
         body.wrap.material.dispose();

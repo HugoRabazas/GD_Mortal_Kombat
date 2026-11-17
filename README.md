@@ -947,7 +947,17 @@ and the heartbeat, the crowd and the weather go quiet.
   the own heads and hairstyles are gone again; instead the picture sits
   better - on the model's neck (centred over the head bone), smaller
   (x0.64 of the shapes' head), in a slim metal frame instead of the thick
-  glowing ring, with the ponytail drawn closer in to match. Still to do before it can replace the realistic body:
+  glowing ring, with the ponytail drawn closer in to match. Loop 262:
+  Settings › Bodies cycles classic, realistic, **Quaternius (beta)** (kept
+  on the device), so it can be tried in the Artifact, where the address
+  cannot carry `?qbody`; the label fits at the seven sizes. The skirt is
+  its own cone now, laid out every frame: for each direction round the
+  waist its hem goes out at least as far as keeps every point of both
+  thighs (hip to knee, with their thickness) inside it, so a kick or a
+  wide stance never pokes through; it starts inside the body under the
+  top, and the hips and thighs under it are dressed in the skirt's
+  colour, so no band of waist or thigh shows between top and skirt (the
+  alliance's two reports). Still to do before it can replace the realistic body:
   the sumo's belt, wrists and feet, the clips blended into idle, walking
   and falls, and the free library has no kicks, guard or throws (those
   stay driven by the pose).

@@ -808,7 +808,15 @@ const bodyReal = () => {
     return true;
   }
 };
-const bodyLabel = () => `Bodies: ${bodyReal() ? 'realistic' : 'classic'}`;
+// ... or the Quaternius body (beta, see qrig.js), which Settings can also pick.
+const bodyQ = () => {
+  try {
+    return localStorage.getItem('gd-arena-body') === 'quaternius';
+  } catch {
+    return false;
+  }
+};
+const bodyLabel = () => `Bodies: ${bodyQ() ? 'Quaternius (beta)' : bodyReal() ? 'realistic' : 'classic'}`;
 
 // -------------------------------------------------------------- tutorial ---
 // Lessons of a few steps each (shared/tutorial.js), against a partner who
@@ -2026,7 +2034,8 @@ const ACTIONS = {
   resetLayout: () => touchLayout.reset(),
   body(el) {
     try {
-      localStorage.setItem('gd-arena-body', bodyReal() ? 'classic' : 'real');
+      // classic, realistic, Quaternius, round again
+      localStorage.setItem('gd-arena-body', bodyQ() ? 'classic' : bodyReal() ? 'quaternius' : 'real');
     } catch {
       // not remembered
     }
