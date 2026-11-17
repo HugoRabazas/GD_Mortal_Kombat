@@ -268,8 +268,17 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
   };
   const put = (mesh, x, y, z) => mesh.position.set(x * S, -y * S, z);
   const scaleOut = new THREE.Vector3();
+  // Where the skeleton's joints are this frame, in `lean`'s space (world
+  // units): what the Quaternius body (qrig.js) bends its bones to.
+  const V = () => new THREE.Vector3();
+  const limbJoints = () => ({ shoulder: V(), elbow: V(), hand: V(), hip: V(), knee: V(), ankle: V() });
+  const joints = { hip: V(), neck: V(), head: V(), side: { 1: limbJoints(), [-1]: limbJoints() } };
+  const at = (v, x, y, z) => v.set(x * S, -y * S, z);
 
   return {
+    joints,
+    lean,
+    head,
     // Where the top of the head is, in world units (for name tags).
     top: () => turn.position.y + 2.05 * turn.scale.y,
     // The middle of the head, in world units (for the breath in the cold).
@@ -319,6 +328,8 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
       const hcx = nx - Math.sin(p.lean + p.tilt) * LEN.head * (1 - HEAD_K) * 0.9;
       const hcy = ny + Math.cos(p.lean + p.tilt) * LEN.head * (1 - HEAD_K) * 0.9;
       put(pelvis, hx, hy, 0);
+      at(joints.hip, hx, hy, 0);
+      at(joints.neck, sx, sy + 6, 0);
       stretch(torso, hx, hy - 2, 0, sx, sy + 6, 0);
       stretch(belt, hx, hy - 3, 0, hx + (sx - hx) * 0.16, hy + (sy - hy) * 0.16, 0);
       put(chest, sx - Math.sin(p.lean) * 6, sy + 9, 0);
@@ -367,12 +378,19 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
         put(l.elbow, arm.jx, arm.jy, zs * 1.1);
         stretch(l.fore, arm.jx, arm.jy, zs * 1.1, arm.ex, arm.ey, zs * 0.7);
         put(l.fist, arm.ex, arm.ey, zs * 0.7);
+        const J = joints.side[l.side];
+        at(J.shoulder, sx, sy + 6, zs);
+        at(J.elbow, arm.jx, arm.jy, zs * 1.1);
+        at(J.hand, arm.ex, arm.ey, zs * 0.7);
         if (l.wrap) stretch(l.wrap, arm.jx + (arm.ex - arm.jx) * 0.72, arm.jy + (arm.ey - arm.jy) * 0.72, zs * 0.78, arm.ex, arm.ey, zs * 0.7);
 
         const zh = build.hip * l.side;
         const leg = joint(hx, hy, footX, footY, LEN.thigh, LEN.shin, -1);
         stretch(l.thigh, hx, hy, zh, leg.jx, leg.jy, zh * 1.2);
         put(l.knee, leg.jx, leg.jy, zh * 1.2);
+        at(J.hip, hx, hy, zh);
+        at(J.knee, leg.jx, leg.jy, zh * 1.2);
+        at(J.ankle, leg.ex, leg.ey - 6, zh * 1.3);
         stretch(l.shin, leg.jx, leg.jy, zh * 1.2, leg.ex, leg.ey - 6, zh * 1.3);
         put(l.foot, leg.ex + 5, leg.ey - 6, zh * 1.3);
         if (l.sole) put(l.sole, leg.ex + 5, leg.ey - 2, zh * 1.3);
@@ -381,6 +399,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
       // The head looks at the camera whatever the body is doing, and rolls
       // with the body when the fighter is knocked over.
       put(head, hcx, hcy, 0);
+      at(joints.head, hcx, hcy, 0);
       turn.updateMatrixWorld(true);
       lean.getWorldQuaternion(q).invert();
       want.setFromAxisAngle(UP, Math.atan2(camera.position.x - turn.position.x, camera.position.z - turn.position.z));

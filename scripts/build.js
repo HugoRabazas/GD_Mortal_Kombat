@@ -44,6 +44,14 @@ const result = await build({
   },
 });
 
+// The Quaternius body's models (client/public/q, see pack-quaternius.mjs)
+// go next to the page, in q/; they are only fetched when that body is on.
+const copyModels = (dir) => {
+  const from = path.join(root, 'client', 'public', 'q');
+  mkdirSync(path.join(dir, 'q'), { recursive: true });
+  for (const file of readdirSync(from)) copyFileSync(path.join(from, file), path.join(dir, 'q', file));
+};
+
 const output = (Array.isArray(result) ? result[0] : result).output;
 const js = output.find((o) => o.type === 'chunk').code.replace(/<\/script/gi, '<\\/script');
 const css = readFileSync(path.join(root, 'client', 'src', 'style.css'), 'utf8');
@@ -93,10 +101,12 @@ if (web) {
     '<meta name="apple-mobile-web-app-title" content="GD Arena">',
   ].join('\n');
   for (const file of readdirSync(path.join(root, 'client', 'web'))) copyFileSync(path.join(root, 'client', 'web', file), path.join(root, 'dist-web', file));
+  copyModels(path.join(root, 'dist-web'));
   writeFileSync(path.join(root, 'dist-web', 'index.html'), preview.replace('<meta charset="utf-8">', `<meta charset="utf-8">\n${head}`));
   console.log(`dist-web/index.html  ${(preview.length / 1024).toFixed(0)} KB  online: ${net ? 'yes' : 'no'}`);
 } else {
   mkdirSync(path.join(root, 'dist'), { recursive: true });
+  copyModels(path.join(root, 'dist'));
   writeFileSync(path.join(root, 'dist', 'gd-arena.html'), page);
   writeFileSync(path.join(root, 'dist', 'index.html'), preview);
   console.log(`dist/gd-arena.html  ${(page.length / 1024).toFixed(0)} KB`);

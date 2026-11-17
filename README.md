@@ -894,6 +894,26 @@ and the heartbeat, the crowd and the weather go quiet.
   also the lighter of the two: a four-fighter brawl at 844x390 draws 240
   calls a frame against 305 with the classic body. The menu's news line
   says so ("every fighter now has a realistic body").
+- **Quaternius bodies, prototype** (loop 252): real skinned characters
+  from Quaternius (Universal Base Characters and Universal Animation
+  Library, both **CC0**, sources in `assets-src/quaternius/`).
+  `scripts/pack-quaternius.mjs` shrinks them into `client/public/q/`
+  (body-male.glb 654 KB, body-female.glb 684 KB, moves.glb 651 KB with
+  the 16 clips worth having; pictures resized to JPEG in Chromium), and
+  the build copies that folder next to the page. Try it with `?qbody`
+  (everyone), or `?qbody=pixie,ruko`: those fighters load the model
+  (female base for those in a skirt, male for the rest) and three.js's
+  own r128 glTF reader from jsDelivr, the first time a fight needs them;
+  until then, or if they cannot load, the usual body shows. The model
+  does not play its clips yet: every frame `qrig.js` turns its bones to
+  the joints the pose system has just solved (`joints` in rig3d.js), so
+  every move, kicks and guards included, matches the rules' timing and
+  aim; the alliance member's picture stays the head (the model's own head
+  is folded away). Still to do before it can replace the realistic body:
+  clothes in each fighter's colours (the free base body wears only a
+  dark undersuit), hands and feet, the clips blended into idle, walking
+  and falls, and the free library has no kicks, guard or throws (those
+  stay driven by the pose).
 - **What's new, for players coming back** (loop 181): the menu's tip line
   says "New: burst out of a combo (block + special), blows that clash, and
   online fights that answer at once" on the first three openings of the

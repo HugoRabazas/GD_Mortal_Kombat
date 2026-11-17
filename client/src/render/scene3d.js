@@ -18,6 +18,7 @@ import { getFighter, dressLineUp, dressColors } from '../../../shared/fighters.j
 import { MOVES, BLOCK_ARC } from '../../../shared/sim.js';
 import { takeFlashes, takeCheers } from './fx.js';
 import { createRig } from './rig3d.js';
+import { createQRig, qbodyFor } from './qrig.js';
 import { play } from '../audio.js';
 import { THEMES } from './themes.js';
 // Photographed stone for the floor: colour, relief (normal map) and
@@ -654,7 +655,7 @@ export function create3D(canvas) {
     if (key === rigKey) return;
     rigKey = key;
     for (const r of rigs) r.dispose();
-    rigs = s.f.map((f, i) => createRig(THREE, scene, getFighter(f.char), opts[i]));
+    rigs = s.f.map((f, i) => (qbodyFor(f.char) ? createQRig : createRig)(THREE, scene, getFighter(f.char), opts[i]));
     dressCrowd(undefined, view.demo ? [] : worn.map((c) => c.primary));
   };
 
