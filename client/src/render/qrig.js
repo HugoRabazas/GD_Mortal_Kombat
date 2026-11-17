@@ -66,6 +66,26 @@ const LEG = (s) => [
   [`calf_${s}`, `foot_${s}`, 'ankle'],
 ];
 
+// Closed fists: the fingers as the library's own Punch_Jab clip holds them
+// (left hand; the right is its mirror, y and z negated).
+const FIST = {
+  index_01: [0.4452, 0.5494, -0.4452, 0.5494],
+  index_02: [0.6233, 0, 0, 0.7819],
+  index_03: [0.6233, 0, 0, 0.7819],
+  middle_01: [0.4321, 0.5387, -0.458, 0.5597],
+  middle_02: [0.6233, 0.0009, 0.0012, 0.7819],
+  middle_03: [0.6233, -0.0007, -0.0009, 0.7819],
+  ring_01: [0.4353, 0.5414, -0.4549, 0.5572],
+  ring_02: [0.6233, 0, 0, 0.7819],
+  ring_03: [0.6233, -0.0007, -0.0008, 0.7819],
+  pinky_01: [0.5041, 0.5115, -0.4352, 0.543],
+  pinky_02: [0.6232, -0.0201, 0.0149, 0.7817],
+  pinky_03: [0.6233, 0.0004, 0.0005, 0.7819],
+  thumb_01: [0.2908, 0.9496, 0.1146, 0.0212],
+  thumb_02: [0.2194, 0.0238, -0.0053, 0.9753],
+  thumb_03: [0.6874, -0.0003, -0.0004, 0.7263],
+};
+
 export function createQRig(THREE, scene, char, opts) {
   const base = createRig(THREE, scene, char, opts);
   let body = null; // { root, bones, rest, scale, sides }
@@ -98,6 +118,11 @@ export function createQRig(THREE, scene, char, opts) {
       root.updateMatrixWorld(true);
       const p = (b) => b.getWorldPosition(new THREE.Vector3());
       const legLen = p(bones.thigh_l).distanceTo(p(bones.calf_l)) + p(bones.calf_l).distanceTo(p(bones.foot_l));
+      // Fists closed, for good: the pose's hands are always fists.
+      for (const [name, [x, y, z, w]] of Object.entries(FIST)) {
+        bones[`${name}_l`]?.quaternion.set(x, y, z, w);
+        bones[`${name}_r`]?.quaternion.set(x, -y, -z, w);
+      }
       body = { root, bones, rest: new Map(), legLen, sides: null };
       for (const b of Object.values(bones)) body.rest.set(b, b.quaternion.clone());
       // The model's own head is folded away: the alliance member's picture

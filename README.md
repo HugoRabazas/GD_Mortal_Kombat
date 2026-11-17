@@ -910,9 +910,10 @@ and the heartbeat, the crowd and the weather go quiet.
   the joints the pose system has just solved (`joints` in rig3d.js), so
   every move, kicks and guards included, matches the rules' timing and
   aim; the alliance member's picture stays the head (the model's own head
-  is folded away). Still to do before it can replace the realistic body:
+  is folded away). The hands are closed fists, as the library's own
+  Punch_Jab clip holds its fingers (asked for by the alliance). Still to do before it can replace the realistic body:
   clothes in each fighter's colours (the free base body wears only a
-  dark undersuit), hands and feet, the clips blended into idle, walking
+  dark undersuit), wrists and feet, the clips blended into idle, walking
   and falls, and the free library has no kicks, guard or throws (those
   stay driven by the pose).
 - **What's new, for players coming back** (loop 181): the menu's tip line
