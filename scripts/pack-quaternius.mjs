@@ -2,9 +2,9 @@
 // small files the game ships: client/public/q/ (copied next to the page
 // by the build and loaded only when the Quaternius body is on)
 //
-//   body-male.glb, body-female.glb  the two base characters, textures shrunk
+//   body-male.json, body-female.json  the two base characters, textures shrunk
 //                                   to JPEG (colour 512 px, relief 256 px)
-//   moves.glb                       only the animation clips the fighters
+//   moves.json                      only the animation clips the fighters
 //                                   use, with no mesh, resampled
 //
 // Run by hand when the sources change: node scripts/pack-quaternius.mjs
@@ -57,6 +57,17 @@ async function shrink(bytes, mime, size, quality = 0.82) {
 
 const io = new NodeIO();
 
+// Written as plain glTF JSON with the data inside (base64): one file each,
+// of a type every host serves - an Artifact serves .json but not .glb.
+function save({ json, resources }, name) {
+  const embed = (uri, mime) => `data:${mime};base64,${Buffer.from(resources[uri]).toString('base64')}`;
+  for (const b of json.buffers || []) b.uri = embed(b.uri, 'application/octet-stream');
+  for (const i of json.images || []) i.uri = embed(i.uri, i.mimeType || 'image/jpeg');
+  const text = JSON.stringify(json);
+  writeFileSync(path.join(out, name), text);
+  console.log(`${name}  ${(text.length / 1024).toFixed(0)} KB`);
+}
+
 async function packBody(file, name) {
   // Some pictures are named "X_png.png" in the .gltf but "X.png" on disk (or
   // the other way round): point each one at the file that exists.
@@ -87,9 +98,7 @@ async function packBody(file, name) {
     t.setURI(t.getURI().replace(/\.png$/i, '.jpg'));
   }
   await doc.transform(dedup(), prune());
-  const glb = await io.writeBinary(doc);
-  writeFileSync(path.join(out, name), glb);
-  console.log(`${name}  ${(glb.length / 1024).toFixed(0)} KB`);
+  save(await io.writeJSON(doc), name);
 }
 
 async function packMoves() {
@@ -116,12 +125,10 @@ async function packMoves() {
   await doc.transform(resample({ tolerance: 0.0005 }), prune({ keepLeaves: true }));
   const missing = CLIPS.filter((c) => !r.listAnimations().some((a) => a.getName() === c));
   if (missing.length) throw new Error(`missing clips: ${missing.join(', ')}`);
-  const glb = await io.writeBinary(doc);
-  writeFileSync(path.join(out, 'moves.glb'), glb);
-  console.log(`moves.glb  ${(glb.length / 1024).toFixed(0)} KB  ${r.listAnimations().length} clips`);
+  save(await io.writeJSON(doc), 'moves.json');
 }
 
-await packBody('Superhero_Male_FullBody.gltf', 'body-male.glb');
-await packBody('Superhero_Female_FullBody.gltf', 'body-female.glb');
+await packBody('Superhero_Male_FullBody.gltf', 'body-male.json');
+await packBody('Superhero_Female_FullBody.gltf', 'body-female.json');
 await packMoves();
 await browser.close();

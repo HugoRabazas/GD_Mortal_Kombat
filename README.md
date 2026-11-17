@@ -898,9 +898,10 @@ and the heartbeat, the crowd and the weather go quiet.
   from Quaternius (Universal Base Characters and Universal Animation
   Library, both **CC0**, sources in `assets-src/quaternius/`).
   `scripts/pack-quaternius.mjs` shrinks them into `client/public/q/`
-  (body-male.glb 654 KB, body-female.glb 684 KB, moves.glb 651 KB with
-  the 16 clips worth having; pictures resized to JPEG in Chromium), and
-  the build copies that folder next to the page. Try it with `?qbody`
+  (body-male.json 866 KB, body-female.json 905 KB, moves.json 727 KB with
+  the 16 clips worth having; pictures resized to JPEG in Chromium; plain
+  glTF JSON with the data inside, because an Artifact serves .json but not
+  .glb), and the build copies that folder next to the page. Try it with `?qbody`
   (everyone), or `?qbody=pixie,ruko`: those fighters load the model
   (female base for those in a skirt, male for the rest) and three.js's
   own r128 glTF reader from jsDelivr, the first time a fight needs them;

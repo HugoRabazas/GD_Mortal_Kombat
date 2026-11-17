@@ -25,7 +25,7 @@ const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search)
 export const qbodyFor = (id) => Q !== null && (Q === '' || Q === 'all' || Q === '1' || Q.split(',').includes(id));
 
 // Those in a skirt get the female base body; the rest the male one.
-const bodyFile = (char) => ((char.gear || []).includes('skirt') ? 'q/body-female.glb' : 'q/body-male.glb');
+const bodyFile = (char) => ((char.gear || []).includes('skirt') ? 'q/body-female.json' : 'q/body-male.json');
 
 let loader = null; // the glTF reader, once its script has arrived
 const files = new Map(); // file -> Promise<ArrayBuffer>
