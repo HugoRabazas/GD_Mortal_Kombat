@@ -210,10 +210,16 @@ export function createQRig(THREE, scene, char, opts) {
         skin.parent.add(body.clothes);
       }
       base.lean.add(root);
-      // Hide the shapes, keep the picture head.
-      for (const c of base.lean.children) if (c !== root && c !== base.head) c.visible = false;
+      // Hide the shapes, keep the picture head and what the fighter wears
+      // (skirt, ponytail, scarf, pads: drawn from the same pose).
+      const keep = new Set([root, base.head, ...base.worn]);
+      for (const c of base.lean.children) if (!keep.has(c)) c.visible = false;
       // The picture head, sized to the model's head rather than the cartoon's.
       base.head.scale.multiplyScalar(0.72);
+      if (base.gearParts.skirt) {
+        base.gearParts.skirt.userData.r *= 0.8; // (a slimmer waist)
+        base.gearParts.skirt.userData.rz *= 0.8;
+      }
     })
     .catch((e) => console.warn('Quaternius body unavailable:', e.message));
 
@@ -267,6 +273,21 @@ export function createQRig(THREE, scene, char, opts) {
         const s = body.sides[side];
         const L = J.side[side];
         for (const [b, c, key] of [...ARM(s), ...LEG(s)]) aim(bones[b], bones[c], world(L[key]));
+      }
+      // Gear made for the shapes' proportions, moved onto this body: pads
+      // on its shoulders, the topknot on top of the picture head.
+      const { pads, knot } = base.gearParts;
+      if (pads)
+        [1, -1].forEach((side, i) => {
+          bones[`upperarm_${body.sides[side]}`].getWorldPosition(v1);
+          base.lean.worldToLocal(v1);
+          pads[i].position.copy(v1);
+          pads[i].position.y += 0.03;
+          pads[i].scale.set(0.09, 0.05, 0.085);
+        });
+      if (knot) {
+        knot.position.copy(base.head.position);
+        knot.position.y += base.head.scale.y * 0.95;
       }
     },
     setOutline(on) {

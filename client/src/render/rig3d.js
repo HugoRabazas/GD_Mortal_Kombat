@@ -275,10 +275,14 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
   const joints = { hip: V(), neck: V(), head: V(), side: { 1: limbJoints(), [-1]: limbJoints() } };
   const at = (v, x, y, z) => v.set(x * S, -y * S, z);
 
+  // What the fighter wears over the body (kept on the Quaternius body too).
+  const worn3d = [skirt, knot, ...tail, ...(scarf ? [scarf.knot, scarf.a, scarf.b] : []), ...(pads || [])].filter(Boolean);
   return {
     joints,
     lean,
     head,
+    worn: worn3d,
+    gearParts: { skirt, knot, pads },
     // Where the top of the head is, in world units (for name tags).
     top: () => turn.position.y + 2.05 * turn.scale.y,
     // The middle of the head, in world units (for the breath in the cold).
