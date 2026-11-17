@@ -282,7 +282,7 @@ export function createRig(THREE, scene, char, { look = 0, boss = false } = {}) {
     lean,
     head,
     worn: worn3d,
-    gearParts: { skirt, knot, pads, scarf },
+    gearParts: { skirt, knot, pads, scarf, tail },
     // Where the top of the head is, in world units (for name tags).
     top: () => turn.position.y + 2.05 * turn.scale.y,
     // The middle of the head, in world units (for the breath in the cold).

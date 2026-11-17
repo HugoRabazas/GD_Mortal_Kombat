@@ -56,6 +56,16 @@ function fetchFile(file) {
   return files.get(file);
 }
 
+// Fighters drawn with the model's own head (prototype): a hairstyle from the
+// library in their hair colour, their eye colour, and a bow for Gleh. The
+// rest keep the alliance member's picture as the head.
+const HEADS = {
+  ruko: { hair: 'simpleparted', color: '#1a1416' },
+  zelrith: { hair: 'simpleparted', color: '#f3cf4a', eyes: '#4fbf6a' },
+  meru: { hair: 'long', color: '#161214' },
+  gleh: { hair: 'long', color: '#141012', bow: '#b8a2e6' },
+};
+
 // Bones by name, and the pairs aimed every frame: [bone, the joint it points
 // at, which of the game's joints that is].
 const ARM = (s) => [
@@ -97,13 +107,12 @@ const WEAR = {
 };
 const OUTFIT = ['top', 'legs', 'shoes'];
 
-// Clothes cut from the body itself: a shell of the body, pushed out a few
-// millimetres along its normals and skinned to the same skeleton, so it
-// bends exactly as the body does. Each corner carries how much of it is
-// under the top, the trousers and the shoes (the share of its skin that
-// follows those bones); the graphics card blends that across each triangle
-// and cuts the cloth where the share falls under a half, so hems are smooth
-// lines rather than the stairs of whole triangles. One mesh, one draw.
+// Clothes painted on the body itself. Each corner of the skin carries how
+// much of it is under the top, the trousers and the shoes (the share of its
+// skin that follows those bones); the graphics card blends that across each
+// triangle and, where it is over a half, draws cloth in the fighter's colour
+// instead of skin - so hems are smooth lines rather than the stairs of whole
+// triangles, and the clothes cost no extra mesh, draw or triangle.
 function dress(THREE, skin, colours, { bareChest }) {
   const g = skin.geometry;
   const bones = skin.skeleton.bones;
@@ -118,22 +127,10 @@ function dress(THREE, skin, colours, { bareChest }) {
       if (kind < 0 || (bareChest && kind === 0)) continue;
       wear[v * 3 + kind] += sw[get[k]](v);
     }
-  const index = g.index ? g.index.array : Array.from({ length: n }, (_, i) => i);
-  const kept = [];
-  const covered = (v) => wear[v * 3] + wear[v * 3 + 1] + wear[v * 3 + 2] > 0.01;
-  for (let t = 0; t < index.length; t += 3) if (covered(index[t]) || covered(index[t + 1]) || covered(index[t + 2])) kept.push(index[t], index[t + 1], index[t + 2]);
-  const cloth = g.clone();
-  const pos = cloth.attributes.position;
-  const nor = cloth.attributes.normal;
-  for (let v = 0; v < n; v++) {
-    const puff = 0.007 + 0.002 * wear[v * 3 + 1] + 0.005 * wear[v * 3 + 2]; // top, trousers, shoes: a little looser each
-    pos.setXYZ(v, pos.getX(v) + nor.getX(v) * puff, pos.getY(v) + nor.getY(v) * puff, pos.getZ(v) + nor.getZ(v) * puff);
-  }
-  cloth.setIndex(kept);
-  cloth.setAttribute('wear', new THREE.BufferAttribute(wear, 3));
+  g.setAttribute('wear', new THREE.BufferAttribute(wear, 3));
   const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
-  const mat = new THREE.MeshStandardMaterial({ roughness: 0.75, metalness: 0, skinning: true }); // (r128 asks for skinning on the material)
   const uniforms = { cTop: { value: lin(colours.primary) }, cLegs: { value: lin(colours.secondary) }, cShoes: { value: lin(colours.accent) } };
+  const mat = skin.material;
   mat.onBeforeCompile = (sh) => {
     Object.assign(sh.uniforms, uniforms);
     sh.vertexShader = sh.vertexShader
@@ -144,16 +141,14 @@ function dress(THREE, skin, colours, { bareChest }) {
       .replace(
         '#include <map_fragment>',
         `#include <map_fragment>
-        if (vWear.x + vWear.y + vWear.z < 0.5) discard;
+        float clothed = step(0.5, vWear.x + vWear.y + vWear.z);
         float m = max(vWear.x, max(vWear.y, vWear.z));
-        diffuseColor.rgb = vWear.x >= m ? cTop : vWear.y >= m ? cLegs : cShoes;`,
+        vec3 cloth = vWear.x >= m ? cTop : vWear.y >= m ? cLegs : cShoes;
+        // (a little of the skin's shading shows through: muscle under a tight suit)
+        diffuseColor.rgb = mix(diffuseColor.rgb, cloth * (0.75 + 0.5 * dot(diffuseColor.rgb, vec3(0.33))), clothed);`,
       );
   };
-  const mesh = new THREE.SkinnedMesh(cloth, mat);
-  mesh.bind(skin.skeleton, skin.bindMatrix);
-  mesh.castShadow = true;
-  mesh.frustumCulled = false;
-  return mesh;
+  mat.needsUpdate = true;
 }
 
 export function createQRig(THREE, scene, char, opts) {
@@ -214,17 +209,15 @@ export function createQRig(THREE, scene, char, opts) {
         }
       }
       // The model's own head is folded away: the alliance member's picture
-      // stays the face.
-      bones.Head.scale.setScalar(0.001);
+      // stays the face. (Unless this fighter has a head of their own.)
+      const own = HEADS[char.id];
+      if (!own) bones.Head.scale.setScalar(0.001);
       // Clothes in the fighter's colours (the sumo fights bare-chested).
       let skin = null;
       root.traverse((o) => {
         if (o.isSkinnedMesh && (!skin || o.geometry.attributes.position.count > skin.geometry.attributes.position.count)) skin = o;
       });
-      if (skin) {
-        body.clothes = dress(THREE, skin, lookColors(char.id, opts?.look ?? 0), { bareChest: char.build === 'sumo' });
-        skin.parent.add(body.clothes);
-      }
+      if (skin) dress(THREE, skin, lookColors(char.id, opts?.look ?? 0), { bareChest: char.build === 'sumo' });
       base.lean.add(root);
       // Hide the shapes, keep the picture head and what the fighter wears
       // (skirt, ponytail, scarf, pads: drawn from the same pose).
@@ -232,7 +225,10 @@ export function createQRig(THREE, scene, char, opts) {
       // looked wrong on this body. The scarf becomes a wrap round the neck.)
       const { scarf, pads } = base.gearParts;
       const drop = new Set([...(pads || []), ...(scarf ? [scarf.knot, scarf.a, scarf.b] : [])]);
+      if (own) for (const m of [base.head, base.gearParts.knot, ...base.gearParts.tail]) drop.add(m); // (the hairstyle replaces the ponytail)
       const keep = new Set([root, base.head, ...base.worn.filter((m) => !drop.has(m))]);
+      if (own) keep.delete(base.head);
+      if (own && skin) wearHead(own, skin, bones);
       if (scarf) {
         const col = lookColors(char.id, opts?.look ?? 0);
         const wrap = new THREE.Mesh(
@@ -252,6 +248,48 @@ export function createQRig(THREE, scene, char, opts) {
       }
     })
     .catch((e) => console.warn('Quaternius body unavailable:', e.message));
+
+  // The model's own head: eye colour now, the hairstyle (and a bow) when it
+  // arrives, skinned to this body's head bone.
+  function wearHead(own, skin, bones) {
+    const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
+    skin.parent.traverse((o) => {
+      if (o.isMesh && own.eyes && /eye/i.test(o.material.name)) o.material.color = lin(own.eyes);
+    });
+    Promise.all([gltfLoader(THREE), fetchFile(`q/hair-${own.hair}.json`)])
+      .then(([gl, buf]) => new Promise((resolve, reject) => gl.parse(buf.slice(0), '', resolve, reject)))
+      .then((g) => {
+        if (gone) return;
+        let hair = null;
+        g.scene.traverse((o) => {
+          if (o.isSkinnedMesh) hair = o;
+        });
+        if (!hair) throw new Error('no hair mesh');
+        const sk = hair.skeleton;
+        hair.bind(new THREE.Skeleton(sk.bones.map((b) => bones[b.name]), sk.boneInverses), hair.bindMatrix);
+        hair.material.color = lin(own.color);
+        hair.material.alphaTest = 0.4;
+        hair.material.side = THREE.DoubleSide;
+        hair.castShadow = true;
+        hair.frustumCulled = false;
+        skin.parent.add(hair);
+        if (own.bow) {
+          // Two loops and a knot at the back of the head.
+          const m = new THREE.MeshStandardMaterial({ color: lin(own.bow), roughness: 0.6 });
+          const bow = new THREE.Group();
+          for (const side of [-1, 1]) {
+            const loop = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 8), m);
+            loop.scale.set(1, 0.6, 0.35);
+            loop.position.set(side * 0.05, 0, 0);
+            bow.add(loop);
+          }
+          bow.add(new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), m));
+          bones.Head.add(bow);
+          bow.position.set(0, 0.12, -0.1); // (head bone space: up the head, at the back)
+        }
+      })
+      .catch((e) => console.warn('Hairstyle unavailable:', e.message));
+  }
 
   // Turns `bone` (in world space) so the direction to `child` points at `target`.
   function aim(bone, child, target) {
@@ -325,10 +363,6 @@ export function createQRig(THREE, scene, char, opts) {
     },
     dispose() {
       gone = true;
-      if (body?.clothes) {
-        body.clothes.geometry.dispose();
-        body.clothes.material.dispose();
-      }
       if (body?.wrap) {
         body.wrap.geometry.dispose();
         body.wrap.material.dispose();

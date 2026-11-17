@@ -4,6 +4,7 @@
 //
 //   body-male.json, body-female.json  the two base characters, textures shrunk
 //                                   to JPEG (colour 512 px, relief 256 px)
+//   hair-*.json                     hairstyles, on the same skeleton
 //   moves.json                      only the animation clips the fighters
 //                                   use, with no mesh, resampled
 //
@@ -36,10 +37,10 @@ const browser = await chromium.launch();
 const page = await browser.newPage();
 
 // Shrinks a picture to `size` px on its long side and re-encodes it as JPEG.
-async function shrink(bytes, mime, size, quality = 0.82) {
+async function shrink(bytes, mime, size, quality = 0.82, type = 'image/jpeg') {
   const url = `data:${mime};base64,${Buffer.from(bytes).toString('base64')}`;
   const b64 = await page.evaluate(
-    async ({ url, size, quality }) => {
+    async ({ url, size, quality, type }) => {
       const img = new Image();
       img.src = url;
       await img.decode();
@@ -48,9 +49,9 @@ async function shrink(bytes, mime, size, quality = 0.82) {
       c.width = Math.round(img.width * k);
       c.height = Math.round(img.height * k);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      return c.toDataURL('image/jpeg', quality).split(',')[1];
+      return c.toDataURL(type, quality).split(',')[1];
     },
-    { url, size, quality },
+    { url, size, quality, type },
   );
   return new Uint8Array(Buffer.from(b64, 'base64'));
 }
@@ -68,10 +69,11 @@ function save({ json, resources }, name) {
   console.log(`${name}  ${(text.length / 1024).toFixed(0)} KB`);
 }
 
-async function packBody(file, name) {
+// A character or a hairstyle. Hair keeps its colour pictures as PNG: their
+// transparency draws the separate strands.
+async function packBody(file, name, { dir = path.join(src, 'universal-base-characters', 'Base Characters', 'Godot - UE'), alpha = false } = {}) {
   // Some pictures are named "X_png.png" in the .gltf but "X.png" on disk (or
   // the other way round): point each one at the file that exists.
-  const dir = path.join(src, 'universal-base-characters', 'Base Characters', 'Godot - UE');
   const json = JSON.parse(readFileSync(path.join(dir, file), 'utf8'));
   const resources = {};
   const load = (uri) => {
@@ -93,9 +95,10 @@ async function packBody(file, name) {
     if (m.getMetallicRoughnessTexture()) relief.add(m.getMetallicRoughnessTexture());
   }
   for (const t of doc.getRoot().listTextures()) {
-    t.setImage(await shrink(t.getImage(), t.getMimeType(), relief.has(t) ? 256 : 512));
-    t.setMimeType('image/jpeg');
-    t.setURI(t.getURI().replace(/\.png$/i, '.jpg'));
+    const png = alpha && !relief.has(t);
+    t.setImage(await shrink(t.getImage(), t.getMimeType(), relief.has(t) ? 256 : 512, 0.82, png ? 'image/png' : 'image/jpeg'));
+    t.setMimeType(png ? 'image/png' : 'image/jpeg');
+    t.setURI(t.getURI().replace(/\.png$/i, png ? '.png' : '.jpg'));
   }
   await doc.transform(dedup(), prune());
   save(await io.writeJSON(doc), name);
@@ -130,5 +133,8 @@ async function packMoves() {
 
 await packBody('Superhero_Male_FullBody.gltf', 'body-male.json');
 await packBody('Superhero_Female_FullBody.gltf', 'body-female.json');
+// The hairstyles, skinned to the same skeleton (to the head bone).
+const hairDir = path.join(src, 'universal-base-characters', 'Hairstyles', 'Rigged to Head Bone', 'glTF (Godot -Unreal)');
+for (const h of ['Hair_Long', 'Hair_SimpleParted']) await packBody(`${h}.gltf`, `hair-${h.slice(5).toLowerCase()}.json`, { dir: hairDir, alpha: true });
 await packMoves();
 await browser.close();

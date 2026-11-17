@@ -898,7 +898,8 @@ and the heartbeat, the crowd and the weather go quiet.
   from Quaternius (Universal Base Characters and Universal Animation
   Library, both **CC0**, sources in `assets-src/quaternius/`).
   `scripts/pack-quaternius.mjs` shrinks them into `client/public/q/`
-  (body-male.json 866 KB, body-female.json 905 KB, moves.json 727 KB with
+  (body-male.json 866 KB, body-female.json 905 KB, hair-long.json 775 KB,
+  hair-simpleparted.json 549 KB, moves.json 727 KB with
   the 16 clips worth having; pictures resized to JPEG in Chromium; plain
   glTF JSON with the data inside, because an Artifact serves .json but not
   .glb), and the build copies that folder next to the page. Try it with `?qbody`
@@ -932,7 +933,16 @@ and the heartbeat, the crowd and the weather go quiet.
   (the alliance's verdict): the shoulder pads (flesh-coloured lumps on this
   body) are gone, and the trailing scarf became a plain wrap of cloth in
   the fighter's accent colour, laid round the neck every frame, square to
-  it. Still to do before it can replace the realistic body:
+  it. Loop 259: the clothes are painted on the body itself instead of a
+  second shell (the same smooth hems, drawn in the body's own shader):
+  a four-fighter brawl at 844x390 on this body draws 82 calls and 183k
+  triangles a frame, against 238 calls and 120k triangles on the usual
+  body (225k with the shell). Loop 260 (asked for by the alliance): the
+  round picture head gives way, as a prototype, to the model's own head
+  for Ruko, Zelrith, Meru and Gleh - a hairstyle from the library skinned
+  to the head bone in their hair colour (`hair-simpleparted.json`,
+  `hair-long.json`, packed with their transparency kept), Zelrith's green
+  eyes and a lilac bow for Gleh; the others keep the picture. Still to do before it can replace the realistic body:
   the sumo's belt, wrists and feet, the clips blended into idle, walking
   and falls, and the free library has no kicks, guard or throws (those
   stay driven by the pose).
