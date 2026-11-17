@@ -16,6 +16,7 @@
 // family as three.js itself.
 
 import { createRig } from './rig3d.js';
+import { lookColors } from '../../../shared/fighters.js';
 
 const LOADER_URL = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js';
 const Q = typeof location !== 'undefined' ? new URLSearchParams(location.search).get('qbody') : null;
@@ -86,6 +87,77 @@ const FIST = {
   thumb_03: [0.6874, -0.0003, -0.0004, 0.7263],
 };
 
+// What each bone's skin is dressed in: a top over the trunk and the upper
+// arms, trousers from the hips down, shoes; forearms, hands and neck stay
+// bare. (A bone not listed: bare.)
+const WEAR = {
+  spine_01: 'top', spine_02: 'top', spine_03: 'top', clavicle_l: 'top', clavicle_r: 'top', upperarm_l: 'top', upperarm_r: 'top',
+  pelvis: 'legs', thigh_l: 'legs', thigh_r: 'legs', calf_l: 'legs', calf_r: 'legs',
+  foot_l: 'shoes', foot_r: 'shoes', ball_l: 'shoes', ball_r: 'shoes',
+};
+const OUTFIT = ['top', 'legs', 'shoes'];
+
+// Clothes cut from the body itself: the triangles under each garment,
+// pushed out a few millimetres along their normals and skinned to the same
+// skeleton, so they bend exactly as the body does. One mesh, one draw per
+// garment.
+function dress(THREE, skin, colours, { bareChest }) {
+  const g = skin.geometry;
+  const bones = skin.skeleton.bones;
+  const si = g.attributes.skinIndex;
+  const sw = g.attributes.skinWeight;
+  const wear = new Int8Array(si.count);
+  const get = ['getX', 'getY', 'getZ', 'getW']; // (r128 has no getComponent)
+  for (let v = 0; v < si.count; v++) {
+    let best = 0;
+    let bone = 0;
+    for (let k = 0; k < 4; k++) {
+      const w = sw[get[k]](v);
+      if (w > best) {
+        best = w;
+        bone = si[get[k]](v);
+      }
+    }
+    const kind = WEAR[bones[bone]?.name];
+    wear[v] = kind && !(bareChest && kind === 'top') ? OUTFIT.indexOf(kind) : -1;
+  }
+  const index = g.index ? g.index.array : Array.from({ length: si.count }, (_, i) => i);
+  const parts = OUTFIT.map(() => []);
+  for (let t = 0; t < index.length; t += 3) {
+    const [a, b, c] = [wear[index[t]], wear[index[t + 1]], wear[index[t + 2]]];
+    // A triangle on a seam goes with the garment most of its corners are in.
+    const kind = a === b || a === c ? a : b === c ? b : Math.max(a, b, c);
+    if (kind >= 0) parts[kind].push(index[t], index[t + 1], index[t + 2]);
+  }
+  const cloth = g.clone();
+  const pos = cloth.attributes.position;
+  const nor = cloth.attributes.normal;
+  const PUFF = [0.007, 0.009, 0.012]; // top, trousers, shoes: a little looser each
+  const done = new Uint8Array(pos.count);
+  const all = [];
+  parts.forEach((list, k) => {
+    for (const v of list)
+      if (!done[v]) {
+        done[v] = 1;
+        pos.setXYZ(v, pos.getX(v) + nor.getX(v) * PUFF[k], pos.getY(v) + nor.getY(v) * PUFF[k], pos.getZ(v) + nor.getZ(v) * PUFF[k]);
+      }
+    cloth.addGroup(all.length, list.length, k);
+    all.push(...list);
+  });
+  cloth.setIndex(all);
+  const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
+  const mats = [
+    new THREE.MeshStandardMaterial({ color: lin(colours.primary), roughness: 0.75, metalness: 0, skinning: true }),
+    new THREE.MeshStandardMaterial({ color: lin(colours.secondary), roughness: 0.85, metalness: 0, skinning: true }),
+    new THREE.MeshStandardMaterial({ color: lin(colours.accent), roughness: 0.5, metalness: 0.05, skinning: true }) // (r128 asks for skinning on the material),
+  ];
+  const mesh = new THREE.SkinnedMesh(cloth, mats);
+  mesh.bind(skin.skeleton, skin.bindMatrix);
+  mesh.castShadow = true;
+  mesh.frustumCulled = false;
+  return mesh;
+}
+
 export function createQRig(THREE, scene, char, opts) {
   const base = createRig(THREE, scene, char, opts);
   let body = null; // { root, bones, rest, scale, sides }
@@ -128,6 +200,15 @@ export function createQRig(THREE, scene, char, opts) {
       // The model's own head is folded away: the alliance member's picture
       // stays the face.
       bones.Head.scale.setScalar(0.001);
+      // Clothes in the fighter's colours (the sumo fights bare-chested).
+      let skin = null;
+      root.traverse((o) => {
+        if (o.isSkinnedMesh && (!skin || o.geometry.attributes.position.count > skin.geometry.attributes.position.count)) skin = o;
+      });
+      if (skin) {
+        body.clothes = dress(THREE, skin, lookColors(char.id, opts?.look ?? 0), { bareChest: char.build === 'sumo' });
+        skin.parent.add(body.clothes);
+      }
       base.lean.add(root);
       // Hide the shapes, keep the picture head.
       for (const c of base.lean.children) if (c !== root && c !== base.head) c.visible = false;
@@ -193,6 +274,10 @@ export function createQRig(THREE, scene, char, opts) {
     },
     dispose() {
       gone = true;
+      if (body?.clothes) {
+        body.clothes.geometry.dispose();
+        for (const m of body.clothes.material) m.dispose();
+      }
       base.dispose();
     },
   };
