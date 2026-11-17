@@ -918,8 +918,8 @@ and the heartbeat, the crowd and the weather go quiet.
   (shoes, accent), pushed out a few millimetres and skinned to the same
   skeleton, so they bend exactly with it: one extra mesh, three draws;
   the sumo keeps a bare chest. Loop 255: each fighter's gear on it too -
-  the skirt (slimmer at the waist), ponytail, scarf, shoulder pads (moved
-  onto the model's shoulders) and the sumo's topknot (onto the picture
+  the skirt (slimmer at the waist), ponytail, scarf, shoulder pads and the
+  sumo's topknot (onto the picture
   head), all drawn from the same pose. Loop 256: the sumo's build on the
   model - the lower spine widened into a belly (x1.9, the chest above it
   x1.2), thick thighs (x1.4) and calves (x1.25): each bone's scale passes
@@ -928,7 +928,11 @@ and the heartbeat, the crowd and the weather go quiet.
   how much of it is under the top, trousers and shoes; the graphics card
   blends that across each triangle and cuts the cloth where it falls under
   a half, so sleeves, waist and collar are smooth lines instead of the
-  stairs of whole triangles (and one draw instead of three). Still to do before it can replace the realistic body:
+  stairs of whole triangles (and one draw instead of three). Loop 258
+  (the alliance's verdict): the shoulder pads (flesh-coloured lumps on this
+  body) are gone, and the trailing scarf became a plain wrap of cloth in
+  the fighter's accent colour, laid round the neck every frame, square to
+  it. Still to do before it can replace the realistic body:
   the sumo's belt, wrists and feet, the clips blended into idle, walking
   and falls, and the free library has no kicks, guard or throws (those
   stay driven by the pose).

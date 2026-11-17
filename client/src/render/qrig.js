@@ -166,6 +166,7 @@ export function createQRig(THREE, scene, char, opts) {
   const v3 = new THREE.Vector3();
   const q1 = new THREE.Quaternion();
   const q2 = new THREE.Quaternion();
+  const Z_AXIS = new THREE.Vector3(0, 0, 1); // (a torus's axis)
 
   Promise.all([gltfLoader(THREE), fetchFile(bodyFile(char))])
     .then(([gl, buf]) => new Promise((resolve, reject) => gl.parse(buf.slice(0), '', resolve, reject)))
@@ -227,7 +228,21 @@ export function createQRig(THREE, scene, char, opts) {
       base.lean.add(root);
       // Hide the shapes, keep the picture head and what the fighter wears
       // (skirt, ponytail, scarf, pads: drawn from the same pose).
-      const keep = new Set([root, base.head, ...base.worn]);
+      // (Not the pads nor the trailing scarf: made for the shapes, they
+      // looked wrong on this body. The scarf becomes a wrap round the neck.)
+      const { scarf, pads } = base.gearParts;
+      const drop = new Set([...(pads || []), ...(scarf ? [scarf.knot, scarf.a, scarf.b] : [])]);
+      const keep = new Set([root, base.head, ...base.worn.filter((m) => !drop.has(m))]);
+      if (scarf) {
+        const col = lookColors(char.id, opts?.look ?? 0);
+        const wrap = new THREE.Mesh(
+          new THREE.TorusGeometry(0.075, 0.038, 10, 24),
+          new THREE.MeshStandardMaterial({ color: new THREE.Color(col.accent).convertSRGBToLinear(), roughness: 0.8, metalness: 0 }),
+        );
+        wrap.castShadow = true;
+        base.lean.add(wrap); // (laid round the neck every frame, in update)
+        body.wrap = wrap;
+      }
       for (const c of base.lean.children) if (!keep.has(c)) c.visible = false;
       // The picture head, sized to the model's head rather than the cartoon's.
       base.head.scale.multiplyScalar(0.72);
@@ -289,17 +304,17 @@ export function createQRig(THREE, scene, char, opts) {
         const L = J.side[side];
         for (const [b, c, key] of [...ARM(s), ...LEG(s)]) aim(bones[b], bones[c], world(L[key]));
       }
-      // Gear made for the shapes' proportions, moved onto this body: pads
-      // on its shoulders, the topknot on top of the picture head.
-      const { pads, knot } = base.gearParts;
-      if (pads)
-        [1, -1].forEach((side, i) => {
-          bones[`upperarm_${body.sides[side]}`].getWorldPosition(v1);
-          base.lean.worldToLocal(v1);
-          pads[i].position.copy(v1);
-          pads[i].position.y += 0.03;
-          pads[i].scale.set(0.09, 0.05, 0.085);
-        });
+      // The neck wrap: round the neck, just above the shoulders, square to it.
+      if (body.wrap) {
+        const w = body.wrap;
+        v1.subVectors(J.head, J.neck);
+        w.position.copy(J.neck).addScaledVector(v1, 0.18);
+        w.quaternion.setFromUnitVectors(Z_AXIS, v1.normalize());
+        w.scale.setScalar(root.scale.x * 1.05);
+      }
+      // The topknot, made for the shapes' proportions, moved onto the
+      // picture head.
+      const { knot } = base.gearParts;
       if (knot) {
         knot.position.copy(base.head.position);
         knot.position.y += base.head.scale.y * 0.95;
@@ -313,6 +328,10 @@ export function createQRig(THREE, scene, char, opts) {
       if (body?.clothes) {
         body.clothes.geometry.dispose();
         body.clothes.material.dispose();
+      }
+      if (body?.wrap) {
+        body.wrap.geometry.dispose();
+        body.wrap.material.dispose();
       }
       base.dispose();
     },
