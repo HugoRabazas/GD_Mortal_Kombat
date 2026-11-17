@@ -4,7 +4,6 @@
 //
 //   body-male.json, body-female.json  the two base characters, textures shrunk
 //                                   to JPEG (colour 512 px, relief 256 px)
-//   hair-*.json                     hairstyles, on the same skeleton
 //   moves.json                      only the animation clips the fighters
 //                                   use, with no mesh, resampled
 //
@@ -133,8 +132,5 @@ async function packMoves() {
 
 await packBody('Superhero_Male_FullBody.gltf', 'body-male.json');
 await packBody('Superhero_Female_FullBody.gltf', 'body-female.json');
-// The hairstyles, skinned to the same skeleton (to the head bone).
-const hairDir = path.join(src, 'universal-base-characters', 'Hairstyles', 'Rigged to Head Bone', 'glTF (Godot -Unreal)');
-for (const h of ['Hair_Long', 'Hair_SimpleParted']) await packBody(`${h}.gltf`, `hair-${h.slice(5).toLowerCase()}.json`, { dir: hairDir, alpha: true });
 await packMoves();
 await browser.close();

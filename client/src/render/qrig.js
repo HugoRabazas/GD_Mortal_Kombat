@@ -56,16 +56,6 @@ function fetchFile(file) {
   return files.get(file);
 }
 
-// Fighters drawn with the model's own head (prototype): a hairstyle from the
-// library in their hair colour, their eye colour, and a bow for Gleh. The
-// rest keep the alliance member's picture as the head.
-const HEADS = {
-  ruko: { hair: 'simpleparted', color: '#1a1416' },
-  zelrith: { hair: 'simpleparted', color: '#f3cf4a', eyes: '#4fbf6a' },
-  meru: { hair: 'long', color: '#161214' },
-  gleh: { hair: 'long', color: '#141012', bow: '#b8a2e6' },
-};
-
 // Bones by name, and the pairs aimed every frame: [bone, the joint it points
 // at, which of the game's joints that is].
 const ARM = (s) => [
@@ -209,9 +199,8 @@ export function createQRig(THREE, scene, char, opts) {
         }
       }
       // The model's own head is folded away: the alliance member's picture
-      // stays the face. (Unless this fighter has a head of their own.)
-      const own = HEADS[char.id];
-      if (!own) bones.Head.scale.setScalar(0.001);
+      // stays the face.
+      bones.Head.scale.setScalar(0.001);
       // Clothes in the fighter's colours (the sumo fights bare-chested).
       let skin = null;
       root.traverse((o) => {
@@ -225,10 +214,7 @@ export function createQRig(THREE, scene, char, opts) {
       // looked wrong on this body. The scarf becomes a wrap round the neck.)
       const { scarf, pads } = base.gearParts;
       const drop = new Set([...(pads || []), ...(scarf ? [scarf.knot, scarf.a, scarf.b] : [])]);
-      if (own) for (const m of [base.head, base.gearParts.knot, ...base.gearParts.tail]) drop.add(m); // (the hairstyle replaces the ponytail)
       const keep = new Set([root, base.head, ...base.worn.filter((m) => !drop.has(m))]);
-      if (own) keep.delete(base.head);
-      if (own && skin) wearHead(own, skin, bones);
       if (scarf) {
         const col = lookColors(char.id, opts?.look ?? 0);
         const wrap = new THREE.Mesh(
@@ -241,55 +227,24 @@ export function createQRig(THREE, scene, char, opts) {
       }
       for (const c of base.lean.children) if (!keep.has(c)) c.visible = false;
       // The picture head, sized to the model's head rather than the cartoon's.
-      base.head.scale.multiplyScalar(0.72);
+      base.head.scale.multiplyScalar(0.64);
+      // A slim frame round the picture, metal rather than glowing: a medallion
+      // worn as a face, not a halo.
+      for (const c of base.head.children)
+        if (c.geometry?.type === 'TorusGeometry') {
+          c.geometry = new THREE.TorusGeometry(1.0, 0.035, 8, 48);
+          body.frame = c.geometry;
+        }
+      for (const t of base.gearParts.tail) t.scale.multiplyScalar(0.7); // (sized to the smaller head)
+      base.gearParts.ring.emissiveIntensity = 0.12;
+      base.gearParts.ring.metalness = 0.75;
+      base.gearParts.ring.roughness = 0.3;
       if (base.gearParts.skirt) {
         base.gearParts.skirt.userData.r *= 0.8; // (a slimmer waist)
         base.gearParts.skirt.userData.rz *= 0.8;
       }
     })
     .catch((e) => console.warn('Quaternius body unavailable:', e.message));
-
-  // The model's own head: eye colour now, the hairstyle (and a bow) when it
-  // arrives, skinned to this body's head bone.
-  function wearHead(own, skin, bones) {
-    const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
-    skin.parent.traverse((o) => {
-      if (o.isMesh && own.eyes && /eye/i.test(o.material.name)) o.material.color = lin(own.eyes);
-    });
-    Promise.all([gltfLoader(THREE), fetchFile(`q/hair-${own.hair}.json`)])
-      .then(([gl, buf]) => new Promise((resolve, reject) => gl.parse(buf.slice(0), '', resolve, reject)))
-      .then((g) => {
-        if (gone) return;
-        let hair = null;
-        g.scene.traverse((o) => {
-          if (o.isSkinnedMesh) hair = o;
-        });
-        if (!hair) throw new Error('no hair mesh');
-        const sk = hair.skeleton;
-        hair.bind(new THREE.Skeleton(sk.bones.map((b) => bones[b.name]), sk.boneInverses), hair.bindMatrix);
-        hair.material.color = lin(own.color);
-        hair.material.alphaTest = 0.4;
-        hair.material.side = THREE.DoubleSide;
-        hair.castShadow = true;
-        hair.frustumCulled = false;
-        skin.parent.add(hair);
-        if (own.bow) {
-          // Two loops and a knot at the back of the head.
-          const m = new THREE.MeshStandardMaterial({ color: lin(own.bow), roughness: 0.6 });
-          const bow = new THREE.Group();
-          for (const side of [-1, 1]) {
-            const loop = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 8), m);
-            loop.scale.set(1, 0.6, 0.35);
-            loop.position.set(side * 0.05, 0, 0);
-            bow.add(loop);
-          }
-          bow.add(new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), m));
-          bones.Head.add(bow);
-          bow.position.set(0, 0.12, -0.1); // (head bone space: up the head, at the back)
-        }
-      })
-      .catch((e) => console.warn('Hairstyle unavailable:', e.message));
-  }
 
   // Turns `bone` (in world space) so the direction to `child` points at `target`.
   function aim(bone, child, target) {
@@ -352,6 +307,16 @@ export function createQRig(THREE, scene, char, opts) {
       }
       // The topknot, made for the shapes' proportions, moved onto the
       // picture head.
+      // The picture sits on the model's neck: its centre where the model's
+      // head would be (the head bone, a little up), and the ponytail moves
+      // with it.
+      bones.Head.getWorldPosition(v1);
+      base.lean.worldToLocal(v1);
+      v1.y += base.head.scale.y * 0.78;
+      v2.copy(base.head.position); // (where the pose put it)
+      base.head.position.copy(v1);
+      // (the ponytail drawn closer in, as the head is smaller)
+      for (const t of base.gearParts.tail) t.position.sub(v2).multiplyScalar(0.7).add(v1);
       const { knot } = base.gearParts;
       if (knot) {
         knot.position.copy(base.head.position);
@@ -363,6 +328,7 @@ export function createQRig(THREE, scene, char, opts) {
     },
     dispose() {
       gone = true;
+      body?.frame?.dispose();
       if (body?.wrap) {
         body.wrap.geometry.dispose();
         body.wrap.material.dispose();

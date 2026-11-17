@@ -898,8 +898,7 @@ and the heartbeat, the crowd and the weather go quiet.
   from Quaternius (Universal Base Characters and Universal Animation
   Library, both **CC0**, sources in `assets-src/quaternius/`).
   `scripts/pack-quaternius.mjs` shrinks them into `client/public/q/`
-  (body-male.json 866 KB, body-female.json 905 KB, hair-long.json 775 KB,
-  hair-simpleparted.json 549 KB, moves.json 727 KB with
+  (body-male.json 866 KB, body-female.json 905 KB, moves.json 727 KB with
   the 16 clips worth having; pictures resized to JPEG in Chromium; plain
   glTF JSON with the data inside, because an Artifact serves .json but not
   .glb), and the build copies that folder next to the page. Try it with `?qbody`
@@ -942,7 +941,13 @@ and the heartbeat, the crowd and the weather go quiet.
   for Ruko, Zelrith, Meru and Gleh - a hairstyle from the library skinned
   to the head bone in their hair colour (`hair-simpleparted.json`,
   `hair-long.json`, packed with their transparency kept), Zelrith's green
-  eyes and a lilac bow for Gleh; the others keep the picture. Still to do before it can replace the realistic body:
+  eyes and a lilac bow for Gleh; the others keep the picture. Loop 261:
+  the alliance chose the picture after all (the free model has one bone
+  for the whole head, so a face cannot be shaped to look like anyone), so
+  the own heads and hairstyles are gone again; instead the picture sits
+  better - on the model's neck (centred over the head bone), smaller
+  (x0.64 of the shapes' head), in a slim metal frame instead of the thick
+  glowing ring, with the ponytail drawn closer in to match. Still to do before it can replace the realistic body:
   the sumo's belt, wrists and feet, the clips blended into idle, walking
   and falls, and the free library has no kicks, guard or throws (those
   stay driven by the pose).
