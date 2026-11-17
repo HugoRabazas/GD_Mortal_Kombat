@@ -923,8 +923,13 @@ and the heartbeat, the crowd and the weather go quiet.
   head), all drawn from the same pose. Loop 256: the sumo's build on the
   model - the lower spine widened into a belly (x1.9, the chest above it
   x1.2), thick thighs (x1.4) and calves (x1.25): each bone's scale passes
-  to its children, so the next bone along undoes it. Still to do before it can replace the realistic body:
-  cleaner hems, the sumo's belt, wrists and feet, the clips blended into idle, walking
+  to its children, so the next bone along undoes it. Loop 257: clean hems -
+  the clothes are now one shell of the whole body, and each corner carries
+  how much of it is under the top, trousers and shoes; the graphics card
+  blends that across each triangle and cuts the cloth where it falls under
+  a half, so sleeves, waist and collar are smooth lines instead of the
+  stairs of whole triangles (and one draw instead of three). Still to do before it can replace the realistic body:
+  the sumo's belt, wrists and feet, the clips blended into idle, walking
   and falls, and the free library has no kicks, guard or throws (those
   stay driven by the pose).
 - **What's new, for players coming back** (loop 181): the menu's tip line

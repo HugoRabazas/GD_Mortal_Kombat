@@ -97,61 +97,59 @@ const WEAR = {
 };
 const OUTFIT = ['top', 'legs', 'shoes'];
 
-// Clothes cut from the body itself: the triangles under each garment,
-// pushed out a few millimetres along their normals and skinned to the same
-// skeleton, so they bend exactly as the body does. One mesh, one draw per
-// garment.
+// Clothes cut from the body itself: a shell of the body, pushed out a few
+// millimetres along its normals and skinned to the same skeleton, so it
+// bends exactly as the body does. Each corner carries how much of it is
+// under the top, the trousers and the shoes (the share of its skin that
+// follows those bones); the graphics card blends that across each triangle
+// and cuts the cloth where the share falls under a half, so hems are smooth
+// lines rather than the stairs of whole triangles. One mesh, one draw.
 function dress(THREE, skin, colours, { bareChest }) {
   const g = skin.geometry;
   const bones = skin.skeleton.bones;
   const si = g.attributes.skinIndex;
   const sw = g.attributes.skinWeight;
-  const wear = new Int8Array(si.count);
   const get = ['getX', 'getY', 'getZ', 'getW']; // (r128 has no getComponent)
-  for (let v = 0; v < si.count; v++) {
-    let best = 0;
-    let bone = 0;
+  const n = si.count;
+  const wear = new Float32Array(n * 3);
+  for (let v = 0; v < n; v++)
     for (let k = 0; k < 4; k++) {
-      const w = sw[get[k]](v);
-      if (w > best) {
-        best = w;
-        bone = si[get[k]](v);
-      }
+      const kind = OUTFIT.indexOf(WEAR[bones[si[get[k]](v)]?.name]);
+      if (kind < 0 || (bareChest && kind === 0)) continue;
+      wear[v * 3 + kind] += sw[get[k]](v);
     }
-    const kind = WEAR[bones[bone]?.name];
-    wear[v] = kind && !(bareChest && kind === 'top') ? OUTFIT.indexOf(kind) : -1;
-  }
-  const index = g.index ? g.index.array : Array.from({ length: si.count }, (_, i) => i);
-  const parts = OUTFIT.map(() => []);
-  for (let t = 0; t < index.length; t += 3) {
-    const [a, b, c] = [wear[index[t]], wear[index[t + 1]], wear[index[t + 2]]];
-    // A triangle on a seam goes with the garment most of its corners are in.
-    const kind = a === b || a === c ? a : b === c ? b : Math.max(a, b, c);
-    if (kind >= 0) parts[kind].push(index[t], index[t + 1], index[t + 2]);
-  }
+  const index = g.index ? g.index.array : Array.from({ length: n }, (_, i) => i);
+  const kept = [];
+  const covered = (v) => wear[v * 3] + wear[v * 3 + 1] + wear[v * 3 + 2] > 0.01;
+  for (let t = 0; t < index.length; t += 3) if (covered(index[t]) || covered(index[t + 1]) || covered(index[t + 2])) kept.push(index[t], index[t + 1], index[t + 2]);
   const cloth = g.clone();
   const pos = cloth.attributes.position;
   const nor = cloth.attributes.normal;
-  const PUFF = [0.007, 0.009, 0.012]; // top, trousers, shoes: a little looser each
-  const done = new Uint8Array(pos.count);
-  const all = [];
-  parts.forEach((list, k) => {
-    for (const v of list)
-      if (!done[v]) {
-        done[v] = 1;
-        pos.setXYZ(v, pos.getX(v) + nor.getX(v) * PUFF[k], pos.getY(v) + nor.getY(v) * PUFF[k], pos.getZ(v) + nor.getZ(v) * PUFF[k]);
-      }
-    cloth.addGroup(all.length, list.length, k);
-    all.push(...list);
-  });
-  cloth.setIndex(all);
+  for (let v = 0; v < n; v++) {
+    const puff = 0.007 + 0.002 * wear[v * 3 + 1] + 0.005 * wear[v * 3 + 2]; // top, trousers, shoes: a little looser each
+    pos.setXYZ(v, pos.getX(v) + nor.getX(v) * puff, pos.getY(v) + nor.getY(v) * puff, pos.getZ(v) + nor.getZ(v) * puff);
+  }
+  cloth.setIndex(kept);
+  cloth.setAttribute('wear', new THREE.BufferAttribute(wear, 3));
   const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
-  const mats = [
-    new THREE.MeshStandardMaterial({ color: lin(colours.primary), roughness: 0.75, metalness: 0, skinning: true }),
-    new THREE.MeshStandardMaterial({ color: lin(colours.secondary), roughness: 0.85, metalness: 0, skinning: true }),
-    new THREE.MeshStandardMaterial({ color: lin(colours.accent), roughness: 0.5, metalness: 0.05, skinning: true }) // (r128 asks for skinning on the material),
-  ];
-  const mesh = new THREE.SkinnedMesh(cloth, mats);
+  const mat = new THREE.MeshStandardMaterial({ roughness: 0.75, metalness: 0, skinning: true }); // (r128 asks for skinning on the material)
+  const uniforms = { cTop: { value: lin(colours.primary) }, cLegs: { value: lin(colours.secondary) }, cShoes: { value: lin(colours.accent) } };
+  mat.onBeforeCompile = (sh) => {
+    Object.assign(sh.uniforms, uniforms);
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nattribute vec3 wear;\nvarying vec3 vWear;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvWear = wear;');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vWear;\nuniform vec3 cTop;\nuniform vec3 cLegs;\nuniform vec3 cShoes;')
+      .replace(
+        '#include <map_fragment>',
+        `#include <map_fragment>
+        if (vWear.x + vWear.y + vWear.z < 0.5) discard;
+        float m = max(vWear.x, max(vWear.y, vWear.z));
+        diffuseColor.rgb = vWear.x >= m ? cTop : vWear.y >= m ? cLegs : cShoes;`,
+      );
+  };
+  const mesh = new THREE.SkinnedMesh(cloth, mat);
   mesh.bind(skin.skeleton, skin.bindMatrix);
   mesh.castShadow = true;
   mesh.frustumCulled = false;
@@ -314,7 +312,7 @@ export function createQRig(THREE, scene, char, opts) {
       gone = true;
       if (body?.clothes) {
         body.clothes.geometry.dispose();
-        for (const m of body.clothes.material) m.dispose();
+        body.clothes.material.dispose();
       }
       base.dispose();
     },
