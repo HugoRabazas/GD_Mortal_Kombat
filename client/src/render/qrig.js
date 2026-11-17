@@ -197,6 +197,23 @@ export function createQRig(THREE, scene, char, opts) {
       }
       body = { root, bones, rest: new Map(), legLen, sides: null };
       for (const b of Object.values(bones)) body.rest.set(b, b.quaternion.clone());
+      // The sumo's build: a belly (the lower spine widened, the chest
+      // above it kept), thick thighs and calves. Each bone hands its scale
+      // down to its children, so the next one along undoes it.
+      if (char.build === 'sumo') {
+        const widen = (name, k, child) => {
+          bones[name].scale.set(k, 1, k);
+          if (child) bones[child].scale.set(1 / k, 1, 1 / k);
+        };
+        widen('spine_01', 1.9, null);
+        bones.spine_02.scale.set(1.2 / 1.9, 1, 1.2 / 1.9); // (the chest a little broad too)
+        bones.spine_03.scale.set(1 / 1.2, 1, 1 / 1.2);
+        for (const s of ['l', 'r']) {
+          widen(`thigh_${s}`, 1.4, null);
+          bones[`calf_${s}`].scale.set(1.25 / 1.4, 1, 1.25 / 1.4);
+          bones[`foot_${s}`].scale.set(1 / 1.25, 1, 1 / 1.25);
+        }
+      }
       // The model's own head is folded away: the alliance member's picture
       // stays the face.
       bones.Head.scale.setScalar(0.001);

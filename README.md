@@ -920,8 +920,11 @@ and the heartbeat, the crowd and the weather go quiet.
   the sumo keeps a bare chest. Loop 255: each fighter's gear on it too -
   the skirt (slimmer at the waist), ponytail, scarf, shoulder pads (moved
   onto the model's shoulders) and the sumo's topknot (onto the picture
-  head), all drawn from the same pose. Still to do before it can replace the realistic body:
-  cleaner hems, the sumo's build, wrists and feet, the clips blended into idle, walking
+  head), all drawn from the same pose. Loop 256: the sumo's build on the
+  model - the lower spine widened into a belly (x1.9, the chest above it
+  x1.2), thick thighs (x1.4) and calves (x1.25): each bone's scale passes
+  to its children, so the next bone along undoes it. Still to do before it can replace the realistic body:
+  cleaner hems, the sumo's belt, wrists and feet, the clips blended into idle, walking
   and falls, and the free library has no kicks, guard or throws (those
   stay driven by the pose).
 - **What's new, for players coming back** (loop 181): the menu's tip line
