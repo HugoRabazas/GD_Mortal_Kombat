@@ -983,7 +983,33 @@ and the heartbeat, the crowd and the weather go quiet.
   hips keeping a share), so it moves with the legs instead of sitting on
   top of them. The skirt's colour on the legs now ends exactly at the
   hem's height, on a smooth line. Checked close up (4x) standing, kicked,
-  high-kicked and hit. Still to do before it can replace the realistic body:
+  high-kicked and hit. Loop 266 (the alliance: "the leg still comes out
+  in the fighting stance"): it did, and for a reason of principle - a
+  skirt skinned to the hips and both thighs blends their movements, so
+  between two legs that part the cloth ends half way and the forward thigh
+  comes through (and its left/right shares were in fact laid front/back:
+  the rest frame was read through `bindMatrixInverse`, which three keeps
+  re-making from wherever the mesh stands). The skirt is now laid round
+  the body every frame (`lay` in tailorSkirt): the rest skirt hangs from
+  the hips; the skin of the hips and thighs is worked out as it stands
+  this frame, point by point, as the graphics card bends it; and ring by
+  ring, for each direction round the body, the cloth takes whichever lies
+  furthest out - the hanging skirt, or the skin in that ring's band plus
+  2 cm of ease. So where nothing pushes it the skirt hangs as cut, and a
+  thigh that steps or kicks carries the cloth out on itself. A thigh
+  lifted past 72 degrees (a knee to the chest, a crouch, a roll) makes the
+  skirt ride up and gather at the hip instead of stretching to the knee.
+  A yoke ring inside the body closes the waist; the skin under the skirt
+  is painted as the skirt's own plain cloth; the cloth is lit the same
+  from both sides, with its own facing worked out ring by ring (triangles
+  of no size where a ring bunches drew dark scratches). Measured, not
+  judged by eye alone: a check (`?debug` exposes the rigs) casts rays
+  from 36 eyes all round and above at every point of the body the skirt
+  should cover, in 26 poses - standing guard, walking, blocking, landing,
+  down and knocked out: 0 of 382 points seen past the cloth; in kicks
+  and crouches, what is seen is the thigh a risen skirt uncovers. Seen from four
+  sides at 6x in real colours and with the skirt green and the body under
+  it magenta. Still to do before it can replace the realistic body:
   the sumo's belt, wrists and feet, the clips blended into idle, walking
   and falls, and the free library has no kicks, guard or throws (those
   stay driven by the pose).
