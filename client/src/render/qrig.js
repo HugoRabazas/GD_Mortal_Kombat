@@ -107,7 +107,7 @@ const WEAR = {
   pelvis: 'legs', thigh_l: 'legs', thigh_r: 'legs', calf_l: 'legs', calf_r: 'legs',
   foot_l: 'shoes', foot_r: 'shoes', ball_l: 'shoes', ball_r: 'shoes',
 };
-const OUTFIT = ['top', 'legs', 'shoes', 'skirt']; // ('skirt': the hips under one, in its colour)
+const OUTFIT = ['top', 'legs', 'shoes', 'skirt']; // ('skirt': what one covers, in its colour)
 
 // Clothes painted on the body itself. Each corner of the skin carries how
 // much of it is under the top, the trousers and the shoes (the share of its
@@ -123,17 +123,21 @@ function dress(THREE, skin, colours, { bareChest, skirt }) {
   const get = ['getX', 'getY', 'getZ', 'getW']; // (r128 has no getComponent)
   const n = si.count;
   const wear = new Float32Array(n * 4);
-  for (let v = 0; v < n; v++)
+  for (let v = 0; v < n; v++) {
+    // Under a skirt, everything it covers - the hips and the whole thigh,
+    // down to the knee (where the thigh's skin starts handing over to the
+    // calf's) - is dressed in the skirt's colour: wherever the leg shows
+    // through or out of it, it reads as the skirt.
+    let underSkirt = false;
+    if (skirt)
+      for (let k = 0; k < 4; k++) if (/^(pelvis|thigh_)/.test(bones[si[get[k]](v)]?.name || '') && sw[get[k]](v) > 0.02) underSkirt = true;
     for (let k = 0; k < 4; k++) {
       const name = bones[si[get[k]](v)]?.name;
-      // Under a skirt, the hips are dressed in its colour, so no band of
-      // trousers shows between the top and the skirt; the legs keep one
-      // colour from the hip to the ankle (leggings), so a leg that kicks out
-      // of the skirt is not half one colour and half another.
-      const kind = OUTFIT.indexOf(skirt && name === 'pelvis' ? 'skirt' : WEAR[name]);
+      const kind = OUTFIT.indexOf(underSkirt && WEAR[name] === 'legs' ? 'skirt' : WEAR[name]);
       if (kind < 0 || (bareChest && kind === 0)) continue;
       wear[v * 4 + kind] += sw[get[k]](v);
     }
+  }
   g.setAttribute('wear', new THREE.BufferAttribute(wear, 4));
   const lin = (hex) => new THREE.Color(hex).convertSRGBToLinear();
   const uniforms = { cTop: { value: lin(colours.primary) }, cLegs: { value: lin(colours.secondary) }, cShoes: { value: lin(colours.accent) }, cSkirt: { value: lin(skirt || colours.accent) } };
@@ -295,11 +299,11 @@ export function createQRig(THREE, scene, char, opts) {
     waist.copy(J.hip).addScaledVector(up, 0.14 * u);
     x.set(1, 0, 0).addScaledVector(up, -up.x).normalize(); // forward, square to the spine
     z.crossVectors(x, up);
-    // The waistband goes round the hips themselves (seen from above, what
-    // shows inside it is the hips, dressed in the skirt's colour).
-    const top = 0.24 * u;
+    // A close fit round the hips; the hips and thighs under it are dressed
+    // in its colour, so where they show through it they read as the skirt.
+    const top = 0.17 * u;
     const len = 0.4 * u; // waistband to hem
-    const thick = 0.11 * u; // a thigh's radius, and a little room
+    const thick = 0.07 * u; // (a close fit: what pokes out is dressed like the skirt)
     let n = 0;
     // (the model's own thighs - where its legs really are - from the hip
     // joint to the knee)
@@ -314,7 +318,7 @@ export function createQRig(THREE, scene, char, opts) {
     for (let i = 0; i < SKIRT_N; i++) {
       const a = (i / SKIRT_N) * Math.PI * 2;
       d.copy(x).multiplyScalar(Math.cos(a)).addScaledVector(z, Math.sin(a));
-      let hem = 0.34 * u; // the hem's radius when nothing pushes it
+      let hem = 0.26 * u; // the hem's radius when nothing pushes it
       for (const q of legPts) {
         p.subVectors(q, waist);
         const depth = -p.dot(up); // how far below the waist
@@ -324,7 +328,7 @@ export function createQRig(THREE, scene, char, opts) {
         // reach at least this much.
         hem = Math.max(hem, top + ((out - top) * len) / Math.min(Math.max(depth, 0.1 * u), len));
       }
-      hem = Math.min(hem, 1.1 * u); // (a high kick lifts it right out)
+      hem = Math.min(hem, 0.55 * u);
       pos.setXYZ(i, waist.x + d.x * top, waist.y + d.y * top, waist.z + d.z * top);
       p.copy(waist).addScaledVector(up, -len).addScaledVector(d, hem);
       pos.setXYZ(SKIRT_N + i, p.x, p.y, p.z);

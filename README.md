@@ -964,7 +964,14 @@ and the heartbeat, the crowd and the weather go quiet.
   the pose's joints, which its thighs do not sit exactly on) with room for
   their thickness, and its waistband goes round the hips themselves, so
   no thigh shows through it standing, kicking or hit (checked with the
-  skirt drawn flat green); a high kick lifts it out on that side. Still to do before it can replace the realistic body:
+  skirt drawn flat green); a high kick lifts it out on that side. Loop
+  264 (the alliance preferred it closer, and the leg under it in its
+  colour): the skirt fits close again (waist 0.17, hem 0.26 of the leg's
+  length, opening at most to 0.55), and everything it covers - hips and
+  the whole thigh down to the knee, where the thigh's skin hands over to
+  the calf's - is dressed in its colour, so a leg showing through or
+  kicking out of it reads as the skirt down to the knee and as leggings
+  below. Still to do before it can replace the realistic body:
   the sumo's belt, wrists and feet, the clips blended into idle, walking
   and falls, and the free library has no kicks, guard or throws (those
   stay driven by the pose).
