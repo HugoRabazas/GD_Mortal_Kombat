@@ -957,7 +957,14 @@ and the heartbeat, the crowd and the weather go quiet.
   wide stance never pokes through; it starts inside the body under the
   top, and the hips and thighs under it are dressed in the skirt's
   colour, so no band of waist or thigh shows between top and skirt (the
-  alliance's two reports). Still to do before it can replace the realistic body:
+  alliance's two reports). Loop 263 (their next report: a leg kicked out
+  of the skirt was half skirt-coloured, half dark): only the hips take
+  the skirt's colour now, the legs are one colour from hip to ankle
+  (leggings); the skirt is laid out from the model's own thigh bones (not
+  the pose's joints, which its thighs do not sit exactly on) with room for
+  their thickness, and its waistband goes round the hips themselves, so
+  no thigh shows through it standing, kicking or hit (checked with the
+  skirt drawn flat green); a high kick lifts it out on that side. Still to do before it can replace the realistic body:
   the sumo's belt, wrists and feet, the clips blended into idle, walking
   and falls, and the free library has no kicks, guard or throws (those
   stay driven by the pose).

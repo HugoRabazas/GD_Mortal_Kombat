@@ -107,7 +107,7 @@ const WEAR = {
   pelvis: 'legs', thigh_l: 'legs', thigh_r: 'legs', calf_l: 'legs', calf_r: 'legs',
   foot_l: 'shoes', foot_r: 'shoes', ball_l: 'shoes', ball_r: 'shoes',
 };
-const OUTFIT = ['top', 'legs', 'shoes', 'skirt']; // ('skirt': the hips and thighs under one, in its colour)
+const OUTFIT = ['top', 'legs', 'shoes', 'skirt']; // ('skirt': the hips under one, in its colour)
 
 // Clothes painted on the body itself. Each corner of the skin carries how
 // much of it is under the top, the trousers and the shoes (the share of its
@@ -126,9 +126,11 @@ function dress(THREE, skin, colours, { bareChest, skirt }) {
   for (let v = 0; v < n; v++)
     for (let k = 0; k < 4; k++) {
       const name = bones[si[get[k]](v)]?.name;
-      // Under a skirt, the hips and thighs are dressed in its colour: no
-      // band of trousers shows between the top and the skirt.
-      const kind = OUTFIT.indexOf(skirt && /^(pelvis|thigh_)/.test(name || '') ? 'skirt' : WEAR[name]);
+      // Under a skirt, the hips are dressed in its colour, so no band of
+      // trousers shows between the top and the skirt; the legs keep one
+      // colour from the hip to the ankle (leggings), so a leg that kicks out
+      // of the skirt is not half one colour and half another.
+      const kind = OUTFIT.indexOf(skirt && name === 'pelvis' ? 'skirt' : WEAR[name]);
       if (kind < 0 || (bareChest && kind === 0)) continue;
       wear[v * 4 + kind] += sw[get[k]](v);
     }
@@ -283,7 +285,7 @@ export function createQRig(THREE, scene, char, opts) {
   // through the cloth. For each direction round the waist, the hem goes at
   // least as far as is needed to keep every point of both thighs (sampled
   // from hip to knee, with the thigh's thickness) inside the cone.
-  const sk = { up: new THREE.Vector3(), x: new THREE.Vector3(), z: new THREE.Vector3(), waist: new THREE.Vector3(), p: new THREE.Vector3(), d: new THREE.Vector3() };
+  const sk = { up: new THREE.Vector3(), x: new THREE.Vector3(), z: new THREE.Vector3(), waist: new THREE.Vector3(), p: new THREE.Vector3(), d: new THREE.Vector3(), hip: new THREE.Vector3(), knee: new THREE.Vector3() };
   const legPts = Array.from({ length: 10 }, () => new THREE.Vector3());
   function layOutSkirt(mesh, J, u) {
     const { up, x, z, waist, p, d } = sk;
@@ -293,27 +295,36 @@ export function createQRig(THREE, scene, char, opts) {
     waist.copy(J.hip).addScaledVector(up, 0.14 * u);
     x.set(1, 0, 0).addScaledVector(up, -up.x).normalize(); // forward, square to the spine
     z.crossVectors(x, up);
-    const top = 0.12 * u; // the waistband's radius (just inside the body)
+    // The waistband goes round the hips themselves (seen from above, what
+    // shows inside it is the hips, dressed in the skirt's colour).
+    const top = 0.24 * u;
     const len = 0.4 * u; // waistband to hem
-    const thick = 0.075 * u; // a thigh's radius
+    const thick = 0.11 * u; // a thigh's radius, and a little room
     let n = 0;
-    for (const s of [1, -1])
-      for (let i = 0; i < 5; i++) legPts[n++].lerpVectors(J.side[s].hip, J.side[s].knee, i / 4);
+    // (the model's own thighs - where its legs really are - from the hip
+    // joint to the knee)
+    for (const side of ['l', 'r']) {
+      body.bones[`thigh_${side}`].getWorldPosition(sk.hip);
+      body.bones[`calf_${side}`].getWorldPosition(sk.knee);
+      base.lean.worldToLocal(sk.hip);
+      base.lean.worldToLocal(sk.knee);
+      for (let i = 0; i < 5; i++) legPts[n++].lerpVectors(sk.hip, sk.knee, i / 4);
+    }
     const pos = mesh.geometry.attributes.position;
     for (let i = 0; i < SKIRT_N; i++) {
       const a = (i / SKIRT_N) * Math.PI * 2;
       d.copy(x).multiplyScalar(Math.cos(a)).addScaledVector(z, Math.sin(a));
-      let hem = 0.3 * u; // the hem's radius when nothing pushes it
+      let hem = 0.34 * u; // the hem's radius when nothing pushes it
       for (const q of legPts) {
         p.subVectors(q, waist);
         const depth = -p.dot(up); // how far below the waist
-        if (depth < 0.02 * u) continue;
+        if (depth < 0.01 * u) continue;
         const out = p.dot(d) + thick; // how far out in this direction
         // The cone's radius at that depth must reach `out`: so the hem's must
         // reach at least this much.
-        hem = Math.max(hem, top + ((out - top) * len) / Math.min(depth, len));
+        hem = Math.max(hem, top + ((out - top) * len) / Math.min(Math.max(depth, 0.1 * u), len));
       }
-      hem = Math.min(hem, 0.6 * u);
+      hem = Math.min(hem, 1.1 * u); // (a high kick lifts it right out)
       pos.setXYZ(i, waist.x + d.x * top, waist.y + d.y * top, waist.z + d.z * top);
       p.copy(waist).addScaledVector(up, -len).addScaledVector(d, hem);
       pos.setXYZ(SKIRT_N + i, p.x, p.y, p.z);
