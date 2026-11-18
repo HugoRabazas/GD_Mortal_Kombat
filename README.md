@@ -971,7 +971,19 @@ and the heartbeat, the crowd and the weather go quiet.
   the whole thigh down to the knee, where the thigh's skin hands over to
   the calf's - is dressed in its colour, so a leg showing through or
   kicking out of it reads as the skirt down to the knee and as leggings
-  below. Still to do before it can replace the realistic body:
+  below. Loop 265 (the alliance: "you can tell at a glance it is a cone
+  with its top cut off"): the cone is gone. The skirt is now made once
+  from the body it is for - cut in rings, in the body's rest pose, from a
+  little above the hip joints to just above the knees; each ring follows
+  how far out the body's own skin reaches in each direction at that
+  height (so it spans the gap between the legs as cloth does), smoothed
+  round, never tucking in below the hips' widest ring, with a little ease
+  growing to the hem - and it is skinned to the same skeleton: the waist
+  to the hips, lower down more and more to the thigh on its side (the
+  hips keeping a share), so it moves with the legs instead of sitting on
+  top of them. The skirt's colour on the legs now ends exactly at the
+  hem's height, on a smooth line. Checked close up (4x) standing, kicked,
+  high-kicked and hit. Still to do before it can replace the realistic body:
   the sumo's belt, wrists and feet, the clips blended into idle, walking
   and falls, and the free library has no kicks, guard or throws (those
   stay driven by the pose).

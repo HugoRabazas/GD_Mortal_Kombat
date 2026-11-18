@@ -66,8 +66,6 @@ function fetchFile(file) {
   return files.get(file);
 }
 
-const SKIRT_N = 28; // points round the skirt's waist and hem
-
 // Bones by name, and the pairs aimed every frame: [bone, the joint it points
 // at, which of the game's joints that is].
 const ARM = (s) => [
@@ -123,19 +121,29 @@ function dress(THREE, skin, colours, { bareChest, skirt }) {
   const get = ['getX', 'getY', 'getZ', 'getW']; // (r128 has no getComponent)
   const n = si.count;
   const wear = new Float32Array(n * 4);
+  // Under a skirt, what it covers - the hips, and the legs down to its hem -
+  // is dressed in the skirt's colour: wherever a leg shows through or out
+  // of it, it reads as the skirt. The line on the leg is drawn at the hem's
+  // height, from a share that goes smoothly from 0 to 1 across it, so it is
+  // as clean as the hems of the top.
+  const fr = skirt ? skirtFrame(THREE, skin) : null;
+  const pos = g.attributes.position;
+  const p = new THREE.Vector3();
   for (let v = 0; v < n; v++) {
-    // Under a skirt, everything it covers - the hips and the whole thigh,
-    // down to the knee (where the thigh's skin starts handing over to the
-    // calf's) - is dressed in the skirt's colour: wherever the leg shows
-    // through or out of it, it reads as the skirt.
-    let underSkirt = false;
-    if (skirt)
-      for (let k = 0; k < 4; k++) if (/^(pelvis|thigh_)/.test(bones[si[get[k]](v)]?.name || '') && sw[get[k]](v) > 0.02) underSkirt = true;
+    let under = 0;
+    if (fr) under = THREE.MathUtils.clamp(p.fromBufferAttribute(pos, v).sub(fr.bottom).dot(fr.up) / 0.03 + 0.5, 0, 1);
     for (let k = 0; k < 4; k++) {
       const name = bones[si[get[k]](v)]?.name;
-      const kind = OUTFIT.indexOf(underSkirt && WEAR[name] === 'legs' ? 'skirt' : WEAR[name]);
+      let kind = OUTFIT.indexOf(WEAR[name]);
       if (kind < 0 || (bareChest && kind === 0)) continue;
-      wear[v * 4 + kind] += sw[get[k]](v);
+      const w = sw[get[k]](v);
+      if (fr && (name === 'pelvis' || WEAR[name] === 'legs')) {
+        wear[v * 4 + 3] += w * under;
+        kind = 1;
+        wear[v * 4 + kind] += w * (1 - under);
+        continue;
+      }
+      wear[v * 4 + kind] += w;
     }
   }
   g.setAttribute('wear', new THREE.BufferAttribute(wear, 4));
@@ -160,6 +168,136 @@ function dress(THREE, skin, colours, { bareChest, skirt }) {
       );
   };
   mat.needsUpdate = true;
+}
+
+// Where a skirt sits on this body, in its rest pose and the mesh's own
+// space: the hem just above the knees, the waistband a little above the
+// hip joints, and the directions up, to the left thigh and forward.
+function skirtFrame(THREE, skin) {
+  const bones = skin.skeleton.bones;
+  const at = (name) => {
+    const i = bones.findIndex((b) => b.name === name);
+    // Where the bone stood when the body was bound, in the mesh's own space.
+    const m = new THREE.Matrix4().copy(skin.skeleton.boneInverses[i]).invert();
+    return { i, p: new THREE.Vector3().setFromMatrixPosition(m).applyMatrix4(skin.bindMatrixInverse) };
+  };
+  const pelvis = at('pelvis');
+  const L = at('thigh_l');
+  const R = at('thigh_r');
+  const kneeL = at('calf_l');
+  const kneeR = at('calf_r');
+  const hips = new THREE.Vector3().addVectors(L.p, R.p).multiplyScalar(0.5);
+  const knees = new THREE.Vector3().addVectors(kneeL.p, kneeR.p).multiplyScalar(0.5);
+  const up = new THREE.Vector3().subVectors(hips, knees);
+  const legLen = up.length();
+  up.normalize();
+  const side = new THREE.Vector3().subVectors(L.p, R.p);
+  side.addScaledVector(up, -side.dot(up)).normalize(); // towards the left thigh
+  const fwd = new THREE.Vector3().crossVectors(side, up);
+  const top = hips.clone().addScaledVector(up, 0.1 * legLen); // the waistband, a little above the hip joints
+  const bottom = knees.clone().addScaledVector(up, 0.12 * legLen); // the hem, just above the knees
+  const height = top.distanceTo(bottom);
+  return { pelvis, L, R, up, side, fwd, legLen, top, bottom, height };
+}
+
+// The skirt, made once from the body it is for. In the body's rest pose
+// (standing, legs straight) it is cut in rings from the waist to just above
+// the knee; each ring follows the outline of the hips and thighs at that
+// height - for each direction round the body, as far out as the body's
+// skin reaches (so between the legs it spans the gap, as cloth does) - plus
+// a little ease that grows towards the hem. It is skinned to the same
+// skeleton: the waist to the hips, and lower down more and more to the
+// thigh on its own side (the front and back middle shared by both), so it
+// moves with the legs, stretching between them in a kick, never left
+// behind like a shape set on top.
+const SKIRT_ROWS = 9;
+const SKIRT_COLS = 40;
+function tailorSkirt(THREE, skin, look) {
+  const g = skin.geometry;
+  const { pelvis, L, R, up, side, fwd, bottom, height } = skirtFrame(THREE, skin);
+  // The body's skin, in that frame: height above the hem, and where it is.
+  const pos = g.attributes.position;
+  const pts = [];
+  const v = new THREE.Vector3();
+  for (let k = 0; k < pos.count; k++) {
+    v.fromBufferAttribute(pos, k).sub(bottom);
+    const h = v.dot(up);
+    if (h < -0.05 * height || h > height * 1.05) continue;
+    pts.push(h, v.dot(side), v.dot(fwd));
+  }
+  const n = SKIRT_ROWS * SKIRT_COLS;
+  const P = new Float32Array(n * 3);
+  const SI = new Uint16Array(n * 4);
+  const SW = new Float32Array(n * 4);
+  const band = (height / (SKIRT_ROWS - 1)) * 0.75;
+  // How far out the body reaches, ring by ring, in each direction round it.
+  const reach = [];
+  for (let r = 0; r < SKIRT_ROWS; r++) {
+    const h = height * (1 - r / (SKIRT_ROWS - 1));
+    const ring = [];
+    for (let c = 0; c < SKIRT_COLS; c++) {
+      const a = (c / SKIRT_COLS) * Math.PI * 2;
+      let out = 0.03;
+      for (let k = 0; k < pts.length; k += 3) if (Math.abs(pts[k] - h) < band) out = Math.max(out, pts[k + 1] * Math.cos(a) + pts[k + 2] * Math.sin(a));
+      ring.push(out);
+    }
+    // Smoothed round the ring (no notches or spikes), never inside the body.
+    for (let pass = 0; pass < 3; pass++) {
+      const was = ring.slice();
+      for (let c = 0; c < SKIRT_COLS; c++) {
+        const avg = (was[(c + SKIRT_COLS - 1) % SKIRT_COLS] + 2 * was[c] + was[(c + 1) % SKIRT_COLS]) / 4;
+        ring[c] = Math.max(avg, was[c] * 0.985, (was[(c + SKIRT_COLS - 1) % SKIRT_COLS] + was[(c + 1) % SKIRT_COLS]) / 2);
+      }
+    }
+    // Cloth falls from the hips: below the widest ring it does not tuck in
+    // between or round the thighs.
+    if (r > 0) for (let c = 0; c < SKIRT_COLS; c++) ring[c] = Math.max(ring[c], reach[r - 1][c]);
+    reach.push(ring);
+  }
+  const centre = new THREE.Vector3();
+  for (let r = 0; r < SKIRT_ROWS; r++) {
+    const t = r / (SKIRT_ROWS - 1); // 0 at the waist, 1 at the hem
+    const h = height * (1 - t);
+    for (let c = 0; c < SKIRT_COLS; c++) {
+      const a = (c / SKIRT_COLS) * Math.PI * 2;
+      const ds = Math.cos(a);
+      const df = Math.sin(a);
+      const out = reach[r][c] + 0.012 + 0.035 * t * t; // close at the waist, a little flare at the hem
+      centre.copy(bottom).addScaledVector(up, h);
+      v.copy(centre).addScaledVector(side, ds * out).addScaledVector(fwd, df * out);
+      const k = r * SKIRT_COLS + c;
+      v.toArray(P, k * 3);
+      // Hips at the top; lower down, the thigh on this side (the middle,
+      // front and back, shared by both thighs).
+      // (the hips keep a share all the way down, so a leg drawn far back or
+      // up pulls the cloth with it softly, without a corner)
+      const leg = 0.75 * t * t * (3 - 2 * t);
+      const toL = THREE.MathUtils.clamp(0.5 + ds * 0.7, 0, 1);
+      SI.set([pelvis.i, L.i, R.i, 0], k * 4);
+      SW.set([1 - leg, leg * toL, leg * (1 - toL), 0], k * 4);
+    }
+  }
+  const idx = [];
+  for (let r = 0; r < SKIRT_ROWS - 1; r++)
+    for (let c = 0; c < SKIRT_COLS; c++) {
+      const a = r * SKIRT_COLS + c;
+      const b = r * SKIRT_COLS + ((c + 1) % SKIRT_COLS);
+      idx.push(a, a + SKIRT_COLS, b, b, a + SKIRT_COLS, b + SKIRT_COLS);
+    }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(P, 3));
+  geo.setAttribute('skinIndex', new THREE.Uint16BufferAttribute(SI, 4));
+  geo.setAttribute('skinWeight', new THREE.BufferAttribute(SW, 4));
+  geo.setIndex(idx);
+  geo.computeVertexNormals();
+  const mat = look.clone();
+  mat.side = THREE.DoubleSide;
+  mat.skinning = true; // (r128 asks for it on the material)
+  const mesh = new THREE.SkinnedMesh(geo, mat);
+  mesh.bind(skin.skeleton, skin.bindMatrix);
+  mesh.castShadow = true;
+  mesh.frustumCulled = false;
+  return mesh;
 }
 
 export function createQRig(THREE, scene, char, opts) {
@@ -263,79 +401,14 @@ export function createQRig(THREE, scene, char, opts) {
       base.gearParts.ring.emissiveIntensity = 0.12;
       base.gearParts.ring.metalness = 0.75;
       base.gearParts.ring.roughness = 0.3;
-      // The skirt: its own cone, which widens wherever a leg would push
-      // through it (see the update).
-      if (base.gearParts.skirt) {
-        const geo = new THREE.BufferGeometry();
-        geo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(SKIRT_N * 2 * 3), 3));
-        const idx = [];
-        for (let i = 0; i < SKIRT_N; i++) {
-          const j = (i + 1) % SKIRT_N;
-          idx.push(i, SKIRT_N + i, j, j, SKIRT_N + i, SKIRT_N + j);
-        }
-        geo.setIndex(idx);
-        const mat = base.gearParts.skirt.material.clone();
-        mat.side = THREE.DoubleSide;
-        body.skirt = new THREE.Mesh(geo, mat);
-        body.skirt.castShadow = true;
-        body.skirt.frustumCulled = false;
-        base.lean.add(body.skirt);
+      // The skirt: cut to the body's own hips and thighs, and skinned to
+      // them (see tailorSkirt).
+      if (base.gearParts.skirt && skin) {
+        body.skirt = tailorSkirt(THREE, skin, base.gearParts.skirt.material);
+        skin.parent.add(body.skirt);
       }
     })
     .catch((e) => console.warn('Quaternius body unavailable:', e.message));
-
-  // The skirt, every frame: a cone from the waist down, its hem pushed out
-  // wherever a thigh reaches past it, so a kick or a wide stance never pokes
-  // through the cloth. For each direction round the waist, the hem goes at
-  // least as far as is needed to keep every point of both thighs (sampled
-  // from hip to knee, with the thigh's thickness) inside the cone.
-  const sk = { up: new THREE.Vector3(), x: new THREE.Vector3(), z: new THREE.Vector3(), waist: new THREE.Vector3(), p: new THREE.Vector3(), d: new THREE.Vector3(), hip: new THREE.Vector3(), knee: new THREE.Vector3() };
-  const legPts = Array.from({ length: 10 }, () => new THREE.Vector3());
-  function layOutSkirt(mesh, J, u) {
-    const { up, x, z, waist, p, d } = sk;
-    up.subVectors(J.neck, J.hip).normalize(); // up the spine
-    // The waistband starts inside the body, under the top's hem, so the
-    // skirt comes out of the body with no gap to see the waist through.
-    waist.copy(J.hip).addScaledVector(up, 0.14 * u);
-    x.set(1, 0, 0).addScaledVector(up, -up.x).normalize(); // forward, square to the spine
-    z.crossVectors(x, up);
-    // A close fit round the hips; the hips and thighs under it are dressed
-    // in its colour, so where they show through it they read as the skirt.
-    const top = 0.17 * u;
-    const len = 0.4 * u; // waistband to hem
-    const thick = 0.07 * u; // (a close fit: what pokes out is dressed like the skirt)
-    let n = 0;
-    // (the model's own thighs - where its legs really are - from the hip
-    // joint to the knee)
-    for (const side of ['l', 'r']) {
-      body.bones[`thigh_${side}`].getWorldPosition(sk.hip);
-      body.bones[`calf_${side}`].getWorldPosition(sk.knee);
-      base.lean.worldToLocal(sk.hip);
-      base.lean.worldToLocal(sk.knee);
-      for (let i = 0; i < 5; i++) legPts[n++].lerpVectors(sk.hip, sk.knee, i / 4);
-    }
-    const pos = mesh.geometry.attributes.position;
-    for (let i = 0; i < SKIRT_N; i++) {
-      const a = (i / SKIRT_N) * Math.PI * 2;
-      d.copy(x).multiplyScalar(Math.cos(a)).addScaledVector(z, Math.sin(a));
-      let hem = 0.26 * u; // the hem's radius when nothing pushes it
-      for (const q of legPts) {
-        p.subVectors(q, waist);
-        const depth = -p.dot(up); // how far below the waist
-        if (depth < 0.01 * u) continue;
-        const out = p.dot(d) + thick; // how far out in this direction
-        // The cone's radius at that depth must reach `out`: so the hem's must
-        // reach at least this much.
-        hem = Math.max(hem, top + ((out - top) * len) / Math.min(Math.max(depth, 0.1 * u), len));
-      }
-      hem = Math.min(hem, 0.55 * u);
-      pos.setXYZ(i, waist.x + d.x * top, waist.y + d.y * top, waist.z + d.z * top);
-      p.copy(waist).addScaledVector(up, -len).addScaledVector(d, hem);
-      pos.setXYZ(SKIRT_N + i, p.x, p.y, p.z);
-    }
-    pos.needsUpdate = true;
-    mesh.geometry.computeVertexNormals();
-  }
 
   // Turns `bone` (in world space) so the direction to `child` points at `target`.
   function aim(bone, child, target) {
@@ -388,7 +461,6 @@ export function createQRig(THREE, scene, char, opts) {
         const L = J.side[side];
         for (const [b, c, key] of [...ARM(s), ...LEG(s)]) aim(bones[b], bones[c], world(L[key]));
       }
-      if (body.skirt) layOutSkirt(body.skirt, J, poseLeg);
       // The neck wrap: round the neck, just above the shoulders, square to it.
       if (body.wrap) {
         const w = body.wrap;
